@@ -7,18 +7,21 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Mail } from "lucide-react";
 import { Alert } from "@/components/ui/alert";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { AuthButton } from "@/components/Auth/AuthButton";
+import { AuthField } from "@/components/Auth/AuthField";
+import { AuthHeading } from "@/components/Auth/AuthHeading";
+import { PasswordField } from "@/components/Auth/PasswordField";
+import { authStyles } from "@/components/Auth/auth-styles";
 import { useAuth } from "@/lib/auth/auth-context";
 import { ROLE_HOME } from "@/lib/constants";
 import { subscribe, getDemoCredentialsSnapshot, getServerCredentialsSnapshot } from "@/lib/auth/mock-auth";
 
 const schema = z.object({
-  email: z.string().email("إيميل غير صحيح"),
-  password: z.string().min(1, "الباسورد مطلوب"),
+  email: z.string().min(1, "Email is required").email("Invalid email address"),
+  password: z.string().min(1, "Password is required"),
+  rememberMe: z.boolean(),
 });
 type FormValues = z.infer<typeof schema>;
 
@@ -31,7 +34,7 @@ export default function LoginPage() {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<FormValues>({ resolver: zodResolver(schema) });
+  } = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: { rememberMe: false } });
 
   function onSubmit(values: FormValues) {
     try {
@@ -39,52 +42,57 @@ export default function LoginPage() {
       const user = login(values.email, values.password);
       router.push(ROLE_HOME[user.role] as Route);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "حصل خطأ غير متوقع");
+      setError(e instanceof Error ? e.message : "Something went wrong. Please try again.");
     }
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>تسجيل الدخول</CardTitle>
-        <CardDescription>ادخل بياناتك للمتابعة في Junior Hub</CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-4">
+    <>
+      <AuthHeading title="Welcome Back!" subtitle="Sign in to continue to your account" />
+
+      <form onSubmit={handleSubmit(onSubmit)} noValidate className={authStyles.form}>
         {error && <Alert variant="danger">{error}</Alert>}
-        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="email">الإيميل</Label>
-            <Input id="email" type="email" placeholder="you@example.com" {...register("email")} />
-            {errors.email && <p className="text-xs text-danger">{errors.email.message}</p>}
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="password">الباسورد</Label>
-            <Input id="password" type="password" {...register("password")} />
-            {errors.password && <p className="text-xs text-danger">{errors.password.message}</p>}
-          </div>
-          <Button type="submit" disabled={isSubmitting} className="mt-2">
-            دخول
-          </Button>
-        </form>
-        <p className="text-center text-sm text-muted-foreground">
-          مستخدم جديد؟{" "}
-          <Link href="/register" className="font-medium text-primary">
-            سجل حساب طالب
+
+        <AuthField
+          label="Email"
+          icon={Mail}
+          type="email"
+          autoComplete="email"
+          placeholder="you@example.com"
+          error={errors.email?.message}
+          {...register("email")}
+        />
+        <PasswordField
+          label="Password"
+          autoComplete="current-password"
+          placeholder="••••••••"
+          error={errors.password?.message}
+          {...register("password")}
+        />
+
+        <div className={`flex items-center justify-between ${authStyles.smallText}`}>
+          <label className="flex cursor-pointer items-center gap-2">
+            <input type="checkbox" className="size-3.5 accent-[#12939b]" {...register("rememberMe")} />
+            Remember me
+          </label>
+          <Link href="/forgot-password" className={authStyles.link}>
+            Forgot password?
           </Link>
-        </p>
-        {demoAccounts.length > 0 && (
-          <Alert>
-            <p className="mb-1 font-medium">حسابات تجريبية (باسورد demo):</p>
-            <ul className="space-y-0.5">
-              {demoAccounts.map((acc) => (
-                <li key={acc.email}>
-                  {acc.role}: {acc.email}
-                </li>
-              ))}
-            </ul>
-          </Alert>
-        )}
-      </CardContent>
-    </Card>
+        </div>
+
+        <AuthButton type="submit" disabled={isSubmitting}>
+          Sign in
+        </AuthButton>
+      </form>
+
+      <p className={`mt-4 text-center ${authStyles.smallText}`}>
+        Don&apos;t have an account?{" "}
+        <Link href="/register" className={authStyles.link}>
+          Sign up
+        </Link>
+      </p>
+
+     
+    </>
   );
 }
