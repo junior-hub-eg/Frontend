@@ -12,6 +12,7 @@ export interface User {
   firstName: string;
   lastName?: string;
   email: string;
+  phone?: string;
   age?: number;
   guardianId?: string;
   createdAt: string;

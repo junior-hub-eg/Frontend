@@ -1,7 +1,3 @@
-/* Auth layout — decoration only (card + artwork + floating shapes).
-   Sizes inside the card use `cqw` (1cqw = 1% of the card width), so the whole
-   composition scales like the Figma frame (card ≈ 585 × 358). */
-
 .pageWrapper {
   position: relative;
   min-height: 100vh;
@@ -31,7 +27,6 @@
 .curlBottomLeft   { bottom: 0; left: 3%;   width: clamp(18px, 2.8vw, 40px); transform: translateY(20%); }
 .burstBottomRight { bottom: 5%; right: 11%; width: clamp(26px, 4vw, 56px); }
 
-/* ---------- Card ---------- */
 .card {
   position: relative;
   z-index: 2;
@@ -39,14 +34,14 @@
   display: grid;
   grid-template-columns: 49% 51%;
   width: min(100%, 920px);
-  aspect-ratio: 585 / 358; /* grows taller automatically if the form needs more room */
+  aspect-ratio: 585 / 358; 
   background: #fff;
   border: 1px solid #e3ece9;
   border-radius: 4.8cqw;
   box-shadow: 0 1.5cqw 5cqw rgba(20, 60, 70, 0.05);
 }
 
-/* ---------- Left: artwork ---------- */
+
 .visual {
   position: relative;
   overflow: hidden;
@@ -89,7 +84,6 @@
   height: auto;
 }
 
-/* Small shapes drawn over the artwork */
 .inner {
   position: absolute;
   z-index: 3;
@@ -101,7 +95,6 @@
 .cross     { top: 23.2cqw; left: 44.6cqw; width: 4.2cqw; }
 .curlEdge  { top: 48cqw;   left: 46.8cqw; width: 3.6cqw; }
 
-/* ---------- Right: form area ---------- */
 .panel {
   position: relative;
   display: flex;
@@ -112,14 +105,12 @@
 }
 
 
-/* Teammates put their form inside this box */
 .content {
   width: 100%;
   max-width: 38.5cqw;
   margin: 0 auto;
 }
 
-/* ---------- Tablet / mobile: hide the artwork, keep the form ---------- */
 @media (max-width: 900px) {
   .pageWrapper { padding: 24px 16px; }
   .card {
@@ -129,6 +120,6 @@
     border-radius: 24px;
   }
   .visual, .hatched, .cross, .curlEdge { display: none; }
-  .panel { padding: 40px 28px; }
+  .panel { padding: 64px 28px 40px; }
   .content { max-width: 100%; }
 }

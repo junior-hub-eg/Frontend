@@ -61,20 +61,21 @@ export interface RegisterLearnerInput {
   firstName: string;
   lastName?: string;
   email: string;
+  phone?: string;
   password: string;
-  age: number;
-  guardianEmail: string;
+  /** Optional: the sign-up design has no age / guardian fields. When guardianEmail is given, a pending guardian consent is created as before. */
+  age?: number;
+  guardianEmail?: string;
 }
 
-/** Creates the learner account (inactive) + a pending guardian consent request. */
-export function registerLearner(input: RegisterLearnerInput): { userId: string; consentId: string } {
+/** Creates the learner account (+ a pending guardian consent request when a guardian email is provided). */
+export function registerLearner(input: RegisterLearnerInput): { userId: string; consentId: string | null } {
   const users = readStore<StoredUser>(USERS_KEY);
   if (users.some((u) => u.email === input.email)) {
-    throw new Error("في حساب مسجل بالفعل بنفس الإيميل ده.");
+    throw new Error("An account with this email already exists.");
   }
 
   const learnerId = crypto.randomUUID();
-  const guardianId = crypto.randomUUID();
 
   const learner: StoredUser = {
     id: learnerId,
@@ -82,11 +83,20 @@ export function registerLearner(input: RegisterLearnerInput): { userId: string; 
     firstName: input.firstName,
     lastName: input.lastName,
     email: input.email,
+    phone: input.phone,
     password: input.password,
     age: input.age,
-    guardianId,
     createdAt: new Date().toISOString(),
   };
+
+  if (!input.guardianEmail) {
+    writeStore(USERS_KEY, [...users, learner]);
+    emitChange();
+    return { userId: learnerId, consentId: null };
+  }
+
+  const guardianId = crypto.randomUUID();
+  learner.guardianId = guardianId;
 
   const guardian: StoredUser = {
     id: guardianId,
@@ -112,6 +122,35 @@ export function registerLearner(input: RegisterLearnerInput): { userId: string; 
   emitChange();
 
   return { userId: learnerId, consentId: consent.id };
+}
+
+// ---------------------------------------------------------------------------
+// OTP (mock) — no email is actually sent. The code is always MOCK_OTP_CODE.
+// Replace with the real "send code" / "verify code" endpoints when the backend ships.
+// ---------------------------------------------------------------------------
+const OTP_KEY = "jh_mock_otp";
+const OTP_TTL_MS = 5 * 60 * 1000;
+export const MOCK_OTP_CODE = "123456";
+
+export function sendOtp(email: string) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(OTP_KEY, JSON.stringify({ email, code: MOCK_OTP_CODE, expiresAt: Date.now() + OTP_TTL_MS }));
+}
+
+export function verifyOtp(email: string, code: string) {
+  let entry: { email: string; code: string; expiresAt: number } | null = null;
+  try {
+    entry = JSON.parse(window.localStorage.getItem(OTP_KEY) ?? "null");
+  } catch {
+    entry = null;
+  }
+  if (!entry || entry.email !== email || entry.expiresAt < Date.now()) {
+    throw new Error("This code has expired. Please request a new one.");
+  }
+  if (entry.code !== code) {
+    throw new Error("Invalid code. Please try again.");
+  }
+  window.localStorage.removeItem(OTP_KEY);
 }
 
 export function getPendingConsentsForGuardianEmail(guardianEmail: string) {
@@ -141,7 +180,7 @@ export function login(email: string, password: string): User {
   const users = readStore<StoredUser>(USERS_KEY);
   const user = users.find((u) => u.email === email);
   if (!user) {
-    throw new Error("الإيميل أو الباسورد غلط.");
+    throw new Error("Incorrect email or password.");
   }
   const { password: userPassword, ...publicUser } = user;
   void userPassword;
