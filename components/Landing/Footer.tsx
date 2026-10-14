@@ -1,9 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
-import { Globe, Mail, MessageCircle } from "lucide-react";
 import { Curl } from "@/components/Auth/AuthDecorations";
-import { Sparkle, SpikeBurst } from "./LandingDecorations";
+import { FacebookIcon, InstagramIcon, Sparkle, SpikeBurst, WhatsAppIcon } from "./LandingDecorations";
 
 const PRODUCT_LINKS: { label: string; href: Route }[] = [
   { label: "Home", href: "/" },
@@ -72,12 +71,12 @@ export function LandingFooter() {
         </div>
 
         <div className="flex gap-3 sm:items-start sm:justify-end">
-          {[Globe, Mail, MessageCircle].map((Icon, i) => (
+          {[FacebookIcon, WhatsAppIcon, InstagramIcon].map((Icon, i) => (
             <span
               key={i}
-              className="grid size-9 place-items-center rounded-full border border-white/15 text-white/70"
+              className="grid size-9 place-items-center rounded-xl bg-white text-[#16244a]"
             >
-              <Icon size={16} />
+              <Icon className="size-4" />
             </span>
           ))}
         </div>
