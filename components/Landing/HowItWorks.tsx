@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Briefcase, CheckCircle2, Monitor, PlayCircle, UserCheck, BookOpen } from "lucide-react";
 
@@ -20,7 +21,15 @@ const STEPS = [
 
 export function HowItWorks() {
   return (
-    <section className="bg-[#F7FBFA] py-20">
+    <section className="relative bg-white py-20">
+      <Image
+        src="/images/Landing%20Page/Back%20Back-2.png"
+        alt=""
+        width={107}
+        height={116}
+        className="pointer-events-none absolute top-6 right-6 w-12 opacity-80 lg:right-10"
+        aria-hidden
+      />
       <div className="mx-auto max-w-7xl px-6 lg:px-10">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
@@ -34,7 +43,14 @@ export function HowItWorks() {
         </div>
 
         <div className="relative mt-14 grid grid-cols-2 gap-x-6 gap-y-12 sm:grid-cols-3 lg:grid-cols-6">
-          <div className="absolute left-[8%] right-[8%] top-6 hidden h-px bg-[#12939b]/20 lg:block" aria-hidden />
+          <div className="absolute left-[8%] right-[8%] top-6 hidden h-[3px] lg:block" aria-hidden>
+            <Image
+              src="/images/Landing%20Page/Line%203.png"
+              alt=""
+              fill
+              className="object-cover opacity-60"
+            />
+          </div>
           {STEPS.map(({ title, icon: Icon, text }, i) => (
             <div key={title} className="relative flex flex-col items-center text-center">
               <span className="relative z-10 grid size-12 place-items-center rounded-full bg-[#12939b] text-white shadow-sm">

@@ -44,7 +44,15 @@ const TRACKS = [
 
 export function Tracks() {
   return (
-    <section className="mx-auto max-w-7xl px-6 py-20 lg:px-10">
+    <section className="relative mx-auto max-w-7xl px-6 py-20 lg:px-10">
+      <Image
+        src="/images/Landing%20Page/Back%20Back-4.png"
+        alt=""
+        width={107}
+        height={116}
+        className="pointer-events-none absolute -top-2 right-6 w-14 rotate-[54deg] opacity-80 lg:right-10"
+        aria-hidden
+      />
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-xs font-semibold tracking-wide text-[#12939b]">EXPLORE YOUR INTERESTS</p>
@@ -60,19 +68,21 @@ export function Tracks() {
 
       <div className="mt-10 grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-6">
         {TRACKS.map(({ title, subtitle, icon, colors }) => (
-          <div key={title} className="flex flex-col gap-4 rounded-2xl p-5" style={{ backgroundColor: colors.bg }}>
-            <span className="grid size-10 place-items-center rounded-xl bg-white p-2">
-              <Image src={icon} alt="" width={28} height={28} className="h-auto w-full object-contain" />
-            </span>
+          <div
+            key={title}
+            className="flex flex-col items-center gap-3 rounded-2xl p-6 text-center"
+            style={{ backgroundColor: colors.bg }}
+          >
+            <Image src={icon} alt="" width={56} height={56} className="h-14 w-14 object-contain" />
             <div>
               <p className="text-sm font-semibold text-[#1b2a5c]">{title}</p>
               <p className="text-xs text-[#1b2a5c]/60">{subtitle}</p>
             </div>
             <button
-              className="mt-2 grid size-7 place-items-center self-start rounded-full border border-[#1b2a5c]/15 text-[#1b2a5c] transition-colors hover:bg-white"
+              className="mt-1 grid size-8 place-items-center rounded-full border border-[#1b2a5c]/15 text-[#1b2a5c] transition-colors hover:bg-white"
               aria-label={`Explore ${title}`}
             >
-              <ArrowRight size={13} />
+              <ArrowRight size={14} />
             </button>
           </div>
         ))}

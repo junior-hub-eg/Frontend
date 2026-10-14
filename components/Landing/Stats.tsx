@@ -9,16 +9,32 @@ const STATS = [
 
 export function Stats() {
   return (
-    <section className="mx-auto -mt-8 max-w-6xl px-6 lg:px-10">
-      <div className="grid grid-cols-2 gap-6 rounded-2xl bg-[#E9F7F4] px-8 py-8 shadow-sm sm:grid-cols-4 sm:divide-x sm:divide-[#12939b]/15">
-        {STATS.map(({ icon: Icon, value, label }) => (
-          <div key={label} className="flex items-center gap-3 sm:px-4 sm:first:pl-0">
-            <span className="grid size-10 shrink-0 place-items-center rounded-full bg-white text-[#12939b]">
-              <Icon size={20} />
-            </span>
-            <div className="leading-tight">
-              <p className="text-xl font-bold text-[#1b2a5c]">{value}</p>
-              <p className="text-xs text-[#1b2a5c]/60">{label}</p>
+    <section className="relative z-10 mx-auto -mt-4 w-full max-w-7xl px-5 sm:-mt-6 sm:px-6 lg:-mt-5 lg:px-10">
+      <div className="grid grid-cols-2 items-center gap-y-5 rounded-[22px] bg-[#EAF9F7] px-5 py-6 sm:grid-cols-4 sm:gap-y-0 sm:px-6 sm:py-7 lg:rounded-[24px] lg:px-8">
+        {STATS.map(({ icon: Icon, value, label }, index) => (
+          <div
+            key={label}
+            className={`flex items-center justify-center gap-3 sm:justify-start sm:px-4 lg:px-5 ${
+              index === 2
+                ? "sm:border-l sm:border-[#C7DEDF]"
+                : ""
+            }`}
+          >
+            <Icon
+              size={30}
+              className="shrink-0 text-[#128B91]"
+              strokeWidth={1.8}
+              aria-hidden="true"
+            />
+
+            <div className="min-w-0 leading-tight">
+              <p className="whitespace-nowrap text-xl font-bold text-[#1B2A5C] sm:text-2xl lg:text-[25px]">
+                {value}
+              </p>
+
+              <p className="mt-1 whitespace-nowrap text-[10px] text-[#1B2A5C] sm:text-[11px] lg:text-xs">
+                {label}
+              </p>
             </div>
           </div>
         ))}

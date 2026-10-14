@@ -101,7 +101,7 @@ export function LandingHeader() {
           ) : (
             <Link
               href="/login"
-              className="rounded-full bg-[#12939b] px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#0f7a81]"
+              className="rounded-[15px] bg-gradient-to-r from-[#128084] to-[#1b2d55] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90"
             >
               Log in
             </Link>
