@@ -63,17 +63,11 @@
   --radius-xl: calc(var(--radius) + 0.25rem);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-
-    --color-muted: #1c1c1f;
-    --color-muted-foreground: #a1a1aa;
-    --color-border: #27272a;
-  }
-}
-
+/*
+  The real brand (Figma) screens are a fixed light palette with no dark-mode
+  variant — see components/Auth, which hardcodes its colors unconditionally.
+  Matching that here instead of following prefers-color-scheme.
+*/
 body {
   background: var(--background);
   color: var(--foreground);

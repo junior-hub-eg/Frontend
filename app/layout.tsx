@@ -15,14 +15,14 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Junior Hub",
-  description: "منصة Learning-to-career للطلاب من ١١ لـ ١٨ سنة — تعلم، اتقيّم، اتوجّه، واتوظّف.",
+  description: "Discover your interests, learn tech skills, and build your future with Junior Hub.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
-      lang="ar"
-      dir="rtl"
+      lang="en"
+      dir="ltr"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
