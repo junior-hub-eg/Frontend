@@ -7,7 +7,6 @@ import { AuthStepper } from "@/components/shared/auth-stepper";
 import { AuthButton } from "./AuthButton";
 import { cn } from "@/lib/utils";
 
-// TODO: replace with the real school contact (email, phone, or support URL)
 const CONTACT_HREF = "mailto:support@juniorhub.com";
 
 export default function CodeError() {
@@ -15,14 +14,12 @@ export default function CodeError() {
 
   return (
     <AuthPanel>
-      {/* Step 1 of 4: short, centered, rounded segments like the Figma design */}
       <AuthStepper
         current={1}
         total={4}
         className="mx-auto w-[77%] gap-[clamp(6px,1cqw,10px)] [&>span]:h-[clamp(4px,0.6cqw,6px)] [&>span]:bg-[#c9efe9] [&>span:first-child]:bg-[#14757d]"
       />
 
-      {/* Big gap under the stepper, like the Figma design */}
 <div className="mt-[clamp(14px,3.6cqw,34px)] flex flex-col items-center text-center">        {/* Error icon: pale ring + red circle + white X */}
         <span
           aria-hidden
@@ -40,7 +37,6 @@ export default function CodeError() {
           This Code Is not Valid
         </h1>
 
-        {/* Full panel width, so only "Expired" wraps to the second line */}
        <p className="mt-1 w-full max-w-[90%] text-[length:clamp(10px,1.3cqw,12px)] leading-snug text-[#1b2a5c]">
   The Activation Code You Entered Is Incorrect Or Has Expired
 </p>
