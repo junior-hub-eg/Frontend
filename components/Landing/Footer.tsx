@@ -41,7 +41,7 @@ export function LandingFooter() {
       <Curl className="pointer-events-none absolute right-[10%] top-[10%] hidden h-10 w-6 md:block" />
       <Curl className="pointer-events-none absolute bottom-[2%] right-[8%] hidden h-14 w-9 scale-x-[-1] md:block" />
 
-      <div className="relative mx-auto grid max-w-7xl gap-10 px-6 sm:grid-cols-[1.3fr_1fr_1fr_auto] lg:px-10">
+      <div className="relative mx-auto flex max-w-7xl flex-col gap-8 px-6 sm:flex-row sm:items-start sm:justify-between lg:px-10">
         <div>
           <Image
             src="/images/Auth/logo.png"
@@ -54,23 +54,24 @@ export function LandingFooter() {
           <p className="mt-1 max-w-[220px] text-xs text-white/45">A brighter future for every young learner.</p>
         </div>
 
-        <div className="flex flex-col gap-2 text-sm text-white/60">
-          {PRODUCT_LINKS.map((l) => (
-            <Link key={l.label} href={l.href} className="transition-colors hover:text-white">
-              {l.label}
-            </Link>
-          ))}
+        <div className="flex flex-col gap-3 text-sm text-white/60 sm:items-center">
+          <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
+            {PRODUCT_LINKS.map((l) => (
+              <Link key={l.label} href={l.href} className="transition-colors hover:text-white">
+                {l.label}
+              </Link>
+            ))}
+          </div>
+          <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
+            {COMPANY_LINKS.map((l) => (
+              <Link key={l.label} href={l.href} className="transition-colors hover:text-white">
+                {l.label}
+              </Link>
+            ))}
+          </div>
         </div>
 
-        <div className="flex flex-col gap-2 text-sm text-white/60">
-          {COMPANY_LINKS.map((l) => (
-            <Link key={l.label} href={l.href} className="transition-colors hover:text-white">
-              {l.label}
-            </Link>
-          ))}
-        </div>
-
-        <div className="flex gap-3 sm:items-start sm:justify-end">
+        <div className="flex gap-3">
           {[FacebookIcon, WhatsAppIcon, InstagramIcon].map((Icon, i) => (
             <span
               key={i}

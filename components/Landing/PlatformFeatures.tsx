@@ -1,5 +1,7 @@
 import Image from "next/image";
 import { Route, ShieldCheck, UserCheck, Rocket } from "lucide-react";
+import { Curl } from "@/components/Auth/AuthDecorations";
+import { Sparkle } from "./LandingDecorations";
 
 const FEATURES = [
   { title: "Learn Your Way", subtitle: "Short Videos, Quizzes, and Real Projects", icon: Route },
@@ -22,16 +24,26 @@ export function PlatformFeatures() {
             className="relative z-10 h-auto w-full"
           />
           <Image
+            src="/images/Landing%20Page/flat-color-icons_idea.png"
+            alt=""
+            width={64}
+            height={64}
+            className="pointer-events-none absolute left-[40%] -top-6 z-10 w-14 sm:w-16"
+            aria-hidden
+          />
+          <Image
             src="/images/Landing%20Page/bitcoin-icons_code-filled.png"
             alt=""
             width={24}
             height={24}
-            className="pointer-events-none absolute -right-2 top-24 z-10 w-6 opacity-80"
+            className="pointer-events-none absolute left-[64%] top-[16%] z-10 w-9"
             aria-hidden
           />
-          <span className="absolute -right-2 -top-2 z-10 grid size-12 place-items-center rounded-full bg-white shadow-md">
-            <Image src="/images/Landing%20Page/flat-color-icons_idea.png" alt="" width={28} height={28} className="w-7" />
-          </span>
+          <Curl className="pointer-events-none absolute right-[4%] top-[20%] z-10 h-10 w-7 text-[#12939b]" />
+          <Curl className="pointer-events-none absolute left-[46%] top-[36%] z-10 h-9 w-6 -scale-x-100 text-[#12939b]" />
+          <span className="pointer-events-none absolute left-[71%] top-[30%] z-10 size-3 rounded-full bg-[#92E1D3]" />
+          <span className="pointer-events-none absolute left-[64%] top-[39%] z-10 size-2.5 rounded-full bg-[#12939b]" />
+          <Sparkle className="pointer-events-none absolute right-[4%] top-[54%] z-10 h-7 w-7 text-[#12939b]" />
         </div>
 
         <div className="relative">
@@ -46,7 +58,7 @@ export function PlatformFeatures() {
           <p className="text-xs font-semibold tracking-wide text-[#12939b]">MORE THAN JUST COURSES</p>
           <h2 className="mt-2 text-3xl font-bold text-[#1b2a5c]">
             A Platform Built <br className="hidden sm:block" />
-            for Your Future
+            for <span className="text-[#12939b]">Your Future</span>
           </h2>
           <p className="mt-4 max-w-md text-sm leading-relaxed text-[#1b2a5c]/65">
             Junior Hub is not just a course library. It&apos;s a complete learning pipeline designed to help you
