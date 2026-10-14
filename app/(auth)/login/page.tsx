@@ -50,16 +50,20 @@ export default function LoginPage() {
         <CardDescription>ادخل بياناتك للمتابعة في Junior Hub</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
-        {error && <Alert variant="danger">{error}</Alert>}
+        {error && (
+          <Alert variant="danger" role="alert">
+            {error}
+          </Alert>
+        )}
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="email">الإيميل</Label>
-            <Input id="email" type="email" placeholder="you@example.com" {...register("email")} />
+            <Input id="email" type="email" autoComplete="email" placeholder="you@example.com" {...register("email")} />
             {errors.email && <p className="text-xs text-danger">{errors.email.message}</p>}
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="password">الباسورد</Label>
-            <Input id="password" type="password" {...register("password")} />
+            <Input id="password" type="password" autoComplete="current-password" {...register("password")} />
             {errors.password && <p className="text-xs text-danger">{errors.password.message}</p>}
           </div>
           <Button type="submit" disabled={isSubmitting} className="mt-2">
@@ -72,7 +76,7 @@ export default function LoginPage() {
             سجل حساب طالب
           </Link>
         </p>
-        {demoAccounts.length > 0 && (
+        {process.env.NODE_ENV !== "production" && demoAccounts.length > 0 && (
           <Alert>
             <p className="mb-1 font-medium">حسابات تجريبية (باسورد demo):</p>
             <ul className="space-y-0.5">
