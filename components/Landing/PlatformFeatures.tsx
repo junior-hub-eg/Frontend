@@ -26,15 +26,23 @@ export function PlatformFeatures() {
             alt=""
             width={24}
             height={24}
-            className="pointer-events-none absolute right-10 top-10 z-10 w-6 opacity-80"
+            className="pointer-events-none absolute -right-2 top-24 z-10 w-6 opacity-80"
             aria-hidden
           />
-          <span className="absolute left-4 top-4 z-10 grid size-12 place-items-center rounded-full bg-white shadow-md">
+          <span className="absolute -right-2 -top-2 z-10 grid size-12 place-items-center rounded-full bg-white shadow-md">
             <Image src="/images/Landing%20Page/flat-color-icons_idea.png" alt="" width={28} height={28} className="w-7" />
           </span>
         </div>
 
-        <div>
+        <div className="relative">
+          <Image
+            src="/images/Landing%20Page/Back%20Back-3.png"
+            alt=""
+            width={107}
+            height={116}
+            className="pointer-events-none absolute -top-4 right-0 w-10 opacity-80 sm:right-10"
+            aria-hidden
+          />
           <p className="text-xs font-semibold tracking-wide text-[#12939b]">MORE THAN JUST COURSES</p>
           <h2 className="mt-2 text-3xl font-bold text-[#1b2a5c]">
             A Platform Built <br className="hidden sm:block" />

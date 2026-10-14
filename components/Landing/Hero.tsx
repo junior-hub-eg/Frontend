@@ -21,7 +21,7 @@ export function Hero() {
             alt=""
             width={290}
             height={296}
-            className="pointer-events-none absolute -left-2 top-0 -z-10 w-64 opacity-50 sm:left-8 sm:w-72"
+            className="pointer-events-none absolute -left-2 top-0 w-64 opacity-50 sm:left-8 sm:w-72"
             aria-hidden
           />
 
