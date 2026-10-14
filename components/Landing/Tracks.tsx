@@ -70,11 +70,11 @@ export function Tracks() {
         {TRACKS.map(({ title, subtitle, icon, colors }) => (
           <div
             key={title}
-            className="flex flex-col items-center gap-3 rounded-2xl p-6 text-center"
+            className="flex h-full flex-col items-center gap-3 rounded-2xl p-6 text-center"
             style={{ backgroundColor: colors.bg }}
           >
             <Image src={icon} alt="" width={56} height={56} className="h-14 w-14 object-contain" />
-            <div>
+            <div className="flex min-h-[68px] flex-col items-center justify-center gap-1">
               <p className="text-sm font-semibold text-[#1b2a5c]">{title}</p>
               <p className="text-xs text-[#1b2a5c]/60">{subtitle}</p>
             </div>

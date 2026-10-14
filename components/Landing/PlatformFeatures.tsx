@@ -12,13 +12,13 @@ export function PlatformFeatures() {
   return (
     <section className="mx-auto max-w-7xl px-6 py-20 lg:px-10">
       <div className="grid items-center gap-12 lg:grid-cols-2">
-        <div className="relative mx-auto w-full max-w-md">
+        <div className="relative mx-auto w-full max-w-xl lg:max-w-none">
           <Image
             src="/images/Landing%20Page/student.png"
             alt="A Junior Hub student learning on a laptop"
             width={762}
             height={603}
-            sizes="(max-width: 1024px) 80vw, 24rem"
+            sizes="(max-width: 1024px) 80vw, 36rem"
             className="relative z-10 h-auto w-full"
           />
           <Image

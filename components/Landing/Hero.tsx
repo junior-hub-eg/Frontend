@@ -17,7 +17,7 @@ export function Hero() {
         <div className="relative z-10">
           {/* Soft background blur */}
           <Image
-            src="/images/Landing%20Page/Background+Blur.png"
+            src="/images/Landing%20Page/Background-Blur.png"
             alt=""
             width={290}
             height={296}
