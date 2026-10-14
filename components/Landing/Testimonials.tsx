@@ -24,7 +24,7 @@ const TESTIMONIALS = [
 
 export function Testimonials() {
   return (
-    <section className="bg-[#F7FBFA] py-20">
+    <section className="bg-white py-20">
       <div className="mx-auto max-w-7xl px-6 lg:px-10">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
@@ -38,7 +38,7 @@ export function Testimonials() {
 
         <div className="mt-10 grid gap-6 sm:grid-cols-3">
           {TESTIMONIALS.map(({ quote, name, role, rating }) => (
-            <div key={name} className="flex flex-col gap-4 rounded-2xl bg-white p-6 shadow-sm">
+            <div key={name} className="flex flex-col gap-4 rounded-2xl border border-black/5 bg-white p-6 shadow-sm">
               <div className="flex gap-0.5 text-[#12939b]">
                 {Array.from({ length: rating }).map((_, i) => (
                   <Star key={i} size={15} fill="currentColor" strokeWidth={0} />

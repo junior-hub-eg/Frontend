@@ -1,92 +1,106 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Brain, PlayCircle, Sparkle, Users } from "lucide-react";
+import { Play } from "lucide-react";
 import { Curl } from "@/components/Auth/AuthDecorations";
-
-function FloatingCard({
-  icon,
-  title,
-  subtitle,
-  className,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  subtitle: string;
-  className?: string;
-}) {
-  return (
-    <div
-      className={`absolute flex items-center gap-2.5 rounded-xl bg-white px-3.5 py-2.5 shadow-[0_8px_24px_rgba(27,42,92,0.12)] ${className ?? ""}`}
-    >
-      <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-[#E9F7F4] text-[#12939b]">{icon}</span>
-      <span className="leading-tight">
-        <span className="block text-xs font-semibold text-[#1b2a5c]">{title}</span>
-        <span className="block text-[11px] text-[#1b2a5c]/60">{subtitle}</span>
-      </span>
-    </div>
-  );
-}
 
 export function Hero() {
   return (
-    <section className="relative overflow-hidden bg-[#E9F7F4]">
-      <Sparkle className="absolute left-[30%] top-10 text-[#12939b]/40" size={22} aria-hidden />
-      <Sparkle className="absolute left-[34%] top-20 text-[#12939b]/30" size={14} aria-hidden />
-      <Curl className="absolute left-0 top-24 w-10 -scale-x-100 opacity-60" aria-hidden />
+    <section className="relative overflow-hidden bg-white">
+      {/* Decorative curl */}
+      <Curl
+        className="absolute left-0 top-24 w-10 -scale-x-100 opacity-60"
+        aria-hidden
+      />
 
-      <div className="mx-auto grid max-w-7xl items-center gap-10 px-6 py-16 lg:grid-cols-2 lg:px-10 lg:py-24">
-        <div>
-          <span className="inline-block rounded-full bg-white px-4 py-1.5 text-xs font-semibold tracking-wide text-[#1b2a5c]/70 shadow-sm">
+      <div className="mx-auto grid max-w-7xl items-center gap-6 px-6 py-8 sm:gap-8 lg:grid-cols-[1fr_1.05fr] lg:gap-4 lg:px-10 lg:py-10">
+        {/* Left: Hero Content */}
+        <div className="relative z-10">
+          {/* Soft background blur */}
+          <Image
+            src="/images/Landing%20Page/Background-Blur.png"
+            alt=""
+            width={290}
+            height={296}
+            className="pointer-events-none absolute -left-2 top-0 w-64 opacity-50 sm:left-8 sm:w-72"
+            aria-hidden
+          />
+
+          <span className="inline-flex items-center rounded-full border border-[#C6EBDD] bg-white/90 px-3 py-1.5 text-[10px] font-semibold tracking-wide text-[#1B2A5C]/80 shadow-sm sm:text-xs">
             YOUR FUTURE STARTS HERE
           </span>
-          <h1 className="mt-5 text-4xl font-bold leading-[1.1] text-[#1b2a5c] sm:text-5xl">
-            Discover Your <span className="text-[#12939b]">Interests</span>.
+
+          <h1 className="mt-4 max-w-[540px] text-[34px] font-bold leading-[1.12] tracking-tight text-[#1B2A5C] sm:text-4xl lg:text-[38px] xl:text-[42px]">
+            Discover
             <br />
-            Build Your <span className="text-[#12939b]">Future</span>.
+            Your <span className="text-[#128B91]">Interests.</span>
+            <br />
+            Build Your <span className="text-[#128B91]">Future.</span>
           </h1>
-          <p className="mt-5 max-w-md text-[15px] leading-relaxed text-[#1b2a5c]/70">
-            Explore technology tracks, learn through short videos, connect with mentors, and experience the world of
-            internships and recruitment.
+
+          <p className="mt-4 max-w-[440px] text-[12px] leading-[1.65] text-[#1B2A5C]/75 sm:text-[13px]">
+            Explore technology tracks, learn through short videos, connect
+            with mentors, and experience the world of internships and
+            recruitment.
           </p>
-          <div className="mt-8 flex flex-wrap items-center gap-4">
+
+          {/* Hero Actions */}
+          <div className="mt-5 flex flex-wrap items-center gap-2.5">
             <Link
               href="/courses"
-              className="rounded-full bg-[#12939b] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#0f7a81]"
+              className="inline-flex h-11 items-center gap-2 rounded-full bg-[#128B91] px-4 text-[11px] font-semibold text-white transition-colors hover:bg-[#0F777D] sm:px-5"
             >
-              Explore Courses →
+              Explore Courses
+              <span aria-hidden>→</span>
             </Link>
-            <button className="flex items-center gap-2 rounded-full bg-gradient-to-r from-[#ff6fa8] to-[#7c5cfc] px-5 py-3 text-sm font-semibold text-white shadow-md">
-              <PlayCircle size={18} /> How It Works
+
+            <button
+              type="button"
+              className="relative isolate inline-flex h-11 items-center gap-2 overflow-hidden rounded-full px-4 text-[11px] font-semibold text-white shadow-sm transition-opacity hover:opacity-90 sm:px-5"
+            >
+              <Image
+                src="/images/Landing%20Page/40174ca2683c92fc391daa5a1fa5a0ae695b3b14.jpg"
+                alt=""
+                fill
+                className="object-cover"
+                aria-hidden
+              />
+              <Image
+                src="/images/Landing%20Page/55e7b74faabefe7f835a610cb9df64edacafc9c9.jpg"
+                alt=""
+                fill
+                className="object-cover opacity-50"
+                aria-hidden
+              />
+              <span className="relative z-10 flex items-center gap-2">
+                <span className="grid size-7 shrink-0 place-items-center rounded-full bg-white">
+                  <Play size={13} className="ml-0.5 fill-[#B45B65] text-[#B45B65]" />
+                </span>
+                How It Works
+              </span>
             </button>
           </div>
         </div>
 
-        <div className="relative mx-auto h-[360px] w-full max-w-md lg:h-[440px] lg:max-w-none">
+        {/* Right: Hero Image */}
+        <div className="relative mx-auto mt-2 w-full max-w-[560px] lg:mt-0 lg:max-w-none">
+          {/* Decorative graphic */}
           <Image
-            src="/images/Auth/students.png"
-            alt="Two Junior Hub students"
-            fill
+            src="/images/Landing%20Page/Component%201.png"
+            alt=""
+            width={339}
+            height={220}
+            className="pointer-events-none absolute -left-3 top-0 z-0 w-28 sm:-left-5 sm:w-40 lg:-left-4 lg:w-44"
+            aria-hidden
+          />
+
+          <Image
+            src="/images/Landing%20Page/Group%205.png"
+            alt="Two Junior Hub students with AI assessment, real projects, and mentorship"
+            width={754}
+            height={565}
             priority
-            sizes="(max-width: 1024px) 80vw, 40vw"
-            className="object-contain object-bottom"
-          />
-          <FloatingCard
-            icon={<Brain size={16} />}
-            title="AI Assessment"
-            subtitle="Personalized path just for you"
-            className="left-0 top-4 sm:left-4"
-          />
-          <FloatingCard
-            icon={<Users size={16} />}
-            title="Real Projects"
-            subtitle="Build with a team"
-            className="right-0 top-0 sm:right-2"
-          />
-          <FloatingCard
-            icon={<Users size={16} />}
-            title="Mentorship"
-            subtitle="Learn From Experts"
-            className="right-0 top-1/2 sm:-right-4"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 85vw, 48vw"
+            className="relative z-10 h-auto w-full object-contain"
           />
         </div>
       </div>
