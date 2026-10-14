@@ -1,37 +1,19 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Brain, PlayCircle, Sparkle, Users } from "lucide-react";
+import { PlayCircle } from "lucide-react";
 import { Curl } from "@/components/Auth/AuthDecorations";
-
-function FloatingCard({
-  icon,
-  title,
-  subtitle,
-  className,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  subtitle: string;
-  className?: string;
-}) {
-  return (
-    <div
-      className={`absolute flex items-center gap-2.5 rounded-xl bg-white px-3.5 py-2.5 shadow-[0_8px_24px_rgba(27,42,92,0.12)] ${className ?? ""}`}
-    >
-      <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-[#E9F7F4] text-[#12939b]">{icon}</span>
-      <span className="leading-tight">
-        <span className="block text-xs font-semibold text-[#1b2a5c]">{title}</span>
-        <span className="block text-[11px] text-[#1b2a5c]/60">{subtitle}</span>
-      </span>
-    </div>
-  );
-}
 
 export function Hero() {
   return (
     <section className="relative overflow-hidden bg-[#E9F7F4]">
-      <Sparkle className="absolute left-[30%] top-10 text-[#12939b]/40" size={22} aria-hidden />
-      <Sparkle className="absolute left-[34%] top-20 text-[#12939b]/30" size={14} aria-hidden />
+      <Image
+        src="/images/Landing%20Page/Group-3.png"
+        alt=""
+        width={38}
+        height={38}
+        className="pointer-events-none absolute left-[32%] top-16 opacity-80"
+        aria-hidden
+      />
       <Curl className="absolute left-0 top-24 w-10 -scale-x-100 opacity-60" aria-hidden />
 
       <div className="mx-auto grid max-w-7xl items-center gap-10 px-6 py-16 lg:grid-cols-2 lg:px-10 lg:py-24">
@@ -61,32 +43,23 @@ export function Hero() {
           </div>
         </div>
 
-        <div className="relative mx-auto h-[360px] w-full max-w-md lg:h-[440px] lg:max-w-none">
+        <div className="relative mx-auto w-full max-w-lg lg:max-w-none">
           <Image
-            src="/images/Auth/students.png"
-            alt="Two Junior Hub students"
-            fill
+            src="/images/Landing%20Page/Group%205.png"
+            alt="Two Junior Hub students — AI Assessment, Real Projects, Mentorship"
+            width={754}
+            height={565}
             priority
-            sizes="(max-width: 1024px) 80vw, 40vw"
-            className="object-contain object-bottom"
+            sizes="(max-width: 1024px) 90vw, 45vw"
+            className="h-auto w-full"
           />
-          <FloatingCard
-            icon={<Brain size={16} />}
-            title="AI Assessment"
-            subtitle="Personalized path just for you"
-            className="left-0 top-4 sm:left-4"
-          />
-          <FloatingCard
-            icon={<Users size={16} />}
-            title="Real Projects"
-            subtitle="Build with a team"
-            className="right-0 top-0 sm:right-2"
-          />
-          <FloatingCard
-            icon={<Users size={16} />}
-            title="Mentorship"
-            subtitle="Learn From Experts"
-            className="right-0 top-1/2 sm:-right-4"
+          <Image
+            src="/images/Landing%20Page/Group-2.png"
+            alt=""
+            width={150}
+            height={142}
+            className="pointer-events-none absolute -top-10 left-1/3 w-20 opacity-90 sm:w-28"
+            aria-hidden
           />
         </div>
       </div>

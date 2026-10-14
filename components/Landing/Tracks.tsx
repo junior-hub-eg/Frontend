@@ -1,14 +1,45 @@
+import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Brain, Monitor, Palette, Server, Smartphone, BarChart3 } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { TRACK_COLORS } from "./colors";
 
 const TRACKS = [
-  { title: "UI/UX Design", subtitle: "Design Digital Experience", icon: Palette, colors: TRACK_COLORS.mint },
-  { title: "Frontend", subtitle: "Web Development", icon: Monitor, colors: TRACK_COLORS.blue },
-  { title: "Mobile Development", subtitle: "Create Mobile Apps", icon: Smartphone, colors: TRACK_COLORS.tan },
-  { title: "Data Science", subtitle: "& Data analysis", icon: BarChart3, colors: TRACK_COLORS.rose },
-  { title: "AI", subtitle: "Explore Intelligent systems", icon: Brain, colors: TRACK_COLORS.purple },
-  { title: "Backend", subtitle: "Development", icon: Server, colors: TRACK_COLORS.teal },
+  {
+    title: "UI/UX Design",
+    subtitle: "Design Digital Experience",
+    icon: "/images/Landing%20Page/Group.png",
+    colors: TRACK_COLORS.mint,
+  },
+  {
+    title: "Frontend",
+    subtitle: "Web Development",
+    icon: "/images/Landing%20Page/emojione-v1_laptop-computer.png",
+    colors: TRACK_COLORS.blue,
+  },
+  {
+    title: "Mobile Development",
+    subtitle: "Create Mobile Apps",
+    icon: "/images/Landing%20Page/Vector.png",
+    colors: TRACK_COLORS.tan,
+  },
+  {
+    title: "Data Science",
+    subtitle: "& Data analysis",
+    icon: "/images/Landing%20Page/fluent_data-histogram-16-filled.png",
+    colors: TRACK_COLORS.rose,
+  },
+  {
+    title: "AI",
+    subtitle: "Explore Intelligent systems",
+    icon: "/images/Landing%20Page/Group%20copy.png",
+    colors: TRACK_COLORS.purple,
+  },
+  {
+    title: "Backend",
+    subtitle: "Development",
+    icon: "/images/Landing%20Page/at-icons_server.png",
+    colors: TRACK_COLORS.teal,
+  },
 ];
 
 export function Tracks() {
@@ -28,10 +59,10 @@ export function Tracks() {
       </div>
 
       <div className="mt-10 grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-6">
-        {TRACKS.map(({ title, subtitle, icon: Icon, colors }) => (
+        {TRACKS.map(({ title, subtitle, icon, colors }) => (
           <div key={title} className="flex flex-col gap-4 rounded-2xl p-5" style={{ backgroundColor: colors.bg }}>
-            <span className="grid size-10 place-items-center rounded-xl bg-white" style={{ color: colors.icon }}>
-              <Icon size={20} />
+            <span className="grid size-10 place-items-center rounded-xl bg-white p-2">
+              <Image src={icon} alt="" width={28} height={28} className="h-auto w-full object-contain" />
             </span>
             <div>
               <p className="text-sm font-semibold text-[#1b2a5c]">{title}</p>

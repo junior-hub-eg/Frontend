@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { Lightbulb, Route, ShieldCheck, UserCheck, Rocket } from "lucide-react";
+import { Route, ShieldCheck, UserCheck, Rocket } from "lucide-react";
 
 const FEATURES = [
   { title: "Learn Your Way", subtitle: "Short Videos, Quizzes, and Real Projects", icon: Route },
@@ -12,16 +12,25 @@ export function PlatformFeatures() {
   return (
     <section className="mx-auto max-w-7xl px-6 py-20 lg:px-10">
       <div className="grid items-center gap-12 lg:grid-cols-2">
-        <div className="relative mx-auto aspect-[4/5] w-full max-w-sm overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-[#E9F7F4] to-[#DCEAFB]">
+        <div className="relative mx-auto w-full max-w-md">
           <Image
-            src="/images/Auth/students.png"
-            alt="A Junior Hub student"
-            fill
+            src="/images/Landing%20Page/student.png"
+            alt="A Junior Hub student learning on a laptop"
+            width={762}
+            height={603}
             sizes="(max-width: 1024px) 80vw, 24rem"
-            className="object-contain object-bottom"
+            className="relative z-10 h-auto w-full"
           />
-          <span className="absolute left-6 top-6 grid size-11 place-items-center rounded-full bg-white text-amber-500 shadow-md">
-            <Lightbulb size={20} />
+          <Image
+            src="/images/Landing%20Page/bitcoin-icons_code-filled.png"
+            alt=""
+            width={24}
+            height={24}
+            className="pointer-events-none absolute right-10 top-10 z-10 w-6 opacity-80"
+            aria-hidden
+          />
+          <span className="absolute left-4 top-4 z-10 grid size-12 place-items-center rounded-full bg-white shadow-md">
+            <Image src="/images/Landing%20Page/flat-color-icons_idea.png" alt="" width={28} height={28} className="w-7" />
           </span>
         </div>
 

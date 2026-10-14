@@ -1,11 +1,25 @@
+import Image from "next/image";
 import Link from "next/link";
-import { Curl } from "@/components/Auth/AuthDecorations";
 
 export function CtaBand() {
   return (
     <section className="relative overflow-hidden bg-[#1b2a5c] py-16">
-      <Curl className="absolute -left-2 top-4 w-16 rotate-12 opacity-20 [&_path]:stroke-white" aria-hidden />
-      <Curl className="absolute -right-2 bottom-2 w-16 -rotate-12 opacity-20 [&_path]:stroke-white" aria-hidden />
+      <Image
+        src="/images/Landing%20Page/Group%20172.png"
+        alt=""
+        width={419}
+        height={277}
+        className="pointer-events-none absolute bottom-0 left-0 w-40 opacity-90 sm:w-56"
+        aria-hidden
+      />
+      <Image
+        src="/images/Landing%20Page/Group%20173.png"
+        alt=""
+        width={450}
+        height={277}
+        className="pointer-events-none absolute bottom-0 right-0 w-40 opacity-90 sm:w-56"
+        aria-hidden
+      />
 
       <div className="relative mx-auto max-w-2xl px-6 text-center">
         <h2 className="text-3xl font-bold text-white">Ready to Build Your Future?</h2>
