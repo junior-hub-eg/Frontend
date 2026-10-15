@@ -2,16 +2,15 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import type { UserRole } from "@/lib/types";
 import { ROLE_HOME, ROLE_PATH_PREFIX } from "@/lib/constants";
+import { TOKEN_COOKIE, decodeToken, isTokenExpired } from "@/lib/auth/token";
 
 /**
  * Route guard by role prefix (/learner, /guardian, /mentor, /admin).
  *
- * Reads the mock session cookie set by lib/auth/mock-auth.ts. This is NOT a
- * real auth check (the cookie is unsigned and client-writable) — it only
- * exists so role-based routing can be exercised end-to-end before the real
- * JWT + Roles auth (PRD §9 / Sprint 1 backend deliverable) exists. Replace
- * the cookie read below with real session/JWT verification once that API
- * ships, per the Data Security guidance for Proxy in the Next.js docs.
+ * Reads the backend JWT from the `jh_token` cookie (written by
+ * lib/auth/token.ts on login) and checks its expiry and role claim. The
+ * signature is NOT verified here — this is only routing UX; every API call
+ * is still authorised by the .NET backend, which does verify it.
  */
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -39,14 +38,16 @@ export function proxy(request: NextRequest) {
   return NextResponse.next();
 }
 
+/** Backend role claim → frontend role. The demo backend only issues "Student". */
+const BACKEND_ROLE: Record<string, UserRole> = { Student: "learner" };
+
 function readSessionCookie(request: NextRequest): { id: string; role: UserRole } | null {
-  const raw = request.cookies.get("jh_session")?.value;
-  if (!raw) return null;
-  try {
-    return JSON.parse(decodeURIComponent(raw));
-  } catch {
-    return null;
-  }
+  const token = request.cookies.get(TOKEN_COOKIE)?.value;
+  if (!token) return null;
+  const claims = decodeToken(token);
+  if (!claims?.sub || isTokenExpired(claims)) return null;
+  const role = claims.role ? BACKEND_ROLE[claims.role] : undefined;
+  return role ? { id: claims.sub, role } : null;
 }
 
 export const config = {
