@@ -3,15 +3,11 @@
 import { createContext, useContext, useSyncExternalStore, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import type { User } from "@/lib/types";
-import * as mockAuth from "@/lib/auth/mock-auth";
-
-if (typeof window !== "undefined") {
-  mockAuth.seedDemoUsers();
-}
+import * as apiAuth from "@/lib/auth/api-auth";
 
 interface AuthContextValue {
   user: User | null;
-  login: (email: string, password: string) => User;
+  login: (email: string, password: string, rememberMe?: boolean) => Promise<User>;
   logout: () => void;
 }
 
@@ -19,14 +15,14 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
-  const user = useSyncExternalStore(mockAuth.subscribe, mockAuth.getCurrentUserSnapshot, mockAuth.getServerUserSnapshot);
+  const user = useSyncExternalStore(apiAuth.subscribe, apiAuth.getCurrentUserSnapshot, apiAuth.getServerUserSnapshot);
 
-  function login(email: string, password: string) {
-    return mockAuth.login(email, password);
+  function login(email: string, password: string, rememberMe?: boolean) {
+    return apiAuth.login(email, password, rememberMe);
   }
 
   function logout() {
-    mockAuth.logout();
+    apiAuth.logout();
     router.push("/login");
   }
 
