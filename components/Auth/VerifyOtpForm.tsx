@@ -13,7 +13,12 @@ import { AuthHeading } from "./AuthHeading";
 import { BackButton } from "./BackButton";
 import { OtpInput } from "./OtpInput";
 import { authStyles } from "./auth-styles";
-import { MOCK_OTP_CODE, sendOtp, verifyOtp } from "@/lib/auth/mock-auth";
+import { confirmEmail, resendCode, verifyResetCode } from "@/lib/auth/account-api";
+import { resetTokenState } from "@/lib/auth/auth-flow-storage";
+import { errorMessage } from "@/lib/api-client";
+
+/** The backend's OneTimeCodes:DemoCode in the Development and Demo environments; no email is sent there. */
+const DEMO_OTP_CODE = "123456";
 
 const RESEND_SECONDS = 30;
 
@@ -46,23 +51,33 @@ export function VerifyOtpForm() {
     return () => window.clearTimeout(timer);
   }, [secondsLeft]);
 
-  function onSubmit(values: FormValues) {
+  async function onSubmit(values: FormValues) {
     try {
       setError(null);
-      verifyOtp(email, values.code);
-      // TODO: after "Forgot password" the next step should be a "Reset password" page (not designed yet).
-      router.push("/login");
+      if (fromSignup) {
+        await confirmEmail(email, values.code);
+        router.push(`/login?notice=verified&email=${encodeURIComponent(email)}` as Route);
+      } else {
+        const { resetToken } = await verifyResetCode(email, values.code);
+        resetTokenState.set(resetToken, email);
+        router.push("/reset-password");
+      }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Something went wrong. Please try again.");
+      setError(errorMessage(e));
     }
   }
 
-  function handleResend() {
-    sendOtp(email);
-    reset({ code: "" });
-    setError(null);
-    setInfo("A new code has been sent to your email.");
-    setSecondsLeft(RESEND_SECONDS);
+  async function handleResend() {
+    try {
+      setError(null);
+      await resendCode(email, fromSignup ? "Signup" : "PasswordReset");
+      reset({ code: "" });
+      setInfo("A new code has been sent to your email.");
+      setSecondsLeft(RESEND_SECONDS);
+    } catch (e) {
+      setInfo(null);
+      setError(errorMessage(e));
+    }
   }
 
   const backHref: Route = fromSignup ? "/register" : "/forgot-password";
@@ -123,7 +138,7 @@ export function VerifyOtpForm() {
         </AuthButton>
 
         {process.env.NODE_ENV !== "production" && (
-          <p className="text-center text-xs text-[#1b2a5c]/60">Demo code: {MOCK_OTP_CODE}</p>
+          <p className="text-center text-xs text-[#1b2a5c]/60">Demo code: {DEMO_OTP_CODE}</p>
         )}
       </form>
     </>

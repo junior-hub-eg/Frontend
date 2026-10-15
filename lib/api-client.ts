@@ -1,13 +1,23 @@
 /**
- * Thin fetch wrapper for the .NET backend + FastAPI AI service (PRD Section 9).
- * The .NET API is live at NEXT_PUBLIC_API_URL; the AI service is not up yet.
- * Requests automatically carry the stored JWT (lib/auth/token.ts) as a Bearer
- * token once logged in via lib/auth/api-auth.ts.
+ * Thin fetch wrapper for the .NET backend (JH-SRS §5) and the AI service.
+ * Requests carry the stored JWT (lib/auth/token.ts) as a Bearer token and send cookies, so the
+ * "Remember me" refresh cookie reaches /api/v1/auth. When a signed-in request gets 401, the token
+ * is refreshed once from that cookie and the request is retried.
  */
-import { getToken } from "@/lib/auth/token";
+import { getToken, setToken } from "@/lib/auth/token";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
 const AI_SERVICE_URL = process.env.NEXT_PUBLIC_AI_SERVICE_URL ?? "";
+
+/** RFC 7807 ProblemDetails as the backend sends them, with its error `code` (JH-SRS §5.1). */
+export interface ProblemDetails {
+  title?: string;
+  status?: number;
+  code?: string;
+  /** Field name (camelCase) → messages, for VALIDATION_FAILED. */
+  errors?: Record<string, string[]>;
+  [key: string]: unknown;
+}
 
 export class ApiError extends Error {
   constructor(
@@ -18,29 +28,84 @@ export class ApiError extends Error {
     super(message);
     this.name = "ApiError";
   }
+
+  get problem(): ProblemDetails | undefined {
+    return this.body && typeof this.body === "object" ? (this.body as ProblemDetails) : undefined;
+  }
+
+  get code(): string | undefined {
+    return this.problem?.code;
+  }
+
+  /** The first message for each field, ready for react-hook-form's setError. */
+  get fieldErrors(): Record<string, string> {
+    const errors = this.problem?.errors ?? {};
+    return Object.fromEntries(Object.entries(errors).map(([field, messages]) => [field, messages[0]]));
+  }
 }
 
-async function request<T>(
-  baseUrl: string,
-  path: string,
-  options: RequestInit = {}
-): Promise<T> {
+/** A plain-language message for the student: the backend's title, or a fallback. */
+export function errorMessage(error: unknown, fallback = "Something went wrong. Please try again."): string {
+  if (error instanceof ApiError) {
+    if (error.status === 0) return "We can't reach Junior Hub right now. Check your connection and try again.";
+    return error.problem?.title ?? fallback;
+  }
+  return fallback;
+}
+
+async function send(baseUrl: string, path: string, options: RequestInit): Promise<Response> {
+  const token = getToken();
+  try {
+    return await fetch(`${baseUrl}${path}`, {
+      ...options,
+      credentials: "include",
+      headers: {
+        ...(options.body ? { "Content-Type": "application/json" } : {}),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...options.headers,
+      },
+    });
+  } catch {
+    throw new ApiError(`Request to ${path} could not be sent`, 0);
+  }
+}
+
+let refreshing: Promise<boolean> | null = null;
+
+/** Gets a new access token from the refresh cookie. Concurrent callers share one attempt. */
+export function refreshAccessToken(): Promise<boolean> {
+  refreshing ??= (async () => {
+    try {
+      const res = await send(API_BASE_URL, "/api/v1/auth/refresh", { method: "POST" });
+      if (!res.ok) return false;
+      const body = (await res.json()) as { accessToken: string };
+      setToken(body.accessToken);
+      return true;
+    } catch {
+      return false;
+    } finally {
+      refreshing = null;
+    }
+  })();
+  return refreshing;
+}
+
+async function request<T>(baseUrl: string, path: string, options: RequestInit = {}): Promise<T> {
   if (!baseUrl) {
     throw new ApiError(
-      `No API base URL configured for "${path}". Set NEXT_PUBLIC_API_URL / NEXT_PUBLIC_AI_SERVICE_URL once the backend is live.`,
+      `No API base URL configured for "${path}". Set NEXT_PUBLIC_API_URL / NEXT_PUBLIC_AI_SERVICE_URL.`,
       0
     );
   }
 
-  const token = getToken();
-  const res = await fetch(`${baseUrl}${path}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options.headers,
-    },
-  });
+  const hadToken = getToken() !== null;
+  let res = await send(baseUrl, path, options);
+
+  // An expired access token: refresh once from the cookie, then retry. Auth endpoints are never retried.
+  if (res.status === 401 && hadToken && baseUrl === API_BASE_URL && !path.startsWith("/api/v1/auth/")) {
+    if (await refreshAccessToken()) res = await send(baseUrl, path, options);
+    else setToken(null);
+  }
 
   if (!res.ok) {
     let body: unknown;

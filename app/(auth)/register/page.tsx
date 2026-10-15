@@ -13,13 +13,15 @@ import { AuthField } from "@/components/Auth/AuthField";
 import { AuthHeading } from "@/components/Auth/AuthHeading";
 import { PasswordField } from "@/components/Auth/PasswordField";
 import { authStyles } from "@/components/Auth/auth-styles";
-import { registerLearner, sendOtp } from "@/lib/auth/mock-auth";
+import { register as registerAccount } from "@/lib/auth/account-api";
+import { passwordSchema } from "@/lib/auth/password-rules";
+import { ApiError, errorMessage } from "@/lib/api-client";
 
 const schema = z.object({
   fullName: z.string().trim().min(2, "Full name is required"),
   phone: z.string().regex(/^\+?[0-9\s-]{8,15}$/, "Enter a valid phone number"),
   email: z.string().min(1, "Email is required").email("Invalid email address"),
-  password: z.string().min(6, "At least 6 characters"),
+  password: passwordSchema,
 });
 type FormValues = z.infer<typeof schema>;
 
@@ -29,24 +31,23 @@ export default function RegisterPage() {
   const {
     register,
     handleSubmit,
+    setError: setFieldError,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({ resolver: zodResolver(schema) });
 
-  function onSubmit(values: FormValues) {
+  async function onSubmit(values: FormValues) {
     try {
       setError(null);
-      const [firstName, ...rest] = values.fullName.trim().split(/\s+/);
-      registerLearner({
-        firstName,
-        lastName: rest.join(" ") || undefined,
-        email: values.email,
-        phone: values.phone,
-        password: values.password,
-      });
-      sendOtp(values.email);
-      router.push(`/verify-otp?email=${encodeURIComponent(values.email)}&from=signup` as Route);
+      const { email } = await registerAccount(values);
+      router.push(`/verify-otp?email=${encodeURIComponent(email)}&from=signup` as Route);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Something went wrong. Please try again.");
+      if (e instanceof ApiError && e.code === "VALIDATION_FAILED") {
+        Object.entries(e.fieldErrors).forEach(([field, message]) =>
+          setFieldError(field as keyof FormValues, { message })
+        );
+        return;
+      }
+      setError(errorMessage(e));
     }
   }
 

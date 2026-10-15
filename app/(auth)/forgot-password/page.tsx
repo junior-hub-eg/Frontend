@@ -13,7 +13,8 @@ import { AuthField } from "@/components/Auth/AuthField";
 import { AuthHeading } from "@/components/Auth/AuthHeading";
 import { BackButton } from "@/components/Auth/BackButton";
 import { authStyles } from "@/components/Auth/auth-styles";
-import { sendOtp } from "@/lib/auth/mock-auth";
+import { forgotPassword } from "@/lib/auth/account-api";
+import { errorMessage } from "@/lib/api-client";
 
 const schema = z.object({
   email: z.string().min(1, "Email is required").email("Invalid email address"),
@@ -29,13 +30,14 @@ export default function ForgotPasswordPage() {
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({ resolver: zodResolver(schema) });
 
-  function onSubmit(values: FormValues) {
+  async function onSubmit(values: FormValues) {
     try {
       setError(null);
-      sendOtp(values.email);
-      router.push(`/verify-otp?email=${encodeURIComponent(values.email)}&from=reset` as Route);
+      // The same answer whether or not the email has an account, so the next page always opens.
+      const { email } = await forgotPassword(values.email);
+      router.push(`/verify-otp?email=${encodeURIComponent(email)}&from=reset` as Route);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Something went wrong. Please try again.");
+      setError(errorMessage(e));
     }
   }
 

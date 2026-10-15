@@ -1,55 +1,61 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import type { Route } from "next";
 import { useRouter } from "next/navigation";
-import { Check, Mail, X } from "lucide-react";
+import { Mail } from "lucide-react";
+import { Alert } from "@/components/ui/alert";
 import { AuthPanel } from "@/components/shared/auth-panel";
 import { AuthStepper } from "@/components/shared/auth-stepper";
 import { AuthButton } from "./AuthButton";
 import { AuthField } from "./AuthField";
 import { PasswordField } from "./PasswordField";
+import { PasswordRuleList } from "./PasswordRuleList";
+import { completeActivation } from "@/lib/auth/account-api";
+import { activationState, useActivationState } from "@/lib/auth/auth-flow-storage";
+import { PASSWORD_RULES } from "@/lib/auth/password-rules";
+import { ApiError, errorMessage } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
-
-const EMAIL = "hamada.yasser@gmail.com";
 
 const NAVY = "text-[#1B2D54]";
 
-const RULES = [
-  { id: "length", label: "At Least 8 Characters", test: (p: string) => p.length >= 8 },
-  { id: "mix", label: "Use Letters & Numbers", test: (p: string) => /[A-Za-z]/.test(p) && /\d/.test(p) },
-  { id: "special", label: "Include Special Characters (! ^ # ! @ $)", test: (p: string) => /[^A-Za-z0-9]/.test(p) },
-];
-
-function RuleIcon({ state }: { state: "idle" | "ok" | "bad" }) {
-  const Icon = state === "bad" ? X : Check;
-  return (
-    <span
-      aria-hidden
-      className={cn(
-        "flex size-[clamp(12px,1.5cqw,15px)] shrink-0 items-center justify-center rounded-full text-white",
-        state === "ok" && "bg-[#22a559]",
-        state === "bad" && "bg-[#e23b3b]",
-        state === "idle" && "bg-[#cfd5d4]"
-      )}
-    >
-      <Icon className="size-[65%]" strokeWidth={3.5} />
-    </span>
-  );
-}
-
+/** Step 3 of school activation: the email comes from the school, the student chooses a password. */
 export default function CreateLogin() {
   const router = useRouter();
+  const state = useActivationState();
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
-  const results = RULES.map((rule) => ({ ...rule, ok: rule.test(password) }));
-  const allRulesOk = results.every((r) => r.ok);
+  // The activation code and details come from step 1; without them, start again.
+  useEffect(() => {
+    if (state === null) router.replace("/activation");
+  }, [state, router]);
+
+  const allRulesOk = PASSWORD_RULES.every((rule) => rule.test(password));
   const mismatch = confirm.length > 0 && confirm !== password;
-  const canContinue = allRulesOk && confirm.length > 0 && !mismatch;
+  const canContinue = !!state && allRulesOk && confirm.length > 0 && !mismatch && !submitting;
 
-  function handleContinue() {
-    if (!canContinue) return;
-    router.push("/login");
+  async function handleContinue() {
+    if (!canContinue || !state) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      const { email } = await completeActivation(state.key, password, confirm);
+      activationState.clear();
+      router.push(`/login?notice=activated&email=${encodeURIComponent(email)}` as Route);
+    } catch (e) {
+      if (e instanceof ApiError && (e.code === "ACTIVATION_INVALID" || e.code === "ACTIVATION_USED")) {
+        activationState.clear();
+        if (e.code === "ACTIVATION_INVALID") {
+          router.push("/code-error");
+          return;
+        }
+      }
+      setError(e instanceof ApiError && e.code === "VALIDATION_FAILED" ? Object.values(e.fieldErrors)[0] : errorMessage(e));
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -64,7 +70,7 @@ export default function CreateLogin() {
         noValidate
         onSubmit={(e) => {
           e.preventDefault();
-          handleContinue();
+          void handleContinue();
         }}
         className="flex flex-col gap-[clamp(10px,1.8cqw,18px)]"
       >
@@ -73,12 +79,14 @@ export default function CreateLogin() {
             Create Your Login
           </h1>
           <p className={cn("mt-1 text-[length:clamp(11px,1.4cqw,16px)] font-normal leading-tight", NAVY)}>
-            Type The Code Provided By School.
+            Choose A Password For Your Account.
           </p>
         </div>
 
+        {error && <Alert variant="danger">{error}</Alert>}
+
         <div className="flex flex-col gap-[clamp(8px,1.4cqw,14px)] [&>div>div:first-child]:py-[clamp(9px,1.4cqw,14px)] [&_label]:text-[#1B2D54] [&_svg]:text-[#1B2D54]">
-          <AuthField label="Email" icon={Mail} type="email" value={EMAIL} readOnly className="text-[#6b7280]" />
+          <AuthField label="Email" icon={Mail} type="email" value={state?.details.email ?? ""} readOnly className="text-[#6b7280]" />
 
           <PasswordField
             label="Password"
@@ -88,7 +96,7 @@ export default function CreateLogin() {
           />
 
           <PasswordField
-            label="Password"
+            label="Confirm Password"
             autoComplete="new-password"
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
@@ -96,20 +104,10 @@ export default function CreateLogin() {
           />
         </div>
 
-        <ul className={cn("flex flex-col gap-[clamp(4px,0.7cqw,7px)] text-[length:clamp(9px,1.1cqw,11px)]", NAVY)}>
-          {results.map((rule) => {
-            const state = password.length === 0 ? "idle" : rule.ok ? "ok" : "bad";
-            return (
-              <li key={rule.id} className="flex items-center gap-2">
-                <RuleIcon state={state} />
-                {rule.label}
-              </li>
-            );
-          })}
-        </ul>
+        <PasswordRuleList password={password} />
 
         <AuthButton type="submit" disabled={!canContinue}>
-          Continue
+          {submitting ? "Saving..." : "Continue"}
         </AuthButton>
       </form>
     </AuthPanel>
