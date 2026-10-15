@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
@@ -16,7 +16,7 @@ import { PasswordField } from "@/components/Auth/PasswordField";
 import { authStyles } from "@/components/Auth/auth-styles";
 import { useAuth } from "@/lib/auth/auth-context";
 import { ROLE_HOME } from "@/lib/constants";
-import { subscribe, getDemoCredentialsSnapshot, getServerCredentialsSnapshot } from "@/lib/auth/mock-auth";
+import { ApiError } from "@/lib/api-client";
 
 const schema = z.object({
   email: z.string().min(1, "Email is required").email("Invalid email address"),
@@ -29,20 +29,24 @@ export default function LoginPage() {
   const { login } = useAuth();
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
-  const demoAccounts = useSyncExternalStore(subscribe, getDemoCredentialsSnapshot, getServerCredentialsSnapshot);
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: { rememberMe: false } });
 
-  function onSubmit(values: FormValues) {
+  async function onSubmit(values: FormValues) {
     try {
       setError(null);
-      const user = login(values.email, values.password);
+      const user = await login(values.email, values.password, values.rememberMe);
       router.push(ROLE_HOME[user.role] as Route);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Something went wrong. Please try again.");
+      if (e instanceof ApiError) {
+        const body = e.body as { message?: string } | undefined;
+        setError(body?.message ?? "Incorrect email or password.");
+      } else {
+        setError(e instanceof Error ? e.message : "Something went wrong. Please try again.");
+      }
     }
   }
 
@@ -91,8 +95,6 @@ export default function LoginPage() {
           Sign up
         </Link>
       </p>
-
-     
     </>
   );
 }

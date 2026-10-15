@@ -1,9 +1,10 @@
 /**
  * Thin fetch wrapper for the .NET backend + FastAPI AI service (PRD Section 9).
- * Endpoints are not live yet (Sprint 1 backend deliverable), so callers should
- * expect this to point at NEXT_PUBLIC_API_URL once it exists — until then,
- * screens use the mock layer in lib/auth/mock-auth.ts instead of this client.
+ * The .NET API is live at NEXT_PUBLIC_API_URL; the AI service is not up yet.
+ * Requests automatically carry the stored JWT (lib/auth/token.ts) as a Bearer
+ * token once logged in via lib/auth/api-auth.ts.
  */
+import { getToken } from "@/lib/auth/token";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
 const AI_SERVICE_URL = process.env.NEXT_PUBLIC_AI_SERVICE_URL ?? "";
@@ -31,10 +32,12 @@ async function request<T>(
     );
   }
 
+  const token = getToken();
   const res = await fetch(`${baseUrl}${path}`, {
     ...options,
     headers: {
       "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options.headers,
     },
   });
