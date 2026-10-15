@@ -1,25 +1,33 @@
 "use client";
 
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ClipboardList, Presentation, School, User } from "lucide-react";
 import { AuthPanel } from "@/components/shared/auth-panel";
 import { AuthStepper } from "@/components/shared/auth-stepper";
 import { AuthButton } from "./AuthButton";
 import { AuthField } from "./AuthField";
+import { useActivationState } from "@/lib/auth/auth-flow-storage";
 import { cn } from "@/lib/utils";
 
-const DETAILS = {
-  fullName: "Mohammed Yasser",
-  school: "Ahmed Maher Primary School",
-  grade: "Grade 9",
-  className: "9A",
-};
+// TODO: replace with the real school contact (email, phone, or support URL)
+const CONTACT_HREF = "mailto:support@juniorhub.com";
 
 const NAVY = "text-[#1B2D54]";
 const VALUE_GREY = "text-[#6b7280]";
 
+/** Step 2 of school activation: the details the school registered, from the activation check. */
 export default function DetailsCheck() {
   const router = useRouter();
+  const state = useActivationState();
+
+  // The details come from step 1; without them, start again.
+  useEffect(() => {
+    if (state === null) router.replace("/activation");
+  }, [state, router]);
+
+  if (!state) return null;
+  const details = state.details;
 
   return (
     <AuthPanel>
@@ -35,25 +43,25 @@ export default function DetailsCheck() {
             Confirm Your Details
           </h1>
           <p className={cn("mt-1 text-[length:clamp(11px,1.4cqw,16px)] font-normal leading-tight", NAVY)}>
-            Type The Code Provided By School.
+            Check The Details Your School Registered.
           </p>
         </div>
 
         <div className="flex flex-col gap-[clamp(8px,1.4cqw,14px)] [&>div>div:first-child]:py-[clamp(9px,1.4cqw,14px)] [&_label]:text-[#1B2D54] [&_svg]:text-[#1B2D54]">
-          <AuthField label="Full Name" icon={User} value={DETAILS.fullName} readOnly className={VALUE_GREY} />
-          <AuthField label="School" icon={School} value={DETAILS.school} readOnly className={VALUE_GREY} />
-          <AuthField label="Grade" icon={ClipboardList} value={DETAILS.grade} readOnly className={VALUE_GREY} />
-          <AuthField label="Class" icon={Presentation} value={DETAILS.className} readOnly className={VALUE_GREY} />
+          <AuthField label="Full Name" icon={User} value={details.fullName} readOnly className={VALUE_GREY} />
+          <AuthField label="School" icon={School} value={details.school} readOnly className={VALUE_GREY} />
+          <AuthField label="Grade" icon={ClipboardList} value={`Grade ${details.grade}`} readOnly className={VALUE_GREY} />
+          <AuthField label="Class" icon={Presentation} value={details.className} readOnly className={VALUE_GREY} />
         </div>
 
         <div className="flex flex-col gap-[clamp(8px,1.2cqw,12px)]">
-          <AuthButton type="button" onClick={() => router.push("/login")}>
+          <AuthButton type="button" onClick={() => router.push("/create-login")}>
             Looks Correct
           </AuthButton>
 
-          <button
-            type="button"
-            onClick={() => router.back()}
+          {/* Only the school can correct these details. */}
+          <a
+            href={CONTACT_HREF}
             className={cn(
               "flex h-[clamp(44px,5.4cqw,52px)] w-full items-center justify-center rounded-xl border border-[#12939b] bg-white",
               "text-[length:clamp(12px,1.6cqw,15px)] font-semibold transition-colors hover:bg-[#12939b]/10",
@@ -62,7 +70,7 @@ export default function DetailsCheck() {
             )}
           >
             Something is incorrect?
-          </button>
+          </a>
         </div>
       </div>
     </AuthPanel>

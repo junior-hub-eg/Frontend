@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { AuthPanel } from "@/components/shared/auth-panel";
 import { AuthStepper } from "@/components/shared/auth-stepper";
 import { HelpCard } from "@/components/shared/help-card";
+import { useActivationCheck } from "@/lib/auth/use-activation-check";
 
 const schema = z.object({
   link: z.string().min(1, "Paste the activation link").url("Enter a valid link"),
@@ -20,6 +21,7 @@ type FormValues = z.infer<typeof schema>;
 
 export default function LinkActivationPage() {
   const [serverError, setServerError] = useState<string | null>(null);
+  const check = useActivationCheck();
 
   const {
     register,
@@ -39,11 +41,8 @@ export default function LinkActivationPage() {
 
   async function onSubmit(values: FormValues) {
     setServerError(null);
-    try {
-      // TODO: call the activation endpoint with values.link
-    } catch {
-      setServerError("Invalid or expired link. Please contact your school.");
-    }
+    const message = await check({ link: values.link });
+    if (message) setServerError(message);
   }
 
   return (

@@ -8,6 +8,9 @@
 const TOKEN_KEY = "jh_token";
 export const TOKEN_COOKIE = "jh_token";
 
+/** Fired on window whenever the token is set or cleared, so the signed-in state re-renders. */
+export const TOKEN_CHANGE_EVENT = "jh-token-change";
+
 export interface TokenClaims {
   sub?: string;
   exp?: number;
@@ -58,4 +61,5 @@ export function setToken(token: string | null) {
     window.localStorage.removeItem(TOKEN_KEY);
     document.cookie = `${TOKEN_COOKIE}=; path=/; max-age=0; samesite=lax${secure}`;
   }
+  window.dispatchEvent(new Event(TOKEN_CHANGE_EVENT));
 }

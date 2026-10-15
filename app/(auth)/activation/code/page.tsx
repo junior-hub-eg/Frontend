@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { AuthPanel } from "@/components/shared/auth-panel";
 import { AuthStepper } from "@/components/shared/auth-stepper";
 import { HelpCard } from "@/components/shared/help-card";
+import { useActivationCheck } from "@/lib/auth/use-activation-check";
 
 const CODE_LENGTH = 6;
 const codeSchema = z.string().length(CODE_LENGTH, `Enter the full ${CODE_LENGTH}-character code`);
@@ -17,6 +18,7 @@ export default function CodeActivationPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const refs = useRef<(HTMLInputElement | null)[]>([]);
+  const check = useActivationCheck();
 
   function handleChange(index: number, raw: string) {
     const char = raw.slice(-1).toUpperCase();
@@ -45,11 +47,9 @@ export default function CodeActivationPage() {
     }
     setError(null);
     setLoading(true);
-    try {
-      // TODO: call the activation endpoint with parsed.data
-    } catch {
-      setError("Invalid or expired code. Please contact your school.");
-    } finally {
+    const message = await check({ code: parsed.data });
+    if (message) {
+      setError(message);
       setLoading(false);
     }
   }
