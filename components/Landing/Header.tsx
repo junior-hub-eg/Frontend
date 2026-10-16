@@ -13,20 +13,27 @@ const NAV_ITEMS: { label: string; href: Route }[] = [
   { label: "Recruitment", href: "/recruitment" },
 ];
 
-export function LandingHeader() {
+export function LandingHeader({ activeHref = "/" }: { activeHref?: Route }) {
   return (
-    <header className="sticky top-0 z-30 border-b border-black/5 bg-white">
+    <header className="relative z-30 border-b border-black/5 bg-white">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-6 py-4 lg:px-10">
         <Link href="/" className="shrink-0">
-          <Image src="/images/Auth/logo.png" alt="Junior Hub" width={160} height={32} priority />
+          <Image
+            src="/images/Auth/logo.png"
+            alt="Junior Hub"
+            width={160}
+            height={32}
+            priority
+          />
         </Link>
 
         <nav className="hidden items-center gap-8 text-sm font-medium text-[#1b2a5c]/80 md:flex">
-          {NAV_ITEMS.map((item, i) => (
+          {NAV_ITEMS.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className={i === 0 ? "border-b-2 border-[#12939b] pb-1 text-[#12939b]" : "transition-colors hover:text-[#12939b]"}
+              aria-current={item.href === activeHref ? "page" : undefined}
+              className={item.href === activeHref ? "border-b-2 border-[#12939b] pb-1 text-[#12939b]" : "transition-colors hover:text-[#12939b]"}
             >
               {item.label}
             </Link>
