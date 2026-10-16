@@ -91,7 +91,7 @@ export function RecruitmentOpportunity() {
             </div>
             <div className="flex flex-col items-start gap-2 sm:items-end">
               <Link
-                href="/register"
+                href="/recruitment/junior-ui-ux-designer/apply"
                 className="inline-flex items-center gap-2 rounded-md bg-[#128b91] px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#0e747a]"
               >
                 Apply Now <ArrowUpRight size={16} aria-hidden />
