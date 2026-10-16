@@ -28,28 +28,28 @@ export function LandingFooter() {
       <CrossMark className="absolute left-[22%] top-2 h-5 w-5 opacity-80" aria-hidden />
       <CrossMark className="absolute bottom-2 left-[39%] h-5 w-5 opacity-70" aria-hidden />
       <span className="absolute bottom-5 right-[18%] size-4 rotate-45 bg-[#b5dbd5]" aria-hidden />
-      <div className="relative mx-auto grid max-w-7xl grid-cols-[1fr_1.8fr_auto] items-center gap-4 px-5 sm:px-8 lg:px-10">
+      <div className="relative mx-auto grid max-w-[1760px] grid-cols-[1fr_1.8fr_auto] items-center gap-6 px-5 sm:px-8 lg:px-12">
         <div className="min-w-0">
           <Image
             src="/images/Auth/logo.png"
             alt="Junior Hub"
-            width={126}
-            height={25}
+            width={150}
+            height={30}
             className="brightness-0 invert"
           />
           <p className="mt-1 text-[10px] font-medium text-white/80">Learn. Practice. Grow.</p>
           <p className="mt-0.5 max-w-[220px] text-[9px] text-white/70">A brighter future for every young learner.</p>
         </div>
 
-        <div className="flex flex-col items-center gap-1 text-[9px] text-white/80">
-          <nav className="flex flex-wrap justify-center gap-x-3 gap-y-1" aria-label="Product">
+        <div className="flex flex-col items-center gap-2 text-xs text-white/80">
+          <nav className="flex flex-wrap justify-center gap-x-4 gap-y-2" aria-label="Product">
             {PRODUCT_LINKS.map((l) => (
               <Link key={l.label} href={l.href} className="transition-colors hover:text-white">
                 {l.label}
               </Link>
             ))}
           </nav>
-          <nav className="flex flex-wrap justify-center gap-x-3 gap-y-1" aria-label="Company">
+          <nav className="flex flex-wrap justify-center gap-x-4 gap-y-2" aria-label="Company">
             {COMPANY_LINKS.map((l) => (
               <Link key={l.label} href={l.href} className="transition-colors hover:text-white">
                 {l.label}

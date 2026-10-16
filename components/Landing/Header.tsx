@@ -16,18 +16,18 @@ const NAV_ITEMS: { label: string; href: Route }[] = [
 export function LandingHeader({ activeHref = "/" }: { activeHref?: Route }) {
   return (
     <header className="relative z-30 border-b border-black/5 bg-white">
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-6 py-4 lg:px-10">
+      <div className="mx-auto flex max-w-[1760px] items-center justify-between gap-3 px-5 py-3 sm:px-8 lg:px-12">
         <Link href="/" className="shrink-0">
           <Image
             src="/images/Auth/logo.png"
             alt="Junior Hub"
-            width={160}
-            height={32}
+            width={150}
+            height={30}
             priority
           />
         </Link>
 
-        <nav className="hidden items-center gap-8 text-sm font-medium text-[#1b2a5c]/80 md:flex">
+        <nav className="hidden items-center gap-4 text-xs font-medium text-[#1b2a5c]/80 sm:flex lg:gap-8 lg:text-sm">
           {NAV_ITEMS.map((item) => (
             <Link
               key={item.href}
@@ -40,13 +40,13 @@ export function LandingHeader({ activeHref = "/" }: { activeHref?: Route }) {
           ))}
         </nav>
 
-        <div className="flex items-center gap-4">
-          <button className="hidden items-center gap-1 text-sm font-medium text-[#1b2a5c]/80 sm:flex">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <button className="hidden items-center gap-1 text-xs font-medium text-[#1b2a5c]/80 sm:flex lg:text-sm">
             EN <ChevronDown size={14} />
           </button>
           <Link
             href="/login"
-            className="rounded-full bg-[#12939b] px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#0f7a81]"
+            className="rounded-full bg-[#12939b] px-5 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-[#0f7a81] sm:text-sm"
           >
             Log in
           </Link>

@@ -54,7 +54,7 @@ const ROLES: {
 
 function RoleIllustration({ variant }: { variant: ArtVariant }) {
   return (
-    <svg viewBox="0 0 140 70" fill="none" aria-hidden="true" className="block h-[76px] w-full">
+    <svg viewBox="0 0 140 70" fill="none" aria-hidden="true" className="block h-[120px] w-full">
       <ellipse cx="70" cy="62" rx="51" ry="5" fill="#D8E9E7" />
       {variant === "design" && (
         <>
@@ -132,7 +132,7 @@ function OpportunityIllustration() {
       viewBox="0 0 340 220"
       fill="none"
       aria-hidden="true"
-      className="absolute left-0 top-0 h-[205px] w-full"
+      className="absolute left-0 top-0 h-[260px] w-full"
     >
       <ellipse cx="183" cy="184" rx="87" ry="20" fill="#F0F2F1" />
       <path d="m153 34 28-15 27 15-27 14-28-14Z" fill="#ECEDEF" />
@@ -168,15 +168,15 @@ export function RecruitmentListings() {
     activeFilter === "All Tracks" ? ROLES : ROLES.filter((role) => role.track === activeFilter);
 
   return (
-    <section className="mx-auto max-w-[1244px] px-5 pb-5 pt-0 sm:px-8">
-      <div className="flex flex-wrap gap-2" aria-label="Filter opportunities by track">
+    <section className="mx-auto max-w-[1760px] px-5 pb-10 pt-0 sm:px-8 lg:px-12">
+      <div className="flex flex-wrap gap-3" aria-label="Filter opportunities by track">
         {FILTERS.map((filter) => (
           <button
             key={filter}
             type="button"
             aria-pressed={activeFilter === filter}
             onClick={() => setActiveFilter(filter)}
-            className={`rounded-full px-3.5 py-2 text-[9px] font-medium transition-colors ${
+            className={`rounded-full px-5 py-2.5 text-xs font-medium transition-colors ${
               activeFilter === filter
                 ? "bg-[#12939b] text-white"
                 : "bg-[#e3f1ef] text-[#1b2a5c] hover:bg-[#d3e9e5]"
@@ -187,42 +187,53 @@ export function RecruitmentListings() {
         ))}
       </div>
 
-      <div className="mt-5 grid grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-3 md:grid-cols-4">
+      <div className="mt-7 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {Array.from({ length: 2 }, (_, row) =>
           visibleRoles.map((role) => (
             <article
               key={`${role.title}-${row}`}
-              className="relative flex h-[228px] min-w-0 flex-col rounded-lg border border-[#1b2a5c]/10 bg-white p-2 shadow-[0_2px_3px_rgba(27,42,92,0.18)]"
+              className="relative flex min-h-[360px] min-w-0 flex-col rounded-xl border border-[#1b2a5c]/10 bg-white p-5 shadow-[0_2px_8px_rgba(27,42,92,0.12)] transition-shadow hover:shadow-[0_8px_24px_rgba(27,42,92,0.14)]"
             >
-              <span className="mb-0.5 self-start rounded-full bg-[#edf0f3] px-1.5 py-0.5 text-[8px] font-medium leading-none text-[#1b2a5c]">
+              <span className="mb-2 self-start rounded-full bg-[#edf0f3] px-2.5 py-1 text-[10px] font-medium leading-none text-[#1b2a5c]">
                 Ready to Start
               </span>
-              <div className="h-[76px] shrink-0 overflow-hidden">
+              <div className="h-[120px] shrink-0 overflow-hidden">
                 <RoleIllustration variant={role.art} />
               </div>
-              <h2 className="mt-0.5 line-clamp-2 min-h-[25px] text-[10px] font-semibold leading-[1.2] text-[#1b2a5c]">
+              <h2 className="mt-2 line-clamp-2 min-h-[42px] text-base font-semibold leading-snug text-[#1b2a5c]">
                 {role.title}
               </h2>
-              <p className="line-clamp-3 min-h-[33px] text-[8px] leading-[1.35] text-[#1b2a5c]/75">
+              <p className="line-clamp-3 min-h-[54px] text-xs leading-relaxed text-[#1b2a5c]/75">
                 {role.description}
               </p>
-              <div className="mt-1 flex min-h-[28px] flex-wrap content-start gap-1">
+              <div className="mt-3 flex min-h-[46px] flex-wrap content-start gap-1.5">
                 {role.tags.map((tag) => (
                   <span
                     key={tag}
-                    className="rounded-full bg-[#e9edf1] px-1.5 py-[3px] text-[8px] leading-none text-[#1b2a5c]"
+                    className="rounded-full bg-[#e9edf1] px-2.5 py-1.5 text-[10px] leading-none text-[#1b2a5c]"
                   >
                     {tag}
                   </span>
                 ))}
               </div>
               <details className="group relative mt-auto">
-                <summary className="flex h-5 cursor-pointer list-none items-center justify-center gap-0.5 rounded-full bg-[#12939b] text-[8px] font-semibold text-white transition-colors hover:bg-[#0f7a81] [&::-webkit-details-marker]:hidden">
+                <summary className="flex h-9 cursor-pointer list-none items-center justify-center gap-1 rounded-full bg-[#12939b] text-xs font-semibold text-white transition-colors hover:bg-[#0f7a81] [&::-webkit-details-marker]:hidden">
                   View Details
-                  <ArrowUpRight size={8} aria-hidden />
+                  <ArrowUpRight size={13} aria-hidden />
                 </summary>
-                <div className="absolute left-0 top-full z-20 mt-1 w-full rounded-lg border border-[#1b2a5c]/10 bg-white p-2 text-[9px] leading-relaxed text-[#1b2a5c] shadow-lg">
+                <div className="absolute left-0 top-full z-20 mt-1 w-full rounded-lg border border-[#1b2a5c]/10 bg-white p-3 text-xs leading-relaxed text-[#1b2a5c] shadow-lg">
                   Practice {role.track.toLowerCase()} skills through a guided hiring scenario.{" "}
+                  {role.title === "Junior UI/UX Designer" && (
+                    <>
+                      <Link
+                        href="/recruitment/junior-ui-ux-designer"
+                        className="font-semibold text-[#0f7a81] underline"
+                      >
+                        View full opportunity
+                      </Link>
+                      {" · "}
+                    </>
+                  )}
                   <Link href="/register" className="font-semibold text-[#0f7a81] underline">
                     Create your profile
                   </Link>
@@ -240,20 +251,20 @@ export function RecruitmentListings() {
 export function RecruitmentHero() {
   return (
     <section className="relative overflow-hidden bg-[radial-gradient(ellipse_at_30%_40%,rgba(213,238,234,0.72),transparent_36%),radial-gradient(ellipse_at_95%_15%,rgba(219,240,237,0.7),transparent_25%)]">
-      <div className="mx-auto grid min-h-[163px] max-w-[1244px] items-center gap-1 px-8 py-2 sm:grid-cols-[1fr_0.9fr] sm:px-8">
+      <div className="mx-auto grid min-h-[280px] max-w-[1760px] items-center gap-8 px-6 py-8 sm:grid-cols-[1fr_0.9fr] sm:px-8 lg:px-12">
         <div className="relative z-10">
-          <span className="inline-flex rounded-full border border-[#cde8e4] bg-white/80 px-2.5 py-1 text-[8px] font-medium text-[#1b2a5c]">
+          <span className="inline-flex rounded-full border border-[#cde8e4] bg-white/80 px-3 py-1.5 text-[10px] font-medium tracking-wide text-[#1b2a5c]">
             YOUR FUTURE STARTS HERE
           </span>
-          <h1 className="mt-3 max-w-[350px] text-[22px] font-bold leading-[1.08] text-[#1b2a5c] sm:text-[23px]">
+          <h1 className="mt-4 max-w-[620px] text-3xl font-bold leading-tight text-[#1b2a5c] sm:text-4xl">
             Explore <span className="text-[#12939b]">Simulated Job Opportunities</span>
           </h1>
-          <p className="mt-3 max-w-[340px] text-[9px] leading-[1.4] text-[#1b2a5c]/80">
+          <p className="mt-4 max-w-[560px] text-sm leading-relaxed text-[#1b2a5c]/80">
             Browse practice hiring scenarios tailored for early-career professionals. Step through full end-to-end
             recruitment cycles without real-world risk.
           </p>
         </div>
-        <div className="relative hidden h-[150px] sm:block">
+        <div className="relative hidden h-[260px] sm:block">
           <OpportunityIllustration />
         </div>
       </div>
