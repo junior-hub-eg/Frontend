@@ -8,6 +8,11 @@ import type { Route } from "next";
 import { ChevronDown, LogOut, Menu, User as UserIcon, X } from "lucide-react";
 import { useAuth } from "@/lib/auth/auth-context";
 
+/** A nav link is active on its page and on the pages under it (e.g. Recruitment on a job's page). */
+function isActive(pathname: string, href: string) {
+  return href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
+}
+
 const NAV_ITEMS: { label: string; href: Route }[] = [
   { label: "Home", href: "/" },
   { label: "Courses", href: "/courses" },
@@ -82,7 +87,7 @@ export function LandingHeader() {
               key={item.href}
               href={item.href}
               className={
-                pathname === item.href
+                isActive(pathname, item.href)
                   ? "border-b-2 border-[#12939b] pb-1 text-[#12939b]"
                   : "transition-colors hover:text-[#12939b]"
               }
@@ -127,7 +132,7 @@ export function LandingHeader() {
               onClick={() => setMobileOpen(false)}
               className={
                 "rounded-lg px-3 py-2.5 text-sm font-medium " +
-                (pathname === item.href ? "bg-[#E9F7F4] text-[#12939b]" : "text-[#1b2a5c]/80 hover:bg-[#E9F7F4]")
+                (isActive(pathname, item.href) ? "bg-[#E9F7F4] text-[#12939b]" : "text-[#1b2a5c]/80 hover:bg-[#E9F7F4]")
               }
             >
               {item.label}

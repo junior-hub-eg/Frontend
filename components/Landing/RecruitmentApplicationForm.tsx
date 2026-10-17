@@ -15,7 +15,7 @@ const TEXT_QUESTIONS = [
   },
   {
     title: "Why are you interested in this simulation?",
-    description: "Tell us what interests you about the challenge and what you hope to learn.",
+    description: "Share a little about your background, what drew you to design, and what you hope to learn.",
   },
 ] as const;
 
@@ -67,10 +67,10 @@ export function RecruitmentApplicationForm() {
 
   return (
     <div className="flex-1 bg-[radial-gradient(ellipse_at_50%_18%,rgba(219,240,237,0.62),transparent_45%),#fff]">
-      <div className="mx-auto max-w-3xl px-5 pb-16 pt-10 sm:px-8 sm:pt-14">
-        <div className="mb-7">
-          <p className="text-xs font-medium text-[#64748b] sm:text-sm">Application for</p>
-          <h1 className="mt-1 text-2xl font-bold leading-tight text-[#1b2a5c] sm:text-3xl">
+      <div className="mx-auto max-w-[900px] px-5 pb-24 pt-14 sm:px-0 sm:pt-[110px]">
+        <div className="mb-12">
+          <p className="text-lg text-[#64748b]">Application for</p>
+          <h1 className="mt-1 text-3xl font-extrabold leading-tight text-[#1b2a5c] sm:text-[40px]">
             Junior UI/UX Designer
           </h1>
         </div>
@@ -94,12 +94,12 @@ export function RecruitmentApplicationForm() {
           </section>
         ) : (
           <>
-            <div className="mb-3 flex items-center justify-between text-xs text-[#64748b] sm:text-sm">
+            <div className="mb-1.5 flex items-center justify-between px-2 text-lg text-[#64748b]">
               <span>Question {step} of 4</span>
-              <span className="font-medium text-[#07858c]">{progress}% complete</span>
+              <span className="text-[#07858c]">{progress}% complete</span>
             </div>
             <div
-              className="mb-5 h-1.5 overflow-hidden rounded-full bg-[#dcecea]"
+              className="mb-7 h-1.5 overflow-hidden rounded-full bg-[#dcecea]"
               role="progressbar"
               aria-label="Application progress"
               aria-valuemin={0}
@@ -112,25 +112,27 @@ export function RecruitmentApplicationForm() {
               />
             </div>
 
-            <h2 className="text-base font-medium text-[#475569] sm:text-lg">
+            <h2 className="text-xl font-medium text-[#64748b] sm:text-[25px]">
               {step === 4 ? (
                 <>
-                  Which design tools have you used?<span className="text-red-500">*</span>
+                  Which design tools have you used?<span className="text-[#b3002d]">*</span>
                 </>
               ) : (
                 <>
                   {TEXT_QUESTIONS[step - 1].title}
-                  <span className="text-red-500">*</span>
+                  <span className="text-[#b3002d]">*</span>
                 </>
               )}
             </h2>
-            <p className="mt-2 text-xs leading-relaxed text-[#64748b] sm:text-sm">
+            <p className="mt-5 text-base leading-snug text-[#64748b]">
               {step === 4 ? "Select all that apply. It’s completely fine if you’re still learning." : TEXT_QUESTIONS[step - 1].description}
             </p>
 
             <form
               onSubmit={handleSubmit}
-              className="mt-1 rounded-2xl border border-[#e8edf0] bg-white p-5 shadow-[0_12px_35px_rgba(27,42,92,0.08)] sm:p-8"
+              className={`mt-1.5 rounded-3xl border border-[#e8edf0] bg-white shadow-[0_12px_35px_rgba(27,42,92,0.08)] ${
+                step < 4 ? "px-5 pb-11 pt-10 sm:px-[50px] sm:pt-[76px]" : "px-5 pb-10 pt-9 sm:px-[38px]"
+              }`}
             >
               {step < 4 ? (
                 <div className="relative">
@@ -150,20 +152,20 @@ export function RecruitmentApplicationForm() {
                     placeholder="Write your answer here..."
                     aria-invalid={Boolean(error)}
                     aria-describedby="answer-count application-error"
-                    className="h-48 w-full resize-y rounded-xl border border-[#cbd0d3] bg-white px-4 pb-9 pt-4 text-sm leading-relaxed text-[#1b2a5c] outline-none transition focus:border-[#12939b] focus:ring-2 focus:ring-[#12939b]/20 sm:h-56 sm:px-5"
+                    className="h-[250px] w-full resize-none rounded-2xl border border-[#9aa3a8] bg-white px-10 pb-10 pt-10 text-base leading-relaxed text-[#1b2a5c] outline-none transition placeholder:text-[#64748b] focus:border-[#12939b] focus:ring-2 focus:ring-[#12939b]/20"
                   />
-                  <span id="answer-count" className="absolute bottom-3 right-4 text-xs text-[#64748b]">
+                  <span id="answer-count" className="absolute bottom-3 right-6 text-sm text-[#64748b]">
                     {answers[step - 1].length}/1000
                   </span>
                 </div>
               ) : (
                 <fieldset>
                   <legend className="sr-only">Select the design tools you have used</legend>
-                  <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="grid gap-x-[84px] gap-y-[30px] sm:grid-cols-2">
                     {DESIGN_TOOLS.map((tool) => (
                       <label
                         key={tool}
-                        className={`flex min-h-12 cursor-pointer items-center gap-3 rounded-lg border px-4 py-3 text-sm transition-colors ${
+                        className={`flex h-[60px] cursor-pointer items-center gap-2.5 rounded-lg border px-4 text-base transition-colors ${
                           selectedTools.includes(tool)
                             ? "border-[#12939b] bg-[#eaf7f5] text-[#087f87]"
                             : "border-[#e2e6e9] bg-white text-[#475569] hover:border-[#9ccfca]"
@@ -173,8 +175,14 @@ export function RecruitmentApplicationForm() {
                           type="checkbox"
                           checked={selectedTools.includes(tool)}
                           onChange={() => toggleTool(tool)}
-                          className="size-4 accent-[#12939b]"
+                          className="peer sr-only"
                         />
+                        <span
+                          aria-hidden
+                          className="grid size-[30px] shrink-0 place-items-center rounded-lg border border-[#64748b] text-white peer-checked:border-[#12939b] peer-checked:bg-[#12939b] peer-focus-visible:ring-2 peer-focus-visible:ring-[#12939b]/40"
+                        >
+                          {selectedTools.includes(tool) && <Check size={18} strokeWidth={3} />}
+                        </span>
                         {tool}
                       </label>
                     ))}
@@ -193,26 +201,27 @@ export function RecruitmentApplicationForm() {
                 </fieldset>
               )}
 
-              <p id="application-error" className="mt-3 min-h-5 text-sm text-red-600" role="alert">
+              <p id="application-error" className="mt-2 min-h-5 text-sm text-red-600" role="alert">
                 {error}
               </p>
-              <div className="mt-3 flex justify-end gap-3">
+              <div className={`flex justify-end gap-2.5 ${step < 4 ? "mt-3" : "mt-6"}`}>
                 {step > 1 && (
                   <button
                     type="button"
                     onClick={goBack}
-                    className="inline-flex items-center gap-2 rounded-md border border-[#d5dce1] bg-white px-4 py-2.5 text-sm font-semibold text-[#475569] transition-colors hover:bg-[#f6f8f9]"
+                    className="inline-flex h-[38px] items-center gap-2 rounded-md bg-[#128b91] px-4 text-base font-bold text-white shadow-[0_8px_16px_rgba(18,139,145,0.25)] transition-colors hover:bg-[#0e747a]"
                   >
                     <ArrowLeft size={15} aria-hidden /> Back
                   </button>
                 )}
                 <button
                   type="submit"
-                  className="inline-flex items-center gap-2 rounded-md bg-[#128b91] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#0e747a]"
+                  className={`inline-flex h-[38px] items-center gap-2 rounded-md px-4 text-base font-bold text-white shadow-[0_8px_16px_rgba(18,139,145,0.25)] transition-opacity hover:opacity-90 ${
+                    step === 4 ? "bg-gradient-to-r from-[#128084] to-[#1b2d55]" : "bg-[#128b91]"
+                  }`}
                 >
                   {step === 4 ? "Submit" : "Next"}
-                  {step < 4 && <ArrowRight size={15} aria-hidden />}
-                  {step === 4 && <ArrowRight size={15} aria-hidden />}
+                  <ArrowRight size={15} aria-hidden />
                 </button>
               </div>
             </form>
