@@ -65,7 +65,7 @@ function PanelHeading({ children }: { children: string }) {
 
 export function RecruitmentOpportunity() {
   return (
-    <main className="flex-1 bg-[radial-gradient(ellipse_at_95%_0%,rgba(219,240,237,0.72),transparent_25%)]">
+    <div className="flex-1 bg-[radial-gradient(ellipse_at_95%_0%,rgba(219,240,237,0.72),transparent_25%)]">
       <div className="mx-auto max-w-[1760px] px-5 pb-10 pt-6 sm:px-8 lg:px-12">
         <Link
           href="/recruitment"
@@ -216,6 +216,6 @@ export function RecruitmentOpportunity() {
           </aside>
         </div>
       </div>
-    </main>
+    </div>
   );
 }

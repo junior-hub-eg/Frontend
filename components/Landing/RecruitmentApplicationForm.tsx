@@ -66,7 +66,7 @@ export function RecruitmentApplicationForm() {
   }
 
   return (
-    <main className="flex-1 bg-[radial-gradient(ellipse_at_50%_18%,rgba(219,240,237,0.62),transparent_45%),#fff]">
+    <div className="flex-1 bg-[radial-gradient(ellipse_at_50%_18%,rgba(219,240,237,0.62),transparent_45%),#fff]">
       <div className="mx-auto max-w-3xl px-5 pb-16 pt-10 sm:px-8 sm:pt-14">
         <div className="mb-7">
           <p className="text-xs font-medium text-[#64748b] sm:text-sm">Application for</p>
@@ -219,6 +219,6 @@ export function RecruitmentApplicationForm() {
           </>
         )}
       </div>
-    </main>
+    </div>
   );
 }
