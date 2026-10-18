@@ -3,37 +3,42 @@ export function InternsStepper() {
     {
       num: 1,
       title: "Apply & Assessment",
-      desc: "Submit your application and complete the technical assessment",
+      desc: "Submit your application and complete the technical assessment.",
     },
     {
       num: 2,
       title: "Team Matching",
-      desc: "Get matched with the right squad and Senior Team Leader",
+      desc: "Get matched with the right squad and Senior Team Leader.",
     },
     {
       num: 3,
       title: "Work & Learn",
-      desc: "Contribute weekly, receive code reviews, and ship PRs",
+      desc: "Complete weekly sprints, work on tasks, and submit GitHub PRs.",
     },
     {
       num: 4,
       title: "Get Certified",
-      desc: "Complete your internship and receive a verified certificate",
+      desc: "Complete your internship and receive your certificate.",
     },
   ];
 
   return (
     <section id="how-it-works" className="bg-white py-6">
       <div className="mx-auto max-w-7xl px-6 lg:px-10">
-        <div className="relative overflow-hidden rounded-[24px] border border-black/5 bg-[#F8FBFA] p-6 lg:p-8">
-          <div className="grid items-center gap-8 lg:grid-cols-12">
+        <div className="relative overflow-hidden rounded-[30px] p-6 lg:p-8">
+          {/* No background in the Figma: only a soft mint glow at the edges */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 -z-0 bg-[radial-gradient(ellipse_32%_90%_at_0%_50%,rgba(18,147,155,0.10),transparent_70%),radial-gradient(ellipse_22%_80%_at_100%_50%,rgba(18,147,155,0.07),transparent_70%)]"
+          />
+          <div className="relative grid items-center gap-8 lg:grid-cols-12">
             {/* Left intro label */}
             <div className="lg:col-span-3">
               <span className="text-xs font-bold uppercase tracking-wider text-[#12939b]">
                 WHY CHOOSE US
               </span>
               <h3 className="mt-1 text-base font-bold text-[#1b2a5c] sm:text-lg">
-                Weekly Sprints/ Real codes & PRs
+                Weekly Sprints Real tasks &amp; PRs
               </h3>
               <p className="mt-1 text-xs text-[#1b2a5c]/60">Follow a clear path</p>
             </div>
@@ -41,8 +46,13 @@ export function InternsStepper() {
             {/* Stepper items */}
             <div className="relative lg:col-span-9">
               {/* Connecting line on desktop */}
+              {/* Solid line from step 1 to 2, dotted after it (Figma) */}
               <div
-                className="pointer-events-none absolute left-[12%] right-[12%] top-4 -z-0 hidden h-[2px] bg-dashed border-t-2 border-dashed border-[#1b2a5c]/20 lg:block"
+                className="pointer-events-none absolute left-[12.5%] right-[12.5%] top-[18px] -z-0 hidden border-t-2 border-dotted border-[#1b2a5c]/25 lg:block"
+                aria-hidden
+              />
+              <div
+                className="pointer-events-none absolute left-[12.5%] top-[17px] -z-0 hidden h-[2px] w-[25%] bg-gradient-to-r from-[#1b2a5c] to-[#7D2331] lg:block"
                 aria-hidden
               />
 
