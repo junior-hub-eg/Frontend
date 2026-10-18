@@ -53,7 +53,7 @@ const BUILDINGS: (Item & {
   },
   {
     label: "Mentorship",
-    href: "/monitor",
+    href: "/learner/mentorship",
     src: `${IMG}/building-mentorship.png`,
     w: 624,
     h: 408,
@@ -64,7 +64,7 @@ const BUILDINGS: (Item & {
   },
   {
     label: "Courses",
-    href: "/courses",
+    href: "/learner/courses",
     src: `${IMG}/building-courses.png`,
     w: 626,
     h: 425,
