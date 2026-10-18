@@ -127,6 +127,8 @@ export const api = {
     request<T>(API_BASE_URL, path, { ...options, method: "POST", body: body ? JSON.stringify(body) : undefined }),
   put: <T>(path: string, body?: unknown, options?: RequestInit) =>
     request<T>(API_BASE_URL, path, { ...options, method: "PUT", body: body ? JSON.stringify(body) : undefined }),
+  patch: <T>(path: string, body?: unknown, options?: RequestInit) =>
+    request<T>(API_BASE_URL, path, { ...options, method: "PATCH", body: body ? JSON.stringify(body) : undefined }),
   delete: <T>(path: string, options?: RequestInit) => request<T>(API_BASE_URL, path, { ...options, method: "DELETE" }),
 };
 
