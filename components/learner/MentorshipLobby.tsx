@@ -1,22 +1,27 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { Poppins } from "next/font/google";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, CircleCheck, ClipboardPaste, Link2 } from "lucide-react";
 import { useAuth } from "@/lib/auth/auth-context";
+import { getSquad } from "@/lib/interns-api";
+import { getMyMentor } from "@/lib/mentorship-api";
+import { ROLE_TITLE } from "./interns-data";
 
 const IMG = "/images/Intern";
 
 /** Same font as the learner shell (the portal is outside it). */
 const poppins = Poppins({ subsets: ["latin"], weight: ["400", "500", "600", "700", "800"] });
 
-/** MOCK squad for the session lobby (Figma "Paste Your Links To Get Ready"). Replace with the squad and mentor APIs. */
+/** The Figma data, shown until the squad and mentor APIs answer (and when they cannot). */
+type Person = { name: string; role: string; level?: number; avatar: string; bg: string };
+
 const MENTOR = { name: "Mohammed Yasser", title: "UI/UX Designer", seniority: "Senior", avatar: `${IMG}/Circle.png` };
-const ME = { name: "Mohammed Yasser", role: "UI/UX Designer", level: 4, avatar: `${IMG}/Static-Characters.png`, bg: "#ffc107" };
-const TEAMMATES = [
+const ME: Person = { name: "Mohammed Yasser", role: "UI/UX Designer", level: 4, avatar: `${IMG}/Static-Characters.png`, bg: "#ffc107" };
+const TEAMMATES: Person[] = [
   { name: "Aisha Khan", role: "Product Manager", level: 5, avatar: `${IMG}/image.png`, bg: "#ffc107" },
   { name: "Aisha Khan", role: "Product Manager", level: 5, avatar: `${IMG}/Image%20copy.png`, bg: "#f6f1d6" },
   { name: "Carlos Mendez", role: "Front-end Developer", level: 3, avatar: `${IMG}/Image%20copy%202.png`, bg: "#2a8a1f" },
@@ -24,6 +29,29 @@ const TEAMMATES = [
   { name: "Lina Nguyen", role: "Data Scientist", level: 6, avatar: `${IMG}/Image%20copy%204.png`, bg: "#e0157e" },
   { name: "Lina Nguyen", role: "Data Scientist", level: 6, avatar: `${IMG}/Image%20copy%205.png`, bg: "#fbf59c" },
 ];
+
+/** "Senior Frontend Engineer" -> seniority "Senior" (bold in the Figma) and the rest. */
+function splitTitle(title: string) {
+  const [first, ...rest] = title.split(" ");
+  return /^(Senior|Lead|Principal|Staff|Junior)$/.test(first) ? { seniority: first, title: rest.join(" ") } : { seniority: "", title };
+}
+
+type Lobby = { mentor: typeof MENTOR; me: Person; teammates: Person[] };
+
+/** The student's mentor and squad from the API; the Figma data for anything that is missing. */
+async function loadLobby(): Promise<Partial<Lobby>> {
+  const [squad, mine] = await Promise.all([getSquad().catch(() => null), getMyMentor().catch(() => null)]);
+  const lobby: Partial<Lobby> = {};
+  if (mine?.current) lobby.mentor = { ...MENTOR, name: mine.current.mentor.fullName, ...splitTitle(mine.current.mentor.title) };
+  if (squad) {
+    const me = squad.members.find((m) => m.isMe);
+    if (me) lobby.me = { ...ME, name: me.fullName, role: ROLE_TITLE[me.role], level: undefined };
+    lobby.teammates = squad.members
+      .filter((m) => !m.isMe)
+      .map((m, i) => ({ ...TEAMMATES[i % TEAMMATES.length], name: m.fullName, role: ROLE_TITLE[m.role], level: undefined }));
+  }
+  return lobby;
+}
 
 const glass =
   "rounded-[20px] border border-white/70 bg-gradient-to-r from-[#c8eef8]/75 to-[#a6dfda]/60 shadow-[0_10px_30px_rgba(20,54,90,0.12)] backdrop-blur-md";
@@ -52,7 +80,18 @@ export default function MentorshipLobby() {
   // Rendered into <body>: the shell's <main> is its own stacking context, so a fixed layer inside it stays under the sidebar.
   const isClient = useSyncExternalStore(noopSubscribe, () => true, () => false);
   const { user } = useAuth();
-  const myName = user ? [user.firstName, user.lastName].filter(Boolean).join(" ") : ME.name;
+  const [lobby, setLobby] = useState<Partial<Lobby>>({});
+  useEffect(() => {
+    let active = true;
+    loadLobby().then((l) => active && setLobby(l));
+    return () => {
+      active = false;
+    };
+  }, []);
+  const mentor = lobby.mentor ?? MENTOR;
+  const me = lobby.me ?? ME;
+  const teammates = lobby.teammates ?? TEAMMATES;
+  const myName = lobby.me?.name ?? (user ? [user.firstName, user.lastName].filter(Boolean).join(" ") : ME.name);
 
   const [link, setLink] = useState("");
   const [ready, setReady] = useState(false);
@@ -103,21 +142,21 @@ export default function MentorshipLobby() {
           <div className="mx-auto mt-[1.2em] grid max-w-[47em] gap-[1em] md:grid-cols-[15em_1fr]">
             <section className={`${glass} flex flex-col items-center p-[1em] text-center md:items-start md:text-left`}>
               <h2 className="text-[1.3em] font-bold text-[#14365a]">Your Mentor</h2>
-              <Avatar src={MENTOR.avatar} size="mt-[0.5em] h-[10em] w-[10em] self-center" />
-              <p className="mt-[0.8em] text-[1.05em] font-bold text-[#14365a]">{MENTOR.name}</p>
+              <Avatar src={mentor.avatar} size="mt-[0.5em] h-[10em] w-[10em] self-center" />
+              <p className="mt-[0.8em] text-[1.05em] font-bold text-[#14365a]">{mentor.name}</p>
               <p className="text-[0.85em] text-[#14365a]">
-                <span className="font-bold">{MENTOR.seniority}</span> {MENTOR.title}
+                <span className="font-bold">{mentor.seniority}</span> {mentor.title}
               </p>
             </section>
 
             <section className={`${glass} p-[1em]`}>
               <h2 className="text-[1.3em] font-bold text-[#14365a]">You</h2>
               <div className="mt-[0.5em] flex items-center gap-[0.8em]">
-                <Avatar src={ME.avatar} bg={ME.bg} size="h-[10em] w-[10em]" />
+                <Avatar src={me.avatar} bg={me.bg} size="h-[10em] w-[10em]" />
                 <div className="min-w-0 leading-snug">
                   <p className="text-[1.35em] font-bold text-[#14365a]">{myName}</p>
-                  <p className="mt-[0.4em] text-[0.95em] text-[#14365a]">{ME.role}</p>
-                  <p className="mt-[0.3em] text-[0.95em] font-bold text-[#14365a]">Level {ME.level}</p>
+                  <p className="mt-[0.4em] text-[0.95em] text-[#14365a]">{me.role}</p>
+                  {me.level !== undefined && <p className="mt-[0.3em] text-[0.95em] font-bold text-[#14365a]">Level {me.level}</p>}
                   {ready && (
                     <p className="mt-[0.3em] flex items-center gap-[0.3em] text-[0.95em] font-bold text-[#1f9d5b]">
                       <CircleCheck className="h-[1.1em] w-[1.1em]" /> Ready
@@ -174,13 +213,13 @@ export default function MentorshipLobby() {
 
           {/* Squad */}
           <ul className="mx-auto mt-[1em] grid max-w-[64em] gap-[1em] md:grid-cols-2">
-            {TEAMMATES.map((t, i) => (
+            {teammates.map((t, i) => (
               <li key={i} className={`${glass} flex items-center gap-[0.8em] p-[0.6em]`}>
                 <Avatar src={t.avatar} bg={t.bg} />
                 <div className="min-w-0 leading-snug">
                   <p className="text-[1.35em] font-bold text-[#14365a]">{t.name}</p>
                   <p className="mt-[0.4em] text-[0.95em] text-[#14365a]">{t.role}</p>
-                  <p className="mt-[0.3em] text-[0.95em] font-bold text-[#14365a]">Level {t.level}</p>
+                  {t.level !== undefined && <p className="mt-[0.3em] text-[0.95em] font-bold text-[#14365a]">Level {t.level}</p>}
                   <p className="mt-[0.3em] text-[0.95em] font-bold text-[#14365a]">Not Ready</p>
                 </div>
               </li>
