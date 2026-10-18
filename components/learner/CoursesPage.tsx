@@ -20,7 +20,6 @@ import {
   Server,
   ShieldCheck,
   Smartphone,
-  Sparkles,
 } from "lucide-react";
 
 const IMG = "/images/Intern";
@@ -142,16 +141,18 @@ function ArrowPair({ onPrev, onNext }: { onPrev: () => void; onNext: () => void 
   );
 }
 
-/** image 33 is the banner itself (407x121 in the Figma): teal background + the boy. */
+/** The Figma banner (sparkles, blobs and the boy), shared with AI Curriculum. */
 function Banner() {
   return (
-    <div className="relative h-[8.5em] min-w-0 flex-1 overflow-hidden rounded-[1.4em] bg-gradient-to-r from-white via-[#e3f8f6] to-[#c4eef0] lg:ml-auto lg:h-[7.5em] lg:w-[54%] lg:flex-none">
-      <Sparkles className="absolute left-[16%] top-[24%] h-[1.6em] w-[1.6em] text-[#2fc4d6]" />
-      <Sparkles className="absolute left-[30%] top-[58%] h-[1.1em] w-[1.1em] text-[#2fc4d6]" />
-
-      <div className="absolute right-0 top-0 aspect-[407/121] h-full [mask-image:linear-gradient(to_right,transparent,black_14%)]">
-        <Image src={`${IMG}/image%2033.png`} alt="" fill priority sizes="480px" className="object-cover object-right" />
-      </div>
+    <div className="relative aspect-[751/121] w-full min-w-0 lg:ml-auto lg:w-[54%]">
+      <Image
+        src="/images/Intern/AI%20Curriculum/Group%20189.png"
+        alt=""
+        fill
+        priority
+        sizes="(max-width: 1024px) 90vw, 50vw"
+        className="object-cover object-right"
+      />
     </div>
   );
 }
