@@ -23,7 +23,7 @@ export function HowItWorks() {
   return (
     <section className="relative bg-white py-20">
       <Image
-        src="/images/Landing%20Page/Back%20Back-2.png"
+        src="/images/Landing%20Page/Home/Back%20Back-2.png"
         alt=""
         width={107}
         height={116}
@@ -45,7 +45,7 @@ export function HowItWorks() {
         <div className="relative mt-14 grid grid-cols-2 gap-x-6 gap-y-12 sm:grid-cols-3 lg:grid-cols-6">
           <div className="absolute left-[8%] right-[8%] top-6 hidden h-[3px] lg:block" aria-hidden>
             <Image
-              src="/images/Landing%20Page/Line%203.png"
+              src="/images/Landing%20Page/Home/Line%203.png"
               alt=""
               fill
               className="object-cover opacity-60"

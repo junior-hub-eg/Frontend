@@ -17,7 +17,7 @@ export function Hero() {
         <div className="relative z-10">
           {/* Soft background blur */}
           <Image
-            src="/images/Landing%20Page/Background-Blur.png"
+            src="/images/Landing%20Page/Home/Background-Blur.png"
             alt=""
             width={290}
             height={296}
@@ -58,14 +58,14 @@ export function Hero() {
               className="relative isolate inline-flex h-11 items-center gap-2 overflow-hidden rounded-full px-4 text-[11px] font-semibold text-white shadow-sm transition-opacity hover:opacity-90 sm:px-5"
             >
               <Image
-                src="/images/Landing%20Page/40174ca2683c92fc391daa5a1fa5a0ae695b3b14.jpg"
+                src="/images/Landing%20Page/Home/40174ca2683c92fc391daa5a1fa5a0ae695b3b14.jpg"
                 alt=""
                 fill
                 className="object-cover"
                 aria-hidden
               />
               <Image
-                src="/images/Landing%20Page/55e7b74faabefe7f835a610cb9df64edacafc9c9.jpg"
+                src="/images/Landing%20Page/Home/55e7b74faabefe7f835a610cb9df64edacafc9c9.jpg"
                 alt=""
                 fill
                 className="object-cover opacity-50"
@@ -85,7 +85,7 @@ export function Hero() {
         <div className="relative mx-auto mt-2 w-full max-w-[560px] lg:mt-0 lg:max-w-none">
           {/* Decorative graphic */}
           <Image
-            src="/images/Landing%20Page/Component%201.png"
+            src="/images/Landing%20Page/Home/Component%201.png"
             alt=""
             width={339}
             height={220}
@@ -94,7 +94,7 @@ export function Hero() {
           />
 
           <Image
-            src="/images/Landing%20Page/Group%205.png"
+            src="/images/Landing%20Page/Home/Group%205.png"
             alt="Two Junior Hub students with AI assessment, real projects, and mentorship"
             width={754}
             height={565}
