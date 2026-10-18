@@ -1,13 +1,16 @@
-import { PlaceholderPage } from "@/components/shared/placeholder-page";
+import { notFound } from "next/navigation";
+import { TrackOverview } from "@/components/Courses/TrackOverview";
+import { landingFont } from "@/components/Landing/font";
+import { getTrack } from "@/lib/data/courses";
 
-export default async function TrackCoursesPage({ params }: PageProps<"/learner/courses/[trackSlug]">) {
+export default async function TrackCoursesPage({ params }: { params: Promise<{ trackSlug: string }> }) {
   const { trackSlug } = await params;
+  const track = getTrack(trackSlug);
+  if (!track) notFound();
+
   return (
-    <PlaceholderPage
-      title={`مسار: ${trackSlug}`}
-      description="عرض الموديولات، مشغل الفيديو، والكويز/case-study بعد كل فيديو"
-      waitingOn="تصميمات UI/UX لمرحلة التعلم + Learning Phase API (Sprint 2 backend)"
-      prdSection="§4.1"
-    />
+    <div className={`${landingFont.variable} flex flex-1 flex-col bg-[#F7FBFA] p-6 font-[family-name:var(--font-poppins)] md:p-10`}>
+      <TrackOverview track={track} />
+    </div>
   );
 }
