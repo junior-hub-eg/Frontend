@@ -3,9 +3,12 @@
 import { useState, type CSSProperties, type ReactNode } from "react";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { ChevronDown, Lightbulb, PanelLeft, Search } from "lucide-react";
+import { Poppins } from "next/font/google";
+import { AlignLeft, Award, ChevronDown, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LearnerSidebar } from "./learner-sidebar";
+
+const poppins = Poppins({ subsets: ["latin"], weight: ["400", "500", "600", "700", "800"] });
 
 interface LearnerShellProps {
   userName: string;
@@ -56,7 +59,7 @@ export function LearnerShell({
   } as CSSProperties;
 
   return (
-    <div dir="ltr" className="min-h-screen bg-[#eaf4fb] lg:h-svh lg:overflow-hidden lg:p-1">
+    <div dir="ltr" className={cn(poppins.className, "min-h-screen bg-[#eaf4fb] lg:h-svh lg:overflow-hidden lg:p-1")}>
       <div
         style={frameVars}
         className="relative min-h-screen w-full overflow-hidden bg-gradient-to-b from-[#8fd0f5] via-[#bfe4f7] to-[#e6f6fc] lg:h-full lg:min-h-0 lg:rounded-[28px] lg:shadow-[0_24px_70px_rgba(20,54,90,0.22)]"
@@ -83,7 +86,7 @@ export function LearnerShell({
               collapsed ? "bg-white/70 text-[#14365a] lg:bg-[#14365a] lg:text-white" : "bg-white/70 text-[#14365a]",
             )}
           >
-            <PanelLeft className="h-[1.2em] w-[1.2em]" />
+            <AlignLeft className="h-[1.2em] w-[1.2em]" />
           </button>
 
           <form role="search" onSubmit={(e) => e.preventDefault()} className="relative hidden max-w-[34em] flex-1 sm:block">
@@ -99,14 +102,17 @@ export function LearnerShell({
           </form>
 
           <div className="ml-auto flex items-center gap-[1.2em]">
-            <button type="button" className="flex items-center gap-[0.3em] text-[0.95em] font-medium text-[#14365a]">
+            <button
+              type="button"
+              className="flex h-[2.8em] items-center gap-[0.5em] rounded-full border border-white/70 bg-white/55 px-[1em] text-[0.95em] font-medium text-[#14365a] backdrop-blur"
+            >
               EN <ChevronDown className="h-[1em] w-[1em]" />
             </button>
 
             <div className="hidden h-[2.8em] items-center gap-[0.6em] rounded-full border border-white/70 bg-white/55 px-[1em] text-[0.95em] font-semibold text-[#14365a] backdrop-blur md:flex">
-              <Lightbulb className="h-[1.3em] w-[1.3em] text-[#2f7fd6]" />
+              <Award className="h-[1.3em] w-[1.3em] text-[#14365a]" />
               <span>{levelLabel}</span>
-              <span className="font-bold">{trackLabel}</span>
+              {trackLabel && <span className="ml-[0.6em] font-bold">{trackLabel}</span>}
             </div>
 
             <div className="relative">

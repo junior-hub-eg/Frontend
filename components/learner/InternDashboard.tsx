@@ -1,7 +1,11 @@
+"use client";
+
 import type { CSSProperties } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
+import { useAuth } from "@/lib/auth/auth-context";
+import { avatarFor, useSquad } from "./interns-data";
 import { TeammatesPanel } from "./teammates-panel";
 
 type Item = {
@@ -98,28 +102,6 @@ const CHARACTERS: Item[] = [
   },
 ];
 
-const TEAMMATES = [
-  {
-    name: "Mohammed Yasser",
-    avatar: `${IMG}/char-boy-glasses.png`,
-    bg: "#ffd66b",
-  },
-  {
-    name: "Sara Mohammed",
-    avatar: `${IMG}/char-girl.png`,
-    bg: "#ff9a62",
-  },
-  {
-    name: "Dalia dodo",
-    avatar: `${IMG}/char-girl.png`,
-    bg: "#ff9a62",
-  },
-  {
-    name: "malak koko",
-    avatar: `${IMG}/char-girl.png`,
-    bg: "#ffd66b",
-  },
-];
 
 function sceneStyle(i: Item): CSSProperties {
   return {
@@ -212,11 +194,16 @@ function Greeting({
   );
 }
 
-export default function InternDashboard({
-  firstName,
-}: {
-  firstName: string;
-}) {
+export default function InternDashboard() {
+  const { user } = useAuth();
+  const squad = useSquad();
+  const me = squad?.members.find((m) => m.isMe);
+  const firstName = user?.firstName ?? me?.firstName ?? "";
+  const teammates = (squad?.members ?? []).map((m, i) => {
+    const avatar = avatarFor(m.photoUrl, i);
+    return { name: m.fullName, avatar: avatar.src, bg: avatar.bg };
+  });
+
   return (
     <>
       {/* Mobile and tablet */}
@@ -278,7 +265,7 @@ export default function InternDashboard({
         </div>
 
         <TeammatesPanel
-          teammates={TEAMMATES}
+          teammates={teammates}
           className="mt-5"
         />
       </div>
@@ -312,7 +299,7 @@ export default function InternDashboard({
 
         <TeammatesPanel
           fluid
-          teammates={TEAMMATES}
+          teammates={teammates}
           className="absolute right-[calc(var(--u)*1.6)] top-[9.8%] z-40"
         />
 

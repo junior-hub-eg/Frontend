@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import Image from "next/image";
 import {
   ArrowLeft,
@@ -14,70 +17,52 @@ import {
   Timer,
   Trophy,
 } from "lucide-react";
+import { errorMessage } from "@/lib/api-client";
+import {
+  moveTask,
+  type Leaderboard as LeaderboardData,
+  type Squad,
+  type SquadTask,
+  type Sprint,
+  type TaskBoard as TaskBoardData,
+  type TaskStatus,
+} from "@/lib/interns-api";
+import { avatarFor, memberIndex, ROLE_TITLE, ROLE_TAG, useInterns } from "./interns-data";
 
 const IMG = "/images/Intern";
 const BG = `${IMG}/bg-park.png`;
 
-const MEMBERS = [
-  { name: "Mohammed Yasser", role: "UI/UX Designer", avatar: `${IMG}/char-boy-glasses.png`, bg: "#ffc531" },
-  { name: "Mohammed Yasser", role: "UI/UX Designer", avatar: `${IMG}/char-girl.png`, bg: "#ff9a62" },
-  { name: "Mohammed Yasser", role: "UI/UX Designer", avatar: `${IMG}/char-boy-glasses-2.png`, bg: "#5aa9e6" },
-  { name: "Mohammed Yasser", role: "UI/UX Designer", avatar: `${IMG}/char-girl.png`, bg: "#3fc9b0" },
-];
-
 const STATS = [
-  { label: "Total Tasks", value: "8", icon: ListChecks, color: "#4a9df8", bg: "#eaf4fe" },
-  { label: "Completed", value: "5", icon: CheckCircle2, color: "#2fb36b", bg: "#e6f6ee" },
-  { label: "Remaining", value: "8", icon: Timer, color: "#ef5b5b", bg: "#fdecec" },
-  { label: "Story Points", value: "1200", icon: Star, color: "#f5a623", bg: "#fff6dc" },
-];
+  { key: "total", label: "Total Tasks", icon: ListChecks, color: "#4a9df8", bg: "#eaf4fe" },
+  { key: "done", label: "Completed", icon: CheckCircle2, color: "#2fb36b", bg: "#e6f6ee" },
+  { key: "left", label: "Remining", icon: Timer, color: "#ef5b5b", bg: "#fdecec" },
+  { key: "points", label: "Story Points", icon: Star, color: "#f5a623", bg: "#fff6dc" },
+] as const;
 
-type Task = { title: string; tag: string; tagBg: string; tagText: string; points: string; mine?: boolean };
-type Column = {
-  title: string;
-  count: number;
-  bg: string;
-  dot: string;
-  add: string;
-  tasks: Task[];
+const COLUMN_STYLE: Record<TaskStatus, { title: string; bg: string; dot: string; add: string }> = {
+  ToDo: { title: "To Do", bg: "#eceef3", dot: "#64748b", add: "#14365a" },
+  InProgress: { title: "In Progress", bg: "#dcecfb", dot: "#3b82f6", add: "#2f7fd6" },
+  Review: { title: "Review", bg: "#ffefd9", dot: "#ff9a1f", add: "#f08a00" },
+  Done: { title: "Done", bg: "#d8f0df", dot: "#2fb36b", add: "#2fb36b" },
 };
 
-const TASKS: Task[] = [
-  { title: "Implement API intgeration", tag: "Backend", tagBg: "#fbd5d5", tagText: "#b83232", points: "3 pts" },
-  { title: "Design user authentication flow", tag: "Prompted", tagBg: "#ffdcc8", tagText: "#c2571a", points: "5 pts" },
-  { title: "Set up database schema", tag: "UI/UX", tagBg: "#fbd5d5", tagText: "#b83232", points: "4 pts" },
-];
+const ORDER: TaskStatus[] = ["ToDo", "InProgress", "Review", "Done"];
 
-const COLUMNS: Column[] = [
-  { title: "To Do", count: 2, bg: "#eceef3", dot: "#64748b", add: "#14365a", tasks: TASKS },
-  {
-    title: "Review",
-    count: 2,
-    bg: "#ffefd9",
-    dot: "#ff9a1f",
-    add: "#f08a00",
-    tasks: [{ ...TASKS[0], mine: true }, TASKS[2], TASKS[2]],
-  },
-  { title: "Done", count: 2, bg: "#d8f0df", dot: "#2fb36b", add: "#2fb36b", tasks: TASKS },
-  { title: "Done", count: 2, bg: "#d8f0df", dot: "#2fb36b", add: "#2fb36b", tasks: TASKS },
-];
+const SQUAD_COLORS = ["#b07fd6", "#3b9cf5", "#52d6b0", "#7fe8d6", "#3b9cf5", "#a31818", "#f9a8b8"];
 
-const SQUADS = [
-  { rank: 1, name: "Pixel Pirates", xp: 875, color: "#b07fd6", hl: true },
-  { rank: 2, name: "Debug Divas", xp: 920, color: "#3b9cf5" },
-  { rank: 3, name: "Syntax Sorcerers", xp: 890, color: "#52d6b0" },
-  { rank: 4, name: "Loop Legends", xp: 940, color: "#7fe8d6", hl: true },
-  { rank: 5, name: "Array Avengers", xp: 865, color: "#3b9cf5", hl: true },
-  { rank: 6, name: "Binary Brawlers", xp: 915, color: "#a31818" },
-  { rank: 7, name: "Function Fanatics", xp: 930, color: "#f9a8b8" },
-];
+const MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
 
-const MAX_XP = 1000;
+/** "sep 21 - sep 27, 2026", like the Figma. */
+function sprintDates(start: string, end: string) {
+  const [, sm, sd] = start.split("-").map(Number);
+  const [ey, em, ed] = end.split("-").map(Number);
+  return `${MONTHS[sm - 1]} ${sd} - ${MONTHS[em - 1]} ${ed}, ${ey}`;
+}
 
 const glass = "rounded-[1.6em] border border-white/80 bg-white/40 shadow-lg shadow-[#14365a]/10 backdrop-blur-md";
 const solid = "rounded-[1.6em] border border-white bg-white shadow-lg shadow-[#14365a]/10";
 
-function TeamCard() {
+function TeamCard({ squad }: { squad: Squad | null }) {
   return (
     <section className="flex min-w-0 flex-col gap-[0.8em]">
       <div className={`${glass} flex items-center gap-[1em] p-[1em]`}>
@@ -86,32 +71,35 @@ function TeamCard() {
         </span>
         <div className="min-w-0">
           <h1 className="flex flex-wrap items-center gap-[0.5em] text-[2.1em] font-extrabold leading-tight text-[#14365a]">
-            Code Hunters Team
+            {squad ? `${squad.name} Team` : "\u00a0"}
             <span className="flex items-center gap-[0.3em] rounded-full bg-[#d7f5e4] px-[0.6em] py-[0.15em] text-[0.38em] font-bold text-[#1f9d5b]">
               <span className="h-[0.7em] w-[0.7em] rounded-full bg-[#2fb36b]" /> Active
             </span>
           </h1>
-          <p className="text-[1.25em] font-bold text-[#14365a]">Wedding Website an mobile app</p>
+          <p className="text-[1.25em] font-bold text-[#14365a]">{squad?.projectTitle}</p>
           <p className="mt-[0.2em] text-[0.8em] text-[#14365a]/75">
-            Junior Hub is not just a course library. It&apos;s a complete learning opportunities in the tech world.
+            {squad?.projectDescription}
           </p>
         </div>
       </div>
 
       <div className={`${solid} min-w-0 p-[1em]`}>
         <ul className="flex items-center gap-[1.2em] overflow-x-auto pb-[0.2em]">
-          {MEMBERS.map((m, i) => (
-            <li key={i} className="flex w-[9em] shrink-0 flex-col items-center text-center">
-              <span
-                className="relative h-[5.2em] w-[5.2em] overflow-hidden rounded-full shadow-md ring-[0.25em] ring-white"
-                style={{ backgroundColor: m.bg }}
-              >
-                <Image src={m.avatar} alt="" fill sizes="96px" className="origin-top scale-[2.1] object-cover object-top" />
-              </span>
-              <span className="mt-[0.5em] text-[0.95em] font-bold text-[#14365a]">{m.name}</span>
-              <span className="text-[0.75em] text-[#14365a]/60">{m.role}</span>
-            </li>
-          ))}
+          {squad?.members.map((m, i) => {
+            const avatar = avatarFor(m.photoUrl, i);
+            return (
+              <li key={m.studentId} className="flex min-w-[9em] shrink-0 flex-col items-center text-center">
+                <span
+                  className="relative h-[5.2em] w-[5.2em] overflow-hidden rounded-full shadow-md ring-[0.25em] ring-white"
+                  style={{ backgroundColor: avatar.bg }}
+                >
+                  <Image src={avatar.src} alt="" fill sizes="96px" className="origin-top scale-[2.1] object-cover object-top" />
+                </span>
+                <span className="mt-[0.5em] whitespace-nowrap text-[0.95em] font-bold text-[#14365a]">{m.fullName}</span>
+                <span className="text-[0.75em] text-[#14365a]/60">{ROLE_TITLE[m.role]}</span>
+              </li>
+            );
+          })}
           <li className="flex shrink-0 flex-col items-center">
             <button
               type="button"
@@ -128,8 +116,14 @@ function TeamCard() {
   );
 }
 
-function SprintCard() {
-  const percent = 60.2;
+function SprintCard({ sprint }: { sprint: Sprint | null }) {
+  const percent = sprint?.progressPercent ?? 0;
+  const values = {
+    total: sprint?.tasksTotal,
+    done: sprint?.tasksDone,
+    left: sprint ? sprint.tasksTotal - sprint.tasksDone : undefined,
+    points: sprint?.storyPointsTotal,
+  };
   return (
     <section className={`${solid} min-w-0 p-[1.1em]`}>
       <div className="flex flex-wrap items-start gap-[1em]">
@@ -137,15 +131,17 @@ function SprintCard() {
           <Target className="h-[1.8em] w-[1.8em]" />
         </span>
         <div>
-          <h2 className="text-[1.7em] font-extrabold leading-tight text-[#14365a]">Sprint 04</h2>
-          <p className="text-[0.8em] text-[#14365a]/60">sep 21 - sep 27, 2026</p>
+          <h2 className="text-[1.7em] font-extrabold leading-tight text-[#14365a]">{sprint?.name ?? "\u00a0"}</h2>
+          <p className="text-[0.8em] text-[#14365a]/60">{sprint ? sprintDates(sprint.startDate, sprint.endDate) : "\u00a0"}</p>
         </div>
         <div className="ml-auto text-right">
           <span className="inline-flex items-center gap-[0.4em] rounded-[0.6em] bg-[#eef2f7] px-[0.7em] py-[0.25em] text-[0.75em] text-[#14365a]/70">
-            <Calendar className="h-[1em] w-[1em]" /> 8 days left
+            <Calendar className="h-[1em] w-[1em]" /> {sprint?.daysLeft ?? 0} {sprint?.daysLeft === 1 ? "day" : "days"} left
           </span>
           <p className="mt-[0.2em] text-[2em] font-extrabold leading-none text-[#14365a]">{percent}%</p>
-          <p className="mt-[0.2em] text-[0.75em] text-[#14365a]/70">5 of 8 tasks done</p>
+          <p className="mt-[0.2em] text-[0.75em] text-[#14365a]/70">
+            {sprint?.tasksDone ?? 0} of {sprint?.tasksTotal ?? 0} tasks done
+          </p>
         </div>
       </div>
 
@@ -164,7 +160,7 @@ function SprintCard() {
             </span>
             <span className="leading-tight">
               <span className="block text-[0.75em] text-[#14365a]/70">{s.label}</span>
-              <span className="block text-[1.05em] font-bold text-[#14365a]">{s.value}</span>
+              <span className="block text-[1.05em] font-bold text-[#14365a]">{values[s.key] ?? "–"}</span>
             </span>
           </li>
         ))}
@@ -173,7 +169,91 @@ function SprintCard() {
   );
 }
 
-function TaskBoard() {
+function TaskCard({ task, avatarIndex, onMove }: { task: SquadTask; avatarIndex: number; onMove: (task: SquadTask, to: TaskStatus) => void }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const at = ORDER.indexOf(task.status);
+  const moves = [ORDER[at - 1], ORDER[at + 1]].filter(Boolean);
+  const tag = task.assignee ? ROLE_TAG[task.assignee.role] : null;
+  const avatar = task.assignee ? avatarFor(task.assignee.photoUrl, avatarIndex) : null;
+
+  return (
+    <li
+      className={`relative rounded-[0.9em] bg-white p-[0.7em] shadow-sm ${
+        task.isMine && task.status === "Review" ? "border-l-[0.3em] border-l-[#ff9a1f]" : ""
+      }`}
+    >
+      <p className="text-[0.85em] font-semibold text-[#14365a]">{task.title}</p>
+      <div className="mt-[0.5em] flex flex-wrap items-center gap-[0.4em]">
+        {avatar && (
+          <span
+            className="relative h-[1.9em] w-[1.9em] shrink-0 overflow-hidden rounded-full ring-2 ring-white"
+            style={{ backgroundColor: avatar.bg }}
+            title={task.assignee?.firstName}
+          >
+            <Image src={avatar.src} alt="" fill sizes="32px" className="origin-top scale-[2.1] object-cover object-top" />
+          </span>
+        )}
+        {tag && (
+          <span
+            className="rounded-[0.4em] px-[0.6em] py-[0.15em] text-[0.65em] font-bold"
+            style={{ backgroundColor: tag.bg, color: tag.text }}
+          >
+            {tag.label}
+          </span>
+        )}
+        <span className="text-[0.65em] text-[#14365a]/60">{task.storyPoints} pts</span>
+        {task.isMine && (
+          <span className="rounded-[0.4em] bg-[#d7f5e4] px-[0.6em] py-[0.15em] text-[0.6em] font-semibold text-[#1f9d5b]">
+            Assigned to you
+          </span>
+        )}
+        {task.isMine ? (
+          <button
+            type="button"
+            onClick={() => setMenuOpen((o) => !o)}
+            aria-label={`Move ${task.title}`}
+            aria-expanded={menuOpen}
+            className="ml-auto rounded-[0.4em] text-[#14365a]/50 hover:text-[#14365a]"
+          >
+            <MoreHorizontal className="h-[1.1em] w-[1.1em]" />
+          </button>
+        ) : (
+          <MoreHorizontal className="ml-auto h-[1.1em] w-[1.1em] text-[#14365a]/30" aria-hidden="true" />
+        )}
+      </div>
+
+      {menuOpen && (
+        <div className="absolute right-[0.5em] top-full z-20 mt-[0.2em] w-[11em] rounded-[0.7em] border border-[#14365a]/10 bg-white p-[0.3em] shadow-lg">
+          {moves.map((to) => (
+            <button
+              key={to}
+              type="button"
+              onClick={() => {
+                setMenuOpen(false);
+                onMove(task, to);
+              }}
+              className="w-full rounded-[0.5em] px-[0.6em] py-[0.4em] text-left text-[0.75em] font-semibold text-[#14365a] hover:bg-[#eef2f7]"
+            >
+              Move to {COLUMN_STYLE[to].title}
+            </button>
+          ))}
+        </div>
+      )}
+    </li>
+  );
+}
+
+function TaskBoard({
+  board,
+  members,
+  onMove,
+  message,
+}: {
+  board: TaskBoardData | null;
+  members: Map<string, number>;
+  onMove: (task: SquadTask, to: TaskStatus) => void;
+  message: string | null;
+}) {
   return (
     <section className={`${solid} min-w-0 p-[1.1em]`}>
       <div className="mb-[0.9em] flex items-center">
@@ -196,70 +276,54 @@ function TaskBoard() {
         </div>
       </div>
 
+      {message && (
+        <p role="status" className="mb-[0.8em] rounded-[0.7em] bg-[#fdecec] px-[0.8em] py-[0.5em] text-[0.8em] font-semibold text-[#b83232]">
+          {message}
+        </p>
+      )}
+
       <div className="flex gap-[1em] overflow-x-auto pb-[0.4em]">
-        {COLUMNS.map((col, ci) => (
-          <div key={ci} className="w-[17em] shrink-0 rounded-[1.1em] p-[0.8em]" style={{ backgroundColor: col.bg }}>
-            <div className="mb-[0.7em] flex items-center gap-[0.5em] text-[0.95em] font-bold text-[#14365a]">
-              <span className="h-[0.7em] w-[0.7em] rounded-full" style={{ backgroundColor: col.dot }} />
-              {col.title}
-              <span className="rounded-full bg-white/70 px-[0.5em] text-[0.75em] font-semibold text-[#14365a]/70">
-                {col.count}
-              </span>
-              <Plus className="ml-auto h-[1.2em] w-[1.2em] text-[#14365a]/70" />
+        {(board?.columns ?? ORDER.map((status) => ({ status, tasks: [] }))).map((col) => {
+          const style = COLUMN_STYLE[col.status];
+          return (
+            <div key={col.status} className="w-[17em] shrink-0 rounded-[1.1em] p-[0.8em]" style={{ backgroundColor: style.bg }}>
+              <div className="mb-[0.7em] flex items-center gap-[0.5em] text-[0.95em] font-bold text-[#14365a]">
+                <span className="h-[0.7em] w-[0.7em] rounded-full" style={{ backgroundColor: style.dot }} />
+                {style.title}
+                <span className="rounded-full bg-white/70 px-[0.5em] text-[0.75em] font-semibold text-[#14365a]/70">
+                  {col.tasks.length}
+                </span>
+                <Plus className="ml-auto h-[1.2em] w-[1.2em] text-[#14365a]/70" />
+              </div>
+
+              <ul className="grid gap-[0.6em]">
+                {col.tasks.map((t) => (
+                  <TaskCard
+                    key={t.id}
+                    task={t}
+                    avatarIndex={(t.assignee && members.get(t.assignee.studentId)) ?? 0}
+                    onMove={onMove}
+                  />
+                ))}
+              </ul>
+
+              <button
+                type="button"
+                className="mt-[0.7em] flex w-full items-center justify-center gap-[0.3em] text-[0.85em] font-semibold"
+                style={{ color: style.add }}
+              >
+                <Plus className="h-[1.1em] w-[1.1em]" /> Add Task
+              </button>
             </div>
-
-            <ul className="grid gap-[0.6em]">
-              {col.tasks.map((t, ti) => (
-                <li
-                  key={ti}
-                  className={`rounded-[0.9em] bg-white p-[0.7em] shadow-sm ${
-                    t.mine ? "border-l-[0.3em] border-l-[#ff9a1f]" : ""
-                  }`}
-                >
-                  <p className="text-[0.85em] font-semibold text-[#14365a]">{t.title}</p>
-                  <div className="mt-[0.5em] flex flex-wrap items-center gap-[0.4em]">
-                    <span className="relative h-[1.9em] w-[1.9em] shrink-0 overflow-hidden rounded-full bg-[#ffc531] ring-2 ring-white">
-                      <Image
-                        src={`${IMG}/char-boy-glasses.png`}
-                        alt=""
-                        fill
-                        sizes="32px"
-                        className="origin-top scale-[2.1] object-cover object-top"
-                      />
-                    </span>
-                    <span
-                      className="rounded-[0.4em] px-[0.6em] py-[0.15em] text-[0.65em] font-bold"
-                      style={{ backgroundColor: t.tagBg, color: t.tagText }}
-                    >
-                      {t.tag}
-                    </span>
-                    <span className="text-[0.65em] text-[#14365a]/60">{t.points}</span>
-                    {t.mine && (
-                      <span className="rounded-[0.4em] bg-[#d7f5e4] px-[0.6em] py-[0.15em] text-[0.6em] font-semibold text-[#1f9d5b]">
-                        assigned to you
-                      </span>
-                    )}
-                    <MoreHorizontal className="ml-auto h-[1.1em] w-[1.1em] text-[#14365a]/50" />
-                  </div>
-                </li>
-              ))}
-            </ul>
-
-            <button
-              type="button"
-              className="mt-[0.7em] flex w-full items-center justify-center gap-[0.3em] text-[0.85em] font-semibold"
-              style={{ color: col.add }}
-            >
-              <Plus className="h-[1.1em] w-[1.1em]" /> Add Task
-            </button>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </section>
   );
 }
 
-function Leaderboard() {
+function Leaderboard({ data }: { data: LeaderboardData | null }) {
+  const rows = data ? [...data.top, ...(data.mine ? [data.mine] : [])] : [];
   return (
     <section className={`${solid} min-w-0 p-[1.1em]`}>
       <div className="flex items-center gap-[0.7em]">
@@ -274,13 +338,16 @@ function Leaderboard() {
       </div>
 
       <ol className="mt-[1em] grid gap-[0.9em]">
-        {SQUADS.map((s) => (
-          <li key={s.rank} className="flex items-center gap-[0.7em]">
+        {rows.map((s, i) => (
+          <li
+            key={s.squadId}
+            className={`flex items-center gap-[0.7em] ${s.isMine ? "-mx-[0.4em] rounded-[0.8em] bg-[#eaf4fe] px-[0.4em] py-[0.2em]" : ""}`}
+          >
             <span
               className={`grid h-[2.2em] w-[2.2em] shrink-0 place-items-center rounded-full text-[0.85em] font-bold text-[#14365a] ${
                 s.rank === 1
                   ? "bg-[#ffd66b] ring-[0.25em] ring-[#ffe9a8]"
-                  : s.hl
+                  : s.rank <= 3
                     ? "bg-[#ff9a1f] ring-[0.25em] ring-[#ffd9a3]"
                     : "bg-[#e1e4ea]"
               }`}
@@ -289,7 +356,7 @@ function Leaderboard() {
             </span>
             <span
               className="grid h-[2.7em] w-[2.7em] shrink-0 place-items-center rounded-[0.7em] text-white"
-              style={{ backgroundColor: s.color }}
+              style={{ backgroundColor: SQUAD_COLORS[i % SQUAD_COLORS.length] }}
               aria-hidden="true"
             >
               <Plane className="h-[1.4em] w-[1.4em]" />
@@ -297,7 +364,7 @@ function Leaderboard() {
             <div className="min-w-0 flex-1">
               <p className="truncate text-[0.85em] font-semibold text-[#14365a]">{s.name}</p>
               <div className="mt-[0.3em] h-[0.45em] rounded-full bg-[#dde6ee]">
-                <div className="h-full rounded-full bg-[#14365a]" style={{ width: `${(s.xp / MAX_XP) * 100}%` }} />
+                <div className="h-full rounded-full bg-[#14365a]" style={{ width: `${s.progressPercent}%` }} />
               </div>
             </div>
             <span className="text-[0.85em] font-bold text-[#14365a]">{s.xp} XP</span>
@@ -309,6 +376,19 @@ function Leaderboard() {
 }
 
 export default function InternshipProgress() {
+  const { squad, sprint, board, leaderboard, error, reload } = useInterns();
+  const [moveError, setMoveError] = useState<string | null>(null);
+
+  async function handleMove(task: SquadTask, to: TaskStatus) {
+    setMoveError(null);
+    try {
+      await moveTask(task.id, to);
+      await reload();
+    } catch (e) {
+      setMoveError(errorMessage(e, "We couldn't move this task. Please try again."));
+    }
+  }
+
   return (
     <div className="relative -ml-[4rem] min-h-[calc(100svh-5rem)] min-w-0 flex-1 lg:absolute lg:inset-0 lg:ml-0 lg:min-h-0">
       {/* Background: on mobile it only covers the top and fades out, on desktop it fills the frame */}
@@ -339,14 +419,19 @@ export default function InternshipProgress() {
 
           {/* Team, sprint, task board */}
           <div className="order-2 flex min-w-0 flex-col gap-[1em] lg:order-none lg:col-start-1 lg:row-span-2 lg:row-start-1">
-            <TeamCard />
-            <SprintCard />
-            <TaskBoard />
+            {error && (
+              <p role="alert" className={`${glass} p-[1em] text-[0.95em] font-semibold text-[#14365a]`}>
+                {error}
+              </p>
+            )}
+            <TeamCard squad={squad} />
+            <SprintCard sprint={sprint} />
+            <TaskBoard board={board} members={memberIndex(squad)} onMove={handleMove} message={moveError} />
           </div>
 
           {/* Leaderboard: last on mobile, under the pod on desktop */}
           <div className="order-3 min-w-0 lg:order-none lg:col-start-2 lg:row-start-2">
-            <Leaderboard />
+            <Leaderboard data={leaderboard} />
           </div>
         </div>
       </div>

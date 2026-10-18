@@ -6,7 +6,7 @@ import { useAuth } from "@/lib/auth/auth-context";
 import { LearnerShell } from "./learner-shell";
 
 // ⚠️ للتطوير بس: اخليه false قبل ما ترفعي الكود
-const SKIP_AUTH = true;
+const SKIP_AUTH = false;
 
 export function LearnerLayoutClient({ children }: { children: ReactNode }) {
   const { user } = useAuth();
@@ -33,7 +33,12 @@ export function LearnerLayoutClient({ children }: { children: ReactNode }) {
   }
 
   return (
-    <LearnerShell userName={fullName} userEmail={user?.email} onLogout={handleLogout}>
+    <LearnerShell
+      userName={fullName}
+      userEmail={user?.email}
+      userAvatar="/images/Intern/char-boy-glasses.png"
+      onLogout={handleLogout}
+    >
       {children}
     </LearnerShell>
   );

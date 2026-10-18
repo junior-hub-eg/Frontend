@@ -65,7 +65,8 @@ function NavLink({
 export function LearnerSidebar({ activeHref, collapsed = false, mobileOpen = false, onNavigate }: LearnerSidebarProps) {
   const pathname = usePathname();
   const current = activeHref ?? pathname;
-  const isActive = (href: string) => current === href || current.startsWith(`${href}/`);
+  const isActive = (item: LearnerNavItem) =>
+    [item.href, ...(item.matches ?? [])].some((href) => current === href || current.startsWith(`${href}/`));
 
   // On mobile/tablet the sidebar is always visible: a slim icon rail, or the full drawer when open.
   const rail = !mobileOpen;
@@ -84,7 +85,7 @@ export function LearnerSidebar({ activeHref, collapsed = false, mobileOpen = fal
   return (
     <aside
       className={cn(
-        "absolute inset-y-0 left-0 z-30 flex flex-col overflow-hidden border-r border-white/70 bg-[linear-gradient(180deg,#c6ecff_0%,#d9f3ff_55%,#cbe9fc_100%)] pb-[2.4em] shadow-[0_8px_40px_rgba(20,54,90,0.10)] transition-[width] duration-300",
+        "absolute inset-y-0 left-0 z-30 flex flex-col overflow-hidden border-r border-white/70 bg-[linear-gradient(180deg,rgba(198,236,255,0.78)_0%,rgba(217,243,255,0.45)_55%,rgba(203,233,252,0.6)_100%)] backdrop-blur-xl pb-[2.4em] shadow-[0_8px_40px_rgba(20,54,90,0.10)] transition-[width] duration-300",
         // mobile / tablet
         mobileOpen
           ? "w-64 rounded-r-[2rem] px-[1.2em] pt-[4.4em]"
@@ -119,7 +120,7 @@ export function LearnerSidebar({ activeHref, collapsed = false, mobileOpen = fal
           <NavLink
             key={item.label}
             item={item}
-            active={isActive(item.href)}
+            active={isActive(item)}
             collapsed={collapsed}
             rail={rail}
             onNavigate={onNavigate}
@@ -134,7 +135,7 @@ export function LearnerSidebar({ activeHref, collapsed = false, mobileOpen = fal
           <NavLink
             key={item.label}
             item={item}
-            active={isActive(item.href)}
+            active={isActive(item)}
             collapsed={collapsed}
             rail={rail}
             onNavigate={onNavigate}
