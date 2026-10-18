@@ -55,8 +55,8 @@ export function InternsHero() {
                 onClick={scrollToHowItWorks}
                 className="relative isolate inline-flex h-14 items-center gap-2 overflow-hidden rounded-full px-7 text-sm font-semibold text-white shadow-md transition-opacity hover:opacity-90 active:scale-95"
               >
-                <Image src="/images/Landing%20Page/Home/55e7b74faabefe7f835a610cb9df64edacafc9c9.jpg" alt="" fill sizes="200px" className="object-cover" aria-hidden />
-                <Image src="/images/Landing%20Page/Home/40174ca2683c92fc391daa5a1fa5a0ae695b3b14.jpg" alt="" fill sizes="200px" className="object-cover opacity-50" aria-hidden />
+                <Image src="/images/Landing%20Page/Interns/55e7b74faabefe7f835a610cb9df64edacafc9c9.jpg" alt="" fill sizes="200px" className="object-cover" aria-hidden />
+                <Image src="/images/Landing%20Page/Interns/40174ca2683c92fc391daa5a1fa5a0ae695b3b14.jpg" alt="" fill sizes="200px" className="object-cover opacity-50" aria-hidden />
                 <span className="relative z-10 flex items-center gap-2">
                   <span className="grid size-7 shrink-0 place-items-center rounded-full bg-white">
                     <Play size={13} className="ml-0.5 fill-[#B45B65] text-[#B45B65]" />
@@ -70,7 +70,7 @@ export function InternsHero() {
           {/* Right Column: the Figma illustration (transparent, cards included) */}
           <div className="lg:col-span-6 xl:col-span-6">
             <Image
-              src="/images/Landing%20Page/Interns/hero-team.webp"
+              src="/images/Landing%20Page/Interns/image%2042.png"
               alt="Three Junior Hub interns working together on a laptop: real projects, team collaboration and career growth"
               width={826}
               height={465}

@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 export function InternsStepper() {
   const steps = [
     {
@@ -26,10 +28,14 @@ export function InternsStepper() {
     <section id="how-it-works" className="bg-white py-6">
       <div className="mx-auto max-w-7xl px-6 lg:px-10">
         <div className="relative overflow-hidden rounded-[30px] p-6 lg:p-8">
-          {/* No background in the Figma: only a soft mint glow at the edges */}
-          <div
+          {/* No background in the Figma: only the soft blur image at the left edge, behind "Why choose us" */}
+          <Image
+            src="/images/Landing%20Page/Interns/Background%2BBlur.png"
+            alt=""
+            width={318}
+            height={196}
             aria-hidden
-            className="pointer-events-none absolute inset-0 -z-0 bg-[radial-gradient(ellipse_32%_90%_at_0%_50%,rgba(18,147,155,0.10),transparent_70%),radial-gradient(ellipse_22%_80%_at_100%_50%,rgba(18,147,155,0.07),transparent_70%)]"
+            className="pointer-events-none absolute inset-y-0 left-0 h-full w-auto max-w-none"
           />
           <div className="relative grid items-center gap-8 lg:grid-cols-12">
             {/* Left intro label */}
