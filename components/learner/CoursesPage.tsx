@@ -2,6 +2,8 @@
 
 import { useRef, useState, type ComponentType, type CSSProperties } from "react";
 import Image from "next/image";
+import Link from "next/link";
+import type { Route } from "next";
 import {
   ArrowLeft,
   ArrowRight,
@@ -100,6 +102,20 @@ const COURSES: { cat: string; title: string; sub: string; bg: string; icon: Icon
   { cat: "qa", title: "Quality Assurance", sub: "Testing & Automation", bg: "#e6f5ec", icon: ShieldCheck, color: "#2fb36b" },
   { cat: "pm", title: "Product Management", sub: "Plan & Ship Products", bg: "#e4f1fb", icon: Briefcase, color: "#3b82c4" },
 ];
+
+/** Track pages that exist (lib/data/courses.ts); the other tracks have no page yet. */
+const TRACK_SLUG: Record<string, string> = {
+  "UI/UX Fundamentals": "ui-ux-design",
+  "Intro to Machine Learning": "ai",
+  "React for Beginners": "frontend",
+  "UI/UX Design": "ui-ux-design",
+  Frontend: "frontend",
+  "Mobile Development": "mobile-development",
+  "Data Science": "data-science",
+  AI: "ai",
+};
+
+const trackHref = (title: string) => (TRACK_SLUG[title] ? (`/learner/courses/${TRACK_SLUG[title]}` as Route) : null);
 
 const AVATARS = [
   { src: `${IMG}/char-boy-glasses.png`, bg: "#ffc531" },
@@ -252,6 +268,9 @@ export default function CoursesPage() {
                   className="relative aspect-[282/150] w-[min(92%,32em)] shrink-0 overflow-hidden rounded-[1.6rem] [container-type:inline-size] lg:h-full lg:w-auto"
                   style={{ background: c.bg }}
                 >
+                  {trackHref(c.title) && (
+                    <Link href={trackHref(c.title)!} aria-label={`Open ${c.title}`} className="absolute inset-0 z-20 rounded-[1.6rem]" />
+                  )}
                   {/* Everything inside scales with the card width (like the Figma) */}
                   <div className="relative h-full w-full p-[1.1em]" style={{ fontSize: "calc(100cqw / 28)" }}>
                     {/* Illustration: right half, its left edge fades into the card */}
@@ -335,13 +354,22 @@ export default function CoursesPage() {
                     <c.icon className="mt-[0.8em] h-[3.4em] w-[3.4em]" style={{ color: c.color }} />
                     <h3 className="mt-[0.7em] text-[0.95em] font-extrabold leading-tight text-[#14365a]">{c.title}</h3>
                     <p className="mt-[0.2em] text-[0.8em] leading-snug text-[#14365a]/80">{c.sub}</p>
-                    <button
-                      type="button"
-                      aria-label={`Open ${c.title}`}
-                      className="mt-auto grid h-[2em] w-[2em] place-items-center rounded-full border-2 border-[#14365a] text-[#14365a] hover:bg-[#14365a] hover:text-white"
-                    >
-                      <ArrowRight className="h-[1em] w-[1em]" />
-                    </button>
+                    {trackHref(c.title) ? (
+                      <Link
+                        href={trackHref(c.title)!}
+                        aria-label={`Open ${c.title}`}
+                        className="mt-auto grid h-[2em] w-[2em] place-items-center rounded-full border-2 border-[#14365a] text-[#14365a] hover:bg-[#14365a] hover:text-white"
+                      >
+                        <ArrowRight className="h-[1em] w-[1em]" />
+                      </Link>
+                    ) : (
+                      <span
+                        title="Coming soon"
+                        className="mt-auto grid h-[2em] w-[2em] place-items-center rounded-full border-2 border-[#14365a]/30 text-[#14365a]/40"
+                      >
+                        <ArrowRight className="h-[1em] w-[1em]" />
+                      </span>
+                    )}
                   </div>
                 </article>
               ))}
