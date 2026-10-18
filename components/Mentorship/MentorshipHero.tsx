@@ -1,63 +1,59 @@
+import Image from "next/image";
 import Link from "next/link";
-import { BadgeCheck, Code2, MessageSquareText, Rocket, Video } from "lucide-react";
-import { Curl, CrossMark } from "@/components/Auth/AuthDecorations";
-
-const FLOATING_CHIPS = [
-  { icon: Video, label: "1:1 Video Calls", className: "left-0 top-6" },
-  { icon: MessageSquareText, label: "Project Feedback", className: "right-0 top-0" },
-  { icon: Code2, label: "Code Review", className: "left-4 bottom-8" },
-  { icon: Rocket, label: "Career Support", className: "right-2 bottom-2" },
-];
+import { ArrowRight, PlayCircle } from "lucide-react";
 
 export function MentorshipHero() {
   return (
-    <section className="relative overflow-hidden bg-linear-to-b from-[#E9F7F4] to-white">
-      <div className="mx-auto grid max-w-[1200px] items-center gap-10 px-6 py-14 md:grid-cols-[1.1fr_1fr] lg:px-10 lg:py-20">
+    <section className="relative overflow-hidden">
+      <div className="mx-auto grid w-full max-w-[1200px] items-center gap-10 px-6 py-14 md:grid-cols-[1.1fr_1fr] lg:px-10 lg:py-20">
         <div>
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-[11px] font-semibold text-[#12939b] shadow-sm">
-            <BadgeCheck aria-hidden size={14} /> Verified mentors for young tech learners
-          </span>
-          <h1 className="mt-4 text-3xl font-bold leading-tight text-[#1b2a5c] sm:text-4xl lg:text-5xl">
-            Find Your Tech Mentor. <span className="text-[#12939b]">Accelerate Your Career.</span>
-          </h1>
-          <p className="mt-4 max-w-lg text-sm leading-relaxed text-[#1b2a5c]/70">
-            Connect with experienced professionals who guide your projects, review your work, and help you grow with
-            confidence — one session at a time.
+          <p className="flex flex-wrap items-center gap-2 text-[10px] text-[#1b2a5c]/70">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-[#1b2a5c]/10 px-3 py-1 font-semibold uppercase tracking-wide text-[#1b2a5c]">
+              <span className="size-1.5 rounded-full bg-[#1b2a5c]" aria-hidden /> 500+ Verified Mentors Online
+            </span>
+            <span aria-hidden>•</span> Junior Hub Talent Network
           </p>
-          <div className="mt-7 flex flex-wrap gap-3">
+          <h1 className="mt-5 text-4xl font-bold leading-[1.1] tracking-tight text-[#1b2a5c] sm:text-5xl lg:text-[56px]">
+            Find Your Tech Mentor.
+            <br />
+            <span className="text-[#12939b]">
+              Accelerate Your
+              <br />
+              Career.
+            </span>
+          </h1>
+          <p className="mt-5 max-w-lg text-sm leading-relaxed text-[#1b2a5c]/75">
+            Connect 1-on-1 with vetted senior engineers, staff architects, and design leaders from world-class teams. Get systematic code
+            reviews, live interview practice, and bespoke roadmap guidance.
+          </p>
+          <div className="mt-8 flex flex-wrap gap-3">
             <Link
               href="#mentors"
-              className="rounded-full bg-linear-to-r from-[#14757d] to-[#1b2a5c] px-6 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+              className="inline-flex h-12 items-center gap-2 rounded-full bg-[#12939b] px-6 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(18,147,155,0.3)] transition-colors hover:bg-[#0f7a81]"
             >
-              Explore Mentors
+              Explore Mentors <ArrowRight size={15} aria-hidden />
             </Link>
             <Link
               href="/courses"
-              className="rounded-full border border-[#12939b] bg-white px-6 py-3 text-sm font-semibold text-[#12939b] transition-colors hover:bg-[#E9F7F4]"
+              className="inline-flex h-12 items-center gap-2 rounded-full bg-[#4A2C7A] px-5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
             >
+              <span className="grid size-7 place-items-center rounded-full bg-white/20">
+                <PlayCircle size={14} aria-hidden />
+              </span>
               Explore Learning Tracks
             </Link>
           </div>
         </div>
 
-        <div className="relative mx-auto hidden h-72 w-full max-w-md md:block" aria-hidden>
-          <div className="absolute inset-6 rounded-[40%_60%_55%_45%/50%_45%_55%_50%] bg-[#bfece5]/70" />
-          <div className="absolute inset-0 grid place-items-center">
-            <span className="grid size-28 place-items-center rounded-3xl bg-white text-[#12939b] shadow-lg">
-              <Video size={44} strokeWidth={1.6} />
-            </span>
-          </div>
-          {FLOATING_CHIPS.map(({ icon: Icon, label, className }) => (
-            <span
-              key={label}
-              className={`absolute flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-[11px] font-semibold text-[#1b2a5c] shadow-md ${className}`}
-            >
-              <Icon size={14} className="text-[#12939b]" /> {label}
-            </span>
-          ))}
-          <Curl className="absolute -right-4 top-1/2 w-6" />
-          <CrossMark className="absolute left-1/2 top-0 w-6" />
-        </div>
+        <Image
+          src="/images/Landing%20Page/Mentorship/image%2040.png"
+          alt="A mentor and a student working together on a laptop: 1:1 mentorship, project feedback, career guidance and answers to any question"
+          width={713}
+          height={600}
+          priority
+          sizes="(max-width: 768px) 90vw, 45vw"
+          className="mx-auto h-auto w-full max-w-[560px]"
+        />
       </div>
     </section>
   );

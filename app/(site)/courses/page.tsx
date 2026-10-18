@@ -1,4 +1,4 @@
-import { CourseCatalog } from "@/components/Courses/CourseCatalog";
+import { CoursesLanding } from "@/components/Courses/CoursesLanding";
 import { landingFont } from "@/components/Landing/font";
 
 /**
@@ -7,8 +7,8 @@ import { landingFont } from "@/components/Landing/font";
  */
 export default function CoursesPage() {
   return (
-    <div className={`${landingFont.variable} flex flex-1 flex-col bg-[#F7FBFA] px-6 py-8 font-[family-name:var(--font-poppins)] md:px-10`}>
-      <CourseCatalog />
+    <div className={`${landingFont.variable} flex flex-1 flex-col bg-white font-[family-name:var(--font-poppins)]`}>
+      <CoursesLanding />
     </div>
   );
 }

@@ -8,7 +8,7 @@ export function CtaBand() {
     <section className="bg-white px-6 py-10 lg:px-10">
       <div className="relative mx-auto max-w-7xl overflow-hidden rounded-[32px] bg-[#1b2a5c] py-14">
         <Image
-          src="/images/Landing%20Page/Group%20172.png"
+          src="/images/Landing%20Page/Home/Group%20172.png"
           alt=""
           width={419}
           height={277}
@@ -16,7 +16,7 @@ export function CtaBand() {
           aria-hidden
         />
         <Image
-          src="/images/Landing%20Page/Group%20173.png"
+          src="/images/Landing%20Page/Home/Group%20173.png"
           alt=""
           width={450}
           height={277}

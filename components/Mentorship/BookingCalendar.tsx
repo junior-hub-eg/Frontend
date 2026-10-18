@@ -10,9 +10,13 @@ function startOfDay(d: Date) {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate());
 }
 
-/** MOCK availability: every future day is open except a deterministic handful. Replace with the mentor's real calendar. */
+/**
+ * MOCK availability, like the Figma: school days from today on, except a deterministic handful.
+ * Replace with the mentor's real calendar.
+ */
 export function isDayAvailable(date: Date, today: Date) {
-  return date >= today && (date.getDate() * 3 + date.getMonth()) % 7 !== 0;
+  const weekend = date.getDay() === 0 || date.getDay() === 6;
+  return date >= today && !weekend && (date.getDate() * 3 + date.getMonth()) % 11 !== 0;
 }
 
 export function isSameDay(a: Date | null, b: Date) {
@@ -31,10 +35,11 @@ export function BookingCalendar({ selected, onSelect }: BookingCalendarProps) {
 
   const first = new Date(cursor.year, cursor.month, 1);
   const daysInMonth = new Date(cursor.year, cursor.month + 1, 0).getDate();
-  const cells: (Date | null)[] = [
-    ...Array.from({ length: first.getDay() }, () => null),
-    ...Array.from({ length: daysInMonth }, (_, i) => new Date(cursor.year, cursor.month, i + 1)),
-  ];
+  const prevDays = new Date(cursor.year, cursor.month, 0).getDate();
+  const lead = first.getDay();
+  const trail = (7 - ((lead + daysInMonth) % 7)) % 7;
+  const days = Array.from({ length: daysInMonth }, (_, i) => new Date(cursor.year, cursor.month, i + 1));
+  const open = days.filter((d) => isDayAvailable(d, today)).length;
   const isCurrentMonth = cursor.year === today.getFullYear() && cursor.month === today.getMonth();
 
   function shift(delta: number) {
@@ -43,18 +48,17 @@ export function BookingCalendar({ selected, onSelect }: BookingCalendarProps) {
   }
 
   return (
-    <div>
-      <div className="mb-3 flex items-center justify-between">
-        <p className="text-sm font-semibold text-[#1b2a5c]">
-          {first.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
-        </p>
-        <div className="flex gap-1">
+    <div className="rounded-2xl bg-[#F6F9FB] p-4">
+      <div className="mb-3 flex items-center gap-2">
+        <p className="text-base font-semibold text-[#1b2a5c]">{first.toLocaleDateString("en-US", { month: "long", year: "numeric" })}</p>
+        <span className="rounded-full bg-[#DDF3E7] px-2 py-0.5 text-[9px] font-semibold text-[#1E9D5B]">{open} youth slots open</span>
+        <div className="ml-auto flex gap-1">
           <button
             type="button"
             onClick={() => shift(-1)}
             disabled={isCurrentMonth}
             aria-label="Previous month"
-            className="grid size-7 place-items-center rounded-md border border-[#dfe7e5] text-[#1b2a5c] hover:bg-[#E9F7F4] disabled:opacity-40"
+            className="grid size-7 place-items-center rounded-full bg-white text-[#1b2a5c] shadow-sm hover:bg-[#E9F7F4] disabled:opacity-40"
           >
             <ChevronLeft size={14} />
           </button>
@@ -62,23 +66,27 @@ export function BookingCalendar({ selected, onSelect }: BookingCalendarProps) {
             type="button"
             onClick={() => shift(1)}
             aria-label="Next month"
-            className="grid size-7 place-items-center rounded-md border border-[#dfe7e5] text-[#1b2a5c] hover:bg-[#E9F7F4]"
+            className="grid size-7 place-items-center rounded-full bg-white text-[#1b2a5c] shadow-sm hover:bg-[#E9F7F4]"
           >
             <ChevronRight size={14} />
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-medium text-[#1b2a5c]/50">
+      <div className="grid grid-cols-7 text-center text-[10px] font-medium text-[#1b2a5c]/60">
         {WEEKDAYS.map((d) => (
-          <span key={d} className="py-1">
+          <span key={d} className="py-1.5">
             {d}
           </span>
         ))}
       </div>
-      <div className="grid grid-cols-7 gap-1">
-        {cells.map((date, i) => {
-          if (!date) return <span key={`blank-${i}`} />;
+      <div className="grid grid-cols-7 gap-y-1">
+        {Array.from({ length: lead }, (_, i) => (
+          <span key={`p${i}`} className="grid h-10 place-items-center text-[11px] text-[#1b2a5c]/25">
+            {prevDays - lead + i + 1}
+          </span>
+        ))}
+        {days.map((date) => {
           const available = isDayAvailable(date, today);
           const isSelected = isSameDay(selected, date);
           return (
@@ -90,24 +98,32 @@ export function BookingCalendar({ selected, onSelect }: BookingCalendarProps) {
               aria-pressed={isSelected}
               aria-label={date.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
               className={cn(
-                "aspect-square rounded-lg text-xs font-medium transition-colors",
+                "relative mx-auto grid h-10 w-10 place-items-center rounded-xl text-[11px] font-semibold transition-colors",
                 isSelected
-                  ? "bg-[#12939b] text-white"
+                  ? "bg-[#0f6b60] text-white shadow-md"
                   : available
-                    ? "bg-[#E9F7F4] text-[#1b2a5c] hover:bg-[#cdeee8]"
-                    : "text-[#1b2a5c]/30"
+                    ? "text-[#1b2a5c] hover:bg-[#E9F7F4]"
+                    : "font-normal text-[#1b2a5c]/30",
               )}
             >
               {date.getDate()}
+              {available && (
+                <span className={cn("absolute bottom-1.5 size-1 rounded-full", isSelected ? "bg-white" : "bg-[#0f6b60]")} aria-hidden />
+              )}
             </button>
           );
         })}
+        {Array.from({ length: trail }, (_, i) => (
+          <span key={`n${i}`} className="grid h-10 place-items-center text-[11px] text-[#1b2a5c]/25">
+            {i + 1}
+          </span>
+        ))}
       </div>
 
       <div className="mt-3 flex flex-wrap gap-4 text-[10px] text-[#1b2a5c]/60">
-        <span className="flex items-center gap-1.5"><i className="size-2 rounded-sm bg-[#E9F7F4]" /> Available</span>
-        <span className="flex items-center gap-1.5"><i className="size-2 rounded-sm bg-[#1b2a5c]/20" /> Unavailable</span>
-        <span className="flex items-center gap-1.5"><i className="size-2 rounded-sm bg-[#12939b]" /> Selected</span>
+        <span className="flex items-center gap-1.5"><i className="size-2 rounded-full bg-[#0f6b60]" /> Available</span>
+        <span className="flex items-center gap-1.5"><i className="size-2 rounded-full bg-[#12939b]" /> Selected Day</span>
+        <span className="flex items-center gap-1.5"><i className="size-2 rounded-full bg-[#1b2a5c]/20" /> Unavailable</span>
       </div>
     </div>
   );

@@ -1,118 +1,192 @@
 /**
- * MOCK mentor data for the Mentorship pages (app/monitor/*).
+ * MOCK mentor data for the Mentorship pages (app/(site)/monitor/*), taken from the Figma.
  * Replace with the Mentors API once the backend contract ships.
  */
+export type SessionFormat = "Free Intro Call (15m)" | "Deep Dive 1-on-1 (45m)" | "Monthly Apprenticeship";
+
 export interface Mentor {
   id: string;
   name: string;
   role: string;
   company: string;
+  years: number;
   bio: string;
   rating: number;
   reviews: number;
   sessions: number;
-  /** USD per 30-minute session. */
+  /** USD per 45-minute session. */
   price: number;
-  expertise: string[];
+  /** Next free slot, for example "Tomorrow, 2:00 PM" or "Thursday". */
+  nextSlot: string;
   technologies: string[];
+  /** Filter groups the mentor matches. */
+  techGroups: string[];
   focus: string[];
-  availableThisWeek: boolean;
+  formats: SessionFormat[];
+  /** Booking page profile card. */
+  headline: string;
+  specialty: string;
+  expertiseTags: string[];
+  studentsCoached: string;
+  responseTime: string;
 }
 
-export const EXPERTISE = ["Frontend", "Backend", "Mobile", "Data & AI", "UI/UX"] as const;
-export const TECHNOLOGIES = ["React", "TypeScript", "Python", "Node.js", "Figma", "Flutter", "SQL", "TensorFlow"] as const;
-export const FOCUS = ["Project review", "Career guidance", "Interview prep", "Portfolio feedback"] as const;
+export const SESSION_FORMATS: SessionFormat[] = ["Free Intro Call (15m)", "Deep Dive 1-on-1 (45m)", "Monthly Apprenticeship"];
+export const TECH_GROUPS = [
+  "React / Next.js",
+  "Python / Django / FastApi",
+  "TypeScript & Node.js",
+  "AWS & Cloud Infrastructure",
+  "PyTorch / Machine Learning",
+  "Go / Rust Microservices",
+  "Flutter / React Native",
+] as const;
+export const FOCUS = [
+  "Code Review & PR Critique",
+  "System Design & Scalability",
+  "Mock Technical Interviews",
+  "Portfolio & Capstone Review",
+  "Junior-to-Mid Transition",
+] as const;
+export const EXPERIENCE = [
+  { id: "5-8", label: "5–8 yrs", min: 5, max: 8 },
+  { id: "8-12", label: "8–12 yrs", min: 8, max: 12 },
+  { id: "12+", label: "12+ yrs", min: 12, max: 99 },
+] as const;
+export const MAX_RATE = 150;
 
 export const MENTORS: Mentor[] = [
   {
     id: "sarah-chen",
     name: "Sarah Chen",
-    role: "Senior Frontend Engineer",
-    company: "Cloud Engineering Group",
-    bio: "Helps young builders ship their first real websites and understand how modern frontend teams work.",
+    role: "Senior Full Stack Engineer",
+    company: "Stripe",
+    years: 7,
+    bio: "Specializing in robust React architectures, scalable distributed systems and clean APIs for real products.",
     rating: 4.9,
-    reviews: 128,
-    sessions: 340,
-    price: 40,
-    expertise: ["Frontend", "UI/UX"],
-    technologies: ["React", "TypeScript", "Figma"],
-    focus: ["Project review", "Career guidance"],
-    availableThisWeek: true,
+    reviews: 84,
+    sessions: 128,
+    price: 45,
+    nextSlot: "Tomorrow, 2:00 PM",
+    technologies: ["React", "TypeScript", "GraphQL", "System Design"],
+    techGroups: ["React / Next.js", "TypeScript & Node.js"],
+    focus: ["Code Review & PR Critique", "System Design & Scalability"],
+    formats: ["Free Intro Call (15m)", "Deep Dive 1-on-1 (45m)"],
+    headline: "Staff Engineer @ Stripe",
+    specialty: "Core Infrastructure & Global Payment Rails",
+    expertiseTags: ["Distributed Systems", "Go", "React / TypeScript", "Microservices"],
+    studentsCoached: "140+ teens & kids",
+    responseTime: "< 2 hour",
   },
   {
     id: "marcus-vance",
     name: "Marcus Vance",
-    role: "Backend Engineer",
-    company: "Northwind Labs",
-    bio: "Explains APIs, databases and servers with simple examples, then guides you through a small project.",
-    rating: 4.8,
-    reviews: 96,
-    sessions: 275,
-    price: 35,
-    expertise: ["Backend"],
-    technologies: ["Python", "Node.js", "SQL"],
-    focus: ["Project review", "Interview prep"],
-    availableThisWeek: true,
+    role: "Principal ML Engineer (ex-Meta)",
+    company: "DeepMind",
+    years: 10,
+    bio: "Passionate about training LLMs, PyTorch model deployment, and computer vision projects you can explain.",
+    rating: 5.0,
+    reviews: 112,
+    sessions: 210,
+    price: 60,
+    nextSlot: "Thursday",
+    technologies: ["Python", "PyTorch", "LLMs", "Computer Vision"],
+    techGroups: ["Python / Django / FastApi", "PyTorch / Machine Learning"],
+    focus: ["System Design & Scalability", "Mock Technical Interviews"],
+    formats: ["Deep Dive 1-on-1 (45m)", "Monthly Apprenticeship"],
+    headline: "Principal ML Engineer @ DeepMind",
+    specialty: "Large Language Models & Computer Vision",
+    expertiseTags: ["PyTorch", "LLMs", "Python", "Computer Vision"],
+    studentsCoached: "200+ teens & kids",
+    responseTime: "< 4 hours",
   },
   {
     id: "elena-rostova",
     name: "Elena Rostova",
-    role: "Product Designer",
-    company: "Studio Lumen",
-    bio: "Teaches design thinking, wireframes and how to present your work so people remember it.",
+    role: "Lead Backend Architect",
+    company: "Shopify",
+    years: 9,
+    bio: "High-throughput concurrency, Go microservices, distributed queues with Kafka and cloud deployments on AWS.",
     rating: 4.9,
-    reviews: 112,
-    sessions: 301,
-    price: 30,
-    expertise: ["UI/UX"],
-    technologies: ["Figma"],
-    focus: ["Portfolio feedback", "Career guidance"],
-    availableThisWeek: false,
+    reviews: 67,
+    sessions: 94,
+    price: 50,
+    nextSlot: "Friday",
+    technologies: ["Golang", "Kubernetes", "Kafka", "AWS"],
+    techGroups: ["Go / Rust Microservices", "AWS & Cloud Infrastructure"],
+    focus: ["System Design & Scalability", "Junior-to-Mid Transition"],
+    formats: ["Free Intro Call (15m)", "Deep Dive 1-on-1 (45m)"],
+    headline: "Lead Backend Architect @ Shopify",
+    specialty: "Commerce Platform & Event Streaming",
+    expertiseTags: ["Go", "Kubernetes", "Kafka", "AWS"],
+    studentsCoached: "90+ teens & kids",
+    responseTime: "< 3 hours",
   },
   {
     id: "david-kim",
     name: "David Kim",
-    role: "Mobile Developer",
-    company: "Appsmith Studio",
-    bio: "Walks you from your first screen to a working mobile app you can run on your own phone.",
-    rating: 4.7,
-    reviews: 74,
-    sessions: 198,
-    price: 45,
-    expertise: ["Mobile"],
-    technologies: ["Flutter", "TypeScript"],
-    focus: ["Project review", "Portfolio feedback"],
-    availableThisWeek: true,
+    role: "Staff Mobile Engineer",
+    company: "Airbnb",
+    years: 8,
+    bio: "Cross-platform mobile optimization with React Native and native iOS Swift, from first screen to the store.",
+    rating: 4.8,
+    reviews: 93,
+    sessions: 145,
+    price: 40,
+    nextSlot: "Today, 5:00 PM",
+    technologies: ["React Native", "Swift", "Kotlin", "Performance"],
+    techGroups: ["Flutter / React Native", "TypeScript & Node.js"],
+    focus: ["Portfolio & Capstone Review", "Code Review & PR Critique"],
+    formats: ["Free Intro Call (15m)", "Deep Dive 1-on-1 (45m)", "Monthly Apprenticeship"],
+    headline: "Staff Mobile Engineer @ Airbnb",
+    specialty: "Cross-platform Apps & Performance",
+    expertiseTags: ["React Native", "Swift", "Kotlin", "Performance"],
+    studentsCoached: "150+ teens & kids",
+    responseTime: "< 1 hour",
   },
   {
     id: "amara-okafor",
     name: "Amara Okafor",
-    role: "Data Scientist",
-    company: "Insight Works",
-    bio: "Makes data approachable: cleaning, charts and the questions worth asking about a dataset.",
-    rating: 4.8,
-    reviews: 87,
-    sessions: 226,
-    price: 38,
-    expertise: ["Data & AI"],
-    technologies: ["Python", "SQL"],
-    focus: ["Career guidance", "Interview prep"],
-    availableThisWeek: true,
+    role: "Senior Product Designer & Frontend Lead",
+    company: "Figma",
+    years: 6,
+    bio: "Bridging UI engineering with refined product design. Design tokens, accessible components and polished pages.",
+    rating: 5.0,
+    reviews: 74,
+    sessions: 118,
+    price: 45,
+    nextSlot: "Saturday",
+    technologies: ["UI/UX", "TailwindCSS", "Accessibility", "Next.js"],
+    techGroups: ["React / Next.js"],
+    focus: ["Portfolio & Capstone Review", "Junior-to-Mid Transition"],
+    formats: ["Free Intro Call (15m)", "Deep Dive 1-on-1 (45m)"],
+    headline: "Senior Product Designer @ Figma",
+    specialty: "Design Systems & Accessible Interfaces",
+    expertiseTags: ["UI/UX", "Design Tokens", "Accessibility", "Next.js"],
+    studentsCoached: "120+ teens & kids",
+    responseTime: "< 2 hour",
   },
   {
     id: "tariq-al-mansoor",
     name: "Tariq Al-Mansoor",
-    role: "AI Engineer",
-    company: "Vector Labs",
-    bio: "Introduces machine learning with hands-on notebooks and responsible-AI habits from day one.",
+    role: "Staff DevOps & Cloud Security Lead",
+    company: "Datadog",
+    years: 11,
+    bio: "Specialized in infrastructure as code, Terraform automation, zero-trust cloud security and CI/CD pipelines.",
     rating: 4.9,
-    reviews: 69,
-    sessions: 154,
-    price: 50,
-    expertise: ["Data & AI", "Backend"],
-    technologies: ["Python", "TensorFlow"],
-    focus: ["Project review", "Interview prep"],
-    availableThisWeek: false,
+    reviews: 51,
+    sessions: 88,
+    price: 55,
+    nextSlot: "Wednesday",
+    technologies: ["Terraform", "Docker", "CI/CD", "Security"],
+    techGroups: ["AWS & Cloud Infrastructure", "Go / Rust Microservices"],
+    focus: ["Mock Technical Interviews", "System Design & Scalability"],
+    formats: ["Deep Dive 1-on-1 (45m)", "Monthly Apprenticeship"],
+    headline: "Staff DevOps Lead @ Datadog",
+    specialty: "Cloud Security & Infrastructure as Code",
+    expertiseTags: ["Terraform", "Docker", "CI/CD", "Security"],
+    studentsCoached: "80+ teens & kids",
+    responseTime: "< 3 hours",
   },
 ];
 
@@ -127,11 +201,35 @@ export interface SessionType {
   /** USD, 0 = free. */
   price: number;
   minutes: number;
+  /** Shown under the price, for example "per 45m" or "first session". */
+  priceNote: string;
   popular?: boolean;
 }
 
 export const SESSION_TYPES: SessionType[] = [
-  { id: "build", title: "Build & Fix My Project", description: "Work on your own project together and get unstuck.", price: 25, minutes: 30, popular: true },
-  { id: "learn", title: "Learn a New Skill", description: "A guided mini-lesson on a topic you pick.", price: 30, minutes: 30 },
-  { id: "intro", title: "Quick Intro & Idea Chat", description: "Meet your mentor and talk through your ideas.", price: 0, minutes: 15 },
+  {
+    id: "build",
+    title: "Build & Fix My Project",
+    description: "Bring your Scratch game, Roblox script, Python mini-game, or website and fix it together.",
+    price: 25,
+    minutes: 45,
+    priceNote: "per 45m",
+    popular: true,
+  },
+  {
+    id: "learn",
+    title: "Learn a New Skill",
+    description: "Step-by-step interactive lesson (Python basics, HTML/CSS website, and more).",
+    price: 30,
+    minutes: 45,
+    priceNote: "per 45m",
+  },
+  {
+    id: "intro",
+    title: "Quick Intro & Idea Chat",
+    description: "Say hello, explore exciting project possibilities, and see if {mentor} is the right fit.",
+    price: 0,
+    minutes: 20,
+    priceNote: "first session",
+  },
 ];

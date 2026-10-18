@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState, type ComponentType } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
 import {
@@ -59,6 +60,12 @@ const THEMES: Record<CourseTheme, { bg: string; accent: string; tag: string }> =
   pink: { bg: "bg-[#FDE4EE]", accent: "text-[#D1365A]", tag: "bg-[#fbc9dc] text-[#b02a4c]" },
   blue: { bg: "bg-[#DCEBFB]", accent: "text-[#2563EB]", tag: "bg-[#bcd6f7] text-[#1d4fb8]" },
   mint: { bg: "bg-[#DDF3EF]", accent: "text-[#12939b]", tag: "bg-[#bfe8e0] text-[#0f7a81]" },
+};
+
+/** Illustrations from the Figma (public/images/Intern); the mint card has none yet. */
+const FEATURED_ART: Partial<Record<"pink" | "blue" | "mint", string>> = {
+  pink: "/images/Intern/image%2036.png",
+  blue: "/images/Intern/image%2037.png",
 };
 
 function formatStudents(n: number) {
@@ -210,9 +217,19 @@ export function CourseCatalog() {
                       <span className="flex items-center gap-1"><Users aria-hidden size={11} /> {formatStudents(course.students)} students</span>
                     </p>
                   </div>
-                  <span aria-hidden className={cn("hidden size-24 shrink-0 place-items-center self-center rounded-2xl bg-white/70 sm:grid", theme.accent)}>
-                    <Monitor size={40} strokeWidth={1.5} />
-                  </span>
+                  {FEATURED_ART[course.theme] ? (
+                    <Image
+                      src={FEATURED_ART[course.theme]!}
+                      alt=""
+                      width={245}
+                      height={180}
+                      className="hidden w-36 shrink-0 self-center object-contain sm:block"
+                    />
+                  ) : (
+                    <span aria-hidden className={cn("hidden size-24 shrink-0 place-items-center self-center rounded-2xl bg-white/70 sm:grid", theme.accent)}>
+                      <Monitor size={40} strokeWidth={1.5} />
+                    </span>
+                  )}
                 </Link>
               );
             })}
