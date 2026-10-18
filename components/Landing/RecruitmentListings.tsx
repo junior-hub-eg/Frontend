@@ -53,13 +53,13 @@ const ROLES: {
   },
 ];
 
-/** Card illustrations exported from the Figma design (public/images/Recruitment). */
+/** Card illustrations exported from the Figma design (public/images/Landing Page/Recruitment). */
 const ROLE_IMAGES: Record<ArtVariant, string> = {
-  design: "/images/Recruitment/role-uiux.png",
-  frontend: "/images/Recruitment/role-frontend.png",
-  qa: "/images/Recruitment/role-qa.png",
-  data: "/images/Recruitment/role-data.png",
-  product: "/images/Recruitment/role-product.png",
+  design: "/images/Landing%20Page/Recruitment/role-uiux.png",
+  frontend: "/images/Landing%20Page/Recruitment/role-frontend.png",
+  qa: "/images/Landing%20Page/Recruitment/role-qa.png",
+  data: "/images/Landing%20Page/Recruitment/role-data.png",
+  product: "/images/Landing%20Page/Recruitment/role-product.png",
 };
 
 function RoleIllustration({ variant }: { variant: ArtVariant }) {
@@ -70,9 +70,9 @@ function RoleIllustration({ variant }: { variant: ArtVariant }) {
 function OpportunityIllustration() {
   return (
     <div className="relative mx-auto h-[386px] w-full max-w-[507px]">
-      <Image src="/images/Recruitment/hero-decorations.png" alt="" fill sizes="507px" className="object-contain" priority />
+      <Image src="/images/Landing%20Page/Recruitment/hero-decorations.png" alt="" fill sizes="507px" className="object-contain" priority />
       <Image
-        src="/images/Recruitment/hero-resume.png"
+        src="/images/Landing%20Page/Recruitment/hero-resume.png"
         alt=""
         width={380}
         height={380}
@@ -168,7 +168,7 @@ export function RecruitmentHero({ children }: { children?: ReactNode }) {
   return (
     <section className="relative overflow-hidden bg-[radial-gradient(ellipse_at_22%_30%,rgba(213,238,234,0.72),transparent_34%)]">
       <Image
-        src="/images/Recruitment/background-blur.png"
+        src="/images/Landing%20Page/Recruitment/background-blur.png"
         alt=""
         width={359}
         height={261}
