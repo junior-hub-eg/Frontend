@@ -101,8 +101,13 @@ export function LearnerSidebar({ activeHref, collapsed = false, mobileOpen = fal
         <div className="absolute -right-[45%] top-[48%] h-[120%] w-[150%] rounded-[50%] bg-[#c3e7fb]/90" />
       </div>
 
-      {/* logo: full logo when open, graduation cap on the rail / collapsed */}
-      <div className={cn("mb-[2.6em] flex h-[2.6em] items-center", logoBox)}>
+      {/* logo: full logo when open, graduation cap on the rail / collapsed. Opens the landing page. */}
+      <Link
+        href="/"
+        aria-label="Junior Hub home"
+        onClick={onNavigate}
+        className={cn("mb-[2.6em] flex h-[2.6em] items-center rounded-[0.7em]", logoBox)}
+      >
         <Image
           src="/images/Auth/logo.png"
           alt="Junior Hub"
@@ -113,7 +118,7 @@ export function LearnerSidebar({ activeHref, collapsed = false, mobileOpen = fal
           className={logoFull}
         />
         <GraduationCap className={cn("h-[2em] w-[2em] text-[#14365a]", logoCap)} />
-      </div>
+      </Link>
 
       <nav className="flex flex-col gap-[0.8em]">
         {LEARNER_NAV_MAIN.map((item) => (
