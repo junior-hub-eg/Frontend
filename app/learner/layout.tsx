@@ -1,5 +1,6 @@
-import { RoleLayout } from "@/components/layout/role-layout";
+import type { ReactNode } from "react";
+import { LearnerLayoutClient } from "@/components/learner/LearnerLayoutClient";
 
-export default function LearnerLayout({ children }: { children: React.ReactNode }) {
-  return <RoleLayout role="learner">{children}</RoleLayout>;
+export default function LearnerLayout({ children }: { children: ReactNode }) {
+  return <LearnerLayoutClient>{children}</LearnerLayoutClient>;
 }
