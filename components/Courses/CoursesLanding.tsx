@@ -18,17 +18,15 @@ import {
   Palette,
   PlayCircle,
   RotateCcw,
-  Rocket,
   ShieldCheck,
   Smartphone,
-  Sparkles,
   TrendingUp,
   Trophy,
   type LucideIcon,
 } from "lucide-react";
 import { Curl } from "@/components/Auth/AuthDecorations";
 import { CtaBand } from "@/components/Landing/CtaBand";
-import { Sparkle, SpikeBurst } from "@/components/Landing/LandingDecorations";
+import { Sparkle } from "@/components/Landing/LandingDecorations";
 
 const IMG = "/images/Landing%20Page/Home";
 /** Track and lesson pages need a signed-in student (proxy.ts sends visitors to /login first). */
@@ -60,10 +58,10 @@ const TRACKS: {
   { slug: "", title: "Backend", text: "Understand the systems behind digital products.", tags: ["Servers", "Logic", "Data"], icon: Database, bg: "from-[#DBF4F1] to-[#F1FBF9]", tile: "bg-white text-[#12939b]", accent: "#12939b" },
 ];
 
-const FEATURED: { slug: string; tag: string; category: string; title: string; text: string; image?: string; tint: string }[] = [
-  { slug: "ui-ux-design", tag: "UI/UX Design", category: "UI/UX DESIGN", title: "Designing Your First Interface", text: "Use layout, color, and hierarchy to turn an idea into a clear digital experience.", image: "/images/Intern/image%2036.png", tint: "from-[#FBD3E4] to-[#FDEAF2]" },
-  { slug: "frontend", tag: "Frontend", category: "FRONTEND", title: "Build a Responsive Web Page", text: "Discover the building blocks of the web and bring a responsive page to life.", image: "/images/Intern/image%2037.png", tint: "from-[#D6E8FB] to-[#EEF5FE]" },
-  { slug: "data-science", tag: "Data Science", category: "DATA SCIENCE", title: "Introduction to Data Thinking", text: "Explore how data can reveal patterns, answer questions, and support decisions.", tint: "from-[#E7DCFB] to-[#F4EEFE]" },
+const FEATURED: { slug: string; tag: string; category: string; title: string; text: string; image?: string; imageHasTag?: boolean; tint: string }[] = [
+  { slug: "ui-ux-design", tag: "UI/UX Design", category: "UI/UX DESIGN", title: "Designing Your First Interface", text: "Use layout, color, and hierarchy to turn an idea into a clear digital experience.", image: "/images/Landing%20Page/Courses/CourseCard.png", imageHasTag: true, tint: "from-[#FBD3E4] to-[#FDEAF2]" },
+  { slug: "frontend", tag: "Frontend", category: "FRONTEND", title: "Build a Responsive Web Page", text: "Discover the building blocks of the web and bring a responsive page to life.", image: "/images/Landing%20Page/Courses/CourseCard-2.png", imageHasTag: true, tint: "from-[#D6E8FB] to-[#EEF5FE]" },
+  { slug: "data-science", tag: "Data Science", category: "DATA SCIENCE", title: "Introduction to Data Thinking", text: "Explore how data can reveal patterns, answer questions, and support decisions.", image: "/images/Landing%20Page/Courses/Container.png", tint: "from-[#E7DCFB] to-[#F4EEFE]" },
 ];
 
 const STEPS: { icon: LucideIcon; title: string; text: string }[] = [
@@ -98,20 +96,6 @@ function SectionHeading({ eyebrow, title, text, link }: { eyebrow: string; title
           View All Tracks <ArrowRight size={14} aria-hidden />
         </Link>
       )}
-    </div>
-  );
-}
-
-function FloatingCard({ icon: Icon, title, text, className }: { icon: LucideIcon; title: string; text: string; className: string }) {
-  return (
-    <div className={`absolute z-20 flex items-center gap-2 rounded-xl bg-white px-3 py-2 shadow-[0_8px_24px_rgba(27,42,92,0.12)] ${className}`}>
-      <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-[#DBF4F1] text-[#12939b]">
-        <Icon size={14} aria-hidden />
-      </span>
-      <span className="leading-tight">
-        <span className="block text-[11px] font-semibold text-[#1b2a5c]">{title}</span>
-        <span className="block text-[9px] text-[#1b2a5c]/55">{text}</span>
-      </span>
     </div>
   );
 }
@@ -151,31 +135,15 @@ function Hero() {
           </div>
         </div>
 
-        <div className="relative mx-auto w-full max-w-[560px] lg:max-w-none">
-          <Image
-            src="/images/Auth/auth-background.png"
-            alt=""
-            width={584}
-            height={719}
-            className="pointer-events-none absolute bottom-0 right-[8%] w-[62%] -rotate-90 opacity-80"
-            aria-hidden
-          />
-          <SpikeBurst className="pointer-events-none absolute left-[30%] top-[18%] z-10 h-10 w-10 text-[#1b2a5c]" />
-          <Sparkle className="pointer-events-none absolute left-[8%] top-[10%] z-10 h-6 w-6 text-[#12939b]" />
-          <Sparkle className="pointer-events-none absolute right-[4%] top-[48%] z-10 h-5 w-5 text-[#12939b]" />
-          <Image
-            src="/images/Auth/students.png"
-            alt="Two Junior Hub students holding a laptop and notebooks"
-            width={1062}
-            height={832}
-            priority
-            sizes="(max-width: 1024px) 90vw, 46vw"
-            className="relative z-10 ml-auto h-auto w-[86%]"
-          />
-          <FloatingCard icon={Sparkles} title="Creative Lessons" text="Learn step by step" className="left-[12%] top-[4%]" />
-          <FloatingCard icon={Rocket} title="Practical Skills" text="Build as you learn" className="right-0 top-[2%]" />
-          <FloatingCard icon={ShieldCheck} title="Keep Growing" text="Follow your progress" className="right-[-2%] top-[36%]" />
-        </div>
+        <Image
+          src="/images/Landing%20Page/Courses/Two%20Junior%20Hub%20students%20ready%20to%20learn.png"
+          alt="Two Junior Hub students ready to learn: creative lessons, practical skills and growing step by step"
+          width={795}
+          height={600}
+          priority
+          sizes="(max-width: 1024px) 90vw, 46vw"
+          className="mx-auto h-auto w-full max-w-[600px]"
+        />
       </div>
     </section>
   );
@@ -259,15 +227,17 @@ function FeaturedCourses() {
               href={trackHref(c.slug)}
               className="group flex h-full flex-col overflow-hidden rounded-[20px] border border-[#E6EEF2] bg-white shadow-[0_6px_20px_rgba(27,42,92,0.06)] transition-shadow hover:shadow-[0_10px_28px_rgba(27,42,92,0.12)]"
             >
-              <div className={`relative aspect-[16/7] bg-gradient-to-br ${c.tint}`}>
+              <div className={`relative aspect-[424/184] bg-gradient-to-br ${c.tint}`}>
                 {c.image ? (
                   <Image src={c.image} alt="" fill sizes="(max-width: 1024px) 50vw, 30vw" className="object-cover" />
                 ) : (
                   <ChartColumn className="absolute left-1/2 top-1/2 size-14 -translate-x-1/2 -translate-y-1/2 text-[#7C3AED]/70" aria-hidden />
                 )}
-                <span className="absolute bottom-3 left-3 rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-medium text-[#1b2a5c]">
-                  {c.tag}
-                </span>
+                {!c.imageHasTag && (
+                  <span className="absolute bottom-3 left-3 rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-medium text-[#1b2a5c]">
+                    {c.tag}
+                  </span>
+                )}
               </div>
               <div className="flex flex-1 flex-col p-5">
                 <p className="text-[10px] font-medium tracking-wide text-[#1b2a5c]/60">{c.category}</p>

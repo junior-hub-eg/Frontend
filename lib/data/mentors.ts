@@ -7,6 +7,9 @@ export type SessionFormat = "Free Intro Call (15m)" | "Deep Dive 1-on-1 (45m)" |
 export interface Mentor {
   id: string;
   name: string;
+  /** Photo from the Figma. Most already have the green "online" dot drawn in. */
+  photo: string;
+  photoHasDot: boolean;
   role: string;
   company: string;
   years: number;
@@ -58,6 +61,8 @@ export const MAX_RATE = 150;
 export const MENTORS: Mentor[] = [
   {
     id: "sarah-chen",
+    photo: "/images/Landing%20Page/Mentorship/Container.png",
+    photoHasDot: true,
     name: "Sarah Chen",
     role: "Senior Full Stack Engineer",
     company: "Stripe",
@@ -80,6 +85,8 @@ export const MENTORS: Mentor[] = [
   },
   {
     id: "marcus-vance",
+    photo: "/images/Landing%20Page/Mentorship/Container-4.png",
+    photoHasDot: true,
     name: "Marcus Vance",
     role: "Principal ML Engineer (ex-Meta)",
     company: "DeepMind",
@@ -102,6 +109,8 @@ export const MENTORS: Mentor[] = [
   },
   {
     id: "elena-rostova",
+    photo: "/images/Landing%20Page/Mentorship/Container-3.png",
+    photoHasDot: true,
     name: "Elena Rostova",
     role: "Lead Backend Architect",
     company: "Shopify",
@@ -124,6 +133,8 @@ export const MENTORS: Mentor[] = [
   },
   {
     id: "david-kim",
+    photo: "/images/Landing%20Page/Mentorship/AB6AXuC6YROxp2BQf4PTEesydJWbo1R1COfRQYIqS2xB-QFnJQ0v1hwyp1_IwjgRrKhNNzCGo5xmvdkBoI_I_6fMRdT6bSaqsFiKWjKWJpqzIuBZtfUdDop9MdTLU7c26f5Xs9DZSycQD7-OrWTZ9s244YIKjso7OFz7DJ_U1xnD64y2irk_FnxVM8UKkQt0LE-9QlsRCRRUBoG1GmCYADLkOlZ05RbEzNoDY3snSuGavAaUgtGQPtN2.png",
+    photoHasDot: false,
     name: "David Kim",
     role: "Staff Mobile Engineer",
     company: "Airbnb",
@@ -146,6 +157,8 @@ export const MENTORS: Mentor[] = [
   },
   {
     id: "amara-okafor",
+    photo: "/images/Landing%20Page/Mentorship/Container-5.png",
+    photoHasDot: true,
     name: "Amara Okafor",
     role: "Senior Product Designer & Frontend Lead",
     company: "Figma",
@@ -168,6 +181,8 @@ export const MENTORS: Mentor[] = [
   },
   {
     id: "tariq-al-mansoor",
+    photo: "/images/Landing%20Page/Mentorship/Container-2.png",
+    photoHasDot: true,
     name: "Tariq Al-Mansoor",
     role: "Staff DevOps & Cloud Security Lead",
     company: "Datadog",

@@ -326,7 +326,7 @@ export function BookingFlow({ mentor }: { mentor: Mentor }) {
             aside={<Badge icon={Wand2}>Beginner friendly • Zero prep needed</Badge>}
           >
             <div className="flex flex-wrap items-center gap-4 rounded-2xl border border-[#cdeee8] bg-[#EAF8F6] p-4">
-              <MentorAvatar name={mentor.name} className="size-11" />
+              <MentorAvatar name={mentor.name} photo={mentor.photo} photoHasDot={mentor.photoHasDot} className="size-11" />
               <div className="min-w-0 flex-1">
                 <p className="flex flex-wrap items-center gap-2 text-xs font-semibold text-[#1b2a5c]">
                   {firstName} is ready to help you code!
@@ -456,7 +456,7 @@ export function BookingFlow({ mentor }: { mentor: Mentor }) {
         <aside className="flex flex-col gap-5 lg:sticky lg:top-24">
           <div className="rounded-[20px] bg-white p-5 shadow-[0_6px_24px_rgba(27,42,92,0.06)]">
             <div className="flex items-start gap-3">
-              <MentorAvatar name={mentor.name} online className="size-14 text-base" />
+              <MentorAvatar name={mentor.name} photo={mentor.photo} photoHasDot={mentor.photoHasDot} online className="size-14 text-base" />
               <div className="min-w-0 flex-1">
                 <p className="flex items-center justify-between gap-2">
                   <span className="flex items-center gap-1 text-base font-semibold text-[#1b2a5c]">
