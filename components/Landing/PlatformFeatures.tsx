@@ -16,7 +16,7 @@ export function PlatformFeatures() {
       <div className="grid items-center gap-12 lg:grid-cols-2">
         <div className="relative mx-auto w-full max-w-xl lg:max-w-none">
           <Image
-            src="/images/Landing%20Page/student.png"
+            src="/images/Landing%20Page/Home/student.png"
             alt="A Junior Hub student learning on a laptop"
             width={762}
             height={603}
@@ -24,7 +24,7 @@ export function PlatformFeatures() {
             className="relative z-10 h-auto w-full"
           />
           <Image
-            src="/images/Landing%20Page/flat-color-icons_idea.png"
+            src="/images/Landing%20Page/Home/flat-color-icons_idea.png"
             alt=""
             width={64}
             height={64}
@@ -32,7 +32,7 @@ export function PlatformFeatures() {
             aria-hidden
           />
           <Image
-            src="/images/Landing%20Page/bitcoin-icons_code-filled.png"
+            src="/images/Landing%20Page/Home/bitcoin-icons_code-filled.png"
             alt=""
             width={24}
             height={24}
@@ -48,7 +48,7 @@ export function PlatformFeatures() {
 
         <div className="relative">
           <Image
-            src="/images/Landing%20Page/Back%20Back-3.png"
+            src="/images/Landing%20Page/Home/Back%20Back-3.png"
             alt=""
             width={107}
             height={116}

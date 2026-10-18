@@ -7,37 +7,37 @@ const TRACKS = [
   {
     title: "UI/UX Design",
     subtitle: "Design Digital Experience",
-    icon: "/images/Landing%20Page/Group.png",
+    icon: "/images/Landing%20Page/Home/Group.png",
     colors: TRACK_COLORS.mint,
   },
   {
     title: "Frontend",
     subtitle: "Web Development",
-    icon: "/images/Landing%20Page/emojione-v1_laptop-computer.png",
+    icon: "/images/Landing%20Page/Home/emojione-v1_laptop-computer.png",
     colors: TRACK_COLORS.blue,
   },
   {
     title: "Mobile Development",
     subtitle: "Create Mobile Apps",
-    icon: "/images/Landing%20Page/Vector.png",
+    icon: "/images/Landing%20Page/Home/Vector.png",
     colors: TRACK_COLORS.tan,
   },
   {
     title: "Data Science",
     subtitle: "& Data analysis",
-    icon: "/images/Landing%20Page/fluent_data-histogram-16-filled.png",
+    icon: "/images/Landing%20Page/Home/fluent_data-histogram-16-filled.png",
     colors: TRACK_COLORS.rose,
   },
   {
     title: "AI",
     subtitle: "Explore Intelligent systems",
-    icon: "/images/Landing%20Page/Group%20copy.png",
+    icon: "/images/Landing%20Page/Home/Group%20copy.png",
     colors: TRACK_COLORS.purple,
   },
   {
     title: "Backend",
     subtitle: "Development",
-    icon: "/images/Landing%20Page/at-icons_server.png",
+    icon: "/images/Landing%20Page/Home/at-icons_server.png",
     colors: TRACK_COLORS.teal,
   },
 ];
@@ -46,7 +46,7 @@ export function Tracks() {
   return (
     <section className="relative mx-auto max-w-7xl px-6 py-20 lg:px-10">
       <Image
-        src="/images/Landing%20Page/Back%20Back-4.png"
+        src="/images/Landing%20Page/Home/Back%20Back-4.png"
         alt=""
         width={107}
         height={116}
