@@ -60,7 +60,7 @@ async function send(baseUrl: string, path: string, options: RequestInit): Promis
       ...options,
       credentials: "include",
       headers: {
-        ...(options.body ? { "Content-Type": "application/json" } : {}),
+        ...(options.body && !(options.body instanceof FormData) ? { "Content-Type": "application/json" } : {}),
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...options.headers,
       },
@@ -127,6 +127,9 @@ export const api = {
     request<T>(API_BASE_URL, path, { ...options, method: "POST", body: body ? JSON.stringify(body) : undefined }),
   put: <T>(path: string, body?: unknown, options?: RequestInit) =>
     request<T>(API_BASE_URL, path, { ...options, method: "PUT", body: body ? JSON.stringify(body) : undefined }),
+  /** multipart/form-data (the browser sets the boundary). */
+  postForm: <T>(path: string, form: FormData, options?: RequestInit) =>
+    request<T>(API_BASE_URL, path, { ...options, method: "POST", body: form }),
   patch: <T>(path: string, body?: unknown, options?: RequestInit) =>
     request<T>(API_BASE_URL, path, { ...options, method: "PATCH", body: body ? JSON.stringify(body) : undefined }),
   delete: <T>(path: string, options?: RequestInit) => request<T>(API_BASE_URL, path, { ...options, method: "DELETE" }),

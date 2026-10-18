@@ -1,0 +1,15 @@
+import DiscoveryInterview from "@/components/learner/DiscoveryInterview";
+import { LearnerPageFrame } from "@/components/learner/LearnerPageFrame";
+import type { DiscoveryPath } from "@/lib/learning-api";
+
+const PATHS: DiscoveryPath[] = ["KnowsTrack", "Unsure", "Exploring"];
+
+export default async function DiscoveryPage({ searchParams }: { searchParams: Promise<{ path?: string }> }) {
+  const { path } = await searchParams;
+  const chosen = PATHS.find((p) => p === path) ?? "Unsure";
+  return (
+    <LearnerPageFrame>
+      <DiscoveryInterview path={chosen} />
+    </LearnerPageFrame>
+  );
+}
