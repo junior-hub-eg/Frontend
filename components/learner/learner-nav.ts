@@ -26,7 +26,7 @@ export const LEARNER_NAV_MAIN: LearnerNavItem[] = [
     icon: LayoutDashboard,
     matches: ["/learner/interns"],
   },
-  { label: "AI Curriculum", href: "/learner/ai-interview" as Route, icon: Brain },
+  { label: "AI Curriculum", href: "/learner/ai-curriculum" as Route, icon: Brain },
   { label: "Recruitment Practice", href: "/learner/recruitment-practice" as Route, icon: FileText },
 ];
 
