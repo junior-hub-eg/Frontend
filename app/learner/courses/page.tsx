@@ -1,5 +1,5 @@
-import CoursesPage from "@/components/learner/CoursesPage";
+import CoursesGate from "@/components/learner/CoursesGate";
 
 export default function LearnerCoursesPage() {
-  return <CoursesPage />;
+  return <CoursesGate />;
 }
