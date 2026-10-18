@@ -1,5 +1,6 @@
-import InternDashboard from "@/components/learner/InternDashboard";
+import { redirect } from "next/navigation";
 
+/** The dashboard moved to /learner/dashboard, where students land after signing in. */
 export default function InternDashboardPage() {
-  return <InternDashboard />;
+  redirect("/learner/dashboard");
 }
