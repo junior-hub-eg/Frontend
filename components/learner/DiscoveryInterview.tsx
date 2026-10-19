@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, LoaderCircle, Mic, Send, Square, Volume2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, LoaderCircle, Mic, RotateCcw, Send, Square, Volume2 } from "lucide-react";
 import { errorMessage } from "@/lib/api-client";
 import {
   answerTyped,
@@ -13,6 +13,7 @@ import {
   startInterview,
   type DiscoveryPath,
   type DiscoveryQuestion,
+  type InterviewState,
   trackPath,
   type DiscoveryResult,
 } from "@/lib/learning-api";
@@ -23,7 +24,24 @@ const PATH_TITLE: Record<DiscoveryPath, string> = {
   Unsure: "Find the tracks that fit you",
 };
 
-type Interview = { id: string; maxQuestions: number; answered: number; canFinish: boolean; question: DiscoveryQuestion | null };
+type Interview = {
+  id: string;
+  maxQuestions: number;
+  answered: number;
+  canFinish: boolean;
+  question: DiscoveryQuestion | null;
+  /** An interview in progress was continued rather than a new one started. */
+  resumed: boolean;
+};
+
+const toInterview = (s: InterviewState): Interview => ({
+  id: s.interviewId,
+  maxQuestions: s.maxQuestions,
+  answered: s.answeredCount,
+  canFinish: s.canFinishNow,
+  question: s.question,
+  resumed: s.resumed,
+});
 
 function playAudio(q: DiscoveryQuestion | null) {
   if (!q?.audioBase64) return;
@@ -49,7 +67,7 @@ export default function DiscoveryInterview({ path }: { path: DiscoveryPath }) {
     startInterview(path)
       .then((s) => {
         if (!active) return;
-        setInterview({ id: s.interviewId, maxQuestions: s.maxQuestions, answered: s.answeredCount, canFinish: s.canFinishNow, question: s.question });
+        setInterview(toInterview(s));
         playAudio(s.question);
       })
       .catch((e) => active && setError(errorMessage(e, "We couldn't start the interview. Please try again.")))
@@ -58,6 +76,23 @@ export default function DiscoveryInterview({ path }: { path: DiscoveryPath }) {
       active = false;
     };
   }, [path]);
+
+  /** Closes the interview in progress and starts a new one from the first question. */
+  async function startAgain() {
+    setBusy("start");
+    setError(null);
+    setNotice(null);
+    setAnswer("");
+    try {
+      const s = await startInterview(path, true);
+      setInterview(toInterview(s));
+      playAudio(s.question);
+    } catch (e) {
+      setError(errorMessage(e, "We couldn't start a new interview. Please try again."));
+    } finally {
+      setBusy(null);
+    }
+  }
 
   async function finish(id: string) {
     setBusy("finish");
@@ -199,6 +234,20 @@ export default function DiscoveryInterview({ path }: { path: DiscoveryPath }) {
             <div className="mt-2 h-2 overflow-hidden rounded-full bg-[#dde6ee]">
               <div className="h-full rounded-full bg-[#12939b] transition-[width]" style={{ width: `${progress}%` }} />
             </div>
+
+            {interview.resumed && (
+              <div className="mt-4 flex flex-wrap items-center gap-3 rounded-2xl border border-[#12939b]/30 bg-[#e9f7f4] px-4 py-3 text-sm text-[#14365a]">
+                <span className="flex-1">You&apos;re continuing the interview you started before.</span>
+                <button
+                  type="button"
+                  disabled={busy !== null}
+                  onClick={startAgain}
+                  className="flex items-center gap-1.5 font-bold text-[#12939b] hover:underline disabled:opacity-60"
+                >
+                  <RotateCcw className="size-4" /> Start again
+                </button>
+              </div>
+            )}
 
             {interview.question && (
               <div className="mt-6 rounded-[24px] bg-gradient-to-br from-[#e3f6ee] to-[#dcebfb] p-6">
