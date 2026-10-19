@@ -3,9 +3,9 @@
 import { useState } from "react";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, CirclePlay, LoaderCircle } from "lucide-react";
+import { ArrowLeft, ArrowRight, CirclePlay, LoaderCircle, RotateCcw } from "lucide-react";
 import { errorMessage } from "@/lib/api-client";
-import { selectTrack, trackPath, type DiscoveryPath, type InterviewState, type TrackSummary } from "@/lib/learning-api";
+import { selectTrack, startInterview, trackPath, type DiscoveryPath, type InterviewState, type TrackSummary } from "@/lib/learning-api";
 
 const CHOICES: { path: DiscoveryPath; emoji: string; title: string; text: string; bg: string }[] = [
   {
@@ -43,6 +43,20 @@ export default function FindYourTrack({
   const [picking, setPicking] = useState(false);
   const [saving, setSaving] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [restarting, setRestarting] = useState(false);
+
+  /** Closes the interview in progress and opens a new one with the same path. */
+  async function startAgain(path: DiscoveryPath) {
+    setRestarting(true);
+    setError(null);
+    try {
+      await startInterview(path, true);
+      router.push(`/learner/courses/discovery?path=${path}&fresh=1`);
+    } catch (e) {
+      setError(errorMessage(e, "We couldn't start a new interview. Please try again."));
+      setRestarting(false);
+    }
+  }
 
   async function choose(code: string) {
     setSaving(code);
@@ -64,18 +78,29 @@ export default function FindYourTrack({
       </p>
 
       {inProgress && !picking && (
-        <button
-          type="button"
-          onClick={() => router.push(`/learner/courses/discovery?path=${inProgress.path}`)}
-          className="mt-5 flex items-center gap-3 rounded-2xl border border-[#12939b]/30 bg-[#e9f7f4] p-4 text-left text-sm text-[#14365a] hover:bg-[#dcf2ee]"
-        >
+        <div className="mt-5 flex flex-wrap items-center gap-3 rounded-2xl border border-[#12939b]/30 bg-[#e9f7f4] p-4 text-sm text-[#14365a]">
           <CirclePlay className="size-6 shrink-0 text-[#12939b]" />
-          <span>
+          <span className="min-w-0 flex-1">
             <span className="block font-bold">Continue your interview</span>
             You answered {inProgress.answeredCount} of {inProgress.maxQuestions} questions.
           </span>
-          <ArrowRight className="ml-auto size-5 shrink-0" />
-        </button>
+          <button
+            type="button"
+            disabled={restarting}
+            onClick={() => startAgain(inProgress.path)}
+            className="flex items-center gap-1.5 rounded-full border border-[#12939b] px-4 py-2 text-xs font-bold text-[#12939b] hover:bg-white disabled:opacity-60"
+          >
+            {restarting ? <LoaderCircle className="size-4 animate-spin" /> : <RotateCcw className="size-4" />} Start again
+          </button>
+          <button
+            type="button"
+            disabled={restarting}
+            onClick={() => router.push(`/learner/courses/discovery?path=${inProgress.path}`)}
+            className="flex items-center gap-1.5 rounded-full bg-[#12939b] px-4 py-2 text-xs font-bold text-white hover:bg-[#0f7a81] disabled:opacity-60"
+          >
+            Continue <ArrowRight className="size-4" />
+          </button>
+        </div>
       )}
 
       {error && (
