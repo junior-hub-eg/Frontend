@@ -25,8 +25,8 @@ export function LearnerShell({
   userName,
   userEmail,
   userAvatar,
-  levelLabel = "Level 4",
-  trackLabel = "UI/UX",
+  levelLabel,
+  trackLabel,
   onLogout,
   activeHref,
   children,
@@ -109,11 +109,14 @@ export function LearnerShell({
               EN <ChevronDown className="h-[1em] w-[1em]" />
             </button>
 
-            <div className="hidden h-[2.8em] items-center gap-[0.6em] rounded-full border border-white/70 bg-white/55 px-[1em] text-[0.95em] font-semibold text-[#14365a] backdrop-blur md:flex">
-              <Award className="h-[1.3em] w-[1.3em] text-[#14365a]" />
-              <span>{levelLabel}</span>
-              {trackLabel && <span className="ml-[0.6em] font-bold">{trackLabel}</span>}
-            </div>
+            {/* The track in focus and the student's level in it; hidden until the student has a track */}
+            {(levelLabel || trackLabel) && (
+              <div className="hidden h-[2.8em] items-center gap-[0.6em] rounded-full border border-white/70 bg-white/55 px-[1em] text-[0.95em] font-semibold text-[#14365a] backdrop-blur md:flex">
+                <Award className="h-[1.3em] w-[1.3em] text-[#14365a]" />
+                {levelLabel && <span>{levelLabel}</span>}
+                {trackLabel && <span className="ml-[0.6em] font-bold">{trackLabel}</span>}
+              </div>
+            )}
 
             <div className="relative">
               <button
