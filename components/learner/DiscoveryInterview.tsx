@@ -51,7 +51,7 @@ function playAudio(q: DiscoveryQuestion | null) {
 }
 
 /** Track Discovery (US-07 to US-14): the AI interview, then the top 3 tracks with a level each. */
-export default function DiscoveryInterview({ path }: { path: DiscoveryPath }) {
+export default function DiscoveryInterview({ path, fresh = false }: { path: DiscoveryPath; fresh?: boolean }) {
   const router = useRouter();
   const [interview, setInterview] = useState<Interview | null>(null);
   const [result, setResult] = useState<DiscoveryResult | null>(null);
@@ -67,7 +67,8 @@ export default function DiscoveryInterview({ path }: { path: DiscoveryPath }) {
     startInterview(path)
       .then((s) => {
         if (!active) return;
-        setInterview(toInterview(s));
+        // Just started again from Find your track: the new interview is not "continued".
+        setInterview({ ...toInterview(s), resumed: s.resumed && !(fresh && s.answeredCount === 0) });
         playAudio(s.question);
       })
       .catch((e) => active && setError(errorMessage(e, "We couldn't start the interview. Please try again.")))
@@ -75,7 +76,7 @@ export default function DiscoveryInterview({ path }: { path: DiscoveryPath }) {
     return () => {
       active = false;
     };
-  }, [path]);
+  }, [path, fresh]);
 
   /** Closes the interview in progress and starts a new one from the first question. */
   async function startAgain() {

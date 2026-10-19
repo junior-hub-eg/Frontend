@@ -4,12 +4,12 @@ import type { DiscoveryPath } from "@/lib/learning-api";
 
 const PATHS: DiscoveryPath[] = ["KnowsTrack", "Unsure", "Exploring"];
 
-export default async function DiscoveryPage({ searchParams }: { searchParams: Promise<{ path?: string }> }) {
-  const { path } = await searchParams;
+export default async function DiscoveryPage({ searchParams }: { searchParams: Promise<{ path?: string; fresh?: string }> }) {
+  const { path, fresh } = await searchParams;
   const chosen = PATHS.find((p) => p === path) ?? "Unsure";
   return (
     <LearnerPageFrame>
-      <DiscoveryInterview path={chosen} />
+      <DiscoveryInterview path={chosen} fresh={fresh === "1"} />
     </LearnerPageFrame>
   );
 }
