@@ -4,6 +4,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/auth-context";
 import { getHub, type Hub } from "@/lib/hub-api";
+import { changeAvatar, refreshProfile } from "@/lib/auth/api-auth";
 import { LearnerShell } from "./learner-shell";
 
 // ⚠️ للتطوير بس: اخليه false قبل ما ترفعي الكود
@@ -23,6 +24,8 @@ export function LearnerLayoutClient({ children }: { children: ReactNode }) {
     getHub()
       .then((h) => active && setHub(h))
       .catch(() => {});
+    // A session from before avatars were saved has none cached: load the profile once.
+    void refreshProfile();
     return () => {
       active = false;
     };
@@ -50,7 +53,8 @@ export function LearnerLayoutClient({ children }: { children: ReactNode }) {
     <LearnerShell
       userName={fullName}
       userEmail={user?.email}
-      userAvatar="/images/Intern/char-boy-glasses.png"
+      userPhotoUrl={user?.photoUrl}
+      onChangeAvatar={user ? changeAvatar : undefined}
       levelLabel={hub?.courses.track ? (hub.courses.level ?? undefined) : undefined}
       trackLabel={hub?.courses.track?.name}
       onLogout={handleLogout}

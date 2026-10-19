@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { ApiError, errorMessage } from "@/lib/api-client";
+import { catalogueAvatar } from "@/lib/avatars";
 import {
   getLeaderboard,
   getSprint,
@@ -26,6 +27,8 @@ const AVATARS = [
 
 /** The student's photo, or the Figma avatar for their place in the squad. */
 export function avatarFor(photoUrl: string | null, index: number) {
+  const chosen = catalogueAvatar(photoUrl);
+  if (chosen) return { src: chosen.src, bg: chosen.bg };
   const pick = AVATARS[((index % AVATARS.length) + AVATARS.length) % AVATARS.length];
   return photoUrl ? { src: photoUrl, bg: pick.bg } : pick;
 }

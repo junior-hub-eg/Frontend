@@ -4,7 +4,9 @@ import { useState, type CSSProperties, type ReactNode } from "react";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Poppins } from "next/font/google";
-import { AlignLeft, Award, ChevronDown, Search } from "lucide-react";
+import { AlignLeft, Award, Check, ChevronDown, LoaderCircle, Search, X } from "lucide-react";
+import { errorMessage } from "@/lib/api-client";
+import { AVATARS, avatarOrDefault } from "@/lib/avatars";
 import { cn } from "@/lib/utils";
 import { LearnerSidebar } from "./learner-sidebar";
 
@@ -13,7 +15,10 @@ const poppins = Poppins({ subsets: ["latin"], weight: ["400", "500", "600", "700
 interface LearnerShellProps {
   userName: string;
   userEmail?: string;
-  userAvatar?: string;
+  /** The chosen avatar (lib/avatars.ts); a default one when empty. */
+  userPhotoUrl?: string | null;
+  /** Saves another catalogue avatar. Without it the menu has no "Change avatar". */
+  onChangeAvatar?: (avatarKey: string) => Promise<unknown>;
   levelLabel?: string;
   trackLabel?: string;
   onLogout?: () => void;
@@ -24,7 +29,8 @@ interface LearnerShellProps {
 export function LearnerShell({
   userName,
   userEmail,
-  userAvatar,
+  userPhotoUrl,
+  onChangeAvatar,
   levelLabel,
   trackLabel,
   onLogout,
@@ -36,6 +42,8 @@ export function LearnerShell({
   const [collapsed, setCollapsed] = useState(false); // desktop: icons only
   const [mobileOpen, setMobileOpen] = useState(false); // mobile/tablet: expanded drawer
   const [menuOpen, setMenuOpen] = useState(false);
+  const [pickingAvatar, setPickingAvatar] = useState(false);
+  const avatar = avatarOrDefault(userPhotoUrl);
 
   function toggleSidebar() {
     if (window.matchMedia("(min-width: 1024px)").matches) setCollapsed((c) => !c);
@@ -125,12 +133,11 @@ export function LearnerShell({
                 aria-expanded={menuOpen}
                 className="flex h-[2.8em] items-center gap-[0.7em] rounded-full border border-white/70 bg-white/55 pl-[0.3em] pr-[1em] text-[0.95em] font-medium text-[#14365a] backdrop-blur"
               >
-                <span className="relative grid h-[2.2em] w-[2.2em] shrink-0 place-items-center overflow-hidden rounded-full bg-[#ffd66b] ring-2 ring-white">
-                  {userAvatar ? (
-                    <Image src={userAvatar} alt="" fill sizes="40px" className="origin-top scale-[2.1] object-cover object-top" />
-                  ) : (
-                    <span className="text-[0.8em] font-semibold text-[#14365a]">{userName.charAt(0).toUpperCase()}</span>
-                  )}
+                <span
+                  className="relative h-[2.2em] w-[2.2em] shrink-0 overflow-hidden rounded-full ring-2 ring-white"
+                  style={{ backgroundColor: avatar.bg }}
+                >
+                  <Image src={avatar.src} alt="" fill sizes="40px" className="object-cover" />
                 </span>
                 <span className="hidden sm:inline">{userName}</span>
                 <ChevronDown className="h-[1em] w-[1em]" />
@@ -139,6 +146,18 @@ export function LearnerShell({
               {menuOpen && (
                 <div className="absolute right-0 top-full z-50 mt-2 w-48 rounded-xl border border-white/60 bg-white p-1 text-base shadow-lg">
                   {userEmail && <p className="truncate px-3 py-2 text-[11px] text-slate-500">{userEmail}</p>}
+                  {onChangeAvatar && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        setPickingAvatar(true);
+                      }}
+                      className="w-full rounded-lg px-3 py-2 text-left text-xs text-[#14365a] hover:bg-slate-100"
+                    >
+                      Change avatar
+                    </button>
+                  )}
                   {onLogout && (
                     <button
                       type="button"
@@ -154,8 +173,80 @@ export function LearnerShell({
           </div>
         </header>
 
+        {pickingAvatar && onChangeAvatar && (
+          <AvatarPicker current={avatar.key} onClose={() => setPickingAvatar(false)} onChoose={onChangeAvatar} />
+        )}
+
         {/* ---------- Content: fills the whole frame on desktop ---------- */}
         <main className="relative flex flex-col pl-[4rem] lg:absolute lg:inset-0 lg:z-0 lg:pl-0">{children}</main>
+      </div>
+    </div>
+  );
+}
+
+/** All the cartoon avatars; the chosen one is saved on the student's profile. */
+function AvatarPicker({
+  current,
+  onClose,
+  onChoose,
+}: {
+  current: string;
+  onClose: () => void;
+  onChoose: (avatarKey: string) => Promise<unknown>;
+}) {
+  const [saving, setSaving] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function choose(key: string) {
+    if (key === current) return onClose();
+    setSaving(key);
+    setError(null);
+    try {
+      await onChoose(key);
+      onClose();
+    } catch (e) {
+      setError(errorMessage(e, "We couldn't save your avatar. Please try again."));
+      setSaving(null);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-[70] grid place-items-center bg-[#14365a]/40 p-4" role="dialog" aria-modal="true" aria-label="Choose your avatar">
+      <div className="w-full max-w-lg rounded-[24px] border border-white bg-white p-6 shadow-2xl">
+        <div className="flex items-center">
+          <h2 className="text-xl font-bold text-[#14365a]">Choose your avatar</h2>
+          <button type="button" onClick={onClose} aria-label="Close" className="ml-auto grid size-9 place-items-center rounded-full hover:bg-slate-100">
+            <X className="size-5 text-[#14365a]" />
+          </button>
+        </div>
+        {error && <p role="alert" className="mt-3 rounded-xl bg-[#fdecec] px-3 py-2 text-xs font-semibold text-[#b83232]">{error}</p>}
+        <ul className="mt-5 grid grid-cols-3 gap-4 sm:grid-cols-4">
+          {AVATARS.map((a) => {
+            const selected = a.key === current;
+            return (
+              <li key={a.key}>
+                <button
+                  type="button"
+                  disabled={saving !== null}
+                  onClick={() => choose(a.key)}
+                  aria-label={a.label}
+                  aria-pressed={selected}
+                  className={`relative mx-auto block aspect-square w-full max-w-[96px] overflow-hidden rounded-full ring-4 transition-transform hover:scale-105 disabled:opacity-60 ${
+                    selected ? "ring-[#12939b]" : "ring-transparent"
+                  }`}
+                  style={{ backgroundColor: a.bg }}
+                >
+                  <Image src={a.src} alt="" fill sizes="96px" className="object-cover" />
+                  {(selected || saving === a.key) && (
+                    <span className="absolute bottom-1 right-1 grid size-6 place-items-center rounded-full bg-[#12939b] text-white">
+                      {saving === a.key ? <LoaderCircle className="size-4 animate-spin" /> : <Check className="size-4" />}
+                    </span>
+                  )}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
       </div>
     </div>
   );
