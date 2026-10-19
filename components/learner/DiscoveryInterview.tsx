@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, LoaderCircle, Mic, Send, Square, Volume2 } from "lucide-react";
 import { errorMessage } from "@/lib/api-client";
@@ -12,6 +13,7 @@ import {
   startInterview,
   type DiscoveryPath,
   type DiscoveryQuestion,
+  trackPath,
   type DiscoveryResult,
 } from "@/lib/learning-api";
 
@@ -121,7 +123,7 @@ export default function DiscoveryInterview({ path }: { path: DiscoveryPath }) {
     setBusy("choose");
     try {
       await selectTrack(code);
-      router.push("/learner/courses");
+      router.push(trackPath(code) as Route);
     } catch (e) {
       setError(errorMessage(e, "We couldn't save your track. Please try again."));
       setBusy(null);

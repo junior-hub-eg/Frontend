@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { LoaderCircle } from "lucide-react";
 import { getCurrentDiscovery, getTracks, type InterviewState, type TrackSummary } from "@/lib/learning-api";
 import { LearnerPageFrame } from "./LearnerPageFrame";
@@ -26,7 +26,6 @@ async function load(): Promise<State> {
 /** Courses in the dashboard: "Find your track" until the student has a track, then the catalog. */
 export default function CoursesGate() {
   const [state, setState] = useState<State>({ kind: "loading" });
-  const reload = useCallback(() => load().then(setState), []);
 
   useEffect(() => {
     let active = true;
@@ -44,7 +43,7 @@ export default function CoursesGate() {
           <LoaderCircle className="size-8 animate-spin text-[#12939b]" />
         </div>
       ) : (
-        <FindYourTrack tracks={state.tracks} inProgress={state.inProgress} onChosen={reload} />
+        <FindYourTrack tracks={state.tracks} inProgress={state.inProgress} />
       )}
     </LearnerPageFrame>
   );
