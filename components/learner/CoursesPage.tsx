@@ -21,6 +21,7 @@ import {
   ShieldCheck,
   Smartphone,
 } from "lucide-react";
+import { trackPath } from "@/lib/learning-api";
 
 const IMG = "/images/Intern";
 
@@ -102,19 +103,21 @@ const COURSES: { cat: string; title: string; sub: string; bg: string; icon: Icon
   { cat: "pm", title: "Product Management", sub: "Plan & Ship Products", bg: "#e4f1fb", icon: Briefcase, color: "#3b82c4" },
 ];
 
-/** Track pages that exist (lib/data/courses.ts); the other tracks have no page yet. */
-const TRACK_SLUG: Record<string, string> = {
-  "UI/UX Fundamentals": "ui-ux-design",
-  "Intro to Machine Learning": "ai",
-  "React for Beginners": "frontend",
-  "UI/UX Design": "ui-ux-design",
-  Frontend: "frontend",
-  "Mobile Development": "mobile-development",
-  "Data Science": "data-science",
-  AI: "ai",
+/** Backend track codes (TracksController); Product Management has no track yet. */
+const TRACK_CODE: Record<string, string> = {
+  "UI/UX Fundamentals": "UIUX",
+  "Intro to Machine Learning": "AI",
+  "React for Beginners": "FRONTEND",
+  "UI/UX Design": "UIUX",
+  Frontend: "FRONTEND",
+  "Mobile Development": "MOBILE",
+  "Data Science": "DATA",
+  AI: "AI",
+  Backend: "BACKEND",
+  "Quality Assurance": "TESTING",
 };
 
-const trackHref = (title: string) => (TRACK_SLUG[title] ? (`/learner/courses/${TRACK_SLUG[title]}` as Route) : null);
+const trackHref = (title: string) => (TRACK_CODE[title] ? (trackPath(TRACK_CODE[title]) as Route) : null);
 
 const AVATARS = [
   { src: `${IMG}/char-boy-glasses.png`, bg: "#ffc531" },

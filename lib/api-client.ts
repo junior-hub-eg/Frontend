@@ -6,7 +6,7 @@
  */
 import { getToken, setToken } from "@/lib/auth/token";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
 const AI_SERVICE_URL = process.env.NEXT_PUBLIC_AI_SERVICE_URL ?? "";
 
 /** RFC 7807 ProblemDetails as the backend sends them, with its error `code` (JH-SRS §5.1). */

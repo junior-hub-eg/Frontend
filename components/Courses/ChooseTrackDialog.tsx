@@ -6,12 +6,14 @@ import { Code2, X } from "lucide-react";
 interface ChooseTrackDialogProps {
   open: boolean;
   trackTitle: string;
+  /** Saving the choice: the confirm button waits. */
+  busy?: boolean;
   onCancel: () => void;
   onConfirm: () => void;
 }
 
 /** Modal built on the native <dialog> element (focus trap + Esc handled by the browser). */
-export function ChooseTrackDialog({ open, trackTitle, onCancel, onConfirm }: ChooseTrackDialogProps) {
+export function ChooseTrackDialog({ open, trackTitle, busy = false, onCancel, onConfirm }: ChooseTrackDialogProps) {
   const ref = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
@@ -51,7 +53,7 @@ export function ChooseTrackDialog({ open, trackTitle, onCancel, onConfirm }: Cho
           {trackTitle}
         </h2>
         <p className="mt-2 text-xs leading-relaxed text-[#1b2a5c]/70">
-          {trackTitle} will become your active learning track. You can explore its lessons and continue from the Courses overview.
+          {trackTitle} will become your active learning track. Courses will open it, and you can learn more tracks later.
         </p>
         <div className="mt-6 flex gap-3">
           <button
@@ -64,9 +66,10 @@ export function ChooseTrackDialog({ open, trackTitle, onCancel, onConfirm }: Cho
           <button
             type="button"
             onClick={onConfirm}
-            className="rounded-lg bg-linear-to-r from-[#14757d] to-[#1b2a5c] px-5 py-2 text-xs font-semibold text-white hover:opacity-90"
+            disabled={busy}
+            className="rounded-lg bg-linear-to-r from-[#14757d] to-[#1b2a5c] px-5 py-2 text-xs font-semibold text-white hover:opacity-90 disabled:opacity-60"
           >
-            Confirm Track
+            {busy ? "Saving…" : "Confirm Track"}
           </button>
         </div>
       </div>

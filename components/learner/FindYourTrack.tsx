@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, CirclePlay, LoaderCircle } from "lucide-react";
 import { errorMessage } from "@/lib/api-client";
-import { selectTrack, type DiscoveryPath, type InterviewState, type TrackSummary } from "@/lib/learning-api";
+import { selectTrack, trackPath, type DiscoveryPath, type InterviewState, type TrackSummary } from "@/lib/learning-api";
 
 const CHOICES: { path: DiscoveryPath; emoji: string; title: string; text: string; bg: string }[] = [
   {
@@ -34,12 +35,9 @@ const CHOICES: { path: DiscoveryPath; emoji: string; title: string; text: string
 export default function FindYourTrack({
   tracks,
   inProgress,
-  onChosen,
 }: {
   tracks: TrackSummary[];
   inProgress: InterviewState | null;
-  /** Called once the track is saved, so Courses can open it. */
-  onChosen: () => void;
 }) {
   const router = useRouter();
   const [picking, setPicking] = useState(false);
@@ -51,7 +49,7 @@ export default function FindYourTrack({
     setError(null);
     try {
       await selectTrack(code);
-      onChosen();
+      router.push(trackPath(code) as Route);
     } catch (e) {
       setError(errorMessage(e, "We couldn't save your track. Please try again."));
       setSaving(null);
