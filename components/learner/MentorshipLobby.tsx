@@ -10,6 +10,7 @@ import { errorMessage } from "@/lib/api-client";
 import { useAuth } from "@/lib/auth/auth-context";
 import { getSquad } from "@/lib/interns-api";
 import { getHub } from "@/lib/hub-api";
+import { avatarOrDefault, catalogueAvatar } from "@/lib/avatars";
 import { chooseMentor, getMentors, type Mentor } from "@/lib/mentorship-api";
 import { ROLE_TITLE } from "./interns-data";
 
@@ -22,7 +23,6 @@ type Person = { name: string; role?: string; avatar: string; bg: string };
 
 /** The Figma avatars, given to the student and teammates in order (no photos yet). */
 const MENTOR_AVATAR = `${IMG}/Circle.png`;
-const ME_AVATAR = { avatar: `${IMG}/Static-Characters.png`, bg: "#ffc107" };
 const AVATARS = [
   { avatar: `${IMG}/image.png`, bg: "#ffc107" },
   { avatar: `${IMG}/Image%20copy.png`, bg: "#f6f1d6" },
@@ -54,7 +54,11 @@ async function loadLobby(): Promise<Lobby> {
     me: me ? { name: me.fullName, role: ROLE_TITLE[me.role] } : null,
     teammates: (squad?.members ?? [])
       .filter((m) => !m.isMe)
-      .map((m, i) => ({ ...AVATARS[i % AVATARS.length], name: m.fullName, role: ROLE_TITLE[m.role] })),
+      .map((m, i) => {
+        const chosen = catalogueAvatar(m.photoUrl);
+        const avatar = chosen ? { avatar: chosen.src, bg: chosen.bg } : AVATARS[i % AVATARS.length];
+        return { ...avatar, name: m.fullName, role: ROLE_TITLE[m.role] };
+      }),
   };
 }
 
@@ -188,6 +192,7 @@ export default function MentorshipLobby() {
   const teammates = lobby?.teammates ?? [];
   const myName = lobby?.me?.name ?? (user ? [user.firstName, user.lastName].filter(Boolean).join(" ") : "");
   const myRole = lobby?.me?.role;
+  const myAvatar = avatarOrDefault(user?.photoUrl);
 
   const [link, setLink] = useState("");
   const [ready, setReady] = useState(false);
@@ -265,7 +270,7 @@ export default function MentorshipLobby() {
             <section className={`${glass} p-[1em]`}>
               <h2 className="text-[1.3em] font-bold text-[#14365a]">You</h2>
               <div className="mt-[0.5em] flex items-center gap-[0.8em]">
-                <Avatar src={ME_AVATAR.avatar} bg={ME_AVATAR.bg} size="h-[10em] w-[10em]" />
+                <Avatar src={myAvatar.src} bg={myAvatar.bg} size="h-[10em] w-[10em]" />
                 <div className="min-w-0 leading-snug">
                   <p className="text-[1.35em] font-bold text-[#14365a]">{myName}</p>
                   {myRole && <p className="mt-[0.4em] text-[0.95em] text-[#14365a]">{myRole}</p>}

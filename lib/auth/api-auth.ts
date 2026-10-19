@@ -53,14 +53,36 @@ function toUser(me: MeResponse): User {
     firstName: me.firstName,
     lastName: lastName || undefined,
     email: me.email,
+    photoUrl: me.photoUrl,
     createdAt: new Date().toISOString(),
   };
 }
 
-async function loadProfile(): Promise<User> {
-  const user = toUser(await api.get<MeResponse>("/api/v1/me"));
+function storeUser(user: User) {
   window.localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
   emitChange();
+}
+
+async function loadProfile(): Promise<User> {
+  const user = toUser(await api.get<MeResponse>("/api/v1/me"));
+  storeUser(user);
+  return user;
+}
+
+/** Reloads the profile (for example the avatar) for a session that is already signed in. */
+export async function refreshProfile(): Promise<User | null> {
+  if (typeof window === "undefined" || !getToken()) return null;
+  try {
+    return await loadProfile();
+  } catch {
+    return null;
+  }
+}
+
+/** Saves one of the catalogue avatars (lib/avatars.ts) and updates the cached profile. */
+export async function changeAvatar(avatarKey: string): Promise<User> {
+  const user = toUser(await api.put<MeResponse>("/api/v1/me/avatar", { avatar: avatarKey }));
+  storeUser(user);
   return user;
 }
 

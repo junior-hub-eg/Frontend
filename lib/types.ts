@@ -12,6 +12,8 @@ export interface User {
   firstName: string;
   lastName?: string;
   email: string;
+  /** The chosen cartoon avatar (lib/avatars.ts), or null. */
+  photoUrl?: string | null;
   phone?: string;
   age?: number;
   guardianId?: string;
