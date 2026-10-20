@@ -13,19 +13,19 @@ const TASK_XP = 20;
 
 const glass = "rounded-[1.2em] border border-white/80 bg-white/45 shadow-lg shadow-[#14365a]/10 backdrop-blur-md";
 
-/** The student's track in focus with their level in it (from the AI interview), and the XP towards the next 500. */
+/** The student's track in focus with their level in it (from the AI interview) and how much of the track is done. */
 export function LevelCard({
   track,
   level,
-  totalXp,
+  progressPercent,
   className = "",
 }: {
   track: string;
   level: string;
-  totalXp: number;
+  progressPercent: number;
   className?: string;
 }) {
-  const inLevel = totalXp % XP_PER_LEVEL;
+  const percent = Math.min(100, Math.max(0, progressPercent));
   return (
     <div className={`${glass} flex items-center gap-[0.9em] px-[1em] py-[0.8em] ${className}`}>
       <span className="grid h-[2.8em] w-[2.8em] shrink-0 place-items-center rounded-full bg-[#14365a] text-[#ffc531] shadow-inner">
@@ -39,19 +39,17 @@ export function LevelCard({
               {level}
             </span>
           </span>
-          <span className="shrink-0 text-[0.9em]">
-            <span className="font-bold">{inLevel}</span> /{XP_PER_LEVEL} XP
-          </span>
+          <span className="shrink-0 text-[0.9em] font-bold">{percent}%</span>
         </div>
         <div
           role="progressbar"
-          aria-label={`${inLevel} of ${XP_PER_LEVEL} XP`}
+          aria-label={`${track}: ${percent}% done`}
           aria-valuemin={0}
-          aria-valuemax={XP_PER_LEVEL}
-          aria-valuenow={inLevel}
+          aria-valuemax={100}
+          aria-valuenow={percent}
           className="mt-[0.5em] h-[0.45em] overflow-hidden rounded-full bg-white/70"
         >
-          <div className="h-full rounded-full bg-[#2fa59b]" style={{ width: `${(inLevel / XP_PER_LEVEL) * 100}%` }} />
+          <div className="h-full rounded-full bg-[#2fa59b]" style={{ width: `${percent}%` }} />
         </div>
       </div>
     </div>
