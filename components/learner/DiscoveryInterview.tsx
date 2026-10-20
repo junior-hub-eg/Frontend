@@ -4,8 +4,9 @@ import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 
 import Image from "next/image";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, LoaderCircle, Mic, Navigation, Phone, RotateCcw, Square, Volume2, VolumeX } from "lucide-react";
+import { ArrowLeft, ArrowRight, LoaderCircle, Mic, MicOff, Navigation, Phone, RotateCcw, Volume2, VolumeX } from "lucide-react";
 import { errorMessage } from "@/lib/api-client";
+import { languageOf, listen, speak, stopSpeaking, type Listening } from "@/lib/voice-call";
 import { useAuth } from "@/lib/auth/auth-context";
 import { avatarOrDefault } from "@/lib/avatars";
 import {
@@ -55,6 +56,9 @@ type Interview = {
   resumed: boolean;
 };
 
+/** off: the call has not started; paused: the microphone is off (or could not be used). */
+type Phase = "off" | "speaking" | "listening" | "thinking" | "paused";
+
 /** One chat bubble: Karima's questions on the left, the student's answers on the right. */
 type Message = { id: number; from: "karima" | "me"; text: string; time: Date; sending?: boolean };
 
@@ -100,31 +104,72 @@ export default function DiscoveryInterview({
   const [busy, setBusy] = useState<"start" | "send" | "finish" | "choose" | null>("start");
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const [recording, setRecording] = useState(false);
-  const [speaking, setSpeaking] = useState(false);
-  const [muted, setMuted] = useState(false);
-  const recorder = useRef<MediaRecorder | null>(null);
-  const audio = useRef<HTMLAudioElement | null>(null);
-  const mutedRef = useRef(false);
+  // The call: off until the student starts it (browsers only allow sound and the microphone after a click).
+  const [phase, setPhase] = useState<Phase>("off");
+  const [caption, setCaption] = useState("");
+  const [micOn, setMicOn] = useState(true);
+  const [soundOn, setSoundOn] = useState(true);
+  const callOn = useRef(false);
+  const micOnRef = useRef(true);
+  const soundOnRef = useRef(true);
+  const listening = useRef<Listening | null>(null);
+  const interviewRef = useRef<Interview | null>(null);
   const chatEnd = useRef<HTMLDivElement>(null);
 
-  /** Karima reads the question aloud when the AI service sent audio. */
-  function speak(q: DiscoveryQuestion | null) {
-    audio.current?.pause();
-    if (!q?.audioBase64 || mutedRef.current) return;
-    const a = new Audio(`data:${q.audioMimeType ?? "audio/mpeg"};base64,${q.audioBase64}`);
-    a.onplay = () => setSpeaking(true);
-    a.onended = a.onpause = () => setSpeaking(false);
-    audio.current = a;
-    // Browsers may block autoplay until the student interacts; the sound button plays it again.
-    void a.play().catch(() => setSpeaking(false));
+  function showInterview(next: Interview) {
+    interviewRef.current = next;
+    setInterview(next);
+  }
+
+  /** Stops Karima and the microphone. */
+  function stopVoice() {
+    listening.current?.cancel();
+    listening.current = null;
+    stopSpeaking();
+    setCaption("");
+  }
+
+  /** Karima asks the question aloud, then listens for the answer. */
+  async function ask(q: DiscoveryQuestion | null) {
+    if (!callOn.current || !q) return;
+    setPhase("speaking");
+    if (soundOnRef.current) await speak(q.text, q.audioBase64 ? { base64: q.audioBase64, mimeType: q.audioMimeType } : undefined);
+    if (callOn.current && interviewRef.current?.question?.orderIndex === q.orderIndex) await hear(q);
+  }
+
+  /** Listens until the student has answered and gone quiet, then sends the answer. */
+  async function hear(q: DiscoveryQuestion) {
+    if (!callOn.current) return;
+    if (!micOnRef.current) {
+      setPhase("paused");
+      return;
+    }
+    setPhase("listening");
+    setCaption("");
+    const current = listen(languageOf(q.text), setCaption);
+    listening.current = current;
+    const heard = await current.done;
+    if (listening.current === current) listening.current = null;
+    if (!heard || !callOn.current) return;
+    if ("error" in heard) {
+      if (heard.error === "no-microphone") {
+        micOnRef.current = false;
+        setMicOn(false);
+        setPhase("paused");
+        setNotice("We couldn't use your microphone. Allow it in your browser, or type your answer.");
+        return;
+      }
+      return hear(q);
+    }
+    setCaption("");
+    await send(heard);
   }
 
   /** Shows a new interview (or the one continued) with its current question. */
   function begin(s: InterviewState, resumed: boolean) {
-    setInterview({ ...toInterview(s), resumed });
+    showInterview({ ...toInterview(s), resumed });
     setMessages(s.question ? [message("karima", s.question.text)] : []);
-    speak(s.question);
+    void ask(s.question);
   }
 
   useEffect(() => {
@@ -138,18 +183,27 @@ export default function DiscoveryInterview({
       .finally(() => active && setBusy(null));
     return () => {
       active = false;
-      audio.current?.pause();
+      callOn.current = false;
+      stopVoice();
     };
-    // begin and speak only set state.
+    // begin and stopVoice only use state setters and refs.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [path, fresh, trackCode]);
 
   useEffect(() => {
     chatEnd.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [messages, busy]);
+  }, [messages, busy, caption]);
+
+  /** The student starts talking with Karima: she reads the current question. */
+  function startCall() {
+    callOn.current = true;
+    setNotice(null);
+    void ask(interviewRef.current?.question ?? null);
+  }
 
   /** Closes the interview in progress and starts a new one from the first question. */
   async function startAgain() {
+    stopVoice();
     setBusy("start");
     setError(null);
     setNotice(null);
@@ -170,9 +224,11 @@ export default function DiscoveryInterview({
   }
 
   async function finish(id: string) {
+    callOn.current = false;
+    stopVoice();
+    setPhase("off");
     setBusy("finish");
     try {
-      audio.current?.pause();
       setResult(await finishInterview(id));
     } catch (e) {
       setError(errorMessage(e, "We couldn't get your results. Please try again."));
@@ -182,7 +238,12 @@ export default function DiscoveryInterview({
   }
 
   async function send(input: { text: string } | { audio: Blob }) {
-    if (!interview?.question) return;
+    const current = interviewRef.current;
+    if (!current?.question) return;
+    listening.current?.cancel();
+    listening.current = null;
+    stopSpeaking();
+    if (callOn.current) setPhase("thinking");
     setBusy("send");
     setError(null);
     setNotice(null);
@@ -192,11 +253,13 @@ export default function DiscoveryInterview({
     try {
       const r =
         "text" in input
-          ? await answerTyped(interview.id, interview.question.orderIndex, input.text)
-          : await answerVoice(interview.id, interview.question.orderIndex, input.audio);
+          ? await answerTyped(current.id, current.question.orderIndex, input.text)
+          : await answerVoice(current.id, current.question.orderIndex, input.audio);
       if (r.retryAsText) {
         setMessages((m) => m.filter((x) => x.id !== mine.id));
-        setNotice("We couldn't hear that clearly. Please type your answer.");
+        setNotice("Karima couldn't hear that clearly. Say it again, or type your answer.");
+        setBusy(null);
+        if (callOn.current) void hear(current.question);
         return;
       }
       // A voice answer shows what the AI heard.
@@ -204,55 +267,47 @@ export default function DiscoveryInterview({
         ...m.map((x) => (x.id === mine.id ? { ...x, text: r.answered?.transcript || x.text, sending: false } : x)),
         ...(r.nextQuestion ? [message("karima", r.nextQuestion.text)] : []),
       ]);
-      setInterview({ ...interview, answered: interview.answered + 1, canFinish: r.canFinishNow, question: r.nextQuestion });
-      if (r.finished || !r.nextQuestion) await finish(interview.id);
-      else speak(r.nextQuestion);
+      showInterview({ ...current, answered: current.answered + 1, canFinish: r.canFinishNow, question: r.nextQuestion });
+      setBusy(null);
+      if (r.finished || !r.nextQuestion) await finish(current.id);
+      else void ask(r.nextQuestion);
     } catch (e) {
       setMessages((m) => m.filter((x) => x.id !== mine.id));
       if ("text" in input) setAnswer(input.text);
       setError(errorMessage(e, "We couldn't send your answer. Please try again."));
-    } finally {
-      setBusy((b) => (b === "send" ? null : b));
+      setBusy(null);
+      if (callOn.current) setPhase("paused");
     }
   }
 
-  async function toggleRecording() {
-    if (recording) {
-      recorder.current?.stop();
-      return;
-    }
-    try {
-      audio.current?.pause();
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const rec = new MediaRecorder(stream);
-      const chunks: Blob[] = [];
-      rec.ondataavailable = (e) => chunks.push(e.data);
-      rec.onstop = () => {
-        stream.getTracks().forEach((t) => t.stop());
-        setRecording(false);
-        void send({ audio: new Blob(chunks, { type: rec.mimeType || "audio/webm" }) });
-      };
-      recorder.current = rec;
-      rec.start();
-      setRecording(true);
-    } catch {
-      setNotice("We couldn't use your microphone. You can type your answer instead.");
+  /** Microphone off: Karima stops listening until it is on again. */
+  function toggleMic() {
+    const next = !micOn;
+    micOnRef.current = next;
+    setMicOn(next);
+    if (!next) {
+      listening.current?.cancel();
+      listening.current = null;
+      setCaption("");
+      if (phase === "listening") setPhase("paused");
+    } else if (callOn.current && phase === "paused" && interviewRef.current?.question) {
+      setNotice(null);
+      void hear(interviewRef.current.question);
     }
   }
 
-  /** Mutes Karima, or unmutes her and reads the current question again. */
+  /** Sound off: Karima's questions are only written; one being read stops and she listens. */
   function toggleSound() {
-    const next = !muted;
-    mutedRef.current = next;
-    setMuted(next);
-    if (next) audio.current?.pause();
-    else speak(interview?.question ?? null);
+    const next = !soundOn;
+    soundOnRef.current = next;
+    setSoundOn(next);
+    if (!next) stopSpeaking();
   }
 
   /** Leave keeps the interview: Find your track offers to continue it. */
   function leave() {
-    audio.current?.pause();
-    if (recording) recorder.current?.stop();
+    callOn.current = false;
+    stopVoice();
     router.push("/learner/courses");
   }
 
@@ -267,8 +322,15 @@ export default function DiscoveryInterview({
     }
   }
 
-  const locked = busy !== null || recording;
+  const locked = busy !== null;
   const questionNumber = interview ? Math.min(interview.answered + 1, interview.maxQuestions) : 0;
+  const status: Record<Phase, string> = {
+    off: "",
+    speaking: `${KARIMA.name} is talking…`,
+    listening: "Your turn: Karima is listening",
+    thinking: `${KARIMA.name} is thinking…`,
+    paused: "Microphone off: turn it on to answer by voice, or type below",
+  };
 
   return (
     <div className="relative flex flex-1 flex-col overflow-hidden">
@@ -320,41 +382,56 @@ export default function DiscoveryInterview({
                   </div>
                 </div>
 
-                <Wave active={speaking || recording} />
+                <Wave mode={phase === "speaking" ? "speaking" : phase === "listening" ? "listening" : "still"} />
 
-                <p className="sr-only" aria-live="polite">
-                  {recording ? "Recording your answer" : speaking ? `${KARIMA.name} is speaking` : ""}
+                <p
+                  className="min-h-[1.25em] text-center text-[13px] font-bold text-[#14365a] drop-shadow-[0_1px_1px_rgba(255,255,255,0.8)]"
+                  aria-live="polite"
+                >
+                  {status[phase]}
                 </p>
 
-                <div className="flex shrink-0 items-start gap-6 sm:gap-8">
-                  <CallButton
-                    label={recording ? "Stop" : "Microphone"}
-                    onClick={toggleRecording}
-                    disabled={busy !== null || !interview?.question}
-                    pressed={recording}
-                    className={recording ? "bg-[#e11d74] text-white" : "text-white hover:brightness-110"}
-                    style={recording ? undefined : { background: MIC_FILL }}
+                {phase === "off" ? (
+                  <button
+                    type="button"
+                    onClick={startCall}
+                    disabled={!interview?.question || busy !== null}
+                    className="flex shrink-0 items-center gap-2 rounded-full px-7 py-3.5 text-[15px] font-bold text-white shadow-[0_8px_24px_rgba(56,130,246,0.4)] transition hover:brightness-110 disabled:opacity-60"
+                    style={{ background: "linear-gradient(90deg, #7c4dff 0%, #3b82f6 55%, #0ea5c6 100%)" }}
                   >
-                    {recording ? <Square className="size-6 fill-current" /> : <Mic className="size-7" />}
-                  </CallButton>
-                  <CallButton
-                    label="Leave"
-                    onClick={leave}
-                    className="border border-[rgba(228,59,127,1)] text-white shadow-[0_8px_24px_rgba(229,0,92,0.4)] hover:brightness-110"
-                    style={{ background: LEAVE_FILL }}
-                  >
-                    <Phone className="size-7 rotate-[135deg] fill-current" />
-                  </CallButton>
-                  <CallButton
-                    label={muted ? "Sound off" : "Sound"}
-                    onClick={toggleSound}
-                    pressed={!muted}
-                    className="text-white hover:brightness-110"
-                    style={{ background: MIC_FILL }}
-                  >
-                    {muted ? <VolumeX className="size-7" /> : <Volume2 className="size-7" />}
-                  </CallButton>
-                </div>
+                    <Phone className="size-5 fill-current" />
+                    {interview?.answered ? "Continue talking with Karima" : "Start talking with Karima"}
+                  </button>
+                ) : (
+                  <div className="flex shrink-0 items-start gap-6 sm:gap-8">
+                    <CallButton
+                      label={micOn ? "Microphone" : "Mic off"}
+                      onClick={toggleMic}
+                      pressed={micOn}
+                      className={micOn ? "text-white hover:brightness-110" : "bg-[#e11d74] text-white"}
+                      style={micOn ? { background: MIC_FILL } : undefined}
+                    >
+                      {micOn ? <Mic className="size-7" /> : <MicOff className="size-7" />}
+                    </CallButton>
+                    <CallButton
+                      label="Leave"
+                      onClick={leave}
+                      className="border border-[rgba(228,59,127,1)] text-white shadow-[0_8px_24px_rgba(229,0,92,0.4)] hover:brightness-110"
+                      style={{ background: LEAVE_FILL }}
+                    >
+                      <Phone className="size-7 rotate-[135deg] fill-current" />
+                    </CallButton>
+                    <CallButton
+                      label={soundOn ? "Sound" : "Sound off"}
+                      onClick={toggleSound}
+                      pressed={soundOn}
+                      className="text-white hover:brightness-110"
+                      style={{ background: MIC_FILL }}
+                    >
+                      {soundOn ? <Volume2 className="size-7" /> : <VolumeX className="size-7" />}
+                    </CallButton>
+                  </div>
+                )}
               </section>
 
               {/* The chat */}
@@ -398,6 +475,9 @@ export default function DiscoveryInterview({
                   {messages.map((m) => (
                     <Bubble key={m.id} message={m} photo={m.from === "karima" ? KARIMA.photo : me.src} photoBg={m.from === "karima" ? "#fff" : me.bg} />
                   ))}
+                  {phase === "listening" && caption && (
+                    <Bubble message={{ id: -1, from: "me", text: caption, time: new Date(), sending: true }} photo={me.src} photoBg={me.bg} />
+                  )}
                   {busy === "send" && (
                     <p className="ml-14 flex items-center gap-1.5 text-xs font-semibold text-[#14365a]/70">
                       <LoaderCircle className="size-3.5 animate-spin" /> {KARIMA.name} is thinking…
@@ -438,7 +518,7 @@ export default function DiscoveryInterview({
                     maxLength={1000}
                     dir="auto"
                     disabled={!interview?.question}
-                    placeholder="Type Here...."
+                    placeholder={phase === "off" ? "Type Here...." : "Or type your answer here...."}
                     aria-label="Your answer"
                     className="min-w-0 flex-1 bg-transparent py-2 text-[15px] text-[#14365a] outline-none placeholder:text-[#14365a]/70"
                   />
@@ -488,7 +568,7 @@ function Bubble({ message: m, photo, photoBg }: { message: Message; photo: strin
         </p>
         <p className={`mt-1 text-[10px] text-[#14365a]/70 ${mine ? "text-right" : ""}`}>
           {clock(m.time)}
-          {mine && (m.sending ? " · Sending" : " · Read")}
+          {mine && (m.id === -1 ? " · Listening…" : m.sending ? " · Sending" : " · Read")}
         </p>
       </div>
     </div>
@@ -532,8 +612,8 @@ function CallButton({
   );
 }
 
-/** The voice line under Karima; it moves while she speaks or the student records. */
-function Wave({ active }: { active: boolean }) {
+/** The voice line under Karima: navy and moving while she talks, teal and moving while she listens. */
+function Wave({ mode }: { mode: "speaking" | "listening" | "still" }) {
   return (
     <svg
       viewBox="0 0 350 90"
@@ -543,11 +623,17 @@ function Wave({ active }: { active: boolean }) {
       <path
         d="M2 62 H62 C78 62 74 30 92 30 C110 30 104 72 122 72 C140 72 130 44 148 44 C164 44 158 84 176 84 C194 84 186 52 200 52 C214 52 206 4 226 4 C246 4 238 70 256 70 C272 70 268 40 284 40 C300 40 298 62 316 62 H348"
         fill="none"
-        stroke="rgba(27,45,84,1)"
+        stroke={mode === "listening" ? "#12939b" : "rgba(27,45,84,1)"}
         strokeWidth="8"
         strokeLinecap="round"
         strokeLinejoin="round"
-        className={active ? "origin-center [transform-box:fill-box] animate-[jh-wave_0.9s_ease-in-out_infinite]" : ""}
+        className={`transition-[stroke] duration-300 ${
+          mode === "speaking"
+            ? "origin-center [transform-box:fill-box] animate-[jh-wave_0.9s_ease-in-out_infinite]"
+            : mode === "listening"
+              ? "origin-center [transform-box:fill-box] animate-[jh-wave_1.6s_ease-in-out_infinite]"
+              : ""
+        }`}
       />
     </svg>
   );
