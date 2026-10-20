@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { Poppins } from "next/font/google";
 import { AlignLeft, Award, Bell, Check, ChevronDown, LoaderCircle, Search, X } from "lucide-react";
 import { errorMessage } from "@/lib/api-client";
-import { AVATARS, avatarOrDefault } from "@/lib/avatars";
+import { AVATARS, CHARACTERS, EMOTIONS, avatarOf, avatarOrDefault, type Avatar } from "@/lib/avatars";
 import { cn } from "@/lib/utils";
 import { LearnerSidebar } from "./learner-sidebar";
 
@@ -149,7 +149,7 @@ export function LearnerShell({
                   className="relative h-[2.2em] w-[2.2em] shrink-0 overflow-hidden rounded-full ring-2 ring-white"
                   style={{ backgroundColor: avatar.bg }}
                 >
-                  <Image src={avatar.src} alt="" fill sizes="40px" className="object-cover" />
+                  <Image src={avatar.src} alt={avatar.label} fill sizes="40px" className="object-cover" />
                 </span>
                 <span className="hidden sm:inline">{userName}</span>
                 <ChevronDown className="h-[1em] w-[1em]" />
@@ -186,7 +186,7 @@ export function LearnerShell({
         </header>
 
         {pickingAvatar && onChangeAvatar && (
-          <AvatarPicker current={avatar.key} onClose={() => setPickingAvatar(false)} onChoose={onChangeAvatar} />
+          <AvatarPicker current={avatar} onClose={() => setPickingAvatar(false)} onChoose={onChangeAvatar} />
         )}
 
         {/* ---------- Content: fills the whole frame on desktop ---------- */}
@@ -196,21 +196,23 @@ export function LearnerShell({
   );
 }
 
-/** All the cartoon avatars; the chosen one is saved on the student's profile. */
+/** Pick a character, then one of its faces; the chosen avatar is saved on the student's profile. */
 function AvatarPicker({
   current,
   onClose,
   onChoose,
 }: {
-  current: string;
+  current: Avatar;
   onClose: () => void;
   onChoose: (avatarKey: string) => Promise<unknown>;
 }) {
+  const [character, setCharacter] = useState(current.character);
   const [saving, setSaving] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const faces = AVATARS.filter((a) => a.character === character);
 
   async function choose(key: string) {
-    if (key === current) return onClose();
+    if (key === current.key) return onClose();
     setSaving(key);
     setError(null);
     try {
@@ -224,7 +226,7 @@ function AvatarPicker({
 
   return (
     <div className="fixed inset-0 z-[70] grid place-items-center bg-[#14365a]/40 p-4" role="dialog" aria-modal="true" aria-label="Choose your avatar">
-      <div className="w-full max-w-lg rounded-[24px] border border-white bg-white p-6 shadow-2xl">
+      <div className="flex max-h-[calc(100dvh-2rem)] w-full max-w-xl flex-col rounded-[24px] border border-white bg-white p-6 shadow-2xl">
         <div className="flex items-center">
           <h2 className="text-xl font-bold text-[#14365a]">Choose your avatar</h2>
           <button type="button" onClick={onClose} aria-label="Close" className="ml-auto grid size-9 place-items-center rounded-full hover:bg-slate-100">
@@ -232,9 +234,37 @@ function AvatarPicker({
           </button>
         </div>
         {error && <p role="alert" className="mt-3 rounded-xl bg-[#fdecec] px-3 py-2 text-xs font-semibold text-[#b83232]">{error}</p>}
-        <ul className="mt-5 grid grid-cols-3 gap-4 sm:grid-cols-4">
-          {AVATARS.map((a) => {
-            const selected = a.key === current;
+
+        <h3 className="mt-5 text-sm font-semibold text-[#14365a]/80">1. Pick your character</h3>
+        <ul className="mt-3 grid grid-cols-4 gap-3 sm:grid-cols-8">
+          {CHARACTERS.map((c) => {
+            const face = avatarOf(c.id);
+            const selected = c.id === character;
+            return (
+              <li key={c.id}>
+                <button
+                  type="button"
+                  disabled={saving !== null}
+                  onClick={() => setCharacter(c.id)}
+                  aria-label={c.label}
+                  aria-pressed={selected}
+                  className={`relative mx-auto block aspect-square w-full max-w-[64px] overflow-hidden rounded-full ring-[3px] transition-transform hover:scale-105 disabled:opacity-60 ${
+                    selected ? "ring-[#12939b]" : "ring-transparent"
+                  }`}
+                  style={{ backgroundColor: c.bg }}
+                >
+                  <Image src={face.src} alt="" fill sizes="64px" className="object-cover" />
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+
+        <h3 className="mt-6 text-sm font-semibold text-[#14365a]/80">2. Pick your face</h3>
+        <ul className="-mx-1 mt-3 grid grid-cols-4 gap-x-3 gap-y-4 overflow-y-auto px-1 pb-1 pt-1">
+          {faces.map((a) => {
+            const selected = a.key === current.key;
+            const emotion = EMOTIONS.find((e) => e.id === a.emotion)?.label ?? a.emotion;
             return (
               <li key={a.key}>
                 <button
@@ -243,17 +273,22 @@ function AvatarPicker({
                   onClick={() => choose(a.key)}
                   aria-label={a.label}
                   aria-pressed={selected}
-                  className={`relative mx-auto block aspect-square w-full max-w-[96px] overflow-hidden rounded-full ring-4 transition-transform hover:scale-105 disabled:opacity-60 ${
-                    selected ? "ring-[#12939b]" : "ring-transparent"
-                  }`}
-                  style={{ backgroundColor: a.bg }}
+                  className="group flex w-full flex-col items-center gap-1 disabled:opacity-60"
                 >
-                  <Image src={a.src} alt="" fill sizes="96px" className="object-cover" />
-                  {(selected || saving === a.key) && (
-                    <span className="absolute bottom-1 right-1 grid size-6 place-items-center rounded-full bg-[#12939b] text-white">
-                      {saving === a.key ? <LoaderCircle className="size-4 animate-spin" /> : <Check className="size-4" />}
-                    </span>
-                  )}
+                  <span
+                    className={`relative block aspect-square w-full max-w-[88px] overflow-hidden rounded-full ring-4 transition-transform group-hover:scale-105 ${
+                      selected ? "ring-[#12939b]" : "ring-transparent"
+                    }`}
+                    style={{ backgroundColor: a.bg }}
+                  >
+                    <Image src={a.src} alt="" fill sizes="88px" className="object-cover" />
+                    {(selected || saving === a.key) && (
+                      <span className="absolute bottom-1 right-1 grid size-6 place-items-center rounded-full bg-[#12939b] text-white">
+                        {saving === a.key ? <LoaderCircle className="size-4 animate-spin" /> : <Check className="size-4" />}
+                      </span>
+                    )}
+                  </span>
+                  <span className="text-[11px] font-medium text-[#14365a]/80">{emotion}</span>
                 </button>
               </li>
             );

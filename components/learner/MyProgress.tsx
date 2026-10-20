@@ -20,7 +20,7 @@ import {
 import { getMentor, type MentorProfile } from "@/lib/mentorship-api";
 import { TrackIcon } from "@/components/Courses/course-ui";
 import { XP_PER_LEVEL } from "./dashboard-cards";
-import { mentorAvatar } from "./ChooseMentorPage";
+import { mentorAvatar } from "@/lib/avatars";
 
 const IMG = "/images/Intern";
 const BG = `${IMG}/bg-park.png`;

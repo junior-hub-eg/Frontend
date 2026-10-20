@@ -32,3 +32,6 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
+
+# full-size avatar pack (1.3 GB); scripts/build-avatars.mjs makes the WebP files from it
+/design-assets

@@ -1,31 +1,119 @@
 /**
- * The cartoon avatars a student can choose (backend PUT /api/v1/me/avatar accepts these keys only).
- * The backend stores the image path as the student's photoUrl.
+ * The cartoon avatars. A student picks one of the young characters and one of its faces; the backend
+ * (PUT /api/v1/me/avatar) accepts these keys only and stores the image path as the student's photoUrl.
+ * Mentors use the grown-up characters. Files come from scripts/build-avatars.mjs.
  */
 export interface Avatar {
+  /** "{character}-{emotion}", e.g. "girl-1-strong". */
   key: string;
+  character: string;
+  emotion: string;
+  /** Alt text / button label, e.g. "Girl with an orange cap, strong". */
   label: string;
   src: string;
-  /** Circle colour behind the transparent character, from the Figma. */
+  /** Circle colour behind the transparent character. */
   bg: string;
 }
 
-export const AVATARS: Avatar[] = [
-  { key: "boy-laughing", label: "Laughing boy", src: "/images/avatars/boy-laughing.png", bg: "#ffc107" },
-  { key: "boy-blue-cap", label: "Boy with a blue cap", src: "/images/avatars/boy-blue-cap.png", bg: "#ffc107" },
-  { key: "girl-orange", label: "Girl in orange", src: "/images/avatars/girl-orange.png", bg: "#f6f1d6" },
-  { key: "boy-thinking", label: "Thinking boy", src: "/images/avatars/boy-thinking.png", bg: "#2a8a1f" },
-  { key: "girl-purple-cap", label: "Girl with a purple cap", src: "/images/avatars/girl-purple-cap.png", bg: "#c98a5e" },
-  { key: "girl-dumbbells", label: "Girl with dumbbells", src: "/images/avatars/girl-dumbbells.png", bg: "#e0157e" },
-  { key: "boy-reading", label: "Boy reading", src: "/images/avatars/boy-reading.png", bg: "#fbf59c" },
+interface Character {
+  id: string;
+  label: string;
+  bg: string;
+}
+
+/** The young characters students choose from (same ids as the backend's ChangeAvatarHandler). */
+export const CHARACTERS: Character[] = [
+  { id: "boy-1", label: "Boy with a purple cap", bg: "#ffc107" },
+  { id: "boy-2", label: "Boy with a blue cap", bg: "#ffb38a" },
+  { id: "boy-3", label: "Boy with brown hair", bg: "#9ad9c8" },
+  { id: "boy-4", label: "Boy in a dark jacket", bg: "#8fd3ff" },
+  { id: "girl-1", label: "Girl with an orange cap", bg: "#bde4ff" },
+  { id: "girl-2", label: "Girl with a purple cap", bg: "#ffe0a3" },
+  { id: "girl-3", label: "Girl in a yellow hoodie", bg: "#c9b8f5" },
+  { id: "girl-4", label: "Girl in a mustard hoodie", bg: "#f7b2b0" },
 ];
+
+/** Every character has each of these faces, happiest first. */
+export const EMOTIONS: { id: string; label: string }[] = [
+  { id: "smile", label: "Smile" },
+  { id: "happy", label: "Happy" },
+  { id: "laughs", label: "Laughing" },
+  { id: "good", label: "Thumbs up" },
+  { id: "ok", label: "OK" },
+  { id: "in-love", label: "Heart" },
+  { id: "reading", label: "Reading" },
+  { id: "thinking", label: "Thinking" },
+  { id: "listening", label: "Music" },
+  { id: "texting", label: "Texting" },
+  { id: "strong", label: "Strong" },
+  { id: "surprised", label: "Surprised" },
+  { id: "neutral", label: "Calm" },
+  { id: "sad", label: "Sad" },
+  { id: "scared", label: "Scared" },
+  { id: "crying", label: "Crying" },
+];
+
+export const DEFAULT_EMOTION = "smile";
+
+export const AVATARS: Avatar[] = CHARACTERS.flatMap((c) =>
+  EMOTIONS.map((e) => ({
+    key: `${c.id}-${e.id}`,
+    character: c.id,
+    emotion: e.id,
+    label: `${c.label}, ${e.label.toLowerCase()}`,
+    src: `/images/avatars/${c.id}-${e.id}.webp`,
+    bg: c.bg,
+  })),
+);
+
+const BY_KEY = new Map(AVATARS.map((a) => [a.key, a]));
+const BY_SRC = new Map(AVATARS.map((a) => [a.src, a]));
+
+/** A character's face, e.g. avatarOf("girl-1", "strong"). */
+export function avatarOf(character: string, emotion = DEFAULT_EMOTION): Avatar {
+  return BY_KEY.get(`${character}-${emotion}`) ?? AVATARS[0];
+}
+
+/** Smiling faces, boys and girls mixed, used when a student has not chosen one yet. */
+export const DEFAULT_AVATARS: Avatar[] = CHARACTERS.slice(0, 4).flatMap((boy, i) => [
+  avatarOf(boy.id),
+  avatarOf(CHARACTERS[i + 4].id),
+]);
+
+/** Paths saved by the first catalogue, mapped to the same character in the new pack. */
+const LEGACY: Record<string, string> = {
+  "/images/avatars/boy-laughing.png": "boy-1-laughs",
+  "/images/avatars/boy-reading.png": "boy-1-reading",
+  "/images/avatars/boy-thinking.png": "boy-1-thinking",
+  "/images/avatars/boy-blue-cap.png": "boy-2-neutral",
+  "/images/avatars/girl-orange.png": "girl-1-neutral",
+  "/images/avatars/girl-dumbbells.png": "girl-1-strong",
+  "/images/avatars/girl-purple-cap.png": "girl-2-smile",
+};
 
 /** The catalogue avatar for a stored photoUrl, if it is one. */
 export function catalogueAvatar(photoUrl: string | null | undefined): Avatar | undefined {
-  return photoUrl ? AVATARS.find((a) => a.src === photoUrl) : undefined;
+  if (!photoUrl) return undefined;
+  return BY_SRC.get(photoUrl) ?? BY_KEY.get(LEGACY[photoUrl] ?? "");
 }
 
 /** The avatar to draw: the chosen one, or a default picked by position so a list looks varied. */
 export function avatarOrDefault(photoUrl: string | null | undefined, index = 0): Avatar {
-  return catalogueAvatar(photoUrl) ?? AVATARS[((index % AVATARS.length) + AVATARS.length) % AVATARS.length];
+  return catalogueAvatar(photoUrl) ?? DEFAULT_AVATARS[((index % DEFAULT_AVATARS.length) + DEFAULT_AVATARS.length) % DEFAULT_AVATARS.length];
+}
+
+/** Grown-up characters for mentors (no photos uploaded yet), always smiling. */
+export const MENTOR_AVATARS: { src: string; bg: string }[] = [
+  "man-1", "woman-1", "man-2", "woman-2", "man-3", "woman-3", "man-4", "woman-4",
+  "man-5", "woman-5", "man-6", "woman-6", "man-7", "woman-7", "man-8", "woman-8",
+].map((id, i) => ({
+  src: `/images/avatars/mentors/${id}.webp`,
+  bg: ["#dbeafe", "#fde68a", "#c7f0d8", "#fbcfe8", "#e9d5ff", "#fed7aa", "#bae6fd", "#d9f99d"][i % 8],
+}));
+
+/** The same grown-up avatar for a mentor everywhere. */
+export function mentorAvatar(id: string) {
+  let hash = 0;
+  for (const ch of id) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
+  return MENTOR_AVATARS[hash % MENTOR_AVATARS.length];
 }

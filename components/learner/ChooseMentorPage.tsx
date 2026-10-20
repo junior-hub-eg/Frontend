@@ -4,16 +4,9 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { Briefcase, ChevronDown, CircleCheck, Languages, LoaderCircle, MessagesSquare, Route as RouteIcon, Search, Star, Users, X } from "lucide-react";
 import { errorMessage } from "@/lib/api-client";
-import { AVATARS } from "@/lib/avatars";
+import { mentorAvatar } from "@/lib/avatars";
 import { getHub } from "@/lib/hub-api";
 import { chooseMentor, getMentor, getMentors, type Mentor, type MentorProfile } from "@/lib/mentorship-api";
-
-/** Mentor photos are not uploaded yet: each mentor gets the same catalogue avatar everywhere. */
-export function mentorAvatar(id: string) {
-  let hash = 0;
-  for (const ch of id) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
-  return AVATARS[hash % AVATARS.length];
-}
 
 const TRACK_NAMES: Record<string, string> = {
   FRONTEND: "Frontend",
