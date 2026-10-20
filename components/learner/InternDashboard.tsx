@@ -1,10 +1,13 @@
 "use client";
 
-import type { CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
+import { BookOpen, Users } from "lucide-react";
 import { useAuth } from "@/lib/auth/auth-context";
+import { getHub } from "@/lib/hub-api";
+import { DailyChallengeCard, LevelCard, RewardsButton } from "./dashboard-cards";
 import { avatarFor, useSquad } from "./interns-data";
 import { TeammatesPanel } from "./teammates-panel";
 
@@ -24,10 +27,17 @@ const BG = `${IMG}/bg-park.png`;
 const CENTER = 59.7;
 const VK = 100 / 1.40625 / 100;
 
+/**
+ * The Figma names on two signs differ from the baked-in images ("Mentorship", "Coursers"): a label in the sign's
+ * colours covers them. Positions are % of the image.
+ */
+type Sign = { label: string; icon: typeof Users; left: number; top: number; width: number; height: number };
+
 const BUILDINGS: (Item & {
   label: string;
   href: string;
   z: string;
+  sign?: Sign;
 })[] = [
   {
     label: "My Progress",
@@ -52,8 +62,9 @@ const BUILDINGS: (Item & {
     z: "z-10",
   },
   {
-    label: "Mentorship",
+    label: "My Mentor",
     href: "/learner/mentorship",
+    sign: { label: "My Mentor", icon: Users, left: 26.4, top: 21.3, width: 37.8, height: 12 },
     src: `${IMG}/building-mentorship.png`,
     w: 624,
     h: 408,
@@ -65,6 +76,7 @@ const BUILDINGS: (Item & {
   {
     label: "Courses",
     href: "/learner/courses",
+    sign: { label: "Courses", icon: BookOpen, left: 37.7, top: 20, width: 32, height: 11.1 },
     src: `${IMG}/building-courses.png`,
     w: 626,
     h: 425,
@@ -102,6 +114,26 @@ const CHARACTERS: Item[] = [
   },
 ];
 
+
+function SignLabel({ sign }: { sign: Sign }) {
+  const Icon = sign.icon;
+  return (
+    <span
+      aria-hidden="true"
+      className="pointer-events-none absolute flex items-center justify-center gap-[0.35em] rounded-[0.4em] bg-gradient-to-b from-[#004372] to-[#013a66] font-semibold text-white transition-transform duration-200 group-hover:-translate-y-1.5"
+      style={{
+        left: `${sign.left}%`,
+        top: `${sign.top}%`,
+        width: `${sign.width}%`,
+        height: `${sign.height}%`,
+        fontSize: "4.6cqw",
+      }}
+    >
+      <Icon className="h-[1.05em] w-[1.05em] shrink-0" strokeWidth={2} />
+      {sign.label}
+    </span>
+  );
+}
 
 function sceneStyle(i: Item): CSSProperties {
   return {
@@ -201,14 +233,30 @@ export default function InternDashboard() {
   const firstName = user?.firstName ?? me?.firstName ?? "";
   const teammates = (squad?.members ?? []).map((m, i) => {
     const avatar = avatarFor(m.photoUrl, i);
-    return { name: m.fullName, avatar: avatar.src, bg: avatar.bg };
+    return { name: m.fullName, role: m.role, isMe: m.isMe, avatar: avatar.src, bg: avatar.bg };
   });
+  const [totalXp, setTotalXp] = useState<number | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    getHub().then(
+      (h) => active && setTotalXp(h.totalXp),
+      () => {}
+    );
+    return () => {
+      active = false;
+    };
+  }, []);
 
   return (
     <>
       {/* Mobile and tablet */}
       <div className="pb-8 pl-3 pr-4 sm:pl-4 sm:pr-6 lg:hidden">
         <Greeting firstName={firstName} />
+        <div className="mt-4 grid gap-3 text-[14px] sm:grid-cols-2">
+          {totalXp !== null && <LevelCard totalXp={totalXp} />}
+          <DailyChallengeCard />
+        </div>
 
         <div className="relative mx-auto mt-4 aspect-[4/3] w-full max-w-[720px] overflow-hidden rounded-[28px]">
           <div
@@ -250,7 +298,7 @@ export default function InternDashboard() {
               key={b.label}
               href={b.href as Route}
               aria-label={b.label}
-              className="group relative z-10 block cursor-pointer rounded-3xl focus-visible:outline focus-visible:outline-4 focus-visible:outline-[#6b2fd1]"
+              className="group relative z-10 block cursor-pointer rounded-3xl [container-type:inline-size] focus-visible:outline focus-visible:outline-4 focus-visible:outline-[#6b2fd1]"
             >
               <Image
                 src={b.src}
@@ -260,6 +308,7 @@ export default function InternDashboard() {
                 sizes="(max-width: 1024px) 48vw, 0px"
                 className="pointer-events-none h-auto w-full drop-shadow-[0_14px_16px_rgba(13,43,90,0.22)] transition-transform duration-200 group-hover:-translate-y-1"
               />
+              {b.sign && <SignLabel sign={b.sign} />}
             </Link>
           ))}
         </div>
@@ -268,6 +317,7 @@ export default function InternDashboard() {
           teammates={teammates}
           className="mt-5"
         />
+        <RewardsButton className="mt-5 flex justify-end text-[14px]" />
       </div>
 
       {/* Desktop */}
@@ -287,15 +337,27 @@ export default function InternDashboard() {
           />
         </div>
 
-        <Greeting
-          firstName={firstName}
-          scaled
-          className="absolute z-40 max-w-[calc(var(--u)*50)] transition-[left] duration-300"
+        <div
+          className="absolute z-40 transition-[left] duration-300"
           style={{
             left: "var(--hl)",
             top: "min(calc(var(--fh) * 0.11), calc(var(--c) * 20.62 - var(--t) - var(--u) * 6.6))",
+            fontSize: "clamp(9px, calc(var(--u) * 1.05), 16px)",
           }}
-        />
+        >
+          <div className="flex items-start gap-[1.4em]">
+            <Greeting firstName={firstName} scaled className="w-fit max-w-[calc(var(--u)*25)]" />
+            {totalXp !== null && <LevelCard totalXp={totalXp} className="mt-[0.2em] w-[22em]" />}
+          </div>
+          <DailyChallengeCard className="mt-[1.2em] w-[20em]" />
+        </div>
+
+        <div
+          className="absolute bottom-[calc(var(--u)*1.6)] right-[calc(var(--u)*1.6)] z-40"
+          style={{ fontSize: "clamp(9px, calc(var(--u) * 1.05), 16px)" }}
+        >
+          <RewardsButton />
+        </div>
 
         <TeammatesPanel
           fluid
@@ -308,7 +370,7 @@ export default function InternDashboard() {
             key={b.label}
             href={b.href as Route}
             aria-label={b.label}
-            className={`group absolute ${b.z} block cursor-pointer rounded-3xl transition-[left] duration-300 focus-visible:outline focus-visible:outline-4 focus-visible:outline-[#6b2fd1]`}
+            className={`group absolute ${b.z} block cursor-pointer rounded-3xl transition-[left] duration-300 [container-type:inline-size] focus-visible:outline focus-visible:outline-4 focus-visible:outline-[#6b2fd1]`}
             style={sceneStyle(b)}
           >
             <Image
@@ -319,6 +381,7 @@ export default function InternDashboard() {
               sizes="40vw"
               className="pointer-events-none h-auto w-full drop-shadow-[0_18px_22px_rgba(13,43,90,0.25)] transition-transform duration-200 group-hover:-translate-y-1.5"
             />
+            {b.sign && <SignLabel sign={b.sign} />}
           </Link>
         ))}
 

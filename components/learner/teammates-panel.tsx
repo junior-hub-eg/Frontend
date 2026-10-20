@@ -4,7 +4,18 @@ import { useState } from "react";
 import Image from "next/image";
 import { Send, X } from "lucide-react";
 
-export type Teammate = { name: string; avatar: string; bg: string };
+export type Teammate = { name: string; avatar: string; bg: string; role?: string; isMe?: boolean };
+
+const ROLE_TITLE: Record<string, string> = {
+  Frontend: "Frontend Developer",
+  Backend: "Backend Developer",
+  UIUX: "UI/UX Designer",
+  AI: "AI Engineer",
+  Testing: "QA Tester",
+  Data: "Data Analyst",
+  Mobile: "Mobile Developer",
+  Gaming: "Game Developer",
+};
 type Msg = { from: "me" | "them"; text: string };
 
 export function TeammatesPanel({
@@ -110,6 +121,9 @@ export function TeammatesPanel({
           Your Teammates
         </h2>
 
+        {teammates.length === 0 && (
+          <p className="text-[0.85em] text-[#14365a]/70">You&apos;ll see your squad here once you join an internship team.</p>
+        )}
         <ul className="grid gap-[0.6em]">
           {teammates.map((m, i) => {
             const isActive = active?.name === m.name;
@@ -122,7 +136,13 @@ export function TeammatesPanel({
                   <Image src={m.avatar} alt="" fill sizes="40px" className="origin-top scale-[2.1] object-cover object-top" />
                 </span>
 
-                <span className="min-w-0 truncate">{m.name}</span>
+                <span className="min-w-0">
+                  <span className="block truncate">
+                    {m.name}
+                    {m.isMe && <span className="ml-[0.3em] text-[0.8em] font-medium text-[#14365a]/60">(you)</span>}
+                  </span>
+                  {m.role && <span className="block truncate text-[0.7em] font-medium text-[#14365a]/65">{ROLE_TITLE[m.role] ?? m.role}</span>}
+                </span>
 
                 <button
                   type="button"

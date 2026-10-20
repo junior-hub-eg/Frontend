@@ -245,3 +245,13 @@ export const submitLessonQuiz = (id: string, answers: number[]) =>
 
 /** Media paths from the API (/media/...) are served by the backend. */
 export const mediaUrl = (path: string) => (/^https?:\/\//.test(path) ? path : `${API_BASE_URL}${path}`);
+
+/* ---------- Achievements (StudentController) ---------- */
+
+export interface Achievements {
+  totalXp: number;
+  streakDays: number;
+  badges: { code: string; name: string; type: string; iconKey: string; earnedUtc: string }[];
+}
+
+export const getAchievements = () => api.get<Achievements>("/api/v1/student/achievements");

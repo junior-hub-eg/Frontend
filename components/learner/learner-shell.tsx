@@ -4,7 +4,7 @@ import { useState, type CSSProperties, type ReactNode } from "react";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Poppins } from "next/font/google";
-import { AlignLeft, Award, Check, ChevronDown, LoaderCircle, Search, X } from "lucide-react";
+import { AlignLeft, Award, Bell, Check, ChevronDown, LoaderCircle, Search, X } from "lucide-react";
 import { errorMessage } from "@/lib/api-client";
 import { AVATARS, avatarOrDefault } from "@/lib/avatars";
 import { cn } from "@/lib/utils";
@@ -112,12 +112,21 @@ export function LearnerShell({
             </kbd>
           </form>
 
+          <button
+            type="button"
+            className="flex h-[2.8em] items-center gap-[0.5em] rounded-full border border-white/70 bg-white/55 px-[1em] text-[0.95em] font-medium text-[#14365a] backdrop-blur"
+          >
+            EN <ChevronDown className="h-[1em] w-[1em]" />
+          </button>
+
           <div className="ml-auto flex items-center gap-[1.2em]">
             <button
               type="button"
-              className="flex h-[2.8em] items-center gap-[0.5em] rounded-full border border-white/70 bg-white/55 px-[1em] text-[0.95em] font-medium text-[#14365a] backdrop-blur"
+              aria-label="Notifications"
+              title="Notifications"
+              className="grid h-[2.8em] w-[2.8em] place-items-center rounded-full border border-white/70 bg-white/55 text-[#14365a] backdrop-blur"
             >
-              EN <ChevronDown className="h-[1em] w-[1em]" />
+              <Bell className="h-[1.2em] w-[1.2em]" />
             </button>
 
             {/* The track in focus and the student's level in it; hidden until the student has a track */}
