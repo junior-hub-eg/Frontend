@@ -11,8 +11,8 @@ import { getToken } from "@/lib/auth/token";
 import { LoaderCircle, RotateCcw } from "lucide-react";
 import { LearnerShell } from "./learner-shell";
 
-// ⚠️ للتطوير بس: اخليه false قبل ما ترفعي الكود
-const SKIP_AUTH = false;
+/** LOCAL ONLY: NEXT_PUBLIC_SKIP_AUTH=true in .env.local skips the login check and the "needs a track" lock. Off by default and ignored in production. */
+const SKIP_AUTH = process.env.NEXT_PUBLIC_SKIP_AUTH === "true" && process.env.NODE_ENV !== "production";
 
 /** The only pages a student without a track can open: the AI interview, and Find your track (its three ways in). */
 const ONBOARDING_PATHS = ["/learner/ai-interview", "/learner/courses", "/learner/courses/discovery"];
@@ -77,7 +77,7 @@ export function LearnerLayoutClient({ children }: { children: ReactNode }) {
   const hub = loaded?.hub ?? null;
   // A new student starts with Find your track and the AI interview; the rest of the dashboard opens once they
   // have a track and a level. Until the hub answers, nothing opens either.
-  const locked = loaded === null || loaded.needsInterview;
+  const locked = !SKIP_AUTH && (loaded === null || loaded.needsInterview);
   const onboarding = ONBOARDING_PATHS.includes(pathname);
   const checkedHere = loaded?.path === pathname;
 
