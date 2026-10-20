@@ -4,20 +4,40 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/auth-context";
 import { getHub, type Hub } from "@/lib/hub-api";
+import { getTracks } from "@/lib/learning-api";
 import { errorMessage } from "@/lib/api-client";
 import { changeAvatar, refreshProfile } from "@/lib/auth/api-auth";
+import { getToken } from "@/lib/auth/token";
 import { LoaderCircle, RotateCcw } from "lucide-react";
 import { LearnerShell } from "./learner-shell";
 
 // ⚠️ للتطوير بس: اخليه false قبل ما ترفعي الكود
 const SKIP_AUTH = false;
 
-/** The only pages a student without a track can open: Find your track (the interview's start) and the interview. */
-const ONBOARDING_PATHS = ["/learner/courses", "/learner/courses/discovery"];
-const INTERVIEW_START = "/learner/courses";
+/** The only pages a student without a track can open: the AI interview, and Find your track (its three ways in). */
+const ONBOARDING_PATHS = ["/learner/ai-interview", "/learner/courses", "/learner/courses/discovery"];
+const INTERVIEW = "/learner/ai-interview";
 
 /** A student needs the AI interview until they have a track in focus and their level in it. */
 const needsInterview = (hub: Hub) => !hub.courses.track || !hub.courses.level;
+
+type Access = { hub: Hub | null; needsInterview: boolean };
+
+/**
+ * Whether the student still needs the interview. From the hub; when the hub cannot be loaded, from the tracks the
+ * student learns (GET /tracks also answers a student without a track), so a broken hub never opens the dashboard.
+ */
+async function loadAccess(): Promise<Access> {
+  try {
+    const hub = await getHub();
+    return { hub, needsInterview: needsInterview(hub) };
+  } catch (hubError) {
+    const tracks = await getTracks().catch(() => {
+      throw hubError;
+    });
+    return { hub: null, needsInterview: !tracks.some((t) => t.isLearning) };
+  }
+}
 
 export function LearnerLayoutClient({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth();
@@ -26,8 +46,8 @@ export function LearnerLayoutClient({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
   const allowed = SKIP_AUTH || (user && user.role === "learner");
-  // The hub, and the page it was loaded for. It carries the track in focus (none for a new student).
-  const [loaded, setLoaded] = useState<{ hub: Hub; path: string } | null>(null);
+  // The hub (when it loaded), whether the interview is still needed, and the page this was checked for.
+  const [loaded, setLoaded] = useState<(Access & { path: string }) | null>(null);
   const [hubError, setHubError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
   const hasTrack = useRef(false);
@@ -36,12 +56,12 @@ export function LearnerLayoutClient({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!allowed || hasTrack.current) return;
     let active = true;
-    getHub()
-      .then((hub) => {
+    loadAccess()
+      .then((access) => {
         if (!active) return;
-        hasTrack.current = !needsInterview(hub);
+        hasTrack.current = !access.needsInterview;
         setHubError(null);
-        setLoaded({ hub, path: pathname });
+        setLoaded({ ...access, path: pathname });
       })
       .catch((e) => active && setHubError(errorMessage(e, "We couldn't load your dashboard. Please try again.")));
     return () => {
@@ -57,16 +77,21 @@ export function LearnerLayoutClient({ children }: { children: ReactNode }) {
   const hub = loaded?.hub ?? null;
   // A new student starts with Find your track and the AI interview; the rest of the dashboard opens once they
   // have a track and a level. Until the hub answers, nothing opens either.
-  const locked = loaded === null || needsInterview(loaded.hub);
+  const locked = loaded === null || loaded.needsInterview;
   const onboarding = ONBOARDING_PATHS.includes(pathname);
   const checkedHere = loaded?.path === pathname;
 
   useEffect(() => {
-    if (allowed && loaded && needsInterview(loaded.hub) && checkedHere && !onboarding) router.replace(INTERVIEW_START);
+    if (allowed && loaded?.needsInterview && checkedHere && !onboarding) router.replace(INTERVIEW);
   }, [allowed, loaded, checkedHere, onboarding, router]);
 
+  // The first render while hydrating has no user yet (server snapshot): only a missing or expired token means
+  // signed out. Otherwise /login would bounce a signed-in student to the dashboard on every reload.
   useEffect(() => {
-    if (!allowed) router.replace("/login");
+    if (allowed) return;
+    // A token without a cached profile (cleared storage): load it instead of signing out.
+    if (getToken()) void refreshProfile().then((u) => u || router.replace("/login"));
+    else router.replace("/login");
   }, [allowed, router]);
 
   if (!allowed) {

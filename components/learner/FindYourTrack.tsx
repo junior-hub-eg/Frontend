@@ -60,7 +60,7 @@ export default function FindYourTrack({
         return;
       }
       await startInterview(path, true);
-      router.push(`/learner/courses/discovery?path=${path}&fresh=1`);
+      router.push(`/learner/ai-interview?path=${path}&fresh=1`);
     } catch (e) {
       setError(errorMessage(e, "We couldn't start a new interview. Please try again."));
       setRestarting(false);
@@ -70,7 +70,7 @@ export default function FindYourTrack({
   /** "I know what I want": an interview about the chosen track finds the student's level in it. */
   function choose(code: string) {
     setSaving(code);
-    router.push(`/learner/courses/discovery?path=KnowsTrack&track=${code}`);
+    router.push(`/learner/ai-interview?path=KnowsTrack&track=${code}`);
   }
 
   return (
@@ -98,7 +98,7 @@ export default function FindYourTrack({
           <button
             type="button"
             disabled={restarting}
-            onClick={() => router.push(`/learner/courses/discovery?path=${inProgress.path}`)}
+            onClick={() => router.push(`/learner/ai-interview?path=${inProgress.path}`)}
             className="flex items-center gap-1.5 rounded-full bg-[#12939b] px-4 py-2 text-xs font-bold text-white hover:bg-[#0f7a81] disabled:opacity-60"
           >
             Continue <ArrowRight className="size-4" />
@@ -118,7 +118,7 @@ export default function FindYourTrack({
             <li key={c.path}>
               <button
                 type="button"
-                onClick={() => (c.path === "KnowsTrack" ? setPicking(true) : router.push(`/learner/courses/discovery?path=${c.path}`))}
+                onClick={() => (c.path === "KnowsTrack" ? setPicking(true) : router.push(`/learner/ai-interview?path=${c.path}`))}
                 className={`group flex h-full w-full flex-col rounded-[28px] border border-white bg-gradient-to-br p-7 text-left shadow-[0_10px_30px_rgba(20,54,90,0.08)] transition-shadow hover:shadow-[0_14px_36px_rgba(20,54,90,0.16)] ${c.bg}`}
               >
                 <span className="text-5xl" aria-hidden>
