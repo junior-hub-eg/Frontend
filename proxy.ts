@@ -12,7 +12,15 @@ import { TOKEN_COOKIE, decodeToken, isTokenExpired } from "@/lib/auth/token";
  * signature is NOT verified here — this is only routing UX; every API call
  * is still authorised by the .NET backend, which does verify it.
  */
+/**
+ * LOCAL ONLY: set NEXT_PUBLIC_SKIP_AUTH=true in .env.local to open the learner pages without a backend or login.
+ * It is ignored in production builds and is off by default, so there is nothing to revert before pushing.
+ */
+const SKIP_AUTH = process.env.NEXT_PUBLIC_SKIP_AUTH === "true" && process.env.NODE_ENV !== "production";
+
 export function proxy(request: NextRequest) {
+  if (SKIP_AUTH) return NextResponse.next();
+
   const { pathname } = request.nextUrl;
 
   const session = readSessionCookie(request);
