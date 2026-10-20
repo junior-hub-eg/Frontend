@@ -1,15 +1,8 @@
-import DiscoveryInterview from "@/components/learner/DiscoveryInterview";
-import { LearnerPageFrame } from "@/components/learner/LearnerPageFrame";
-import type { DiscoveryPath } from "@/lib/learning-api";
+import type { Route } from "next";
+import { redirect } from "next/navigation";
 
-const PATHS: DiscoveryPath[] = ["KnowsTrack", "Unsure", "Exploring"];
-
-export default async function DiscoveryPage({ searchParams }: { searchParams: Promise<{ path?: string; fresh?: string; track?: string }> }) {
-  const { path, fresh, track } = await searchParams;
-  const chosen = PATHS.find((p) => p === path) ?? "Unsure";
-  return (
-    <LearnerPageFrame>
-      <DiscoveryInterview path={chosen} fresh={fresh === "1"} trackCode={chosen === "KnowsTrack" ? track : undefined} />
-    </LearnerPageFrame>
-  );
+/** The interview moved to /learner/ai-interview; old links keep their query. */
+export default async function DiscoveryPage({ searchParams }: { searchParams: Promise<Record<string, string>> }) {
+  const query = new URLSearchParams(await searchParams).toString();
+  redirect(`/learner/ai-interview${query ? `?${query}` : ""}` as Route);
 }
