@@ -19,12 +19,22 @@ export interface SquadMember {
   isMe: boolean;
 }
 
+/** The mentor who supervises the squad's project (picked at random), not the student's own mentor. */
+export interface SquadMonitor {
+  id: string;
+  fullName: string;
+  title: string;
+  trackCode: string;
+  photoUrl: string;
+}
+
 export interface Squad {
   id: string;
   name: string;
   projectTitle: string;
   projectDescription: string;
   members: SquadMember[];
+  monitor: SquadMonitor | null;
 }
 
 export interface Sprint {
@@ -108,6 +118,7 @@ export interface SquadMemberLinks {
 export interface SquadLinks {
   squadId: string;
   squadName: string;
+  monitor: SquadMonitor | null;
   members: SquadMemberLinks[];
 }
 
