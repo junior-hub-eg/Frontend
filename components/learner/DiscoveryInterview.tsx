@@ -96,7 +96,7 @@ export default function DiscoveryInterview({
 }) {
   const router = useRouter();
   const { user } = useAuth();
-  const me = avatarOrDefault(user?.photoUrl);
+  const me = avatarOrDefault(user?.photoUrl, 0, user?.gender);
   const [interview, setInterview] = useState<Interview | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [result, setResult] = useState<DiscoveryResult | null>(null);

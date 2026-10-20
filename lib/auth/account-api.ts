@@ -3,6 +3,7 @@
  * (backend AuthController, /api/v1/auth). Errors are thrown as ApiError with the backend's code.
  */
 import { api } from "@/lib/api-client";
+import type { Gender } from "@/lib/avatars";
 
 /** The code typed by the student or the link from the school: send one of the two. */
 export type ActivationKey = { code: string } | { link: string };
@@ -18,14 +19,15 @@ export interface ActivationDetails {
 export const checkActivation = (key: ActivationKey) =>
   api.post<ActivationDetails>("/api/v1/auth/activation/check", key);
 
-export const completeActivation = (key: ActivationKey, password: string, confirmPassword: string) =>
-  api.post<{ email: string }>("/api/v1/auth/activation/complete", { ...key, password, confirmPassword });
+export const completeActivation = (key: ActivationKey, password: string, confirmPassword: string, gender: Gender) =>
+  api.post<{ email: string }>("/api/v1/auth/activation/complete", { ...key, password, confirmPassword, gender });
 
 export interface RegisterInput {
   fullName: string;
   phone: string;
   email: string;
   password: string;
+  gender: Gender;
 }
 
 export const register = (input: RegisterInput) => api.post<{ email: string }>("/api/v1/auth/register", input);

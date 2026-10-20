@@ -14,6 +14,8 @@ export interface User {
   email: string;
   /** The chosen cartoon avatar (lib/avatars.ts), or null. */
   photoUrl?: string | null;
+  /** Boy or girl ("Male" / "Female"); null for a student from before the question, who is asked once. */
+  gender?: "Male" | "Female" | null;
   phone?: string;
   age?: number;
   guardianId?: string;
