@@ -13,9 +13,18 @@ const TASK_XP = 20;
 
 const glass = "rounded-[1.2em] border border-white/80 bg-white/45 shadow-lg shadow-[#14365a]/10 backdrop-blur-md";
 
-/** "Level N" and the XP towards the next level (Figma: the card next to the greeting). */
-export function LevelCard({ totalXp, className = "" }: { totalXp: number; className?: string }) {
-  const level = Math.floor(totalXp / XP_PER_LEVEL) + 1;
+/** The student's track in focus with their level in it (from the AI interview), and the XP towards the next 500. */
+export function LevelCard({
+  track,
+  level,
+  totalXp,
+  className = "",
+}: {
+  track: string;
+  level: string;
+  totalXp: number;
+  className?: string;
+}) {
   const inLevel = totalXp % XP_PER_LEVEL;
   return (
     <div className={`${glass} flex items-center gap-[0.9em] px-[1em] py-[0.8em] ${className}`}>
@@ -23,15 +32,20 @@ export function LevelCard({ totalXp, className = "" }: { totalXp: number; classN
         <Crown className="h-[1.4em] w-[1.4em] fill-[#ffc531]" />
       </span>
       <div className="min-w-0 flex-1">
-        <div className="flex items-baseline justify-between gap-[1em] text-[#14365a]">
-          <span className="text-[1em] font-bold">Level {level}</span>
-          <span className="text-[0.9em]">
+        <div className="flex items-center justify-between gap-[0.8em] text-[#14365a]">
+          <span className="flex min-w-0 items-center gap-[0.5em]">
+            <span className="truncate text-[1em] font-bold">{track}</span>
+            <span className="shrink-0 rounded-full bg-[#2fa59b]/15 px-[0.6em] py-[0.1em] text-[0.75em] font-bold text-[#12797f]">
+              {level}
+            </span>
+          </span>
+          <span className="shrink-0 text-[0.9em]">
             <span className="font-bold">{inLevel}</span> /{XP_PER_LEVEL} XP
           </span>
         </div>
         <div
           role="progressbar"
-          aria-label={`${inLevel} of ${XP_PER_LEVEL} XP to level ${level + 1}`}
+          aria-label={`${inLevel} of ${XP_PER_LEVEL} XP`}
           aria-valuemin={0}
           aria-valuemax={XP_PER_LEVEL}
           aria-valuenow={inLevel}

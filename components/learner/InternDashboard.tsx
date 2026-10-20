@@ -6,7 +6,7 @@ import Link from "next/link";
 import type { Route } from "next";
 import { BookOpen, Users } from "lucide-react";
 import { useAuth } from "@/lib/auth/auth-context";
-import { getHub } from "@/lib/hub-api";
+import { getHub, type Hub } from "@/lib/hub-api";
 import { DailyChallengeCard, LevelCard, RewardsButton } from "./dashboard-cards";
 import { avatarFor, useSquad } from "./interns-data";
 import { TeammatesPanel } from "./teammates-panel";
@@ -235,12 +235,12 @@ export default function InternDashboard() {
     const avatar = avatarFor(m.photoUrl, i);
     return { name: m.fullName, role: m.role, isMe: m.isMe, avatar: avatar.src, bg: avatar.bg };
   });
-  const [totalXp, setTotalXp] = useState<number | null>(null);
+  const [hub, setHub] = useState<Hub | null>(null);
 
   useEffect(() => {
     let active = true;
     getHub().then(
-      (h) => active && setTotalXp(h.totalXp),
+      (h) => active && setHub(h),
       () => {}
     );
     return () => {
@@ -248,13 +248,20 @@ export default function InternDashboard() {
     };
   }, []);
 
+  // The dashboard opens only with a track (LearnerLayoutClient), and a track always has a level.
+  const levelCard = (className?: string) =>
+    hub?.courses.track &&
+    hub.courses.level && (
+      <LevelCard track={hub.courses.track.name} level={hub.courses.level} totalXp={hub.totalXp} className={className} />
+    );
+
   return (
     <>
       {/* Mobile and tablet */}
       <div className="pb-8 pl-3 pr-4 sm:pl-4 sm:pr-6 lg:hidden">
         <Greeting firstName={firstName} />
         <div className="mt-4 grid gap-3 text-[14px] sm:grid-cols-2">
-          {totalXp !== null && <LevelCard totalXp={totalXp} />}
+          {levelCard()}
           <DailyChallengeCard />
         </div>
 
@@ -347,7 +354,7 @@ export default function InternDashboard() {
         >
           <div className="flex items-start gap-[1.4em]">
             <Greeting firstName={firstName} scaled className="w-fit max-w-[calc(var(--u)*25)]" />
-            {totalXp !== null && <LevelCard totalXp={totalXp} className="mt-[0.2em] w-[22em]" />}
+            {levelCard("mt-[0.2em] w-[22em]")}
           </div>
           <DailyChallengeCard className="mt-[1.2em] w-[20em]" />
         </div>
