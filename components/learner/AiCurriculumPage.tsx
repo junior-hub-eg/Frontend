@@ -1,10 +1,20 @@
 import Image from "next/image";
+import Link from "next/link";
+import type { Route } from "next";
 import { ArrowRight } from "lucide-react";
 
 const IMG = "/images/Intern/AI%20Curriculum";
 
-/** Subjects from the Figma. The AI lessons behind them are not built yet. */
-const SUBJECTS = [
+/** Subjects from the Figma. `href` is set only for subjects that are built. */
+const SUBJECTS: {
+  title: string;
+  desc: string;
+  img: string;
+  w: number;
+  h: number;
+  bg: string;
+  href?: Route;
+}[] = [
   {
     title: "Mathematics",
     desc: "Solve problems step by step with AI videos, interactive simulations, and live coding.",
@@ -12,6 +22,7 @@ const SUBJECTS = [
     w: 523,
     h: 396,
     bg: "#eaf3fd",
+    href: "/learner/ai-curriculum/mathematics" as Route,
   },
   {
     title: "Physics",
@@ -22,6 +33,9 @@ const SUBJECTS = [
     bg: "#ddf5f7",
   },
 ];
+
+const ARROW_CLASS =
+  "grid h-[4em] w-[4em] shrink-0 place-items-center rounded-full bg-[#14365a] text-white";
 
 /** The Figma "AI Curriculum" page, inside the learner shell (it places itself next to the sidebar, like Courses). */
 export default function AiCurriculumPage() {
@@ -45,7 +59,11 @@ export default function AiCurriculumPage() {
         {/* Subjects */}
         <ul className="mt-[2.6em] grid gap-[1em] md:grid-cols-2 lg:px-[1.8em]">
           {SUBJECTS.map((s) => (
-            <li key={s.title} className="flex flex-col overflow-hidden rounded-[1.8em]" style={{ backgroundColor: s.bg }}>
+            <li
+              key={s.title}
+              className={`relative flex flex-col overflow-hidden rounded-[1.8em] ${s.href ? "transition hover:shadow-lg" : ""}`}
+              style={{ backgroundColor: s.bg }}
+            >
               <div className="relative aspect-[523/396] w-full">
                 <Image src={s.img} alt="" fill sizes="(max-width: 768px) 90vw, 40vw" className="object-contain" />
               </div>
@@ -54,15 +72,26 @@ export default function AiCurriculumPage() {
                   <h2 className="text-[2.1em] font-extrabold leading-tight text-[#14365a]">{s.title}</h2>
                   <p className="mt-[0.6em] text-[0.95em] leading-snug text-[#14365a]">{s.desc}</p>
                 </div>
-                <button
-                  type="button"
-                  disabled
-                  title="Coming soon"
-                  aria-label={`Open ${s.title} (coming soon)`}
-                  className="grid h-[4em] w-[4em] shrink-0 place-items-center rounded-full bg-[#14365a] text-white disabled:cursor-not-allowed"
-                >
-                  <ArrowRight className="h-[1.8em] w-[1.8em]" />
-                </button>
+                {s.href ? (
+                  // The ::after layer stretches this link over the whole card, so clicking anywhere opens the page.
+                  <Link
+                    href={s.href}
+                    aria-label={`Open ${s.title}`}
+                    className={`${ARROW_CLASS} transition hover:brightness-125 after:absolute after:inset-0 after:content-['']`}
+                  >
+                    <ArrowRight className="h-[1.8em] w-[1.8em]" />
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    disabled
+                    title="Coming soon"
+                    aria-label={`Open ${s.title} (coming soon)`}
+                    className={`${ARROW_CLASS} disabled:cursor-not-allowed`}
+                  >
+                    <ArrowRight className="h-[1.8em] w-[1.8em]" />
+                  </button>
+                )}
               </div>
             </li>
           ))}
