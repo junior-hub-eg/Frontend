@@ -5,6 +5,7 @@
 import { api, refreshAccessToken } from "@/lib/api-client";
 import { getToken, setToken, TOKEN_CHANGE_EVENT } from "@/lib/auth/token";
 import type { User } from "@/lib/types";
+import type { Gender } from "@/lib/avatars";
 
 const CURRENT_USER_KEY = "jh_api_user";
 
@@ -43,6 +44,7 @@ interface MeResponse {
   photoUrl: string | null;
   totalXp: number;
   streakDays: number;
+  gender: Gender | null;
 }
 
 function toUser(me: MeResponse): User {
@@ -54,6 +56,7 @@ function toUser(me: MeResponse): User {
     lastName: lastName || undefined,
     email: me.email,
     photoUrl: me.photoUrl,
+    gender: me.gender,
     createdAt: new Date().toISOString(),
   };
 }
@@ -82,6 +85,13 @@ export async function refreshProfile(): Promise<User | null> {
 /** Saves one of the catalogue avatars (lib/avatars.ts) and updates the cached profile. */
 export async function changeAvatar(avatarKey: string): Promise<User> {
   const user = toUser(await api.put<MeResponse>("/api/v1/me/avatar", { avatar: avatarKey }));
+  storeUser(user);
+  return user;
+}
+
+/** Boy or girl, once, for a student who was not asked at sign-up (PUT /api/v1/me/gender). Updates the cached profile. */
+export async function setGender(gender: Gender): Promise<User> {
+  const user = toUser(await api.put<MeResponse>("/api/v1/me/gender", { gender }));
   storeUser(user);
   return user;
 }

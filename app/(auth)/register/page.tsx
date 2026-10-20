@@ -3,13 +3,14 @@ import { useState } from "react";
 import Link from "next/link";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Mail, Phone, User } from "lucide-react";
 import { Alert } from "@/components/ui/alert";
 import { AuthButton } from "@/components/Auth/AuthButton";
 import { AuthField } from "@/components/Auth/AuthField";
+import { GenderField } from "@/components/Auth/GenderField";
 import { AuthHeading } from "@/components/Auth/AuthHeading";
 import { PasswordField } from "@/components/Auth/PasswordField";
 import { authStyles } from "@/components/Auth/auth-styles";
@@ -22,6 +23,7 @@ const schema = z.object({
   phone: z.string().regex(/^\+?[0-9\s-]{8,15}$/, "Enter a valid phone number"),
   email: z.string().min(1, "Email is required").email("Invalid email address"),
   password: passwordSchema,
+  gender: z.enum(["Male", "Female"], { message: "Choose boy or girl" }),
 });
 type FormValues = z.infer<typeof schema>;
 
@@ -30,6 +32,7 @@ export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null);
   const {
     register,
+    control,
     handleSubmit,
     setError: setFieldError,
     formState: { errors, isSubmitting },
@@ -90,6 +93,11 @@ export default function RegisterPage() {
           placeholder="••••••••"
           error={errors.password?.message}
           {...register("password")}
+        />
+        <Controller
+          control={control}
+          name="gender"
+          render={({ field }) => <GenderField value={field.value} onChange={field.onChange} error={errors.gender?.message} />}
         />
 
         <p className={authStyles.smallText}>

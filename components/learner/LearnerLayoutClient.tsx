@@ -6,7 +6,7 @@ import { useAuth } from "@/lib/auth/auth-context";
 import { getHub, type Hub } from "@/lib/hub-api";
 import { getTracks } from "@/lib/learning-api";
 import { errorMessage } from "@/lib/api-client";
-import { changeAvatar, refreshProfile } from "@/lib/auth/api-auth";
+import { changeAvatar, refreshProfile, setGender } from "@/lib/auth/api-auth";
 import { getToken } from "@/lib/auth/token";
 import { LoaderCircle, RotateCcw } from "lucide-react";
 import { LearnerShell } from "./learner-shell";
@@ -117,7 +117,9 @@ export function LearnerLayoutClient({ children }: { children: ReactNode }) {
       userName={fullName}
       userEmail={user?.email}
       userPhotoUrl={user?.photoUrl}
+      userGender={user?.gender}
       onChangeAvatar={user ? changeAvatar : undefined}
+      onSetGender={user ? setGender : undefined}
       levelLabel={hub?.courses.track ? (hub.courses.level ?? undefined) : undefined}
       trackLabel={hub?.courses.track?.name}
       onLogout={handleLogout}

@@ -9,6 +9,7 @@ import { AuthPanel } from "@/components/shared/auth-panel";
 import { AuthStepper } from "@/components/shared/auth-stepper";
 import { AuthButton } from "./AuthButton";
 import { AuthField } from "./AuthField";
+import { GenderField } from "./GenderField";
 import { PasswordField } from "./PasswordField";
 import { PasswordRuleList } from "./PasswordRuleList";
 import { completeActivation } from "@/lib/auth/account-api";
@@ -16,6 +17,7 @@ import { activationState, useActivationState } from "@/lib/auth/auth-flow-storag
 import { PASSWORD_RULES } from "@/lib/auth/password-rules";
 import { ApiError, errorMessage } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
+import type { Gender } from "@/lib/avatars";
 
 const NAVY = "text-[#1B2D54]";
 
@@ -25,6 +27,7 @@ export default function CreateLogin() {
   const state = useActivationState();
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [gender, setGender] = useState<Gender | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -35,14 +38,14 @@ export default function CreateLogin() {
 
   const allRulesOk = PASSWORD_RULES.every((rule) => rule.test(password));
   const mismatch = confirm.length > 0 && confirm !== password;
-  const canContinue = !!state && allRulesOk && confirm.length > 0 && !mismatch && !submitting;
+  const canContinue = !!state && allRulesOk && confirm.length > 0 && !mismatch && gender !== null && !submitting;
 
   async function handleContinue() {
-    if (!canContinue || !state) return;
+    if (!canContinue || !state || !gender) return;
     setSubmitting(true);
     setError(null);
     try {
-      const { email } = await completeActivation(state.key, password, confirm);
+      const { email } = await completeActivation(state.key, password, confirm, gender);
       activationState.clear();
       router.push(`/login?notice=activated&email=${encodeURIComponent(email)}` as Route);
     } catch (e) {
@@ -79,7 +82,7 @@ export default function CreateLogin() {
             Create Your Login
           </h1>
           <p className={cn("mt-1 text-[length:clamp(11px,1.4cqw,16px)] font-normal leading-tight", NAVY)}>
-            Choose A Password For Your Account.
+            Choose A Password And Tell Us Who You Are.
           </p>
         </div>
 
@@ -105,6 +108,8 @@ export default function CreateLogin() {
         </div>
 
         <PasswordRuleList password={password} />
+
+        <GenderField value={gender} onChange={setGender} />
 
         <AuthButton type="submit" disabled={!canContinue}>
           {submitting ? "Saving..." : "Continue"}

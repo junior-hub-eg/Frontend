@@ -15,22 +15,26 @@ export interface Avatar {
   bg: string;
 }
 
+/** Boy or girl, as the backend stores it. */
+export type Gender = "Male" | "Female";
+
 interface Character {
   id: string;
+  gender: Gender;
   label: string;
   bg: string;
 }
 
 /** The young characters students choose from (same ids as the backend's ChangeAvatarHandler). */
 export const CHARACTERS: Character[] = [
-  { id: "boy-1", label: "Boy with a purple cap", bg: "#ffc107" },
-  { id: "boy-2", label: "Boy with a blue cap", bg: "#ffb38a" },
-  { id: "boy-3", label: "Boy with brown hair", bg: "#9ad9c8" },
-  { id: "boy-4", label: "Boy in a dark jacket", bg: "#8fd3ff" },
-  { id: "girl-1", label: "Girl with an orange cap", bg: "#bde4ff" },
-  { id: "girl-2", label: "Girl with a purple cap", bg: "#ffe0a3" },
-  { id: "girl-3", label: "Girl in a yellow hoodie", bg: "#c9b8f5" },
-  { id: "girl-4", label: "Girl in a mustard hoodie", bg: "#f7b2b0" },
+  { id: "boy-1", gender: "Male", label: "Boy with a purple cap", bg: "#ffc107" },
+  { id: "boy-2", gender: "Male", label: "Boy with a blue cap", bg: "#ffb38a" },
+  { id: "boy-3", gender: "Male", label: "Boy with brown hair", bg: "#9ad9c8" },
+  { id: "boy-4", gender: "Male", label: "Boy in a dark jacket", bg: "#8fd3ff" },
+  { id: "girl-1", gender: "Female", label: "Girl with an orange cap", bg: "#bde4ff" },
+  { id: "girl-2", gender: "Female", label: "Girl with a purple cap", bg: "#ffe0a3" },
+  { id: "girl-3", gender: "Female", label: "Girl in a yellow hoodie", bg: "#c9b8f5" },
+  { id: "girl-4", gender: "Female", label: "Girl in a mustard hoodie", bg: "#f7b2b0" },
 ];
 
 /** Every character has each of these faces, happiest first. */
@@ -74,6 +78,17 @@ export function avatarOf(character: string, emotion = DEFAULT_EMOTION): Avatar {
   return BY_KEY.get(`${character}-${emotion}`) ?? AVATARS[0];
 }
 
+/** The characters a student of this gender can pick; all of them while the gender is not known. */
+export function charactersFor(gender: Gender | null | undefined): Character[] {
+  return gender ? CHARACTERS.filter((c) => c.gender === gender) : CHARACTERS;
+}
+
+/** The sign-up choices, each with the avatar it starts with (same as the backend's default). */
+export const GENDERS: { id: Gender; label: string; avatar: Avatar }[] = [
+  { id: "Male", label: "Boy", avatar: avatarOf("boy-1") },
+  { id: "Female", label: "Girl", avatar: avatarOf("girl-1") },
+];
+
 /** Smiling faces, boys and girls mixed, used when a student has not chosen one yet. */
 export const DEFAULT_AVATARS: Avatar[] = CHARACTERS.slice(0, 4).flatMap((boy, i) => [
   avatarOf(boy.id),
@@ -97,9 +112,15 @@ export function catalogueAvatar(photoUrl: string | null | undefined): Avatar | u
   return BY_SRC.get(photoUrl) ?? BY_KEY.get(LEGACY[photoUrl] ?? "");
 }
 
-/** The avatar to draw: the chosen one, or a default picked by position so a list looks varied. */
-export function avatarOrDefault(photoUrl: string | null | undefined, index = 0): Avatar {
-  return catalogueAvatar(photoUrl) ?? DEFAULT_AVATARS[((index % DEFAULT_AVATARS.length) + DEFAULT_AVATARS.length) % DEFAULT_AVATARS.length];
+/**
+ * The avatar to draw: the chosen one, or a default. With a gender, the default is that gender's;
+ * otherwise it is picked by position so a list looks varied.
+ */
+export function avatarOrDefault(photoUrl: string | null | undefined, index = 0, gender?: Gender | null): Avatar {
+  const chosen = catalogueAvatar(photoUrl);
+  if (chosen) return chosen;
+  if (gender) return GENDERS.find((g) => g.id === gender)!.avatar;
+  return DEFAULT_AVATARS[((index % DEFAULT_AVATARS.length) + DEFAULT_AVATARS.length) % DEFAULT_AVATARS.length];
 }
 
 /** Grown-up characters for mentors (no photos uploaded yet), always smiling. */
