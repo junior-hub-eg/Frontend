@@ -1,11 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, CirclePlay, LoaderCircle, RotateCcw } from "lucide-react";
 import { errorMessage } from "@/lib/api-client";
-import { selectTrack, startInterview, trackPath, type DiscoveryPath, type InterviewState, type TrackSummary } from "@/lib/learning-api";
+import { abandonInterview, startInterview, type DiscoveryPath, type InterviewState, type TrackSummary } from "@/lib/learning-api";
 
 const CHOICES: { path: DiscoveryPath; emoji: string; title: string; text: string; bg: string }[] = [
   {
@@ -44,12 +43,22 @@ export default function FindYourTrack({
   const [saving, setSaving] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [restarting, setRestarting] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
 
   /** Closes the interview in progress and opens a new one with the same path. */
-  async function startAgain(path: DiscoveryPath) {
+  async function startAgain(interview: InterviewState) {
+    const path = interview.path;
     setRestarting(true);
     setError(null);
     try {
+      if (path === "KnowsTrack") {
+        // The track is chosen again first: close the open interview and show the list.
+        await abandonInterview(interview.interviewId);
+        setDismissed(true);
+        setPicking(true);
+        setRestarting(false);
+        return;
+      }
       await startInterview(path, true);
       router.push(`/learner/courses/discovery?path=${path}&fresh=1`);
     } catch (e) {
@@ -58,26 +67,20 @@ export default function FindYourTrack({
     }
   }
 
-  async function choose(code: string) {
+  /** "I know what I want": an interview about the chosen track finds the student's level in it. */
+  function choose(code: string) {
     setSaving(code);
-    setError(null);
-    try {
-      await selectTrack(code);
-      router.push(trackPath(code) as Route);
-    } catch (e) {
-      setError(errorMessage(e, "We couldn't save your track. Please try again."));
-      setSaving(null);
-    }
+    router.push(`/learner/courses/discovery?path=KnowsTrack&track=${code}`);
   }
 
   return (
     <div className="flex flex-1 flex-col bg-[#fbfdff] p-6 md:p-10">
       <h1 className="text-[2em] font-extrabold leading-tight text-[#14365a]">Find your track</h1>
       <p className="mt-1 text-sm text-[#14365a]/75">
-        {picking ? "Choose the track you want to learn. You can learn more tracks later." : "How do you want to start? Pick the way that feels right."}
+        {picking ? "Choose the track you want to learn. A short AI interview then finds your level in it." : "How do you want to start? Pick the way that feels right."}
       </p>
 
-      {inProgress && !picking && (
+      {inProgress && !picking && !dismissed && (
         <div className="mt-5 flex flex-wrap items-center gap-3 rounded-2xl border border-[#12939b]/30 bg-[#e9f7f4] p-4 text-sm text-[#14365a]">
           <CirclePlay className="size-6 shrink-0 text-[#12939b]" />
           <span className="min-w-0 flex-1">
@@ -87,7 +90,7 @@ export default function FindYourTrack({
           <button
             type="button"
             disabled={restarting}
-            onClick={() => startAgain(inProgress.path)}
+            onClick={() => startAgain(inProgress)}
             className="flex items-center gap-1.5 rounded-full border border-[#12939b] px-4 py-2 text-xs font-bold text-[#12939b] hover:bg-white disabled:opacity-60"
           >
             {restarting ? <LoaderCircle className="size-4 animate-spin" /> : <RotateCcw className="size-4" />} Start again

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, LoaderCircle, Mic, RotateCcw, Send, Square, Volume2 } from "lucide-react";
 import { errorMessage } from "@/lib/api-client";
 import {
+  abandonInterview,
   answerTyped,
   answerVoice,
   finishInterview,
@@ -19,7 +20,7 @@ import {
 } from "@/lib/learning-api";
 
 const PATH_TITLE: Record<DiscoveryPath, string> = {
-  KnowsTrack: "Check your level",
+  KnowsTrack: "Find your level",
   Exploring: "Explore the world of tech",
   Unsure: "Find the tracks that fit you",
 };
@@ -51,7 +52,16 @@ function playAudio(q: DiscoveryQuestion | null) {
 }
 
 /** Track Discovery (US-07 to US-14): the AI interview, then the top 3 tracks with a level each. */
-export default function DiscoveryInterview({ path, fresh = false }: { path: DiscoveryPath; fresh?: boolean }) {
+export default function DiscoveryInterview({
+  path,
+  fresh = false,
+  trackCode,
+}: {
+  path: DiscoveryPath;
+  fresh?: boolean;
+  /** KnowsTrack: the track the student chose; the interview finds their level in it. */
+  trackCode?: string;
+}) {
   const router = useRouter();
   const [interview, setInterview] = useState<Interview | null>(null);
   const [result, setResult] = useState<DiscoveryResult | null>(null);
@@ -64,7 +74,7 @@ export default function DiscoveryInterview({ path, fresh = false }: { path: Disc
 
   useEffect(() => {
     let active = true;
-    startInterview(path)
+    startInterview(path, false, trackCode)
       .then((s) => {
         if (!active) return;
         // Just started again from Find your track: the new interview is not "continued".
@@ -76,7 +86,7 @@ export default function DiscoveryInterview({ path, fresh = false }: { path: Disc
     return () => {
       active = false;
     };
-  }, [path, fresh]);
+  }, [path, fresh, trackCode]);
 
   /** Closes the interview in progress and starts a new one from the first question. */
   async function startAgain() {
@@ -85,7 +95,13 @@ export default function DiscoveryInterview({ path, fresh = false }: { path: Disc
     setNotice(null);
     setAnswer("");
     try {
-      const s = await startInterview(path, true);
+      if (path === "KnowsTrack" && !trackCode && interview) {
+        // Resumed without the chosen track: close it and choose the track again.
+        await abandonInterview(interview.id);
+        router.push("/learner/courses");
+        return;
+      }
+      const s = await startInterview(path, true, trackCode);
       setInterview(toInterview(s));
       playAudio(s.question);
     } catch (e) {
@@ -177,7 +193,7 @@ export default function DiscoveryInterview({ path, fresh = false }: { path: Disc
       >
         <ArrowLeft className="size-4" /> Courses
       </button>
-      <h1 className="mt-3 text-[2em] font-extrabold leading-tight text-[#14365a]">{result ? "Your top 3 tracks" : PATH_TITLE[path]}</h1>
+      <h1 className="mt-3 text-[2em] font-extrabold leading-tight text-[#14365a]">{result ? (path === "KnowsTrack" ? "Your level and 2 more tracks to explore" : "Your top 3 tracks") : PATH_TITLE[path]}</h1>
 
       {error && (
         <p role="alert" className="mt-4 rounded-xl bg-[#fdecec] px-4 py-2 text-sm font-semibold text-[#b83232]">
@@ -188,32 +204,36 @@ export default function DiscoveryInterview({ path, fresh = false }: { path: Disc
       {busy === "start" && <LoaderCircle className="mx-auto mt-16 size-8 animate-spin text-[#12939b]" aria-label="Starting" />}
 
       {result ? (
-        <>
-          {result.summary && <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[#14365a]/80">{result.summary}</p>}
-          <ul className="mt-6 grid gap-5 lg:grid-cols-3">
-            {result.recommendations.map((r) => (
-              <li key={r.trackCode} className="flex flex-col rounded-[24px] border border-[#e3ecea] bg-white p-6 shadow-[0_10px_30px_rgba(20,54,90,0.08)]">
-                <div className="flex items-center justify-between">
-                  <span className="grid size-9 place-items-center rounded-full bg-[#14365a] text-sm font-bold text-white">{r.rank}</span>
-                  <span className="rounded-full bg-[#e9f7f4] px-3 py-1 text-xs font-bold text-[#12939b]">{r.matchPercent}% match</span>
-                </div>
-                <h2 className="mt-4 text-xl font-extrabold text-[#14365a]">{r.trackName}</h2>
-                <p className="mt-1 text-xs font-semibold text-[#7c3aed]">{r.level}</p>
-                <p className="mt-3 text-sm leading-relaxed text-[#14365a]/75">{r.reason}</p>
-                {r.levelReason && <p className="mt-2 text-xs text-[#14365a]/60">{r.levelReason}</p>}
-                <button
-                  type="button"
-                  disabled={busy !== null}
-                  onClick={() => startTrack(r.trackCode)}
-                  className="mt-auto flex items-center justify-center gap-2 rounded-full bg-[#12939b] px-5 py-3 text-sm font-semibold text-white hover:bg-[#0f7a81] disabled:opacity-60"
-                  style={{ marginTop: "1.5rem" }}
-                >
-                  Start this track <ArrowRight className="size-4" />
-                </button>
-              </li>
-            ))}
-          </ul>
-        </>
+        path === "KnowsTrack" && result.recommendations.length > 0 ? (
+          <KnowsTrackResult result={result} busy={busy !== null} onStart={startTrack} />
+        ) : (
+          <>
+            {result.summary && <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[#14365a]/80">{result.summary}</p>}
+            <ul className="mt-6 grid gap-5 lg:grid-cols-3">
+              {result.recommendations.map((r) => (
+                <li key={r.trackCode} className="flex flex-col rounded-[24px] border border-[#e3ecea] bg-white p-6 shadow-[0_10px_30px_rgba(20,54,90,0.08)]">
+                  <div className="flex items-center justify-between">
+                    <span className="grid size-9 place-items-center rounded-full bg-[#14365a] text-sm font-bold text-white">{r.rank}</span>
+                    <span className="rounded-full bg-[#e9f7f4] px-3 py-1 text-xs font-bold text-[#12939b]">{r.matchPercent}% match</span>
+                  </div>
+                  <h2 className="mt-4 text-xl font-extrabold text-[#14365a]">{r.trackName}</h2>
+                  <p className="mt-1 text-xs font-semibold text-[#7c3aed]">{r.level}</p>
+                  <p className="mt-3 text-sm leading-relaxed text-[#14365a]/75">{r.reason}</p>
+                  {r.levelReason && <p className="mt-2 text-xs text-[#14365a]/60">{r.levelReason}</p>}
+                  <button
+                    type="button"
+                    disabled={busy !== null}
+                    onClick={() => startTrack(r.trackCode)}
+                    className="mt-auto flex items-center justify-center gap-2 rounded-full bg-[#12939b] px-5 py-3 text-sm font-semibold text-white hover:bg-[#0f7a81] disabled:opacity-60"
+                    style={{ marginTop: "1.5rem" }}
+                  >
+                    Start this track <ArrowRight className="size-4" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </>
+        )
       ) : (
         interview && (
           <section className="mt-6 max-w-3xl">
@@ -310,5 +330,49 @@ export default function DiscoveryInterview({ path, fresh = false }: { path: Disc
         )
       )}
     </div>
+  );
+}
+
+/** KnowsTrack: the chosen track with the level the interview found, and two more tracks worth exploring later. */
+function KnowsTrackResult({ result, busy, onStart }: { result: DiscoveryResult; busy: boolean; onStart: (code: string) => void }) {
+  const [chosen, ...others] = result.recommendations;
+  return (
+    <>
+      {result.summary && <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[#14365a]/80">{result.summary}</p>}
+      <section className="mt-6 flex flex-wrap items-center gap-6 rounded-[28px] bg-gradient-to-br from-[#e3f6ee] to-[#dcebfb] p-7">
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-bold uppercase tracking-wide text-[#12939b]">Your track</p>
+          <h2 className="mt-1 text-2xl font-extrabold text-[#14365a]">{chosen.trackName}</h2>
+          <p className="mt-3 inline-flex rounded-full bg-white px-4 py-1.5 text-sm font-bold text-[#7c3aed]">Your level: {chosen.level}</p>
+          {chosen.levelReason && <p className="mt-3 max-w-xl text-sm leading-relaxed text-[#14365a]/75">{chosen.levelReason}</p>}
+        </div>
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => onStart(chosen.trackCode)}
+          className="flex items-center gap-2 rounded-full bg-[#14365a] px-6 py-3 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
+        >
+          Start learning {chosen.trackName} <ArrowRight className="size-4" />
+        </button>
+      </section>
+
+      {others.length > 0 && (
+        <>
+          <h3 className="mt-8 text-lg font-extrabold text-[#14365a]">Also worth exploring</h3>
+          <p className="mt-1 text-sm text-[#14365a]/70">You can open these tracks from Courses once you start learning.</p>
+          <ul className="mt-4 grid gap-4 md:grid-cols-2">
+            {others.map((r) => (
+              <li key={r.trackCode} className="rounded-[24px] border border-[#e3ecea] bg-white p-5 shadow-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <h4 className="text-base font-bold text-[#14365a]">{r.trackName}</h4>
+                  <span className="rounded-full bg-[#e9f7f4] px-3 py-1 text-xs font-bold text-[#12939b]">{r.matchPercent}% match</span>
+                </div>
+                <p className="mt-2 text-sm leading-relaxed text-[#14365a]/75">{r.reason}</p>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </>
   );
 }
