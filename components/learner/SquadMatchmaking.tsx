@@ -8,7 +8,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Dices, LoaderCircle, Users } from "lucide-react";
 import { ApiError, errorMessage } from "@/lib/api-client";
-import { AVATARS } from "@/lib/avatars";
+import { DEFAULT_AVATARS } from "@/lib/avatars";
 import { joinSquad } from "@/lib/squad-join-api";
 
 const IMG = "/images/Intern";
@@ -63,7 +63,7 @@ export default function SquadMatchmaking() {
 
           <section className={`${glass} mx-auto mt-[1.5em] flex max-w-[34em] flex-col items-center gap-[1em] p-[2em] text-center`}>
             <ul className="flex -space-x-[0.9em]" aria-hidden>
-              {AVATARS.slice(0, 5).map((a) => (
+              {DEFAULT_AVATARS.slice(0, 5).map((a) => (
                 <li key={a.key} className="relative h-[4.6em] w-[4.6em] overflow-hidden rounded-full border-[0.2em] border-white" style={{ backgroundColor: a.bg }}>
                   <Image src={a.src} alt="" fill sizes="80px" className="object-cover" />
                 </li>

@@ -7,11 +7,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, CircleCheck, ClipboardPaste, Dices, ExternalLink, Link2, LoaderCircle } from "lucide-react";
 import { ApiError, errorMessage } from "@/lib/api-client";
-import { avatarOrDefault, catalogueAvatar, AVATARS } from "@/lib/avatars";
+import { avatarOrDefault, mentorAvatar } from "@/lib/avatars";
 import { getHub } from "@/lib/hub-api";
 import { getSquad, getSquadLinks, saveMyLinks, type SquadLinks, type SquadMemberLinks, type WorkLinkKind } from "@/lib/interns-api";
 import { XP_PER_LEVEL } from "./dashboard-cards";
-import { mentorAvatar } from "./ChooseMentorPage";
 import { ROLE_TITLE } from "./interns-data";
 
 const IMG = "/images/Intern";
@@ -42,7 +41,7 @@ function Avatar({ src, bg, size = "h-[9.5em] w-[9.5em]" }: { src: string; bg?: s
 }
 
 function memberAvatar(m: SquadMemberLinks, i: number) {
-  return catalogueAvatar(m.photoUrl) ?? AVATARS[(i + 1) % AVATARS.length];
+  return avatarOrDefault(m.photoUrl, i + 1);
 }
 
 function LinkChips({ member }: { member: SquadMemberLinks }) {

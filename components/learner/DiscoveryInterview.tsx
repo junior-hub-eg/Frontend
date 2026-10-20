@@ -24,7 +24,7 @@ import {
 } from "@/lib/learning-api";
 
 /** The interviewer (Figma "Karima AI assistant"). */
-const KARIMA = { name: "Karima", photo: "/images/avatars/girl-orange.png", video: "/images/Ai%20intervew/Video_1.mp4" };
+const KARIMA = { name: "Karima", photo: "/images/avatars/girl-1-smile.webp", video: "/images/Ai%20intervew/Video_1.mp4" };
 
 /** Figma colours: the ring and the send button are the same stack of gradients over rgba(104,174,255). */
 const RING_FILL = [
