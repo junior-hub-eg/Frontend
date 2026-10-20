@@ -9,11 +9,15 @@ interface ChooseTrackDialogProps {
   /** Saving the choice: the confirm button waits. */
   busy?: boolean;
   onCancel: () => void;
+  /** "I'm new to it": start the track at Beginner. */
   onConfirm: () => void;
+  /** "I know some": take the placement test to find the level. */
+  onPlacement: () => void;
 }
 
 /** Modal built on the native <dialog> element (focus trap + Esc handled by the browser). */
-export function ChooseTrackDialog({ open, trackTitle, busy = false, onCancel, onConfirm }: ChooseTrackDialogProps) {
+/** Starting a track (decision of 21 Oct 2026): know some of it (placement test) or start from Beginner. */
+export function ChooseTrackDialog({ open, trackTitle, busy = false, onCancel, onConfirm, onPlacement }: ChooseTrackDialogProps) {
   const ref = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
@@ -53,23 +57,29 @@ export function ChooseTrackDialog({ open, trackTitle, busy = false, onCancel, on
           {trackTitle}
         </h2>
         <p className="mt-2 text-xs leading-relaxed text-[#1b2a5c]/70">
-          {trackTitle} will become your active learning track. Courses will open it, and you can learn more tracks later.
+          How much do you know about {trackTitle}? You also get a {trackTitle} mentor, and you keep your other tracks.
         </p>
-        <div className="mt-6 flex gap-3">
+        <div className="mt-6 grid w-full gap-3">
           <button
             type="button"
-            onClick={onCancel}
-            className="rounded-lg border border-[#12939b] px-5 py-2 text-xs font-semibold text-[#12939b] hover:bg-[#E9F7F4]"
+            onClick={onPlacement}
+            disabled={busy}
+            className="rounded-xl border border-[#12939b] px-4 py-3 text-left text-xs text-[#1b2a5c] hover:bg-[#E9F7F4] disabled:opacity-60"
           >
-            Cancel
+            <span className="block text-sm font-bold">I know some {trackTitle}</span>
+            Answer 6 quick technical questions and start at your level.
           </button>
           <button
             type="button"
             onClick={onConfirm}
             disabled={busy}
-            className="rounded-lg bg-linear-to-r from-[#14757d] to-[#1b2a5c] px-5 py-2 text-xs font-semibold text-white hover:opacity-90 disabled:opacity-60"
+            className="rounded-xl bg-linear-to-r from-[#14757d] to-[#1b2a5c] px-4 py-3 text-left text-xs text-white hover:opacity-90 disabled:opacity-60"
           >
-            {busy ? "Saving…" : "Confirm Track"}
+            <span className="block text-sm font-bold">{busy ? "Saving…" : "I'm new to it"}</span>
+            Start from the Beginner lessons.
+          </button>
+          <button type="button" onClick={onCancel} className="mt-1 text-xs font-semibold text-[#12939b] hover:underline">
+            Cancel
           </button>
         </div>
       </div>

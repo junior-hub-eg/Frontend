@@ -2,11 +2,42 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { Briefcase, ChevronDown, CircleCheck, Languages, LoaderCircle, MessagesSquare, Route as RouteIcon, Search, Star, Users, X } from "lucide-react";
+import {
+  Briefcase,
+  CalendarCheck,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  CircleCheck,
+  Languages,
+  LoaderCircle,
+  MessagesSquare,
+  Route as RouteIcon,
+  Search,
+  Star,
+  User,
+  Users,
+  X,
+} from "lucide-react";
 import { errorMessage } from "@/lib/api-client";
 import { mentorAvatar } from "@/lib/avatars";
-import { getHub } from "@/lib/hub-api";
-import { chooseMentor, getMentor, getMentors, type Mentor, type MentorProfile } from "@/lib/mentorship-api";
+import {
+  bookSession,
+  cancelSession,
+  chooseMentor,
+  getMentor,
+  getMentors,
+  getMentorSlots,
+  getMyMentor,
+  getMySessions,
+  sessionTime,
+  type Mentor,
+  type MentorAssignment,
+  type MentorProfile,
+  type MentorSession,
+  type MentorSlots,
+  type SessionType,
+} from "@/lib/mentorship-api";
 
 const TRACK_NAMES: Record<string, string> = {
   FRONTEND: "Frontend",
@@ -18,6 +49,7 @@ const TRACK_NAMES: Record<string, string> = {
   TESTING: "Testing",
   GAMING: "Gaming",
 };
+const trackName = (code: string) => TRACK_NAMES[code] ?? code;
 
 type Sort = "rating" | "experience" | "name";
 const SORTS: { id: Sort; label: string }[] = [
@@ -27,10 +59,23 @@ const SORTS: { id: Sort; label: string }[] = [
 ];
 
 const FEATURES = [
-  { icon: RouteIcon, title: "Guide your track", text: "Lessons, projects and career", color: "bg-[#e3eefd] text-[#2f6fc4]" },
-  { icon: CircleCheck, title: "Review your work", text: "Feedback in every session", color: "bg-[#e3f6ee] text-[#1f9d5b]" },
-  { icon: Briefcase, title: "Plan your future", text: "Internships and first jobs", color: "bg-[#fff4d6] text-[#c27c00]" },
+  { icon: RouteIcon, title: "1:1 Mentoring", text: "Guidance on your track", color: "bg-[#e3eefd] text-[#2f6fc4]" },
+  { icon: CircleCheck, title: "Practical advice", text: "From real experience", color: "bg-[#e3f6ee] text-[#1f9d5b]" },
+  { icon: Briefcase, title: "Plan your future", text: "Projects and career", color: "bg-[#fff4d6] text-[#c27c00]" },
 ];
+
+/** Day key and labels in school time (Cairo). */
+const CAIRO = "Africa/Cairo";
+const dayKey = (iso: string) => new Date(iso).toLocaleDateString("en-CA", { timeZone: CAIRO });
+const dayParts = (iso: string) => ({
+  weekday: new Date(iso).toLocaleDateString("en-GB", { weekday: "short", timeZone: CAIRO }),
+  day: new Date(iso).toLocaleDateString("en-GB", { day: "numeric", timeZone: CAIRO }),
+  month: new Date(iso).toLocaleDateString("en-GB", { month: "long", year: "numeric", timeZone: CAIRO }),
+});
+const timeLabel = (iso: string) =>
+  new Date(iso).toLocaleTimeString("en-GB", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: CAIRO }).toUpperCase();
+
+const DAYS_SHOWN = 5;
 
 function Avatar({ id, className }: { id: string; className: string }) {
   const a = mentorAvatar(id);
@@ -53,6 +98,10 @@ function Chip({ children }: { children: React.ReactNode }) {
   return <span className="rounded-[0.5em] bg-[#eaf3fb] px-[0.6em] py-[0.3em] text-[0.75em] font-semibold text-[#14365a]">{children}</span>;
 }
 
+function Availability({ text }: { text: string }) {
+  return <span className="rounded-full bg-[#c9f2d6] px-[0.6em] py-[0.15em] text-[0.7em] font-semibold text-[#1f7a43]">{text}</span>;
+}
+
 function Select<T extends string>({ value, onChange, options, label }: { value: T; onChange: (v: T) => void; options: { id: T; label: string }[]; label: string }) {
   return (
     <label className="relative">
@@ -73,28 +122,29 @@ function Select<T extends string>({ value, onChange, options, label }: { value: 
   );
 }
 
-/** Figma "Choose Your Mentor": the student's mentor and every mentor to choose from (MentorsController). */
+/** Figma "Choose Your Mentor": the student's mentor in each track, the mentors of their tracks, and booking a session. */
 export default function ChooseMentorPage() {
   const [mentors, setMentors] = useState<Mentor[] | null>(null);
+  const [mine, setMine] = useState<MentorAssignment[]>([]);
+  const [sessions, setSessions] = useState<MentorSession[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [track, setTrack] = useState("all");
   const [skill, setSkill] = useState("all");
-  const [availability, setAvailability] = useState("all");
   const [sort, setSort] = useState<Sort>("rating");
   const [query, setQuery] = useState("");
-  const [saving, setSaving] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [profile, setProfile] = useState<MentorProfile | "loading" | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
-    Promise.all([getMentors({ all: true }), getHub().catch(() => null)])
-      .then(([list, hub]) => {
+    Promise.all([getMentors(), getMyMentor(), getMySessions().catch(() => [])])
+      .then(([list, my, booked]) => {
         if (!active) return;
         setMentors(list);
-        // Mentors of the student's track first, like the backend's default list.
-        const code = hub?.courses.track?.code;
-        if (code && list.some((m) => m.trackCode === code)) setTrack(code);
+        setMine(my.currents);
+        setSessions(booked);
+        setSelectedId(my.current?.mentor.id ?? list[0]?.id ?? null);
       })
       .catch((e) => active && setLoadError(errorMessage(e, "We couldn't load the mentors. Please try again.")));
     return () => {
@@ -102,41 +152,36 @@ export default function ChooseMentorPage() {
     };
   }, []);
 
-  const mine = mentors?.find((m) => m.isMyMentor) ?? null;
-  // Plain values: the React Compiler memoizes them.
+  const selected = mentors?.find((m) => m.id === selectedId) ?? null;
   const options = (() => {
     const list = mentors ?? [];
     const uniq = (xs: string[]) => [...new Set(xs)].sort();
     return {
-      tracks: [{ id: "all", label: "All Tracks" }, ...uniq(list.map((m) => m.trackCode)).map((c) => ({ id: c, label: TRACK_NAMES[c] ?? c }))],
+      tracks: [{ id: "all", label: "All My Tracks" }, ...uniq(list.map((m) => m.trackCode)).map((c) => ({ id: c, label: trackName(c) }))],
       skills: [{ id: "all", label: "All Skills" }, ...uniq(list.flatMap((m) => m.skills)).map((s) => ({ id: s, label: s }))],
-      availability: [{ id: "all", label: "Availability" }, ...uniq(list.map((m) => m.availability)).map((a) => ({ id: a, label: a }))],
     };
   })();
-
   const shown = (() => {
     const q = query.trim().toLowerCase();
     return (mentors ?? [])
       .filter((m) => track === "all" || m.trackCode === track)
       .filter((m) => skill === "all" || m.skills.includes(skill))
-      .filter((m) => availability === "all" || m.availability === availability)
       .filter((m) => !q || `${m.fullName} ${m.title} ${m.skills.join(" ")}`.toLowerCase().includes(q))
       .sort((a, b) =>
         sort === "rating" ? b.rating - a.rating : sort === "experience" ? b.yearsOfExperience - a.yearsOfExperience : a.fullName.localeCompare(b.fullName),
       );
   })();
 
-  async function select(m: Mentor) {
-    setSaving(m.id);
+  async function makeMyMentor(m: Mentor) {
     setError(null);
     try {
-      await chooseMentor(m.id);
-      setMentors((list) => list?.map((x) => ({ ...x, isMyMentor: x.id === m.id })) ?? list);
+      const my = await chooseMentor(m.id);
+      setMine(my.currents);
+      const ids = new Set(my.currents.map((c) => c.mentor.id));
+      setMentors((list) => list?.map((x) => ({ ...x, isMyMentor: ids.has(x.id) })) ?? list);
       setProfile(null);
     } catch (e) {
       setError(errorMessage(e, "We couldn't choose this mentor. Please try again."));
-    } finally {
-      setSaving(null);
     }
   }
 
@@ -150,10 +195,20 @@ export default function ChooseMentorPage() {
     }
   }
 
+  async function cancel(s: MentorSession) {
+    setError(null);
+    try {
+      await cancelSession(s.id);
+      setSessions((list) => list.filter((x) => x.id !== s.id));
+    } catch (e) {
+      setError(errorMessage(e, "We couldn't cancel this session. Please try again."));
+    }
+  }
+
   return (
     <div className="relative min-w-0 flex-1 pb-8 pr-3 sm:pr-4 lg:absolute lg:inset-0 lg:overflow-y-auto lg:pb-[calc(var(--u)*2)] lg:pl-[var(--hl)] lg:pr-[calc(var(--u)*1.6)] lg:pt-[calc(var(--u)*6.5)]">
       <div style={{ fontSize: "clamp(11px, calc(var(--u) * 1.05), 16px)" }}>
-        {/* ---------- Title, features and your mentor ---------- */}
+        {/* ---------- Title, features and your mentors ---------- */}
         <div className="grid gap-[1.2em] lg:grid-cols-[1fr_minmax(0,38em)]">
           <section className="flex flex-col justify-between gap-[1.2em] rounded-[1.6em] bg-white/35 p-[1.4em] backdrop-blur-sm">
             <div>
@@ -177,37 +232,70 @@ export default function ChooseMentorPage() {
 
           <section aria-labelledby="your-mentor" className="rounded-[1.6em] bg-white p-[1.2em] shadow-[0_6px_22px_rgba(20,54,90,0.07)]">
             <h2 id="your-mentor" className="text-[1.3em] font-extrabold text-[#14365a]">
-              Your Mentor
+              {mine.length > 1 ? "Your Mentors" : "Your Mentor"}
             </h2>
             {!mentors ? (
               <LoaderCircle className="mx-auto my-[2em] h-[2em] w-[2em] animate-spin text-[#12939b]" />
-            ) : mine ? (
+            ) : mine.length === 0 ? (
+              <p className="mt-[0.8em] text-[0.95em] text-[#14365a]/75">You don&apos;t have a mentor yet. Choose one below.</p>
+            ) : mine.length === 1 ? (
               <div className="mt-[0.6em] flex flex-wrap items-center gap-[1.2em]">
-                <Avatar id={mine.id} className="h-[10em] w-[10em]" />
+                <Avatar id={mine[0].mentor.id} className="h-[9em] w-[9em]" />
                 <div className="min-w-0 flex-1">
-                  <span className="rounded-full bg-[#c9f2d6] px-[0.6em] py-[0.15em] text-[0.7em] font-semibold text-[#1f7a43]">{mine.availability}</span>
+                  <Availability text={mine[0].mentor.availability} />
                   <div className="mt-[0.5em]">
-                    <Rating value={mine.rating} />
+                    <Rating value={mine[0].mentor.rating} />
                   </div>
-                  <p className="mt-[0.2em] text-[1.35em] font-bold text-[#14365a]">{mine.fullName}</p>
-                  <p className="text-[1em] text-[#14365a]">{mine.title}</p>
-                  <p className="text-[0.9em] text-[#14365a]/75">{mine.yearsOfExperience} years experience</p>
+                  <p className="mt-[0.2em] text-[1.35em] font-bold text-[#14365a]">{mine[0].mentor.fullName}</p>
+                  <p className="text-[1em] text-[#14365a]">{mine[0].mentor.title}</p>
+                  <p className="text-[0.9em] text-[#14365a]/75">{trackName(mine[0].mentor.trackCode)} mentor</p>
                 </div>
                 <div className="flex flex-col gap-[0.5em]">
-                  {mine.skills.slice(0, 3).map((s) => (
+                  {mine[0].mentor.skills.slice(0, 3).map((s) => (
                     <Chip key={s}>{s}</Chip>
                   ))}
                 </div>
               </div>
             ) : (
-              <p className="mt-[0.8em] text-[0.95em] text-[#14365a]/75">
-                You don&apos;t have a mentor yet. Choose one below: they will guide you through your track.
-              </p>
+              <ul className="mt-[0.6em] grid gap-[0.6em]">
+                {mine.map((a) => (
+                  <li key={a.mentor.id} className="flex items-center gap-[0.8em]">
+                    <Avatar id={a.mentor.id} className="h-[3.6em] w-[3.6em]" />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[1em] font-bold text-[#14365a]">{a.mentor.fullName}</p>
+                      <p className="truncate text-[0.8em] text-[#14365a]/75">{a.mentor.title}</p>
+                    </div>
+                    <span className="rounded-full bg-[#eaf3fb] px-[0.7em] py-[0.2em] text-[0.75em] font-bold text-[#14365a]">
+                      {trackName(a.mentor.trackCode)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {sessions.length > 0 && (
+              <div className="mt-[1em] border-t border-[#e8eef5] pt-[0.8em]">
+                <h3 className="text-[0.9em] font-bold text-[#14365a]">Your sessions</h3>
+                <ul className="mt-[0.4em] grid gap-[0.4em]">
+                  {sessions.map((s) => (
+                    <li key={s.id} className="flex items-center gap-[0.6em] rounded-[0.8em] bg-[#e9f7f4] px-[0.8em] py-[0.5em] text-[0.85em] text-[#14365a]">
+                      <CalendarCheck className="h-[1.2em] w-[1.2em] shrink-0 text-[#12939b]" />
+                      <span className="min-w-0 flex-1">
+                        <span className="font-bold">{s.type === "OneToOne" ? "1:1" : "Group"} session</span> with {s.mentor.fullName} ·{" "}
+                        {sessionTime(s.startsUtc)}
+                      </span>
+                      <button type="button" onClick={() => cancel(s)} className="text-[0.85em] font-semibold text-[#b83232] hover:underline">
+                        Cancel
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             )}
           </section>
         </div>
 
-        {/* ---------- Mentors ---------- */}
+        {/* ---------- Mentors of your tracks, and the selected mentor ---------- */}
         <section aria-label="Mentors" className="mt-[1.2em] rounded-[1.6em] bg-white p-[1.2em] shadow-[0_6px_22px_rgba(20,54,90,0.07)]">
           <div className="flex flex-wrap items-center gap-[0.8em]">
             <label className="relative min-w-[14em] flex-1">
@@ -220,9 +308,8 @@ export default function ChooseMentorPage() {
                 className="h-[2.9em] w-full rounded-[0.9em] border border-[#e1e8f0] bg-white pl-[2.8em] pr-[1em] text-[0.9em] text-[#14365a] outline-none placeholder:text-[#14365a]/45 focus:ring-2 focus:ring-[#12939b]/30"
               />
             </label>
-            <Select label="Track" value={track} onChange={setTrack} options={options.tracks} />
             <Select label="Skill" value={skill} onChange={setSkill} options={options.skills} />
-            <Select label="Availability" value={availability} onChange={setAvailability} options={options.availability} />
+            <Select label="Track" value={track} onChange={setTrack} options={options.tracks} />
             <span className="ml-auto flex items-center gap-[0.6em] text-[0.9em] text-[#14365a]">
               Sort by <Select label="Sort by" value={sort} onChange={setSort} options={SORTS} />
             </span>
@@ -233,54 +320,65 @@ export default function ChooseMentorPage() {
               {error ?? loadError}
             </p>
           )}
-
           {!mentors && !loadError && <LoaderCircle className="mx-auto my-[3em] h-[2em] w-[2em] animate-spin text-[#12939b]" />}
-          {mentors && shown.length === 0 && <p className="py-[3em] text-center text-[0.95em] text-[#14365a]/65">No mentor matches these filters.</p>}
 
-          <ul className="mt-[1em] grid gap-[0.9em] md:grid-cols-2 xl:grid-cols-3">
-            {shown.map((m) => (
-              <li key={m.id} className="flex flex-col rounded-[1.2em] border border-[#e8eef5] p-[1em]">
-                <div className="flex items-center gap-[1em]">
-                  <Avatar id={m.id} className="h-[8.5em] w-[8.5em]" />
-                  <div className="min-w-0">
-                    <span className="rounded-full bg-[#c9f2d6] px-[0.6em] py-[0.15em] text-[0.7em] font-semibold text-[#1f7a43]">{m.availability}</span>
-                    <div className="mt-[0.5em]">
-                      <Rating value={m.rating} />
+          <div className="mt-[1em] grid items-start gap-[1em] xl:grid-cols-[1fr_minmax(0,27em)]">
+            <ul className="grid gap-[0.9em] md:grid-cols-2">
+              {mentors && shown.length === 0 && <p className="py-[3em] text-center text-[0.95em] text-[#14365a]/65 md:col-span-2">No mentor matches these filters.</p>}
+              {shown.map((m) => (
+                <li
+                  key={m.id}
+                  className={`flex flex-col rounded-[1.2em] border p-[1em] ${m.id === selectedId ? "border-[#14365a] ring-2 ring-[#14365a]/15" : "border-[#e8eef5]"}`}
+                >
+                  <div className="flex items-center gap-[1em]">
+                    <Avatar id={m.id} className="h-[7.5em] w-[7.5em]" />
+                    <div className="min-w-0">
+                      <Availability text={m.availability} />
+                      <div className="mt-[0.5em]">
+                        <Rating value={m.rating} />
+                      </div>
+                      <p className="mt-[0.2em] truncate text-[1.2em] font-bold text-[#14365a]">{m.fullName}</p>
+                      <p className="text-[0.9em] text-[#14365a]">{m.title}</p>
+                      <p className="text-[0.8em] text-[#14365a]/70">
+                        {trackName(m.trackCode)} · {m.yearsOfExperience} years{m.isMyMentor ? " · Your mentor" : ""}
+                      </p>
                     </div>
-                    <p className="mt-[0.2em] truncate text-[1.25em] font-bold text-[#14365a]">{m.fullName}</p>
-                    <p className="text-[0.95em] text-[#14365a]">{m.title}</p>
-                    <p className="text-[0.85em] text-[#14365a]/70">
-                      {TRACK_NAMES[m.trackCode] ?? m.trackCode} · {m.yearsOfExperience} years
-                    </p>
                   </div>
-                </div>
-                <p className="mt-[0.9em] line-clamp-2 text-[0.85em] leading-snug text-[#14365a]/85">{m.bio}</p>
-                <div className="mt-[0.7em] flex flex-wrap gap-[0.4em]">
-                  {m.skills.slice(0, 3).map((s) => (
-                    <Chip key={s}>{s}</Chip>
-                  ))}
-                </div>
-                <div className="mt-auto grid grid-cols-2 gap-[0.6em] pt-[1.2em]">
-                  <button
-                    type="button"
-                    onClick={() => openProfile(m)}
-                    className="h-[2.8em] rounded-[0.6em] border border-[#e1e8f0] text-[0.95em] font-semibold text-[#14365a] hover:bg-[#f4f8fc]"
-                  >
-                    View Profile
-                  </button>
-                  <button
-                    type="button"
-                    disabled={m.isMyMentor || saving !== null}
-                    onClick={() => select(m)}
-                    className="flex h-[2.8em] items-center justify-center gap-[0.4em] rounded-[0.6em] bg-[#14365a] text-[0.95em] font-semibold text-white hover:bg-[#0f2a47] disabled:cursor-default disabled:opacity-70"
-                  >
-                    {saving === m.id ? <LoaderCircle className="h-[1.1em] w-[1.1em] animate-spin" /> : m.isMyMentor ? <CircleCheck className="h-[1.1em] w-[1.1em]" /> : null}
-                    {m.isMyMentor ? "Your Mentor" : "Select Mentor"}
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
+                  <p className="mt-[0.9em] line-clamp-2 text-[0.85em] leading-snug text-[#14365a]/85">{m.bio}</p>
+                  <div className="mt-[0.7em] flex flex-wrap gap-[0.4em]">
+                    {m.skills.slice(0, 3).map((s) => (
+                      <Chip key={s}>{s}</Chip>
+                    ))}
+                  </div>
+                  <div className="mt-auto grid grid-cols-2 gap-[0.6em] pt-[1.2em]">
+                    <button
+                      type="button"
+                      onClick={() => openProfile(m)}
+                      className="h-[2.8em] rounded-[0.6em] border border-[#e1e8f0] text-[0.95em] font-semibold text-[#14365a] hover:bg-[#f4f8fc]"
+                    >
+                      View Profile
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedId(m.id)}
+                      className="h-[2.8em] rounded-[0.6em] bg-[#14365a] text-[0.95em] font-semibold text-white hover:bg-[#0f2a47]"
+                    >
+                      {m.id === selectedId ? "Selected" : "Select Mentor"}
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+
+            {selected && (
+              <BookingPanel
+                key={selected.id}
+                mentor={selected}
+                onMakeMine={() => makeMyMentor(selected)}
+                onBooked={(s) => setSessions((list) => [...list, s].sort((a, b) => a.startsUtc.localeCompare(b.startsUtc)))}
+              />
+            )}
+          </div>
         </section>
       </div>
 
@@ -313,8 +411,7 @@ export default function ChooseMentorPage() {
                 <p className="mt-4 text-sm leading-relaxed text-[#14365a]/85">{profile.mentor.bio}</p>
                 <dl className="mt-4 grid gap-2 text-sm">
                   <div className="flex items-center gap-2">
-                    <Briefcase className="size-4 text-[#12939b]" /> {profile.mentor.yearsOfExperience} years experience ·{" "}
-                    {TRACK_NAMES[profile.mentor.trackCode] ?? profile.mentor.trackCode}
+                    <Briefcase className="size-4 text-[#12939b]" /> {profile.mentor.yearsOfExperience} years experience · {trackName(profile.mentor.trackCode)}
                   </div>
                   <div className="flex items-center gap-2">
                     <MessagesSquare className="size-4 text-[#12939b]" /> {profile.mentor.availability}
@@ -333,11 +430,13 @@ export default function ChooseMentorPage() {
                 </div>
                 <button
                   type="button"
-                  disabled={profile.mentor.isMyMentor || saving !== null}
-                  onClick={() => select(profile.mentor)}
-                  className="mt-6 h-11 w-full rounded-xl bg-[#14365a] text-sm font-semibold text-white hover:bg-[#0f2a47] disabled:opacity-70"
+                  onClick={() => {
+                    setSelectedId(profile.mentor.id);
+                    setProfile(null);
+                  }}
+                  className="mt-6 h-11 w-full rounded-xl bg-[#14365a] text-sm font-semibold text-white hover:bg-[#0f2a47]"
                 >
-                  {profile.mentor.isMyMentor ? "Your Mentor" : saving ? "Saving…" : "Select Mentor"}
+                  Book a session
                 </button>
               </>
             )}
@@ -345,5 +444,221 @@ export default function ChooseMentorPage() {
         </div>
       )}
     </div>
+  );
+}
+
+/** Figma "Selected Mentor": the session type, a day and a time from the mentor's slots, then Book Session. */
+function BookingPanel({ mentor, onMakeMine, onBooked }: { mentor: Mentor; onMakeMine: () => Promise<void>; onBooked: (s: MentorSession) => void }) {
+  const [slots, setSlots] = useState<MentorSlots | null>(null);
+  const [failed, setFailed] = useState<string | null>(null);
+  const [type, setType] = useState<SessionType>("OneToOne");
+  const [page, setPage] = useState(0);
+  const [day, setDay] = useState<string | null>(null);
+  const [time, setTime] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [making, setMaking] = useState(false);
+  const [booked, setBooked] = useState<MentorSession | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    getMentorSlots(mentor.id).then(
+      (s) => active && setSlots(s),
+      (e) => active && setFailed(errorMessage(e, "We couldn't load this mentor's times.")),
+    );
+    return () => {
+      active = false;
+    };
+  }, [mentor.id]);
+
+  const days = [...new Set((slots?.slots ?? []).map((s) => dayKey(s.startsUtc)))];
+  const pageDays = days.slice(page * DAYS_SHOWN, page * DAYS_SHOWN + DAYS_SHOWN);
+  const chosenDay = day && days.includes(day) ? day : (pageDays[0] ?? null);
+  const times = (slots?.slots ?? []).filter((s) => dayKey(s.startsUtc) === chosenDay);
+  const free = (s: MentorSlots["slots"][number]) => !s.bookedByMe && (type === "OneToOne" ? s.oneToOneAvailable : s.groupSpotsLeft > 0);
+  const firstOfPage = (slots?.slots ?? []).find((s) => dayKey(s.startsUtc) === pageDays[0]);
+
+  async function book() {
+    if (!time) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const s = await bookSession(mentor.id, time, type);
+      setBooked(s);
+      onBooked(s);
+      setSlots(await getMentorSlots(mentor.id));
+      setTime(null);
+    } catch (e) {
+      setError(errorMessage(e, "We couldn't book this session. Please try again."));
+      setSlots(await getMentorSlots(mentor.id).catch(() => slots));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <aside aria-label="Selected mentor" className="rounded-[1.2em] border border-[#e8eef5] p-[1.2em] text-[#14365a] xl:sticky xl:top-0">
+      <h2 className="text-[1.25em] font-extrabold">Selected Mentor</h2>
+      <div className="mt-[0.8em] flex items-center gap-[1em]">
+        <Avatar id={mentor.id} className="h-[7.5em] w-[7.5em]" />
+        <div className="min-w-0">
+          <Availability text={mentor.availability} />
+          <div className="mt-[0.5em]">
+            <Rating value={mentor.rating} />
+          </div>
+          <p className="mt-[0.2em] text-[1.25em] font-bold">{mentor.fullName}</p>
+          <p className="text-[0.9em]">{mentor.title}</p>
+          <p className="text-[0.8em] text-[#14365a]/70">{trackName(mentor.trackCode)}</p>
+        </div>
+      </div>
+      <p className="mt-[0.8em] text-[0.85em] leading-snug text-[#14365a]/85">{mentor.bio}</p>
+      <div className="mt-[0.6em] flex flex-wrap gap-[0.4em]">
+        {mentor.skills.slice(0, 3).map((s) => (
+          <Chip key={s}>{s}</Chip>
+        ))}
+      </div>
+      {!mentor.isMyMentor && (
+        <button
+          type="button"
+          disabled={making}
+          onClick={async () => {
+            setMaking(true);
+            await onMakeMine();
+            setMaking(false);
+          }}
+          className="mt-[0.8em] text-[0.85em] font-semibold text-[#12939b] hover:underline disabled:opacity-60"
+        >
+          {making ? "Saving…" : `Make ${mentor.fullName.split(" ")[0]} my ${trackName(mentor.trackCode)} mentor`}
+        </button>
+      )}
+
+      <h3 className="mt-[1.2em] text-[1em] font-bold">Session Type</h3>
+      <div className="mt-[0.5em] grid grid-cols-2 gap-[0.6em]">
+        {(
+          [
+            { id: "OneToOne", icon: User, title: "1:1 Session", text: `${slots?.durationMinutes ?? 45} min, just you` },
+            { id: "Group", icon: Users, title: "Group Session", text: `Up to ${slots?.groupCapacity ?? 5} students` },
+          ] as const
+        ).map((o) => (
+          <button
+            key={o.id}
+            type="button"
+            aria-pressed={type === o.id}
+            onClick={() => {
+              setType(o.id);
+              setTime(null);
+            }}
+            className={`flex items-center gap-[0.6em] rounded-[0.8em] border px-[0.8em] py-[0.7em] text-left ${
+              type === o.id ? "border-[#12939b] bg-[#e3f6fb]" : "border-transparent bg-[#f2f5f8] hover:bg-[#e9eef3]"
+            }`}
+          >
+            <o.icon className="h-[1.4em] w-[1.4em] shrink-0" />
+            <span className="min-w-0">
+              <span className="block text-[0.85em] font-bold">{o.title}</span>
+              <span className="block text-[0.7em] text-[#14365a]/70">{o.text}</span>
+            </span>
+          </button>
+        ))}
+      </div>
+
+      <h3 className="mt-[1.2em] text-[1em] font-bold">Choose Date &amp; Time</h3>
+      {failed && <p className="mt-[0.5em] text-[0.85em] text-[#b83232]">{failed}</p>}
+      {!slots && !failed && <LoaderCircle className="mx-auto my-[1.5em] h-[1.6em] w-[1.6em] animate-spin text-[#12939b]" />}
+      {slots && days.length === 0 && <p className="mt-[0.5em] text-[0.85em] text-[#14365a]/70">This mentor has no session times yet.</p>}
+      {slots && days.length > 0 && (
+        <>
+          <div className="mt-[0.5em] rounded-[1em] border border-[#e8eef5] p-[0.8em]">
+            <div className="flex items-center justify-between">
+              <button
+                type="button"
+                aria-label="Earlier days"
+                disabled={page === 0}
+                onClick={() => setPage(page - 1)}
+                className="grid h-[2em] w-[2em] place-items-center rounded-full hover:bg-[#f2f5f8] disabled:opacity-30"
+              >
+                <ChevronLeft className="h-[1.1em] w-[1.1em]" />
+              </button>
+              <span className="text-[0.95em] font-semibold">{firstOfPage ? dayParts(firstOfPage.startsUtc).month : ""}</span>
+              <button
+                type="button"
+                aria-label="Later days"
+                disabled={(page + 1) * DAYS_SHOWN >= days.length}
+                onClick={() => setPage(page + 1)}
+                className="grid h-[2em] w-[2em] place-items-center rounded-full hover:bg-[#f2f5f8] disabled:opacity-30"
+              >
+                <ChevronRight className="h-[1.1em] w-[1.1em]" />
+              </button>
+            </div>
+            <div className="mt-[0.6em] grid grid-cols-5 gap-[0.4em]">
+              {pageDays.map((d) => {
+                const first = slots.slots.find((s) => dayKey(s.startsUtc) === d)!;
+                const parts = dayParts(first.startsUtc);
+                return (
+                  <button
+                    key={d}
+                    type="button"
+                    aria-pressed={d === chosenDay}
+                    onClick={() => {
+                      setDay(d);
+                      setTime(null);
+                    }}
+                    className={`rounded-[0.6em] border py-[0.4em] text-center ${
+                      d === chosenDay ? "border-[#14365a] bg-[#14365a] text-white" : "border-[#e1e8f0] hover:bg-[#f2f5f8]"
+                    }`}
+                  >
+                    <span className="block text-[0.7em]">{parts.weekday}</span>
+                    <span className="block text-[1em] font-bold">{parts.day}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <div className="mt-[0.8em] grid grid-cols-3 gap-[0.5em]">
+            {times.map((s) => (
+              <button
+                key={s.startsUtc}
+                type="button"
+                disabled={!free(s)}
+                aria-pressed={time === s.startsUtc}
+                onClick={() => setTime(s.startsUtc)}
+                title={s.bookedByMe ? "You booked this time" : !free(s) ? "Not available" : undefined}
+                className={`rounded-[0.6em] border py-[0.55em] text-[0.8em] font-semibold disabled:cursor-not-allowed disabled:opacity-40 ${
+                  time === s.startsUtc ? "border-[#14365a] bg-[#14365a] text-white" : "border-[#e1e8f0] hover:bg-[#f2f5f8]"
+                }`}
+              >
+                {timeLabel(s.startsUtc)}
+                {s.bookedByMe && <span className="block text-[0.8em]">Booked</span>}
+                {!s.bookedByMe && type === "Group" && s.groupSpotsLeft > 0 && (
+                  <span className="block text-[0.8em] font-normal">{s.groupSpotsLeft} places</span>
+                )}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+
+      {error && (
+        <p role="alert" className="mt-[0.8em] rounded-[0.6em] bg-[#fdecec] px-[0.8em] py-[0.5em] text-[0.8em] font-semibold text-[#b83232]">
+          {error}
+        </p>
+      )}
+      {booked && (
+        <p role="status" className="mt-[0.8em] flex items-start gap-[0.5em] rounded-[0.6em] bg-[#e6f6ec] px-[0.8em] py-[0.6em] text-[0.85em] text-[#1b5e36]">
+          <CircleCheck className="mt-[0.1em] h-[1.1em] w-[1.1em] shrink-0" />
+          <span>
+            You have a {booked.type === "OneToOne" ? "1:1" : "group"} session with <b>{booked.mentor.fullName}</b> on <b>{sessionTime(booked.startsUtc)}</b>.
+          </span>
+        </p>
+      )}
+      <button
+        type="button"
+        disabled={!time || busy}
+        onClick={book}
+        className="mt-[1em] flex h-[3em] w-full items-center justify-center gap-[0.5em] rounded-[0.8em] bg-[#14365a] text-[1em] font-semibold text-white hover:bg-[#0f2a47] disabled:opacity-50"
+      >
+        {busy && <LoaderCircle className="h-[1.1em] w-[1.1em] animate-spin" />}
+        Book Session
+      </button>
+    </aside>
   );
 }
