@@ -14,9 +14,11 @@ import { LearnerShell } from "./learner-shell";
 /** LOCAL ONLY: NEXT_PUBLIC_SKIP_AUTH=true in .env.local skips the login check and the "needs a track" lock. Off by default and ignored in production. */
 const SKIP_AUTH = process.env.NEXT_PUBLIC_SKIP_AUTH === "true" && process.env.NODE_ENV !== "production";
 
-/** The only pages a student without a track can open: the AI interview, and Find your track (its three ways in). */
+/** The only pages a student without a track can open: Find your track, the placement test and the AI interview. */
 const ONBOARDING_PATHS = ["/learner/ai-interview", "/learner/courses", "/learner/courses/discovery"];
-const INTERVIEW = "/learner/ai-interview";
+const isOnboarding = (path: string) => ONBOARDING_PATHS.includes(path) || path.startsWith("/learner/placement/");
+/** Where a student without a track lands: Find your track, with its two ways in. */
+const FIND_YOUR_TRACK = "/learner/courses";
 
 /** A student needs the AI interview until they have a track in focus and their level in it. */
 const needsInterview = (hub: Hub) => !hub.courses.track || !hub.courses.level;
@@ -78,11 +80,11 @@ export function LearnerLayoutClient({ children }: { children: ReactNode }) {
   // A new student starts with Find your track and the AI interview; the rest of the dashboard opens once they
   // have a track and a level. Until the hub answers, nothing opens either.
   const locked = !SKIP_AUTH && (loaded === null || loaded.needsInterview);
-  const onboarding = ONBOARDING_PATHS.includes(pathname);
+  const onboarding = isOnboarding(pathname);
   const checkedHere = loaded?.path === pathname;
 
   useEffect(() => {
-    if (allowed && loaded?.needsInterview && checkedHere && !onboarding) router.replace(INTERVIEW);
+    if (allowed && loaded?.needsInterview && checkedHere && !onboarding) router.replace(FIND_YOUR_TRACK);
   }, [allowed, loaded, checkedHere, onboarding, router]);
 
   // The first render while hydrating has no user yet (server snapshot): only a missing or expired token means

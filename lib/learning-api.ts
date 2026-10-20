@@ -255,3 +255,27 @@ export interface Achievements {
 }
 
 export const getAchievements = () => api.get<Achievements>("/api/v1/student/achievements");
+
+/* ---------- Placement test ("I know my track") ---------- */
+
+export interface PlacementTest {
+  trackCode: string;
+  trackName: string;
+  questions: QuizQuestion[];
+}
+
+export interface PlacementResult {
+  trackCode: string;
+  trackName: string;
+  /** Where the student starts in the track. */
+  level: TrackLevel;
+  score: number;
+  total: number;
+  results: { questionId: string; correct: boolean; correctOptionIndex: number; explanation: string }[];
+  /** The track is now in focus at this level. */
+  track: SelectTrackResult;
+}
+
+export const getPlacementTest = (code: string) => api.get<PlacementTest>(`/api/v1/tracks/${encodeURIComponent(code)}/placement`);
+export const submitPlacementTest = (code: string, answers: number[]) =>
+  api.post<PlacementResult>(`/api/v1/tracks/${encodeURIComponent(code)}/placement`, { answers });

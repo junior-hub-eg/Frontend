@@ -12,6 +12,8 @@ import {
   lessonPath,
   submitLessonQuiz,
   submitTrackQuiz,
+  getPlacementTest,
+  submitPlacementTest,
   trackPath,
   type Badge,
   type QuizQuestion,
@@ -23,7 +25,8 @@ const LETTERS = ["A", "B", "C", "D", "E"];
 
 /** One graded question: the track quiz also says which option was right. */
 type Graded = { correct: boolean; correctIndex?: number; note: string | null };
-type Outcome = { passed: boolean; graded: Graded[]; xpAwarded: number; badge: Badge | null };
+/** level and message: the placement test's result. */
+type Outcome = { passed: boolean; graded: Graded[]; xpAwarded: number; badge: Badge | null; level?: string; message?: string };
 
 interface Quiz {
   eyebrow: string;
@@ -36,6 +39,8 @@ interface Quiz {
   continueLabel: string;
   passedText: string;
   failedText: string;
+  /** The result's small heading when passed (default "Quiz passed"). */
+  doneLabel?: string;
   submit: (answers: number[]) => Promise<Outcome>;
 }
 
@@ -93,22 +98,51 @@ async function trackQuiz(code: string): Promise<Quiz> {
   };
 }
 
-/** The lesson quiz (lessonId given) or the track quiz: answer each question, then all are graded together. */
-export function QuizView({ code, lessonId }: { code: string; lessonId?: string }) {
+/** "I know my track": the technical questions find the level, and the track starts at it. */
+async function placementQuiz(code: string): Promise<Quiz> {
+  const test = await getPlacementTest(code);
+  return {
+    eyebrow: `${test.trackName} / Find your level`,
+    title: `Let's find your level in ${test.trackName}`,
+    rule: "6 quick technical questions, from easy to hard. Answer what you know.",
+    questions: test.questions,
+    backHref: "/learner/courses",
+    backLabel: "Choose another track",
+    continueHref: trackPath(test.trackCode),
+    continueLabel: `Start learning ${test.trackName}`,
+    passedText: "",
+    failedText: "",
+    doneLabel: "Your level",
+    submit: async (answers) => {
+      const r = await submitPlacementTest(test.trackCode, answers);
+      return {
+        passed: true,
+        graded: r.results.map((x) => ({ correct: x.correct, correctIndex: x.correctOptionIndex, note: x.explanation })),
+        xpAwarded: 0,
+        badge: null,
+        level: r.level,
+        message: `You start ${test.trackName} at ${r.level} level. You can take this test again to change it.`,
+      };
+    },
+  };
+}
+
+/** The lesson quiz (lessonId given), the track quiz, or the placement test: all questions are graded together. */
+export function QuizView({ code, lessonId, placement = false }: { code: string; lessonId?: string; placement?: boolean }) {
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [loadError, setLoadError] = useState<unknown>(null);
   const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let active = true;
-    (lessonId ? lessonQuiz(code, lessonId) : trackQuiz(code)).then(
+    (placement ? placementQuiz(code) : lessonId ? lessonQuiz(code, lessonId) : trackQuiz(code)).then(
       (q) => active && setQuiz(q),
       (e) => active && setLoadError(e)
     );
     return () => {
       active = false;
     };
-  }, [code, lessonId]);
+  }, [code, lessonId, placement]);
 
   if (!quiz) return <LoadState error={loadError} backHref={trackPath(code)} />;
   return <QuizRun key={attempt} quiz={quiz} onRetry={() => setAttempt((a) => a + 1)} />;
@@ -168,11 +202,14 @@ function QuizRun({ quiz, onRetry }: { quiz: Quiz; onRetry: () => void }) {
             {outcome.passed ? <Trophy size={26} /> : <RotateCcw size={24} />}
           </span>
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-[#12939b]">{outcome.passed ? "Quiz passed" : "Almost there"}</p>
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-[#12939b]">{outcome.passed ? (quiz.doneLabel ?? "Quiz passed") : "Almost there"}</p>
             <h1 className="mt-1 text-2xl font-bold text-[#1b2a5c]">
-              You answered {score} of {total} correctly.
+              {outcome.level ? `${outcome.level}` : `You answered ${score} of ${total} correctly.`}
             </h1>
-            <p className="mt-1 text-sm text-[#1b2a5c]/65">{outcome.passed ? quiz.passedText : quiz.failedText}</p>
+            <p className="mt-1 text-sm text-[#1b2a5c]/65">
+              {outcome.level && `You answered ${score} of ${total} correctly. `}
+              {outcome.message ?? (outcome.passed ? quiz.passedText : quiz.failedText)}
+            </p>
           </div>
           {(outcome.xpAwarded > 0 || outcome.badge) && (
             <div className="flex flex-wrap justify-center gap-2">
