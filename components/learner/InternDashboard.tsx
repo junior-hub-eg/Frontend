@@ -6,7 +6,8 @@ import Link from "next/link";
 import type { Route } from "next";
 import { BookOpen, Users } from "lucide-react";
 import { useAuth } from "@/lib/auth/auth-context";
-import { getHub, type Hub } from "@/lib/hub-api";
+import { getHub } from "@/lib/hub-api";
+import { getTrackLessons, getTracks } from "@/lib/learning-api";
 import { DailyChallengeCard, LevelCard, RewardsButton } from "./dashboard-cards";
 import { avatarFor, useSquad } from "./interns-data";
 import { TeammatesPanel } from "./teammates-panel";
@@ -226,6 +227,34 @@ function Greeting({
   );
 }
 
+/** The track in focus, the student's level in it and the share of its lessons done. */
+type TrackFocus = { track: string; level: string; progressPercent: number };
+
+/**
+ * From the hub; if the hub fails, from the track in focus and its lessons, so the card still shows the track.
+ * Progress is done ÷ all lessons of the track, one decimal, like the hub.
+ */
+async function loadTrackFocus(): Promise<TrackFocus | null> {
+  try {
+    const { courses } = await getHub();
+    return courses.track && courses.level
+      ? { track: courses.track.name, level: courses.level, progressPercent: courses.progressPercent ?? 0 }
+      : null;
+  } catch {
+    const tracks = await getTracks();
+    const code = (tracks.find((t) => t.isFocus) ?? tracks.find((t) => t.isLearning))?.code;
+    if (!code) return null;
+    const track = await getTrackLessons(code);
+    const lessons = track.modules.flatMap((m) => m.lessons);
+    const done = lessons.filter((l) => l.status === "Done").length;
+    return {
+      track: track.trackName,
+      level: track.level,
+      progressPercent: lessons.length ? Math.round((done / lessons.length) * 1000) / 10 : 0,
+    };
+  }
+}
+
 export default function InternDashboard() {
   const { user } = useAuth();
   const squad = useSquad();
@@ -235,12 +264,12 @@ export default function InternDashboard() {
     const avatar = avatarFor(m.photoUrl, i);
     return { name: m.fullName, role: m.role, isMe: m.isMe, avatar: avatar.src, bg: avatar.bg };
   });
-  const [hub, setHub] = useState<Hub | null>(null);
+  const [focus, setFocus] = useState<TrackFocus | null>(null);
 
   useEffect(() => {
     let active = true;
-    getHub().then(
-      (h) => active && setHub(h),
+    loadTrackFocus().then(
+      (f) => active && setFocus(f),
       () => {}
     );
     return () => {
@@ -248,12 +277,8 @@ export default function InternDashboard() {
     };
   }, []);
 
-  // The dashboard opens only with a track (LearnerLayoutClient), and a track always has a level.
   const levelCard = (className?: string) =>
-    hub?.courses.track &&
-    hub.courses.level && (
-      <LevelCard track={hub.courses.track.name} level={hub.courses.level} totalXp={hub.totalXp} className={className} />
-    );
+    focus && <LevelCard track={focus.track} level={focus.level} progressPercent={focus.progressPercent} className={className} />;
 
   return (
     <>

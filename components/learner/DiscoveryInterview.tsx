@@ -275,7 +275,7 @@ export default function DiscoveryInterview({
       <Image src="/images/Intern/bg-park.png" alt="" fill priority sizes="100vw" className="object-cover object-center" />
 
       <div className="relative flex flex-1 items-center justify-center p-3 sm:p-6 lg:min-h-0 lg:p-[3%]">
-        <div className="flex w-full max-w-[1300px] flex-col gap-6 rounded-[40px] border border-white/70 bg-white/20 p-5 shadow-[0_20px_60px_rgba(20,54,90,0.15)] backdrop-blur-[6px] sm:p-8 lg:h-full lg:max-h-[820px] lg:flex-row lg:items-stretch lg:gap-10 lg:p-10">
+        <div className="relative flex w-full max-w-[1300px] flex-col gap-6 rounded-[40px] border border-white/70 bg-white/20 p-5 shadow-[0_20px_60px_rgba(20,54,90,0.15)] backdrop-blur-[6px] sm:p-8 lg:h-full lg:max-h-[820px] lg:flex-row lg:items-stretch lg:gap-[4%] lg:px-[3.5%] lg:py-[clamp(16px,3.5vh,40px)]">
           {result ? (
             <section className="flex min-w-0 flex-1 flex-col rounded-[32px] bg-white/85 p-6 md:p-10">
               <h1 className="text-[2em] font-extrabold leading-tight text-[#14365a]">
@@ -291,19 +291,19 @@ export default function DiscoveryInterview({
           ) : (
             <>
               {/* Karima: the avatar, her voice and the call buttons */}
-              <section className="relative flex shrink-0 flex-col items-center justify-center gap-6 lg:w-[40%]">
+              <section className="flex shrink-0 flex-col items-center justify-center gap-[clamp(10px,2.4vh,24px)] lg:min-h-0 lg:w-[40%]">
                 <button
                   type="button"
                   onClick={leave}
                   aria-label="Back to Find your track"
-                  className="absolute left-0 top-0 grid size-11 place-items-center rounded-[10px] bg-[rgba(41,45,50,0.47)] text-white shadow-md backdrop-blur-sm hover:bg-[rgba(41,45,50,0.6)]"
+                  className="absolute left-5 top-5 z-10 grid size-11 place-items-center sm:left-8 sm:top-8 lg:left-[2.5%] lg:top-[clamp(16px,4vh,40px)] rounded-[10px] bg-[rgba(41,45,50,0.47)] text-white shadow-md backdrop-blur-sm hover:bg-[rgba(41,45,50,0.6)]"
                 >
                   <ArrowLeft className="size-6" />
                 </button>
 
                 {/* Figma "Animation-Character": the 400 × 400 ring with Karima's video inside */}
                 <div
-                  className="mt-12 grid aspect-square w-[min(70vw,400px)] place-items-center rounded-full p-[12.5%] shadow-[inset_0_-2px_5px_rgba(0,0,0,0.12),0_12px_40px_rgba(56,130,246,0.3)] lg:mt-4 lg:w-[min(100%,400px)]"
+                  className="mt-12 grid aspect-square w-[min(70vw,400px)] shrink-0 place-items-center rounded-full p-[12.5%] shadow-[inset_0_-2px_5px_rgba(0,0,0,0.12),0_12px_40px_rgba(56,130,246,0.3)] lg:mt-0 lg:w-[min(80%,400px,calc(100vh-490px))] lg:min-w-[180px]"
                   style={{ background: RING_FILL }}
                 >
                   <div className="relative size-full overflow-hidden rounded-full bg-white">
@@ -326,7 +326,7 @@ export default function DiscoveryInterview({
                   {recording ? "Recording your answer" : speaking ? `${KARIMA.name} is speaking` : ""}
                 </p>
 
-                <div className="flex items-start gap-6 sm:gap-8">
+                <div className="flex shrink-0 items-start gap-6 sm:gap-8">
                   <CallButton
                     label={recording ? "Stop" : "Microphone"}
                     onClick={toggleRecording}
@@ -537,7 +537,7 @@ function Wave({ active }: { active: boolean }) {
   return (
     <svg
       viewBox="0 0 350 90"
-      className="h-auto w-[min(85%,338px)] overflow-visible [filter:drop-shadow(0_2.77px_2.21px_rgba(98,149,247,0.5))_drop-shadow(0_6.65px_5.32px_rgba(98,149,247,0.35))]"
+      className="h-auto w-[min(85%,338px)] shrink-0 overflow-visible lg:w-[min(85%,338px,calc((100vh-490px)*0.85))] lg:min-w-[160px] [filter:drop-shadow(0_2.77px_2.21px_rgba(98,149,247,0.5))_drop-shadow(0_6.65px_5.32px_rgba(98,149,247,0.35))]"
       aria-hidden
     >
       <path
