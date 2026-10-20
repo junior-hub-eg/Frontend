@@ -5,27 +5,18 @@ import { createPortal } from "react-dom";
 import { Poppins } from "next/font/google";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, CircleCheck, ClipboardPaste, Dices, ExternalLink, Link2, LoaderCircle } from "lucide-react";
+import { ArrowLeft, CircleCheck, Dices, LoaderCircle } from "lucide-react";
 import { ApiError, errorMessage } from "@/lib/api-client";
 import { avatarOrDefault, mentorAvatar } from "@/lib/avatars";
-import { getHub } from "@/lib/hub-api";
-import { getSquad, getSquadLinks, saveMyLinks, type SquadLinks, type SquadMemberLinks, type WorkLinkKind } from "@/lib/interns-api";
+import { getSquad, getSquadLinks, type SquadLinks, type SquadMemberLinks } from "@/lib/interns-api";
 import { XP_PER_LEVEL } from "./dashboard-cards";
 import { ROLE_TITLE } from "./interns-data";
+import { LinkChips, MyLinksEditor } from "./work-links";
 
 const IMG = "/images/Intern";
 
 /** Same font as the learner shell (the portal is outside it). */
 const poppins = Poppins({ subsets: ["latin"], weight: ["400", "500", "600", "700", "800"] });
-
-const KIND: Record<WorkLinkKind, { label: string; placeholder: string }> = {
-  Figma: { label: "Figma", placeholder: "Paste Figma link...." },
-  GitHub: { label: "GitHub", placeholder: "Paste GitHub repo link...." },
-  LiveSite: { label: "Live site", placeholder: "Paste Vercel / live site link...." },
-  Api: { label: "API", placeholder: "Paste server / Swagger link...." },
-  Demo: { label: "Demo", placeholder: "Paste demo link...." },
-  TestReport: { label: "Test report", placeholder: "Paste test report link...." },
-};
 
 const level = (xp: number) => Math.floor(xp / XP_PER_LEVEL) + 1;
 
@@ -44,26 +35,6 @@ function memberAvatar(m: SquadMemberLinks, i: number) {
   return avatarOrDefault(m.photoUrl, i + 1);
 }
 
-function LinkChips({ member }: { member: SquadMemberLinks }) {
-  if (member.links.length === 0) return null;
-  return (
-    <ul className="mt-[0.4em] flex flex-wrap gap-[0.4em]">
-      {member.links.map((l) => (
-        <li key={l.kind}>
-          <a
-            href={l.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-[0.3em] rounded-full bg-white/70 px-[0.7em] py-[0.2em] text-[0.8em] font-semibold text-[#14365a] hover:bg-white"
-          >
-            {KIND[l.kind].label} <ExternalLink className="h-[0.9em] w-[0.9em]" />
-          </a>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
 /** One teammate: avatar, role, level, ready state and the links they shared. */
 function MemberCard({ member, index }: { member: SquadMemberLinks; index: number }) {
   const a = memberAvatar(member, index);
@@ -75,7 +46,7 @@ function MemberCard({ member, index }: { member: SquadMemberLinks; index: number
         <p className="mt-[0.3em] text-[0.95em] text-[#14365a]">{ROLE_TITLE[member.role]}</p>
         <p className="mt-[0.2em] text-[0.95em] font-bold text-[#14365a]">Level {level(member.totalXp)}</p>
         <p className={`mt-[0.2em] text-[0.95em] font-bold ${member.ready ? "text-[#1f9d5b]" : "text-[#14365a]"}`}>{member.ready ? "Ready" : "Not Ready"}</p>
-        <LinkChips member={member} />
+        <LinkChips member={member} className="mt-[0.4em]" />
       </div>
     </li>
   );
@@ -131,17 +102,16 @@ function ProjectCard({
 
 const noopSubscribe = () => () => {};
 
-/** Figma "Paste Your Links To Get Ready": the mentor and the squad, each member sharing the links of their role. */
+/**
+ * Figma "Paste Your Links To Get Ready": the squad's monitor and the squad, each member sharing any links to their work
+ * (Figma, GitHub, the live site, ...). When everyone is ready the project is revealed.
+ */
 export default function SquadSession() {
   // Rendered into <body>: the shell's <main> is its own stacking context, so a fixed layer inside it stays under the sidebar.
   const isClient = useSyncExternalStore(noopSubscribe, () => true, () => false);
   const [squad, setSquad] = useState<SquadLinks | null>(null);
   const [noSquad, setNoSquad] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [mentor, setMentor] = useState<{ id: string; fullName: string; title: string } | null | undefined>(undefined);
-  const [drafts, setDrafts] = useState<Partial<Record<WorkLinkKind, string>>>({});
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   /** 3, 2, 1, 0 while the project is being "rolled" once the whole squad is ready; null before that. */
   const [countdown, setCountdown] = useState<number | null>(null);
   const [project, setProject] = useState<{ title: string; description: string } | null>(null);
@@ -153,16 +123,11 @@ export default function SquadSession() {
 
   useEffect(() => {
     let active = true;
-    getHub()
-      .then((h) => active && setMentor(h.mentorship.mentor))
-      .catch(() => active && setMentor(null));
     getSquadLinks()
       .then((s) => {
         if (!active) return;
         setSquad(s);
         startIfAllReady(s);
-        const me = s.members.find((m) => m.isMe);
-        setDrafts(Object.fromEntries((me?.links ?? []).map((l) => [l.kind, l.url])));
       })
       .catch((e) => {
         if (!active) return;
@@ -178,7 +143,8 @@ export default function SquadSession() {
   const others = squad?.members.filter((m) => !m.isMe) ?? [];
   const meIndex = squad?.members.findIndex((m) => m.isMe) ?? 0;
   const myAvatar = avatarOrDefault(me?.photoUrl, meIndex);
-  const dirty = me ? me.kinds.some((k) => (drafts[k] ?? "") !== (me.links.find((l) => l.kind === k)?.url ?? "")) : false;
+  // The project's monitor (a mentor picked for the squad), not the student's own mentor.
+  const monitor = squad?.monitor ?? null;
 
   const hasSquad = squad !== null;
   const allReady = !!squad && squad.members.length > 0 && squad.members.every((m) => m.ready);
@@ -221,32 +187,6 @@ export default function SquadSession() {
   const leftColumn = others.slice(0, half);
   const rightColumn = others.slice(half);
 
-  async function paste(kind: WorkLinkKind) {
-    try {
-      const text = (await navigator.clipboard.readText()).trim();
-      setDrafts((d) => ({ ...d, [kind]: text }));
-      setError(null);
-    } catch {
-      setError("We couldn't read your clipboard. Paste the link with Ctrl+V or ⌘V.");
-    }
-  }
-
-  async function save() {
-    if (!me) return;
-    setSaving(true);
-    setError(null);
-    try {
-      const s = await saveMyLinks(me.kinds.map((k) => ({ kind: k, url: (drafts[k] ?? "").trim() })));
-      setSquad(s);
-      startIfAllReady(s);
-    } catch (e) {
-      const fields = e instanceof ApiError ? e.problem?.errors : undefined;
-      setError(fields ? Object.values(fields).flat()[0] : errorMessage(e, "We couldn't save your links. Please try again."));
-    } finally {
-      setSaving(false);
-    }
-  }
-
   if (!isClient) return null;
 
   return createPortal(
@@ -278,24 +218,17 @@ export default function SquadSession() {
 
           {me && (
             <div className="mx-auto mt-[1.2em] grid max-w-[47em] gap-[1em] md:grid-cols-[15em_1fr]">
-              {/* Mentor */}
+              {/* Monitor */}
               <section className={`${glass} flex flex-col items-center p-[1em] text-center md:items-start md:text-left`}>
-                <h2 className="text-[1.3em] font-bold text-[#14365a]">Your Mentor</h2>
-                {mentor ? (
+                <h2 className="text-[1.3em] font-bold text-[#14365a]">Your Monitor</h2>
+                {monitor ? (
                   <>
-                    <Avatar src={mentorAvatar(mentor.id).src} bg={mentorAvatar(mentor.id).bg} size="mt-[0.5em] h-[10em] w-[10em] self-center" />
-                    <p className="mt-[0.8em] text-[1.05em] font-bold text-[#14365a]">{mentor.fullName}</p>
-                    <p className="text-[0.85em] text-[#14365a]">{mentor.title}</p>
+                    <Avatar src={mentorAvatar(monitor.id).src} bg={mentorAvatar(monitor.id).bg} size="mt-[0.5em] h-[10em] w-[10em] self-center" />
+                    <p className="mt-[0.8em] text-[1.05em] font-bold text-[#14365a]">{monitor.fullName}</p>
+                    <p className="text-[0.85em] text-[#14365a]">{monitor.title}</p>
                   </>
                 ) : (
-                  <p className="mt-[0.8em] text-[0.95em] leading-snug text-[#14365a]/80">
-                    {mentor === undefined ? "Loading…" : "You don't have a mentor yet."}{" "}
-                    {mentor === null && (
-                      <Link href="/learner/mentorship" className="font-bold underline">
-                        Choose one
-                      </Link>
-                    )}
-                  </p>
+                  <p className="mt-[0.8em] text-[0.95em] leading-snug text-[#14365a]/80">Your squad&apos;s monitor will show here.</p>
                 )}
               </section>
 
@@ -316,51 +249,16 @@ export default function SquadSession() {
                   </div>
                 </div>
 
-                <form
-                  className="mt-[0.8em] flex flex-col gap-[0.5em]"
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    void save();
-                  }}
-                >
-                  {me.kinds.map((k) => (
-                    <label key={k} className="flex min-w-0 items-center gap-[0.6em] rounded-full border border-white/80 bg-white/45 py-[0.4em] pl-[1em] pr-[0.4em]">
-                      <Link2 className="h-[1.2em] w-[1.2em] shrink-0 text-[#14365a]" aria-hidden />
-                      <input
-                        value={drafts[k] ?? ""}
-                        onChange={(e) => {
-                          setDrafts((d) => ({ ...d, [k]: e.target.value }));
-                          setError(null);
-                        }}
-                        placeholder={KIND[k].placeholder}
-                        aria-label={`${KIND[k].label} link`}
-                        className="min-w-0 flex-1 bg-transparent text-[0.9em] text-[#14365a] outline-none placeholder:text-[#14365a]/80"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => paste(k)}
-                        aria-label={`Paste the ${KIND[k].label} link`}
-                        className="grid h-[2em] w-[2.4em] shrink-0 place-items-center rounded-full bg-[#4f9cf0]/45 text-[#14365a] hover:bg-[#4f9cf0]/60"
-                      >
-                        <ClipboardPaste className="h-[1em] w-[1em]" />
-                      </button>
-                    </label>
-                  ))}
-                  <button
-                    type="submit"
-                    disabled={saving || (!dirty && me.ready)}
-                    className={`h-[2.7em] self-end rounded-[0.8em] px-[1.4em] text-[0.95em] font-extrabold tracking-wide shadow-[0_6px_18px_rgba(47,127,214,0.45)] transition-colors disabled:cursor-default ${
-                      me.ready && !dirty ? "bg-[#2fb36b] text-white" : "bg-[#4f9cf0] text-[#14365a] hover:bg-[#3d8ce6]"
-                    }`}
-                  >
-                    {saving ? "SAVING…" : me.ready && !dirty ? "READY ✓" : "READY"}
-                  </button>
-                </form>
-                {error && (
-                  <p role="alert" className="mt-[0.5em] text-[0.8em] font-semibold text-[#b83232]">
-                    {error}
-                  </p>
-                )}
+                <div className="mt-[0.8em]">
+                  <MyLinksEditor
+                    me={me}
+                    submitLabel="READY"
+                    onSaved={(updated) => {
+                      setSquad(updated);
+                      startIfAllReady(updated);
+                    }}
+                  />
+                </div>
               </section>
             </div>
           )}

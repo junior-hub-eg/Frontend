@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState, type DragEvent } from "react";
 import Image from "next/image";
 import {
   ArrowLeft,
@@ -19,7 +19,10 @@ import {
 } from "lucide-react";
 import { errorMessage } from "@/lib/api-client";
 import {
+  createTask,
+  getSquadLinks,
   moveTask,
+  type SquadLinks,
   type Leaderboard as LeaderboardData,
   type Squad,
   type SquadTask,
@@ -28,6 +31,7 @@ import {
   type TaskStatus,
 } from "@/lib/interns-api";
 import { avatarFor, memberIndex, ROLE_TITLE, ROLE_TAG, useInterns } from "./interns-data";
+import { LinkChips, MyLinksEditor } from "./work-links";
 
 const IMG = "/images/Intern";
 const BG = `${IMG}/bg-park.png`;
@@ -171,14 +175,19 @@ function SprintCard({ sprint }: { sprint: Sprint | null }) {
 
 function TaskCard({ task, avatarIndex, onMove }: { task: SquadTask; avatarIndex: number; onMove: (task: SquadTask, to: TaskStatus) => void }) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const at = ORDER.indexOf(task.status);
-  const moves = [ORDER[at - 1], ORDER[at + 1]].filter(Boolean);
+  // Decision of 21 Oct 2026: a task can go to any other column (drag it, or use this menu).
+  const moves = BOARD_COLUMNS.filter((s) => s !== task.status);
   const tag = task.assignee ? ROLE_TAG[task.assignee.role] : null;
   const avatar = task.assignee ? avatarFor(task.assignee.photoUrl, avatarIndex) : null;
 
   return (
     <li
-      className={`relative rounded-[0.9em] bg-white p-[0.7em] shadow-sm ${
+      draggable={task.isMine}
+      onDragStart={(e) => {
+        e.dataTransfer.setData("text/plain", task.id);
+        e.dataTransfer.effectAllowed = "move";
+      }}
+      className={`relative rounded-[0.9em] bg-white p-[0.7em] shadow-sm ${task.isMine ? "cursor-grab active:cursor-grabbing" : ""} ${
         task.isMine && task.status === "Review" ? "border-l-[0.3em] border-l-[#ff9a1f]" : ""
       }`}
     >
@@ -243,17 +252,84 @@ function TaskCard({ task, avatarIndex, onMove }: { task: SquadTask; avatarIndex:
   );
 }
 
+/** "To Do" to "Review" to "Done"; In Progress shows only while a task is in it (older squads). */
+const BOARD_COLUMNS: TaskStatus[] = ["ToDo", "Review", "Done"];
+
+function AddTaskForm({ onAdd }: { onAdd: (title: string) => Promise<boolean> }) {
+  const [open, setOpen] = useState(false);
+  const [title, setTitle] = useState("");
+  const [saving, setSaving] = useState(false);
+  if (!open)
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="mt-[0.7em] flex w-full items-center justify-center gap-[0.3em] text-[0.85em] font-semibold text-[#14365a]"
+      >
+        <Plus className="h-[1.1em] w-[1.1em]" /> Add Task
+      </button>
+    );
+  return (
+    <form
+      className="mt-[0.7em] flex flex-col gap-[0.4em]"
+      onSubmit={async (e) => {
+        e.preventDefault();
+        if (!title.trim()) return;
+        setSaving(true);
+        if (await onAdd(title.trim())) {
+          setTitle("");
+          setOpen(false);
+        }
+        setSaving(false);
+      }}
+    >
+      <input
+        autoFocus
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        maxLength={200}
+        placeholder="What will you do?"
+        aria-label="New task"
+        className="rounded-[0.7em] border border-[#14365a]/15 bg-white px-[0.7em] py-[0.5em] text-[0.85em] text-[#14365a] outline-none focus:ring-2 focus:ring-[#12939b]/30"
+      />
+      <div className="flex gap-[0.4em]">
+        <button type="submit" disabled={saving || !title.trim()} className="rounded-[0.6em] bg-[#14365a] px-[0.9em] py-[0.35em] text-[0.8em] font-semibold text-white disabled:opacity-50">
+          {saving ? "Adding…" : "Add"}
+        </button>
+        <button type="button" onClick={() => setOpen(false)} className="text-[0.8em] font-semibold text-[#14365a]/70 hover:underline">
+          Cancel
+        </button>
+      </div>
+    </form>
+  );
+}
+
 function TaskBoard({
   board,
   members,
   onMove,
+  onAdd,
   message,
 }: {
   board: TaskBoardData | null;
   members: Map<string, number>;
   onMove: (task: SquadTask, to: TaskStatus) => void;
+  onAdd: (title: string) => Promise<boolean>;
   message: string | null;
 }) {
+  const [over, setOver] = useState<TaskStatus | null>(null);
+  const columns = (board?.columns ?? ORDER.map((status) => ({ status, tasks: [] as SquadTask[] }))).filter(
+    (c) => BOARD_COLUMNS.includes(c.status) || c.tasks.length > 0,
+  );
+  const allTasks = columns.flatMap((c) => c.tasks);
+
+  function drop(e: DragEvent, status: TaskStatus) {
+    e.preventDefault();
+    setOver(null);
+    const task = allTasks.find((t) => t.id === e.dataTransfer.getData("text/plain"));
+    if (task && task.status !== status) onMove(task, status);
+  }
+
   return (
     <section className={`${solid} min-w-0 p-[1.1em]`}>
       <div className="mb-[0.9em] flex items-center">
@@ -283,17 +359,26 @@ function TaskBoard({
       )}
 
       <div className="flex gap-[1em] overflow-x-auto pb-[0.4em]">
-        {(board?.columns ?? ORDER.map((status) => ({ status, tasks: [] }))).map((col) => {
+        {columns.map((col) => {
           const style = COLUMN_STYLE[col.status];
           return (
-            <div key={col.status} className="w-[17em] shrink-0 rounded-[1.1em] p-[0.8em]" style={{ backgroundColor: style.bg }}>
+            <div
+              key={col.status}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setOver(col.status);
+              }}
+              onDragLeave={() => setOver((o) => (o === col.status ? null : o))}
+              onDrop={(e) => drop(e, col.status)}
+              className={`w-[17em] shrink-0 rounded-[1.1em] p-[0.8em] transition-shadow ${over === col.status ? "ring-2 ring-[#14365a]/40" : ""}`}
+              style={{ backgroundColor: style.bg }}
+            >
               <div className="mb-[0.7em] flex items-center gap-[0.5em] text-[0.95em] font-bold text-[#14365a]">
                 <span className="h-[0.7em] w-[0.7em] rounded-full" style={{ backgroundColor: style.dot }} />
                 {style.title}
                 <span className="rounded-full bg-white/70 px-[0.5em] text-[0.75em] font-semibold text-[#14365a]/70">
                   {col.tasks.length}
                 </span>
-                <Plus className="ml-auto h-[1.2em] w-[1.2em] text-[#14365a]/70" />
               </div>
 
               <ul className="grid gap-[0.6em]">
@@ -307,13 +392,10 @@ function TaskBoard({
                 ))}
               </ul>
 
-              <button
-                type="button"
-                className="mt-[0.7em] flex w-full items-center justify-center gap-[0.3em] text-[0.85em] font-semibold"
-                style={{ color: style.add }}
-              >
-                <Plus className="h-[1.1em] w-[1.1em]" /> Add Task
-              </button>
+              {col.status === "ToDo" && <AddTaskForm onAdd={onAdd} />}
+              {col.tasks.length === 0 && col.status !== "ToDo" && (
+                <p className="py-[1em] text-center text-[0.75em] text-[#14365a]/55">Drag your tasks here</p>
+              )}
             </div>
           );
         })}
@@ -375,6 +457,64 @@ function Leaderboard({ data }: { data: LeaderboardData | null }) {
   );
 }
 
+/** Every member's links to the project (Figma, GitHub, Vercel, the server, ...); the student edits their own. */
+function ProjectLinks() {
+  const [links, setLinks] = useState<SquadLinks | null>(null);
+  const [editing, setEditing] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    getSquadLinks().then(
+      (l) => active && setLinks(l),
+      () => {},
+    );
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  if (!links) return null;
+  const me = links.members.find((m) => m.isMe);
+  return (
+    <section className={`${solid} min-w-0 p-[1.1em]`}>
+      <div className="flex items-center gap-[0.6em]">
+        <h2 className="text-[1.3em] font-extrabold text-[#14365a]">Project Links</h2>
+        {me && !editing && (
+          <button type="button" onClick={() => setEditing(true)} className="ml-auto text-[0.85em] font-semibold text-[#12939b] hover:underline">
+            {me.links.length ? "Edit my links" : "+ Add my links"}
+          </button>
+        )}
+      </div>
+      {me && editing && (
+        <div className="mt-[0.7em] rounded-[0.9em] bg-[#eef6fb] p-[0.7em]">
+          <MyLinksEditor
+            me={me}
+            onSaved={(l) => {
+              setLinks(l);
+              setEditing(false);
+            }}
+          />
+        </div>
+      )}
+      <ul className="mt-[0.7em] grid gap-[0.6em] sm:grid-cols-2">
+        {links.members.map((m) => (
+          <li key={m.studentId} className="rounded-[0.9em] border border-[#14365a]/10 p-[0.6em]">
+            <p className="text-[0.9em] font-bold text-[#14365a]">
+              {m.fullName}
+              {m.isMe && " (you)"} <span className="font-normal text-[#14365a]/60">· {ROLE_TITLE[m.role]}</span>
+            </p>
+            {m.links.length ? (
+              <LinkChips member={m} className="mt-[0.4em]" />
+            ) : (
+              <p className="mt-[0.3em] text-[0.75em] text-[#14365a]/55">No links yet</p>
+            )}
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 export default function InternshipProgress() {
   const { squad, sprint, board, leaderboard, error, reload } = useInterns();
   const [moveError, setMoveError] = useState<string | null>(null);
@@ -386,6 +526,18 @@ export default function InternshipProgress() {
       await reload();
     } catch (e) {
       setMoveError(errorMessage(e, "We couldn't move this task. Please try again."));
+    }
+  }
+
+  async function handleAdd(title: string) {
+    setMoveError(null);
+    try {
+      await createTask(title);
+      await reload();
+      return true;
+    } catch (e) {
+      setMoveError(errorMessage(e, "We couldn't add this task. Please try again."));
+      return false;
     }
   }
 
@@ -426,7 +578,8 @@ export default function InternshipProgress() {
             )}
             <TeamCard squad={squad} />
             <SprintCard sprint={sprint} />
-            <TaskBoard board={board} members={memberIndex(squad)} onMove={handleMove} message={moveError} />
+            <ProjectLinks />
+            <TaskBoard board={board} members={memberIndex(squad)} onMove={handleMove} onAdd={handleAdd} message={moveError} />
           </div>
 
           {/* Leaderboard: last on mobile, under the pod on desktop */}
