@@ -145,6 +145,15 @@ export interface InternshipAccess {
   /** In a squad, or the level is finished. */
   open: boolean;
   level: LevelProgress | null;
+  /** The last project the monitor approved, with the review. */
+  lastProject?: {
+    squadName: string;
+    projectTitle: string;
+    level: string;
+    feedback: string | null;
+    monitorName: string | null;
+    approvedUtc: string | null;
+  } | null;
 }
 
 export const getInternshipAccess = () => api.get<InternshipAccess>("/api/v1/interns/access");
@@ -152,3 +161,33 @@ export const getInternshipAccess = () => api.get<InternshipAccess>("/api/v1/inte
 export const joinSquad = () => api.post<Squad>("/api/v1/interns/squad/join");
 /** Writes a task for yourself; it starts in To Do. */
 export const createTask = (title: string, storyPoints = 1) => api.post<SquadTask>("/api/v1/interns/tasks", { title, storyPoints });
+
+/* ---------- Submitting the project for the monitor's review ---------- */
+
+export type ProjectState = "InProgress" | "InReview" | "Completed";
+
+export interface ProjectReview {
+  decision: "Approved" | "ChangesRequested";
+  feedback: string;
+  monitorName: string;
+  createdUtc: string;
+}
+
+export interface ProjectStatus {
+  squadId: string;
+  squadName: string;
+  projectTitle: string;
+  level: string;
+  status: ProjectState;
+  /** Members who submitted their work, of all members. */
+  submitted: number;
+  members: number;
+  mySubmittedUtc: string | null;
+  /** Newest first. */
+  reviews: ProjectReview[];
+}
+
+export const getProjectStatus = () => api.get<ProjectStatus>("/api/v1/interns/project");
+/** "I submitted my work": needs a link shared and every own task Done. */
+export const submitWork = () => api.post<ProjectStatus>("/api/v1/interns/project/submit");
+export const withdrawSubmission = () => api.delete<ProjectStatus>("/api/v1/interns/project/submit");

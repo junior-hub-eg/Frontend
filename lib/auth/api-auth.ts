@@ -3,7 +3,7 @@
  * The backend only has a Student role, so every signed-in user maps to role "learner" here.
  */
 import { api, refreshAccessToken } from "@/lib/api-client";
-import { getToken, setToken, TOKEN_CHANGE_EVENT } from "@/lib/auth/token";
+import { decodeToken, getToken, setToken, TOKEN_CHANGE_EVENT } from "@/lib/auth/token";
 import type { User } from "@/lib/types";
 import type { Gender } from "@/lib/avatars";
 
@@ -29,7 +29,22 @@ function emitChange() {
 interface LoginResponse {
   accessToken: string;
   expiresIn: number;
-  student: { id: string; firstName: string; grade: number | null; className: string | null };
+  /** Student or Mentor. */
+  role?: string;
+  student: { id: string; firstName: string; grade: number | null; className: string | null } | null;
+  mentor?: { id: string; firstName: string; fullName: string; title: string; trackCode: string } | null;
+}
+
+/** GET /api/v1/monitor/me for a mentor's account. */
+interface MentorMeResponse {
+  mentor: { id: string; fullName: string; title: string; trackCode: string; photoUrl: string };
+}
+
+const isMentorSession = () => decodeToken(getToken() ?? "")?.role === "Mentor";
+
+function mentorUser(m: { id: string; fullName: string }, email: string): User {
+  const [firstName, ...rest] = m.fullName.split(/\s+/);
+  return { id: m.id, role: "mentor", firstName, lastName: rest.join(" ") || undefined, email, createdAt: new Date().toISOString() };
 }
 
 /** GET /api/v1/me. School, grade and class are empty for a student who registered alone. */
@@ -67,6 +82,13 @@ function storeUser(user: User) {
 }
 
 async function loadProfile(): Promise<User> {
+  if (isMentorSession()) {
+    const cached = getCurrentUserSnapshot();
+    const me = await api.get<MentorMeResponse>("/api/v1/monitor/me");
+    const user = mentorUser(me.mentor, cached?.email ?? "");
+    storeUser(user);
+    return user;
+  }
   const user = toUser(await api.get<MeResponse>("/api/v1/me"));
   storeUser(user);
   return user;
@@ -100,14 +122,19 @@ export async function setGender(gender: Gender): Promise<User> {
 export async function login(email: string, password: string, rememberMe = false): Promise<User> {
   const res = await api.post<LoginResponse>("/api/v1/auth/login", { email, password, rememberMe });
   setToken(res.accessToken);
+  if (res.role === "Mentor" && res.mentor) {
+    const user = mentorUser(res.mentor, email.trim().toLowerCase());
+    storeUser(user);
+    return user;
+  }
   try {
     return await loadProfile();
   } catch {
     // /me failed — fall back to what the login response carried.
     const user: User = {
-      id: res.student.id,
+      id: res.student!.id,
       role: "learner",
-      firstName: res.student.firstName,
+      firstName: res.student!.firstName,
       email: email.trim().toLowerCase(),
       createdAt: new Date().toISOString(),
     };

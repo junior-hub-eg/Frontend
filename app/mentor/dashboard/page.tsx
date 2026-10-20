@@ -1,12 +1,6 @@
-import { PlaceholderPage } from "@/components/shared/placeholder-page";
+import MonitorDashboard from "@/components/mentor/MonitorDashboard";
 
+/** A mentor's account: the squads they monitor and the projects waiting for their review. */
 export default function MentorDashboardPage() {
-  return (
-    <PlaceholderPage
-      title="لوحة المونيتور"
-      description="الطلاب المتابَعين، الأنشطة الأخيرة، الأسئلة المفتوحة، واتجاهات الجاهزية/التقدّم"
-      waitingOn="Mentor assignment + dashboard API (Sprint 5-6 backend)"
-      prdSection="§4.3"
-    />
-  );
+  return <MonitorDashboard />;
 }
