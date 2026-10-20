@@ -8,7 +8,7 @@ import { BookOpen, Users } from "lucide-react";
 import { useAuth } from "@/lib/auth/auth-context";
 import { getHub } from "@/lib/hub-api";
 import { getTrackLessons, getTracks } from "@/lib/learning-api";
-import { DailyChallengeCard, LevelCard, RewardsButton } from "./dashboard-cards";
+import { DailyChallengeCard, LevelCard, NextSessionCard, RewardsButton } from "./dashboard-cards";
 import { avatarFor, useSquad } from "./interns-data";
 import { TeammatesPanel } from "./teammates-panel";
 
@@ -288,6 +288,7 @@ export default function InternDashboard() {
         <div className="mt-4 grid gap-3 text-[14px] sm:grid-cols-2">
           {levelCard()}
           <DailyChallengeCard />
+          <NextSessionCard />
         </div>
 
         <div className="relative mx-auto mt-4 aspect-[4/3] w-full max-w-[720px] overflow-hidden rounded-[28px]">
@@ -382,6 +383,7 @@ export default function InternDashboard() {
             {levelCard("mt-[0.2em] w-[22em]")}
           </div>
           <DailyChallengeCard className="mt-[1.2em] w-[20em]" />
+          <NextSessionCard className="mt-[0.8em] w-[20em]" />
         </div>
 
         <div

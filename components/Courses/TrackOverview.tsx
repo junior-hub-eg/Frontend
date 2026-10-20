@@ -260,6 +260,7 @@ export function TrackOverview({ code }: { code: string }) {
         busy={choosing}
         onCancel={() => setDialogOpen(false)}
         onConfirm={confirmTrack}
+        onPlacement={() => router.push(`/learner/placement/${track.code.toLowerCase()}` as Route)}
       />
     </div>
   );

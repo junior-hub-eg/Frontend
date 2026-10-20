@@ -2,8 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Award, CalendarCheck, Crown, Flame, Gift, LoaderCircle, X } from "lucide-react";
+import { ArrowRight, Award, CalendarCheck, Crown, Flame, Gift, LoaderCircle, X, CalendarClock } from "lucide-react";
 import { getAchievements, type Achievements } from "@/lib/learning-api";
+import { getMySessions, sessionTime, type MentorSession } from "@/lib/mentorship-api";
 
 /** XP per dashboard level. The backend keeps total XP only, so the level is worked out here. */
 export const XP_PER_LEVEL = 500;
@@ -75,6 +76,37 @@ export function DailyChallengeCard({ className = "" }: { className?: string }) {
       </span>
       <span className="grid h-[2em] w-[2em] shrink-0 place-items-center rounded-[0.5em] bg-[#2fa59b] text-white transition-transform group-hover:translate-x-0.5">
         <ArrowRight className="h-[1.1em] w-[1.1em]" />
+      </span>
+    </Link>
+  );
+}
+
+/** The next session the student booked with a mentor (GET /student/sessions), linking to the mentor page. */
+export function NextSessionCard({ className = "" }: { className?: string }) {
+  const [next, setNext] = useState<MentorSession | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    getMySessions().then(
+      (list) => active && setNext(list[0] ?? null),
+      () => {},
+    );
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  if (!next) return null;
+  return (
+    <Link href="/learner/mentorship" className={`${glass} flex items-center gap-[0.8em] p-[0.7em] pr-[1em] ${className}`}>
+      <span className="grid h-[3em] w-[3em] shrink-0 place-items-center rounded-[0.9em] bg-gradient-to-br from-[#2fa59b] to-[#14365a] text-white">
+        <CalendarClock className="h-[1.5em] w-[1.5em]" />
+      </span>
+      <span className="min-w-0">
+        <span className="block text-[0.95em] font-bold text-[#14365a]">
+          {next.type === "OneToOne" ? "1:1" : "Group"} session with {next.mentor.fullName}
+        </span>
+        <span className="block text-[0.8em] text-[#14365a]/75">{sessionTime(next.startsUtc)}</span>
       </span>
     </Link>
   );

@@ -119,7 +119,9 @@ export function catalogueAvatar(photoUrl: string | null | undefined): Avatar | u
 export function avatarOrDefault(photoUrl: string | null | undefined, index = 0, gender?: Gender | null): Avatar {
   const chosen = catalogueAvatar(photoUrl);
   if (chosen) return chosen;
-  if (gender) return GENDERS.find((g) => g.id === gender)!.avatar;
+  // An unknown gender (an old cached profile) falls back to the default instead of breaking the page.
+  const byGender = gender ? GENDERS.find((g) => g.id === gender)?.avatar : undefined;
+  if (byGender) return byGender;
   return DEFAULT_AVATARS[((index % DEFAULT_AVATARS.length) + DEFAULT_AVATARS.length) % DEFAULT_AVATARS.length];
 }
 
