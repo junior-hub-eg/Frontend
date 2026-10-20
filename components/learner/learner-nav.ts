@@ -1,7 +1,6 @@
 import type { Route } from "next";
 import {
   Brain,
-  ChartPie,
   FileBadge,
   FileText,
   FolderOpen,
@@ -33,7 +32,6 @@ export const LEARNER_NAV_MAIN: LearnerNavItem[] = [
 /** Group 2 (below the divider in the Figma). */
 export const LEARNER_NAV_SECONDARY: LearnerNavItem[] = [
   { label: "My Projects", href: "/learner/projects" as Route, icon: FolderOpen },
-  { label: "Progress", href: "/learner/progress" as Route, icon: ChartPie },
   { label: "Certification", href: "/learner/certification" as Route, icon: FileBadge },
   { label: "Settings", href: "/learner/profile" as Route, icon: Settings },
 ];
