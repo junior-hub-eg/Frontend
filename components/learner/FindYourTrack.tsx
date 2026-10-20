@@ -10,27 +10,20 @@ const CHOICES: { path: DiscoveryPath; emoji: string; title: string; text: string
   {
     path: "KnowsTrack",
     emoji: "🎯",
-    title: "I know what I want",
-    text: "Pick your track from the list and start learning right away.",
+    title: "I know my track",
+    text: "Pick your track and answer 6 quick technical questions. We'll find your level and start you there.",
     bg: "from-[#e3f6ee] to-[#f4fbf8]",
   },
   {
     path: "Exploring",
     emoji: "🧭",
     title: "I have no idea",
-    text: "Explore the kinds of tech work in a friendly AI interview, then see the tracks that fit you.",
+    text: "Talk with Karima, our AI assistant. She asks about what you enjoy and suggests your top 3 tracks.",
     bg: "from-[#dcebfb] to-[#f1f7fe]",
-  },
-  {
-    path: "Unsure",
-    emoji: "🤔",
-    title: "I'm not sure yet",
-    text: "Answer a few questions about what you enjoy, and the AI suggests your top 3 tracks.",
-    bg: "from-[#efe5fb] to-[#f8f3fe]",
   },
 ];
 
-/** The first visit to Courses, while the student has no track (US-04, US-07): three ways in. */
+/** After sign-in, while the student has no track: I know my track (placement test) or I have no idea (AI interview). */
 export default function FindYourTrack({
   tracks,
   inProgress,
@@ -70,14 +63,14 @@ export default function FindYourTrack({
   /** "I know what I want": an interview about the chosen track finds the student's level in it. */
   function choose(code: string) {
     setSaving(code);
-    router.push(`/learner/ai-interview?path=KnowsTrack&track=${code}`);
+    router.push(`/learner/placement/${code.toLowerCase()}`);
   }
 
   return (
     <div className="flex flex-1 flex-col bg-[#fbfdff] p-6 md:p-10">
       <h1 className="text-[2em] font-extrabold leading-tight text-[#14365a]">Find your track</h1>
       <p className="mt-1 text-sm text-[#14365a]/75">
-        {picking ? "Choose the track you want to learn. A short AI interview then finds your level in it." : "How do you want to start? Pick the way that feels right."}
+        {picking ? "Choose the track you want to learn. 6 quick technical questions then find your level in it." : "How do you want to start? Pick the way that feels right."}
       </p>
 
       {inProgress && !picking && !dismissed && (
@@ -113,7 +106,7 @@ export default function FindYourTrack({
       )}
 
       {!picking ? (
-        <ul className="mt-6 grid gap-5 lg:grid-cols-3">
+        <ul className="mt-6 grid gap-5 md:grid-cols-2">
           {CHOICES.map((c) => (
             <li key={c.path}>
               <button
