@@ -98,7 +98,7 @@ export const moveTask = (taskId: string, status: TaskStatus) =>
 
 /* ---------- Session page: links to each member's work ---------- */
 
-export type WorkLinkKind = "Figma" | "GitHub" | "LiveSite" | "Api" | "Demo" | "TestReport";
+export type WorkLinkKind = "Figma" | "GitHub" | "LiveSite" | "Api" | "Demo" | "TestReport" | "Other";
 
 export interface SquadMemberLinks {
   studentId: string;
@@ -108,10 +108,10 @@ export interface SquadMemberLinks {
   role: SquadRole;
   isMe: boolean;
   totalXp: number;
-  /** The links this member's role shares, in order. */
+  /** The kinds of link this member's role usually shares (suggested first). */
   kinds: WorkLinkKind[];
   links: { kind: WorkLinkKind; url: string }[];
-  /** Every link of the role is there. */
+  /** The member shared at least one link. */
   ready: boolean;
 }
 
@@ -123,5 +123,32 @@ export interface SquadLinks {
 }
 
 export const getSquadLinks = () => api.get<SquadLinks>("/api/v1/interns/squad/links");
-/** Saves the student's own links; an empty url removes that link. */
+/** Replaces the student's own links (any number up to 10, any kind); an empty list removes them all. */
 export const saveMyLinks = (links: { kind: WorkLinkKind; url: string }[]) => api.put<SquadLinks>("/api/v1/interns/squad/links", { links });
+
+/* ---------- Internship access, matchmaking and own tasks ---------- */
+
+export interface LevelProgress {
+  trackCode: string;
+  trackName: string;
+  level: string;
+  done: number;
+  total: number;
+  percent: number;
+  complete: boolean;
+  /** Lessons (the level's lessons) or TrackQuiz (a track without lessons at that level). */
+  basis: "Lessons" | "TrackQuiz";
+}
+
+export interface InternshipAccess {
+  inSquad: boolean;
+  /** In a squad, or the level is finished. */
+  open: boolean;
+  level: LevelProgress | null;
+}
+
+export const getInternshipAccess = () => api.get<InternshipAccess>("/api/v1/interns/access");
+/** Joins a squad of the same level from other tracks (or a new one with a random project). */
+export const joinSquad = () => api.post<Squad>("/api/v1/interns/squad/join");
+/** Writes a task for yourself; it starts in To Do. */
+export const createTask = (title: string, storyPoints = 1) => api.post<SquadTask>("/api/v1/interns/tasks", { title, storyPoints });

@@ -4,9 +4,10 @@ import { useEffect, useState, type CSSProperties } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
-import { BookOpen, Users } from "lucide-react";
+import { BookOpen, Lock, Users } from "lucide-react";
 import { useAuth } from "@/lib/auth/auth-context";
 import { getHub } from "@/lib/hub-api";
+import { getInternshipAccess } from "@/lib/interns-api";
 import { getTrackLessons, getTracks } from "@/lib/learning-api";
 import { DailyChallengeCard, LevelCard, NextSessionCard, RewardsButton } from "./dashboard-cards";
 import { avatarFor, useSquad } from "./interns-data";
@@ -132,6 +133,20 @@ function SignLabel({ sign }: { sign: Sign }) {
     >
       <Icon className="h-[1.05em] w-[1.05em] shrink-0" strokeWidth={2} />
       {sign.label}
+    </span>
+  );
+}
+
+const INTERNSHIP = "/learner/interns/internship";
+
+/** On the Internship building while it is locked: finish your level first. */
+function LockBadge() {
+  return (
+    <span
+      className="pointer-events-none absolute left-1/2 top-[52%] flex -translate-x-1/2 -translate-y-1/2 items-center gap-[0.4em] whitespace-nowrap rounded-full bg-[#14365a]/90 px-[0.9em] py-[0.45em] font-semibold text-white shadow-lg"
+      style={{ fontSize: "3.6cqw" }}
+    >
+      <Lock className="h-[1.1em] w-[1.1em]" /> Finish your level to unlock
     </span>
   );
 }
@@ -265,6 +280,19 @@ export default function InternDashboard() {
     return { name: m.fullName, role: m.role, isMe: m.isMe, avatar: avatar.src, bg: avatar.bg };
   });
   const [focus, setFocus] = useState<TrackFocus | null>(null);
+  // Decision of 21 Oct 2026: the Internship stays locked until the student finishes their level.
+  const [internshipLocked, setInternshipLocked] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    getInternshipAccess().then(
+      (a) => active && setInternshipLocked(!a.open),
+      () => {},
+    );
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -342,6 +370,7 @@ export default function InternDashboard() {
                 className="pointer-events-none h-auto w-full drop-shadow-[0_14px_16px_rgba(13,43,90,0.22)] transition-transform duration-200 group-hover:-translate-y-1"
               />
               {b.sign && <SignLabel sign={b.sign} />}
+              {b.href === INTERNSHIP && internshipLocked && <LockBadge />}
             </Link>
           ))}
         </div>
@@ -416,6 +445,7 @@ export default function InternDashboard() {
               className="pointer-events-none h-auto w-full drop-shadow-[0_18px_22px_rgba(13,43,90,0.25)] transition-transform duration-200 group-hover:-translate-y-1.5"
             />
             {b.sign && <SignLabel sign={b.sign} />}
+            {b.href === INTERNSHIP && internshipLocked && <LockBadge />}
           </Link>
         ))}
 

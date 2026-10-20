@@ -1,35 +1,125 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { LoaderCircle } from "lucide-react";
-import { ApiError } from "@/lib/api-client";
-import { getSquad } from "@/lib/interns-api";
+import { useEffect, useState, useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
+import { Poppins } from "next/font/google";
+import Image from "next/image";
+import Link from "next/link";
+import type { Route } from "next";
+import { ArrowLeft, LoaderCircle, Lock } from "lucide-react";
+import { errorMessage } from "@/lib/api-client";
+import { getInternshipAccess, type InternshipAccess, type LevelProgress } from "@/lib/interns-api";
+import { trackPath } from "@/lib/learning-api";
 import InternshipProgress from "./InternshipProgress";
 import SquadMatchmaking from "./SquadMatchmaking";
 
-/**
- * Entry of the Internship: a student without a squad joins one first (matchmaking, then "Get Ready");
- * everyone else goes straight to the squad's Internship Progress.
- */
 /** LOCAL ONLY (NEXT_PUBLIC_SKIP_AUTH=true): with no backend, show the "Join Your Squad" screen instead of an error. */
 const PREVIEW = process.env.NEXT_PUBLIC_SKIP_AUTH === "true" && process.env.NODE_ENV !== "production";
 
+const IMG = "/images/Intern";
+const poppins = Poppins({ subsets: ["latin"], weight: ["400", "500", "600", "700", "800"] });
+const noopSubscribe = () => () => {};
+const glass =
+  "rounded-[20px] border border-white/70 bg-gradient-to-r from-[#c8eef8]/75 to-[#a6dfda]/60 shadow-[0_10px_30px_rgba(20,54,90,0.12)] backdrop-blur-md";
+
+/** The Internship before the level is finished (decision of 21 Oct 2026): what is left, and back to the lessons. */
+function LockedInternship({ level }: { level: LevelProgress | null }) {
+  const isClient = useSyncExternalStore(noopSubscribe, () => true, () => false);
+  if (!isClient) return null;
+  return createPortal(
+    <div dir="ltr" className={`${poppins.className} fixed inset-0 z-50 bg-[#bfe4f7]`} style={{ fontSize: "clamp(11px, 1.05vw, 16px)" }}>
+      <Image src={`${IMG}/bg-park.png`} alt="" fill priority sizes="100vw" className="pointer-events-none object-cover" />
+      <div className="absolute inset-0 overflow-y-auto">
+        <div className="relative mx-auto max-w-[72em] px-4 pb-10 pt-6 sm:px-6">
+          <div className="relative flex items-center justify-center py-[1em]">
+            <Link
+              href="/learner/dashboard"
+              aria-label="Back to the dashboard"
+              className="absolute left-0 grid h-[3em] w-[3em] place-items-center rounded-[0.8em] bg-[#6c86ad]/80 text-white shadow-md hover:bg-[#5a759d]"
+            >
+              <ArrowLeft className="h-[1.6em] w-[1.6em]" />
+            </Link>
+            <h1 className="px-[3.5em] text-center text-[2.6em] font-semibold leading-tight text-[#14365a]">Internship</h1>
+          </div>
+
+          <section className={`${glass} mx-auto mt-[1.5em] flex max-w-[34em] flex-col items-center gap-[1em] p-[2em] text-center text-[#14365a]`}>
+            <span className="grid h-[4.5em] w-[4.5em] place-items-center rounded-full bg-[#14365a] text-white shadow-lg">
+              <Lock className="h-[2em] w-[2em]" />
+            </span>
+            <h2 className="text-[1.6em] font-bold">Finish your level to unlock the Internship</h2>
+            {level ? (
+              <>
+                <p className="max-w-[26em] text-[1em] leading-relaxed text-[#14365a]/85">
+                  {level.basis === "Lessons"
+                    ? `Complete every ${level.level} lesson of ${level.trackName}. Then you join a squad with students of your level from other tracks and build a real project together.`
+                    : `Watch a ${level.trackName} video and pass the track quiz. Then you join a squad with students of your level from other tracks and build a real project together.`}
+                </p>
+                <div className="w-full max-w-[24em]">
+                  <div className="flex justify-between text-[0.85em] font-semibold">
+                    <span>
+                      {level.trackName} · {level.level}
+                    </span>
+                    <span>{level.percent}%</span>
+                  </div>
+                  <div
+                    role="progressbar"
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={level.percent}
+                    className="mt-[0.4em] h-[0.6em] overflow-hidden rounded-full bg-white/70"
+                  >
+                    <div className="h-full rounded-full bg-[#2fa59b]" style={{ width: `${level.percent}%` }} />
+                  </div>
+                  {level.basis === "Lessons" && (
+                    <p className="mt-[0.3em] text-[0.8em] text-[#14365a]/70">
+                      {level.done} of {level.total} lessons done
+                    </p>
+                  )}
+                </div>
+                <Link
+                  href={trackPath(level.trackCode) as Route}
+                  className="mt-[0.4em] rounded-[0.8em] bg-[#4f9cf0] px-[2em] py-[0.8em] text-[1em] font-extrabold tracking-wide text-[#14365a] shadow-[0_6px_18px_rgba(47,127,214,0.45)] hover:bg-[#3d8ce6]"
+                >
+                  CONTINUE LEARNING
+                </Link>
+              </>
+            ) : (
+              <p className="text-[1em] text-[#14365a]/85">Choose a track and finish its first level to join a squad.</p>
+            )}
+          </section>
+        </div>
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
+/**
+ * Entry of the Internship (decision of 21 Oct 2026): locked until the student finishes their level; then a
+ * congratulations screen to join a squad (matchmaking, then "Get Ready"); in a squad, the squad's Internship Progress.
+ */
 export default function InternshipGate() {
-  const [state, setState] = useState<"loading" | "no-squad" | "squad">("loading");
+  const [access, setAccess] = useState<InternshipAccess | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
-    getSquad().then(
-      () => active && setState("squad"),
-      // Any other error is shown by the progress page itself.
-      (e) => active && setState((e instanceof ApiError && e.code === "NO_SQUAD") || PREVIEW ? "no-squad" : "squad")
+    getInternshipAccess().then(
+      (a) => active && setAccess(a),
+      (e) =>
+        active &&
+        (PREVIEW
+          ? setAccess({ inSquad: false, open: true, level: null })
+          : setError(errorMessage(e, "We couldn't open the Internship. Please try again."))),
     );
     return () => {
       active = false;
     };
   }, []);
 
-  if (state === "no-squad") return <SquadMatchmaking />;
-  if (state === "squad") return <InternshipProgress />;
-  return <LoaderCircle className="mx-auto mt-[20vh] h-8 w-8 animate-spin text-[#14365a]" aria-label="Loading" />;
+  if (error) return <p className="mx-auto mt-[20vh] max-w-md text-center font-semibold text-[#14365a]">{error}</p>;
+  if (!access) return <LoaderCircle className="mx-auto mt-[20vh] h-8 w-8 animate-spin text-[#14365a]" aria-label="Loading" />;
+  if (access.inSquad) return <InternshipProgress />;
+  if (!access.open) return <LockedInternship level={access.level} />;
+  return <SquadMatchmaking level={access.level} />;
 }
