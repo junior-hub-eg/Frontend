@@ -35,3 +35,11 @@ export const getMentors = (options: { track?: string; all?: boolean } = {}) => {
 };
 export const getMyMentor = () => api.get<MyMentor>("/api/v1/student/mentor");
 export const chooseMentor = (mentorId: string) => api.put<MyMentor>("/api/v1/student/mentor", { mentorId });
+
+export interface MentorProfile {
+  mentor: Mentor;
+  /** How many students they mentor now. */
+  currentStudents: number;
+}
+
+export const getMentor = (id: string) => api.get<MentorProfile>(`/api/v1/mentors/${id}`);

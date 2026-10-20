@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { Send, X } from "lucide-react";
 
 export type Teammate = { name: string; avatar: string; bg: string; role?: string; isMe?: boolean };
@@ -118,7 +119,15 @@ export function TeammatesPanel({
             <circle cx="19" cy="12" r="3" />
             <circle cx="12" cy="19" r="3" />
           </svg>
-          Your Teammates
+          <Link href="/learner/interns/session" className="hover:underline">
+            Your Teammates
+          </Link>
+          <Link
+            href="/learner/interns/session"
+            className="ml-auto rounded-full bg-[#14365a] px-[0.8em] py-[0.25em] text-[0.7em] font-bold text-white hover:bg-[#0f2a47]"
+          >
+            Get ready
+          </Link>
         </h2>
 
         {teammates.length === 0 && (

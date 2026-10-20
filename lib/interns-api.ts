@@ -85,3 +85,32 @@ export const getLeaderboard = () => api.get<Leaderboard>("/api/v1/interns/leader
 /** Moves an own task one step forward or back. */
 export const moveTask = (taskId: string, status: TaskStatus) =>
   api.patch<MoveTaskResult>(`/api/v1/interns/tasks/${taskId}`, { status });
+
+/* ---------- Session page: links to each member's work ---------- */
+
+export type WorkLinkKind = "Figma" | "GitHub" | "LiveSite" | "Api" | "Demo" | "TestReport";
+
+export interface SquadMemberLinks {
+  studentId: string;
+  firstName: string;
+  fullName: string;
+  photoUrl: string | null;
+  role: SquadRole;
+  isMe: boolean;
+  totalXp: number;
+  /** The links this member's role shares, in order. */
+  kinds: WorkLinkKind[];
+  links: { kind: WorkLinkKind; url: string }[];
+  /** Every link of the role is there. */
+  ready: boolean;
+}
+
+export interface SquadLinks {
+  squadId: string;
+  squadName: string;
+  members: SquadMemberLinks[];
+}
+
+export const getSquadLinks = () => api.get<SquadLinks>("/api/v1/interns/squad/links");
+/** Saves the student's own links; an empty url removes that link. */
+export const saveMyLinks = (links: { kind: WorkLinkKind; url: string }[]) => api.put<SquadLinks>("/api/v1/interns/squad/links", { links });
