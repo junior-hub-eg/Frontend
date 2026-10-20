@@ -15,7 +15,7 @@ const SKIP_AUTH = false;
 const ONBOARDING_PATHS = ["/learner/courses", "/learner/courses/discovery"];
 
 export function LearnerLayoutClient({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const router = useRouter();
 
   const pathname = usePathname();
@@ -72,8 +72,10 @@ export function LearnerLayoutClient({ children }: { children: ReactNode }) {
 
   const fullName = user ? [user.firstName, user.lastName].filter(Boolean).join(" ") : "Mohammed Yasser";
 
+  // Clears the token (and its cookie, which the proxy reads) before leaving; otherwise /login sends the student back.
   function handleLogout() {
-    router.push("/login");
+    logout();
+    router.replace("/login");
   }
 
   return (
