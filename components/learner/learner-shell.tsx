@@ -23,6 +23,8 @@ interface LearnerShellProps {
   trackLabel?: string;
   onLogout?: () => void;
   activeHref?: string;
+  /** The student has no track yet: the sidebar links stay locked until Find your track is done. */
+  navLocked?: boolean;
   children: ReactNode;
 }
 
@@ -35,6 +37,7 @@ export function LearnerShell({
   trackLabel,
   onLogout,
   activeHref,
+  navLocked = false,
   children,
 }: LearnerShellProps) {
   const pathname = usePathname();
@@ -81,7 +84,7 @@ export function LearnerShell({
           />
         )}
 
-        <LearnerSidebar activeHref={current} collapsed={collapsed} mobileOpen={mobileOpen} onNavigate={closeMobile} />
+        <LearnerSidebar activeHref={current} collapsed={collapsed} mobileOpen={mobileOpen} onNavigate={closeMobile} locked={navLocked} />
 
         {/* ---------- Top bar ---------- */}
         <header className="relative z-40 flex items-center gap-3 py-4 pl-[4rem] pr-4 lg:absolute lg:left-[var(--hl)] lg:right-[calc(var(--u)*1.6)] lg:top-[3.8%] lg:gap-[1.2em] lg:p-0 lg:transition-[left] lg:duration-300 lg:[font-size:clamp(9px,var(--u),16px)]">

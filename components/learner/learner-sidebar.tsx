@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { GraduationCap } from "lucide-react";
+import { GraduationCap, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LEARNER_NAV_MAIN, LEARNER_NAV_SECONDARY, type LearnerNavItem } from "./learner-nav";
 
@@ -14,6 +14,8 @@ interface LearnerSidebarProps {
   /** Mobile/tablet: expanded drawer (otherwise a slim icon rail) */
   mobileOpen?: boolean;
   onNavigate?: () => void;
+  /** No track yet: the student finishes Find your track first, so the links are shown locked. */
+  locked?: boolean;
 }
 
 function NavLink({
@@ -22,6 +24,7 @@ function NavLink({
   collapsed,
   rail,
   onNavigate,
+  locked = false,
 }: {
   item: LearnerNavItem;
   active: boolean;
@@ -29,6 +32,7 @@ function NavLink({
   /** mobile/tablet icon-only rail */
   rail: boolean;
   onNavigate?: () => void;
+  locked?: boolean;
 }) {
   const Icon = item.icon;
 
@@ -41,6 +45,20 @@ function NavLink({
       : "px-[1em]";
 
   const label = collapsed ? (rail ? "hidden" : "lg:hidden") : rail ? "hidden lg:inline" : "";
+
+  if (locked) {
+    return (
+      <span
+        aria-disabled="true"
+        title={`${item.label}: choose your track first`}
+        className={cn("flex h-[2.8em] cursor-not-allowed items-center gap-[0.9em] rounded-[0.7em] text-[1.05em] font-medium text-[#14365a]/40", align)}
+      >
+        <Icon className="h-[1.3em] w-[1.3em] shrink-0" />
+        <span className={label}>{item.label}</span>
+        <Lock className={cn("ml-auto h-[0.9em] w-[0.9em] shrink-0", label)} />
+      </span>
+    );
+  }
 
   return (
     <Link
@@ -62,7 +80,7 @@ function NavLink({
 }
 
 /** The parent (LearnerShell frame) must be `relative` and define `--sb` and `--u`. */
-export function LearnerSidebar({ activeHref, collapsed = false, mobileOpen = false, onNavigate }: LearnerSidebarProps) {
+export function LearnerSidebar({ activeHref, collapsed = false, mobileOpen = false, onNavigate, locked = false }: LearnerSidebarProps) {
   const pathname = usePathname();
   const current = activeHref ?? pathname;
   const isActive = (item: LearnerNavItem) =>
@@ -129,6 +147,7 @@ export function LearnerSidebar({ activeHref, collapsed = false, mobileOpen = fal
             collapsed={collapsed}
             rail={rail}
             onNavigate={onNavigate}
+            locked={locked}
           />
         ))}
       </nav>
@@ -144,6 +163,7 @@ export function LearnerSidebar({ activeHref, collapsed = false, mobileOpen = fal
             collapsed={collapsed}
             rail={rail}
             onNavigate={onNavigate}
+            locked={locked}
           />
         ))}
       </nav>
