@@ -14,59 +14,19 @@ import {
   Search,
 } from "lucide-react";
 
+import {
+  MATH_ALGORITHMS as ALGORITHMS,
+  MATH_LEVELS as LEVELS,
+  MATH_PROBLEMS as PROBLEMS,
+  MATH_TOPICS as TOPICS,
+  type MathAlgorithm,
+  type MathProblem as Problem,
+} from "@/lib/math-problems";
+
 const IMG = "/images/Intern/AI%20Curriculum";
-
-/* ---------------- Data (replace with API data later) ---------------- */
-
-const TOPICS = [
-  "All Topics",
-  "Algebra",
-  "Functions",
-  "Geometry",
-  "Trigonometry",
-  "Calculus",
-  "Statistics",
-] as const;
-
-const LEVELS = ["All Levels", "Beginner", "Intermediate", "Advanced"] as const;
-
-const ALGORITHMS = [
-  "Linear Regression",
-  "Logistic Regression",
-  "Random Forest",
-  "Support Vector Machine",
-  "AdaBoost",
-  "Decision Tree",
-  "K-Nearest Neighbors",
-  "Gradient Boosting",
-  "Neural Network",
-  "Naive Bayes",
-  "CatBoost",
-  "XGBoost",
-  "LightGBM",
-  "Quadratic Discriminant Analysis",
-];
 
 type Topic = (typeof TOPICS)[number];
 type Level = (typeof LEVELS)[number];
-
-type Problem = {
-  id: string;
-  title: string;
-  formula: string;
-  level: Level;
-  algorithm: string;
-  topic: Topic;
-};
-
-const PROBLEMS: Problem[] = Array.from({ length: 4 }, (_, i) => ({
-  id: `linear-regression-${i + 1}`,
-  title: "Solve Linear Regression",
-  formula: "y = mx + b",
-  level: "Beginner",
-  algorithm: "Linear Regression",
-  topic: "Algebra",
-}));
 
 /* ---------------- Pieces ---------------- */
 
@@ -125,8 +85,8 @@ function ProblemCard({ problem }: { problem: Problem }) {
 export default function MathematicsPage() {
   const [query, setQuery] = useState("");
   const [level, setLevel] = useState<Level>("All Levels");
-  const [topic, setTopic] = useState<Topic>("Algebra");
-  const [algorithm, setAlgorithm] = useState("Linear Regression");
+  const [topic, setTopic] = useState<Topic>("All Topics");
+  const [algorithm, setAlgorithm] = useState<MathAlgorithm>("Linear Regression");
 
   const problems = useMemo(
     () =>
@@ -135,7 +95,7 @@ export default function MathematicsPage() {
           (topic === "All Topics" || p.topic === topic) &&
           (level === "All Levels" || p.level === level) &&
           p.algorithm === algorithm &&
-          p.title.toLowerCase().includes(query.trim().toLowerCase())
+          `${p.title} ${p.formula}`.toLowerCase().includes(query.trim().toLowerCase())
       ),
     [query, level, topic, algorithm]
   );
