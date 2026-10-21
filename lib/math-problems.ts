@@ -39,6 +39,8 @@ export interface MathProblem {
   learn: string[];
   /** The worked solution, one step per line; the last step checks or states the answer. */
   steps: string[];
+  /** a·x + b = c: shows the balance simulation in "Try it Yourself". */
+  equation?: { a: number; b: number; c: number };
 }
 
 export const MATH_PROBLEMS: MathProblem[] = [
@@ -50,6 +52,7 @@ export const MATH_PROBLEMS: MathProblem[] = [
     topic: "Algebra",
     algorithm: "Linear Regression",
     minutes: 10,
+    equation: { a: 2, b: 4, c: 12 },
     learn: ["How to isolate the variable", "Doing the same thing to both sides", "Checking your answer"],
     steps: [
       "Write the equation: 2x + 4 = 12.",

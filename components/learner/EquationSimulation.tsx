@@ -10,6 +10,19 @@ const primaryBtn =
 const ghostBtn =
   "flex items-center gap-[0.4em] rounded-[0.8em] border border-[#c9d3df] px-[1.2em] py-[0.7em] text-[0.85em] font-semibold text-[#14365a] transition hover:bg-[#f3f6f9] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#12939b]";
 
+/** One pan of the scale; it counter-rotates so it hangs straight while the beam tilts. */
+function Pan({ cx, label, angle, color }: { cx: number; label: string; angle: number; color: string }) {
+  return (
+    <g transform={`translate(${cx} 40) rotate(${-angle})`}>
+      <path d="M0 0 L-30 62 M0 0 L30 62" stroke="#14365a" strokeWidth="2" fill="none" />
+      <rect x="-38" y="62" width="76" height="9" rx="4.5" fill={color} />
+      <text x="0" y="90" textAnchor="middle" fontSize="15" fontWeight="700" fill="#14365a">
+        {label}
+      </text>
+    </g>
+  );
+}
+
 /**
  * "Try it Yourself" for a linear equation a·x + b = c:
  * a balance scale you tilt with a slider, and a step-by-step solver.
@@ -27,16 +40,6 @@ export default function EquationSimulation({ a = 2, b = 4, c = 12 }: { a?: numbe
   const panColor = balanced ? "#1f9d55" : "#12939b";
 
   const equation = [`${a}x + ${b} = ${c}`, `${a}x = ${f(c - b)}`, `x = ${f(solution)}`][stage];
-
-  const Pan = ({ cx, label }: { cx: number; label: string }) => (
-    <g transform={`translate(${cx} 40) rotate(${-angle})`}>
-      <path d="M0 0 L-30 62 M0 0 L30 62" stroke="#14365a" strokeWidth="2" fill="none" />
-      <rect x="-38" y="62" width="76" height="9" rx="4.5" fill={panColor} />
-      <text x="0" y="90" textAnchor="middle" fontSize="15" fontWeight="700" fill="#14365a">
-        {label}
-      </text>
-    </g>
-  );
 
   return (
     <section aria-label="Equation balance simulation" className="rounded-[1.2em] border border-[#e3e9f0] bg-white p-[1.4em]">
@@ -57,8 +60,8 @@ export default function EquationSimulation({ a = 2, b = 4, c = 12 }: { a?: numbe
             <path d="M150 40 V140 M110 140 H190" stroke="#14365a" strokeWidth="5" strokeLinecap="round" fill="none" />
             <g transform={`rotate(${angle} 150 40)`} style={{ transition: "transform 0.35s ease" }}>
               <line x1="40" y1="40" x2="260" y2="40" stroke="#14365a" strokeWidth="5" strokeLinecap="round" />
-              <Pan cx={40} label={f(lhs)} />
-              <Pan cx={260} label={String(c)} />
+              <Pan cx={40} label={f(lhs)} angle={angle} color={panColor} />
+              <Pan cx={260} label={String(c)} angle={angle} color={panColor} />
             </g>
             <circle cx="150" cy="40" r="6" fill={panColor} />
           </svg>
