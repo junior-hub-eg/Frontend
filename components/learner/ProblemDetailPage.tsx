@@ -1,5 +1,5 @@
 "use client";
-
+import EquationSimulation from "./EquationSimulation";
 import { useRef, useState } from "react";
 import Link from "next/link";
 import type { Route } from "next";
@@ -265,11 +265,7 @@ export default function ProblemDetailPage({ problem }: { problem: MathProblem })
         <div className="mt-[1em]">
           {tab === "AI Explanation" && <VideoPlayer />}
 
-          {tab === "Try it Yourself" && (
-            <div className="rounded-[1.2em] border border-dashed border-[#c9d3df] p-[2.5em] text-center text-[0.9em] text-[#5b7089]">
-              The interactive simulation is coming soon.
-            </div>
-          )}
+                   {tab === "Try it Yourself" && <EquationSimulation />}
 
           {tab === "Steps" && (
             <ol className="space-y-[0.8em] rounded-[1.2em] border border-[#e3e9f0] bg-white p-[1.4em]">
