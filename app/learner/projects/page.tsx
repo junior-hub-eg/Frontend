@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import type { Route } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -60,11 +61,8 @@ const OPPORTUNITIES = [
     href: "/learner/placement",
     image: "/images/learner/projects/opportunity-recruitment.png",
   },
-] as const;
+];
 
-/* ------------------------------------------------------------------ */
-/* Small building blocks                                               */
-/* ------------------------------------------------------------------ */
 
 function Card({ className, children }: { className?: string; children: ReactNode }) {
   return (
@@ -98,8 +96,7 @@ function InfoTile({
   );
 }
 
-/** Dark navy → teal button used across the page. */
-function PrimaryButton({ href, children }: { href: string; children: ReactNode }) {
+function PrimaryButton({ href, children }: { href: Route; children: ReactNode }) {
   return (
     <Link
       href={href}
@@ -132,8 +129,6 @@ export default function MyProjectsPage() {
           className="object-cover object-top"
         />
       </div>
-
-      {/* Title */}
       <header className="min-w-0">
         <h1 className="text-xl font-bold">My Projects</h1>
         <p className="mt-1 text-[11px] text-[#1B2D54]/70">
@@ -163,7 +158,7 @@ export default function MyProjectsPage() {
                 <p className="mt-1 text-[11px] leading-snug text-[#1B2D54]/70">{PROJECT.description}</p>
               </div>
 
-              <PrimaryButton href={`/learner/projects/${PROJECT.id}`}>
+              <PrimaryButton href={`/learner/projects/${PROJECT.id}` as Route}>
                 Continue Working
                 <ArrowRight aria-hidden className="size-3.5" />
               </PrimaryButton>
@@ -189,8 +184,6 @@ export default function MyProjectsPage() {
                 className="bg-[#dff5e8]"
               />
             </div>
-
-            {/* Sprint */}
             <div className="min-w-0 rounded-xl bg-[#f3f5f5] p-3">
               <div className="flex min-w-0 items-center gap-3">
                 <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#c9efe9] text-[#14757d]">
@@ -269,7 +262,7 @@ export default function MyProjectsPage() {
           <p className="max-w-md text-[11px] text-[#1B2D54]/70">
             Join a squad from Internship to start working on a project with your team.
           </p>
-          <PrimaryButton href="/learner/interns">
+          <PrimaryButton href={"/learner/interns" as Route}>
             Join a squad
             <ArrowRight aria-hidden className="size-3.5" />
           </PrimaryButton>
@@ -308,7 +301,7 @@ export default function MyProjectsPage() {
           {OPPORTUNITIES.map((item) => (
             <Link
               key={item.title}
-              href={item.href}
+              href={item.href as Route}
               aria-label={`Explore ${item.title}`}
               className="block min-w-0 overflow-hidden rounded-xl transition-transform hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#12939b]/40"
             >

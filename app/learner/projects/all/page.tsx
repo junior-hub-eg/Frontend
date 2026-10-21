@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import type { Route } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -78,7 +79,7 @@ const OPPORTUNITIES = [
     href: "/learner/placement",
     image: "/images/learner/projects/opportunity-recruitment.png",
   },
-] as const;
+];
 
 function Row({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
   return (
@@ -209,7 +210,7 @@ export default function AllProjectsPage() {
               </div>
 
               <Link
-                href={`/learner/projects/${p.id}`}
+                href={`/learner/projects/${p.id}` as Route}
                 className="mt-auto inline-flex items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-[#14757d] to-[#1B2D54] px-4 py-2 text-[11px] font-semibold text-white shadow-sm transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#12939b]/40"
               >
                 View details
@@ -226,7 +227,7 @@ export default function AllProjectsPage() {
           {OPPORTUNITIES.map((item) => (
             <Link
               key={item.title}
-              href={item.href}
+              href={item.href as Route}
               aria-label={`Explore ${item.title}`}
               className="block min-w-0 overflow-hidden rounded-xl transition-transform hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#12939b]/40"
             >
