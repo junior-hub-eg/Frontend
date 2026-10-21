@@ -30,6 +30,7 @@ import {
   type TaskBoard as TaskBoardData,
   type TaskStatus,
 } from "@/lib/interns-api";
+import { mentorAvatar } from "@/lib/avatars";
 import { avatarFor, memberIndex, ROLE_TITLE, ROLE_TAG, useInterns } from "./interns-data";
 import { LinkChips, MyLinksEditor } from "./work-links";
 import { ProjectSubmitCard } from "./ProjectSubmitCard";
@@ -90,6 +91,20 @@ function TeamCard({ squad }: { squad: Squad | null }) {
 
       <div className={`${solid} min-w-0 p-[1em]`}>
         <ul className="flex items-center gap-[1.2em] overflow-x-auto pb-[0.2em]">
+          {/* The project's monitor (a mentor picked for the squad), then the members. */}
+          {squad?.monitor && (
+            <li className="flex min-w-[9em] shrink-0 flex-col items-center border-r border-[#e3ebf3] pr-[1.2em] text-center">
+              <span
+                className="relative h-[5.2em] w-[5.2em] overflow-hidden rounded-full shadow-md ring-[0.25em] ring-[#12939b]"
+                style={{ backgroundColor: mentorAvatar(squad.monitor).bg }}
+              >
+                <Image src={mentorAvatar(squad.monitor).src} alt="" fill sizes="96px" className="object-cover" />
+              </span>
+              <span className="mt-[0.5em] whitespace-nowrap text-[0.95em] font-bold text-[#14365a]">{squad.monitor.fullName}</span>
+              <span className="mt-[0.15em] rounded-full bg-[#e9f7f4] px-[0.7em] py-[0.1em] text-[0.7em] font-bold text-[#12939b]">Monitor</span>
+              <span className="mt-[0.15em] max-w-[11em] truncate text-[0.7em] text-[#14365a]/60">{squad.monitor.title}</span>
+            </li>
+          )}
           {squad?.members.map((m, i) => {
             const avatar = avatarFor(m.photoUrl, i);
             return (
