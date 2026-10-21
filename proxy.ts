@@ -19,6 +19,7 @@ import { TOKEN_COOKIE, decodeToken, isTokenExpired } from "@/lib/auth/token";
 const SKIP_AUTH = process.env.NEXT_PUBLIC_SKIP_AUTH === "true" && process.env.NODE_ENV !== "production";
 
 export function proxy(request: NextRequest) {
+
   if (SKIP_AUTH) return NextResponse.next();
 
   const { pathname } = request.nextUrl;
