@@ -120,7 +120,7 @@ export default function MyProgress() {
   const focusPercent = hub?.courses.progressPercent ?? 0;
 
   const mentor = hub?.mentorship.mentor ?? null;
-  const mentorLook = mentor ? mentorAvatar(mentor.id) : null;
+  const mentorLook = mentor ? mentorAvatar(mentor) : null;
 
   const stats = [
     { label: "Completed Courses", value: `${coursesDone}/${learningTracks.length}`, icon: BookOpen, color: "#4a9df8", bg: "#eaf4fe" },

@@ -134,9 +134,14 @@ export const MENTOR_AVATARS: { src: string; bg: string }[] = [
   bg: ["#dbeafe", "#fde68a", "#c7f0d8", "#fbcfe8", "#e9d5ff", "#fed7aa", "#bae6fd", "#d9f99d"][i % 8],
 }));
 
-/** The same grown-up avatar for a mentor everywhere. */
-export function mentorAvatar(id: string) {
+/**
+ * A mentor's grown-up avatar: the one the backend saved for them (it matches the mentor, a man or a woman), else one picked
+ * from the id so it is the same everywhere.
+ */
+export function mentorAvatar(mentor: { id: string; photoUrl?: string | null }) {
+  const saved = MENTOR_AVATARS.find((a) => a.src === mentor.photoUrl);
+  if (saved) return saved;
   let hash = 0;
-  for (const ch of id) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
+  for (const ch of mentor.id) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
   return MENTOR_AVATARS[hash % MENTOR_AVATARS.length];
 }

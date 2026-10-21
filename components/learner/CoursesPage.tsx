@@ -255,9 +255,9 @@ export default function CoursesPage() {
                           <>
                             <span
                               className="relative size-[2em] shrink-0 overflow-hidden rounded-full"
-                              style={{ backgroundColor: mentorAvatar(c.mentor.id).bg }}
+                              style={{ backgroundColor: mentorAvatar(c.mentor).bg }}
                             >
-                              <Image src={mentorAvatar(c.mentor.id).src} alt="" fill sizes="40px" className="object-cover" />
+                              <Image src={mentorAvatar(c.mentor).src} alt="" fill sizes="40px" className="object-cover" />
                             </span>
                             <span className="min-w-0 flex-1 leading-tight">
                               <span className="block truncate text-[0.78em] font-bold text-[#14365a]">{c.mentor.fullName}</span>

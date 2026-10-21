@@ -223,7 +223,7 @@ export default function SquadSession() {
                 <h2 className="text-[1.3em] font-bold text-[#14365a]">Your Monitor</h2>
                 {monitor ? (
                   <>
-                    <Avatar src={mentorAvatar(monitor.id).src} bg={mentorAvatar(monitor.id).bg} size="mt-[0.5em] h-[10em] w-[10em] self-center" />
+                    <Avatar src={mentorAvatar(monitor).src} bg={mentorAvatar(monitor).bg} size="mt-[0.5em] h-[10em] w-[10em] self-center" />
                     <p className="mt-[0.8em] text-[1.05em] font-bold text-[#14365a]">{monitor.fullName}</p>
                     <p className="text-[0.85em] text-[#14365a]">{monitor.title}</p>
                   </>

@@ -94,7 +94,7 @@ export default function AllProjectsPage() {
     // One chip per kind of link the student shared.
     links: [...new Set(p.links.map((l) => l.kind))],
     mentor: p.monitor?.fullName ?? "No monitor yet",
-    mentorAvatar: p.monitor ? mentorAvatar(p.monitor.id) : null,
+    mentorAvatar: p.monitor ? mentorAvatar(p.monitor) : null,
   }));
 
   return (

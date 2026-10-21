@@ -410,8 +410,8 @@ export default function LessonPage({ code, lessonId }: { code: string; lessonId:
             <p className={label}>Your mentor</p>
             {mentor ? (
               <div className="mt-[0.4em] flex items-center gap-[0.6em]">
-                <span className="relative size-[2.4em] shrink-0 overflow-hidden rounded-full" style={{ backgroundColor: mentorAvatar(mentor.id).bg }}>
-                  <Image src={mentorAvatar(mentor.id).src} alt="" fill sizes="40px" className="object-cover" />
+                <span className="relative size-[2.4em] shrink-0 overflow-hidden rounded-full" style={{ backgroundColor: mentorAvatar(mentor).bg }}>
+                  <Image src={mentorAvatar(mentor).src} alt="" fill sizes="40px" className="object-cover" />
                 </span>
                 <span className="leading-tight">
                   <span className="block text-[0.8em] font-extrabold text-[#14365a]">{mentor.fullName}</span>
