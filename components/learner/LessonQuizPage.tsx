@@ -5,7 +5,7 @@ import Link from "next/link";
 import type { Route } from "next";
 import { ArrowLeft, ArrowRight, Award, CheckCircle2, LoaderCircle, XCircle } from "lucide-react";
 import { errorMessage } from "@/lib/api-client";
-import { getLesson, getTrackLessons, lessonPath, submitLessonQuiz, trackPath, type Badge } from "@/lib/learning-api";
+import { getLesson, getTrackLessons, lessonPath, submitLessonQuiz, type Badge, lessonAfter } from "@/lib/learning-api";
 import { LoadState } from "@/components/Courses/course-ui";
 
 type Q = { id: string; prompt: string; options: string[] };
@@ -33,15 +33,13 @@ export default function LessonQuizPage({ code, lessonId }: { code: string; lesso
     Promise.all([getLesson(lessonId), getTrackLessons(code).catch(() => null)])
       .then(([lesson, track]) => {
         if (!active) return;
-        const lessons = track?.modules.flatMap((m) => m.lessons) ?? [];
-        const next = lessons[lessons.findIndex((l) => l.id === lesson.id) + 1];
         setState({
           kind: "ready",
           view: {
             title: lesson.title,
             trackName: track?.trackName ?? lesson.trackCode,
             questions: lesson.questions.map((q) => ({ id: q.id, prompt: q.prompt, options: q.options })),
-            nextHref: next ? lessonPath(lesson.trackCode, next.id) : trackPath(lesson.trackCode),
+            nextHref: lessonAfter(track, lesson.trackCode, lesson.id).href,
           },
         });
       })

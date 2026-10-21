@@ -340,3 +340,17 @@ export const submitLevelExam = (code: string, courseId: string, level: string, a
 export const coursePath = (code: string, courseId: string) => `${trackPath(code)}/course/${courseId}`;
 /** Level 1, 2 and 3 in the pages, Beginner / Intermediate / Advanced in the API. */
 export const LEVEL_NUMBER: Record<TrackLevel, number> = { Beginner: 1, Intermediate: 2, Advanced: 3 };
+
+/**
+ * Where "Next" goes after a lesson. Levels open in order (finish a level and pass its exam first), so the next lesson
+ * is only offered inside the same course and level; otherwise the course page, where the level exam is.
+ */
+export function lessonAfter(track: TrackLessons | null, code: string, lessonId: string): { href: string; label: string } {
+  const course = track?.modules.find((m) => m.lessons.some((l) => l.id === lessonId));
+  if (!course) return { href: trackPath(code), label: "Back to Track" };
+  const i = course.lessons.findIndex((l) => l.id === lessonId);
+  const lesson = course.lessons[i];
+  const next = course.lessons[i + 1];
+  if (next && next.level === lesson.level) return { href: lessonPath(code, next.id), label: "Next Lesson" };
+  return { href: coursePath(code, course.id), label: next ? "Take the level exam" : "Back to Course" };
+}
