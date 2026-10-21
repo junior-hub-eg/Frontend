@@ -53,14 +53,23 @@ interface ProfileData {
   certificates: Certificate[];
 }
 
+/** A failed part says which one, so "Something went wrong" never hides where. */
+class ProfilePartError extends Error {
+  constructor(part: string, cause: unknown) {
+    super(`We couldn't load ${part}. ${errorMessage(cause)}`);
+  }
+}
+
+const part = <T,>(name: string, request: Promise<T>) => request.catch((e: unknown) => Promise.reject(new ProfilePartError(name, e)));
+
 async function loadProfile(): Promise<ProfileData> {
   const [me, hub, tracks, mentors, achievements, certificates] = await Promise.all([
-    getMe(),
-    getHub(),
-    getTracks(),
-    getMyMentor(),
-    getAchievements(),
-    getMyCertificates(),
+    part("your profile", getMe()),
+    part("your dashboard", getHub()),
+    part("your tracks", getTracks()),
+    part("your mentors", getMyMentor()),
+    part("your achievements", getAchievements()),
+    part("your certificates", getMyCertificates()),
   ]);
   return { me, hub, tracks, mentors, achievements, certificates };
 }
@@ -201,7 +210,7 @@ export default function ProfilePage() {
     let active = true;
     loadProfile().then(
       (d) => active && setData(d),
-      (e) => active && setError(errorMessage(e, "We couldn't load your profile. Please try again.")),
+      (e) => active && setError(e instanceof ProfilePartError ? e.message : errorMessage(e, "We couldn't load your profile. Please try again.")),
     );
     return () => {
       active = false;
