@@ -9,6 +9,7 @@ import { errorMessage } from "@/lib/api-client";
 import { changeAvatar, refreshProfile, setGender } from "@/lib/auth/api-auth";
 import { getToken } from "@/lib/auth/token";
 import { LoaderCircle, RotateCcw } from "lucide-react";
+import { AssistantChat } from "./AssistantChat";
 import { LearnerShell } from "./learner-shell";
 
 /** LOCAL ONLY: NEXT_PUBLIC_SKIP_AUTH=true in .env.local skips the login check and the "needs a track" lock. Off by default and ignored in production. */
@@ -145,6 +146,8 @@ export function LearnerLayoutClient({ children }: { children: ReactNode }) {
       ) : (
         children
       )}
+      {/* The assistant also helps a new student find their way, so it is there before a track is chosen. */}
+      {(user || SKIP_AUTH) && <AssistantChat key={user?.email ?? "local"} />}
     </LearnerShell>
   );
 }
