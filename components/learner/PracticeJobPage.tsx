@@ -11,6 +11,7 @@ import {
   CheckCircle2,
   ChevronRight,
   Copy,
+  ExternalLink,
   LoaderCircle,
   RotateCcw,
   Send,
@@ -93,6 +94,14 @@ function CertificateCard({ code }: { code: string }) {
         <button type="button" onClick={copy} className="inline-flex items-center gap-[0.3em] text-[0.8em] font-semibold text-[#0f7a81] hover:underline">
           {copied ? <Check className="h-[1em] w-[1em]" /> : <Copy className="h-[1em] w-[1em]" />} {copied ? "Copied" : "Copy code"}
         </button>
+        <a
+          href={`/certificates/${code}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-[0.3em] text-[0.8em] font-semibold text-[#0f7a81] hover:underline"
+        >
+          <ExternalLink className="h-[1em] w-[1em]" /> View and print
+        </a>
       </div>
     </section>
   );
