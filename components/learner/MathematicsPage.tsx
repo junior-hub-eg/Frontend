@@ -24,8 +24,8 @@ const TOPICS = [
   "Functions",
   "Geometry",
   "Trigonometry",
-  "Claculas",
-  "Statics",
+  "Calculus",
+  "Statistics",
 ] as const;
 
 const LEVELS = ["All Levels", "Beginner", "Intermediate", "Advanced"] as const;
