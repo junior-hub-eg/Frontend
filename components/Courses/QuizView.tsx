@@ -10,6 +10,7 @@ import {
   getTrack,
   getTrackLessons,
   lessonPath,
+  lessonAfter,
   submitLessonQuiz,
   submitTrackQuiz,
   getPlacementTest,
@@ -50,8 +51,7 @@ interface Quiz {
 
 async function lessonQuiz(code: string, lessonId: string): Promise<Quiz> {
   const [lesson, track] = await Promise.all([getLesson(lessonId), getTrackLessons(code).catch(() => null)]);
-  const lessons = track?.modules.flatMap((m) => m.lessons) ?? [];
-  const next = lessons[lessons.findIndex((l) => l.id === lesson.id) + 1];
+  const after = lessonAfter(track, lesson.trackCode, lesson.id);
   const lessonHref = lessonPath(lesson.trackCode, lesson.id);
   return {
     eyebrow: `${track?.trackName ?? lesson.trackCode} / Lesson quiz`,
@@ -60,8 +60,8 @@ async function lessonQuiz(code: string, lessonId: string): Promise<Quiz> {
     questions: lesson.questions,
     backHref: lessonHref,
     backLabel: "Back to Lesson",
-    continueHref: next ? lessonPath(lesson.trackCode, next.id) : trackPath(lesson.trackCode),
-    continueLabel: next ? "Next Lesson" : "Back to Track",
+    continueHref: after.href,
+    continueLabel: after.label,
     passedText: "You finished this lesson.",
     failedText: "Read the help under each wrong answer, then try again.",
     submit: async (answers) => {

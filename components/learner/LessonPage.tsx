@@ -15,12 +15,14 @@ import {
   trackPath,
   type Lesson,
   type LessonStep,
+  lessonAfter,
   type LessonSummary,
+  type TrackLessons,
 } from "@/lib/learning-api";
 import { getMyMentor, type Mentor } from "@/lib/mentorship-api";
 import { LinearGraph, LoadState, VideoPlayer, minutes } from "@/components/Courses/course-ui";
 
-type Data = { lesson: Lesson; trackName: string; list: LessonSummary[]; mentor: Mentor | null };
+type Data = { lesson: Lesson; trackName: string; list: LessonSummary[]; track: TrackLessons | null; mentor: Mentor | null };
 
 /** The lesson, its track's lessons, and the student's mentor in this track. */
 async function load(code: string, lessonId: string): Promise<Data> {
@@ -28,7 +30,7 @@ async function load(code: string, lessonId: string): Promise<Data> {
   const mentor =
     mine?.currents?.find((a) => a.mentor.trackCode === lesson.trackCode)?.mentor ??
     (mine?.current?.mentor.trackCode === lesson.trackCode ? mine.current.mentor : null);
-  return { lesson, trackName: track?.trackName ?? lesson.trackCode, list: track?.modules.flatMap((m) => m.lessons) ?? [], mentor };
+  return { lesson, trackName: track?.trackName ?? lesson.trackCode, list: track?.modules.flatMap((m) => m.lessons) ?? [], track, mentor };
 }
 
 const TABS = ["Overview", "Steps"] as const;
@@ -90,7 +92,7 @@ export default function LessonPage({ code, lessonId }: { code: string; lessonId:
   const progress = lesson.progress;
   const idx = Math.max(0, list.findIndex((l) => l.id === lesson.id));
   const prev = list[idx - 1];
-  const next = list[idx + 1];
+  const after = lessonAfter(data.track, code, lesson.id);
   const doneCount = list.filter((l) => (l.id === lesson.id ? progress.done : l.status === "Done")).length;
   const percent = list.length ? Math.round((doneCount / list.length) * 100) : progress.done ? 100 : 0;
   const base = lessonPath(lesson.trackCode, lesson.id);
@@ -284,15 +286,10 @@ export default function LessonPage({ code, lessonId }: { code: string; lessonId:
               <Code2 className="size-[1.1em]" /> {lesson.tryIt ? (progress.tryItDone ? "Open Try it again" : "Open Try it") : "Take the quiz"}
             </Link>
 
-            {next ? (
-              <Link href={lessonPath(code, next.id) as Route} className={`${navBtn} border-[#14365a]/40 bg-white text-[#14365a] hover:bg-[#eef4fa]`}>
-                Next <ArrowRight className="size-[1.1em]" />
-              </Link>
-            ) : (
-              <Link href={trackPath(code) as Route} className={`${navBtn} border-[#14365a]/40 bg-white text-[#14365a] hover:bg-[#eef4fa]`}>
-                Back to Track <ArrowRight className="size-[1.1em]" />
-              </Link>
-            )}
+            {/* Next stays inside the course and level: a locked level opens from its course page (level exam). */}
+            <Link href={after.href as Route} className={`${navBtn} border-[#14365a]/40 bg-white text-[#14365a] hover:bg-[#eef4fa]`}>
+              {after.label === "Next Lesson" ? "Next" : after.label} <ArrowRight className="size-[1.1em]" />
+            </Link>
           </div>
         </div>
 

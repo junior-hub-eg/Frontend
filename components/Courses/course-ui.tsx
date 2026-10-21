@@ -11,6 +11,7 @@ import {
   Code2,
   Gamepad2,
   LoaderCircle,
+  Lock,
   Monitor,
   PenTool,
   Play,
@@ -48,6 +49,21 @@ export function LoadState({ error, onRetry, backHref = "/learner/courses" }: { e
     );
   }
   const notFound = error instanceof ApiError && error.status === 404;
+  // Levels open in order: a lesson of a later level waits for the level before and its exam.
+  if (error instanceof ApiError && error.code === "LEVEL_LOCKED") {
+    return (
+      <div className="mx-auto flex max-w-md flex-col items-center gap-3 py-20 text-center">
+        <span className="grid size-12 place-items-center rounded-full bg-[#e9f7f4] text-[#12939b]">
+          <Lock aria-hidden size={22} />
+        </span>
+        <p className="text-lg font-bold text-[#1b2a5c]">This level is still locked</p>
+        <p className="text-sm text-[#1b2a5c]/65">Finish the lessons of the level before and pass its exam to open this one.</p>
+        <Link href={backHref as Route} className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-[#12939b] px-4 py-2 text-xs font-semibold text-white">
+          <ArrowLeft aria-hidden size={14} /> Back to the course
+        </Link>
+      </div>
+    );
+  }
   return (
     <div className="mx-auto flex max-w-md flex-col items-center gap-3 py-20 text-center">
       <p className="text-lg font-bold text-[#1b2a5c]">{notFound ? "We couldn't find this page" : "Something went wrong"}</p>
