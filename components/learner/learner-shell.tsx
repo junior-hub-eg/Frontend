@@ -212,7 +212,7 @@ export function LearnerShell({
  * Pick a character of your gender, then one of its faces; the chosen avatar is saved on the student's profile.
  * A student with no gender yet (from before the question) answers "boy or girl" first, once.
  */
-function AvatarPicker({
+export function AvatarPicker({
   current,
   gender,
   onClose,
