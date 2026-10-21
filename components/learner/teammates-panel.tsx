@@ -66,7 +66,7 @@ export function TeammatesPanel({
                 className="relative h-[2em] w-[2em] shrink-0 overflow-hidden rounded-full ring-2 ring-white"
                 style={{ backgroundColor: active.bg }}
               >
-                <Image src={active.avatar} alt="" fill sizes="32px" className="origin-top scale-[2.1] object-cover object-top" />
+                <Image src={active.avatar} alt="" fill sizes="32px" className="object-cover" />
               </span>
               <span className="truncate">{active.name}</span>
             </span>
@@ -142,7 +142,7 @@ export function TeammatesPanel({
                   className="relative h-[2.4em] w-[2.4em] shrink-0 overflow-hidden rounded-full ring-2 ring-white"
                   style={{ backgroundColor: m.bg }}
                 >
-                  <Image src={m.avatar} alt="" fill sizes="40px" className="origin-top scale-[2.1] object-cover object-top" />
+                  <Image src={m.avatar} alt="" fill sizes="40px" className="object-cover" />
                 </span>
 
                 <span className="min-w-0">

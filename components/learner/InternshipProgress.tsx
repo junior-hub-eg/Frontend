@@ -98,7 +98,7 @@ function TeamCard({ squad }: { squad: Squad | null }) {
                   className="relative h-[5.2em] w-[5.2em] overflow-hidden rounded-full shadow-md ring-[0.25em] ring-white"
                   style={{ backgroundColor: avatar.bg }}
                 >
-                  <Image src={avatar.src} alt="" fill sizes="96px" className="origin-top scale-[2.1] object-cover object-top" />
+                  <Image src={avatar.src} alt="" fill sizes="96px" className="object-cover" />
                 </span>
                 <span className="mt-[0.5em] whitespace-nowrap text-[0.95em] font-bold text-[#14365a]">{m.fullName}</span>
                 <span className="text-[0.75em] text-[#14365a]/60">{ROLE_TITLE[m.role]}</span>
@@ -200,7 +200,7 @@ function TaskCard({ task, avatarIndex, onMove }: { task: SquadTask; avatarIndex:
             style={{ backgroundColor: avatar.bg }}
             title={task.assignee?.firstName}
           >
-            <Image src={avatar.src} alt="" fill sizes="32px" className="origin-top scale-[2.1] object-cover object-top" />
+            <Image src={avatar.src} alt="" fill sizes="32px" className="object-cover" />
           </span>
         )}
         {tag && (
