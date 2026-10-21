@@ -67,7 +67,7 @@ function JobGrid({ jobs }: { jobs: PracticeJob[] }) {
   );
 }
 
-/** US-36: Recruitment Practice, the practice jobs with the student's tracks first. Always a simulation (BR-12). */
+/** US-36: Recruitment Practice, the practice jobs of the student's tracks only. Always a simulation (BR-12). */
 export default function RecruitmentPracticePage() {
   const [list, setList] = useState<JobList | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -83,8 +83,6 @@ export default function RecruitmentPracticePage() {
     };
   }, []);
 
-  const mine = list?.jobs.filter((j) => j.inMyTracks) ?? [];
-  const others = list?.jobs.filter((j) => !j.inMyTracks) ?? [];
 
   return (
     <RecruitmentFrame>
@@ -122,16 +120,24 @@ export default function RecruitmentPracticePage() {
       )}
       {!list && !error && <LoaderCircle className="mx-auto my-[4em] h-[2em] w-[2em] animate-spin text-[#12939b]" aria-label="Loading" />}
 
-      {list && mine.length > 0 && (
+      {list && (
         <section className="mt-[2em]">
-          <h2 className="mb-[0.8em] text-[1.3em] font-extrabold text-[#14365a]">For your tracks</h2>
-          <JobGrid jobs={mine} />
-        </section>
-      )}
-      {list && others.length > 0 && (
-        <section className="mt-[2em]">
-          <h2 className="mb-[0.8em] text-[1.3em] font-extrabold text-[#14365a]">{mine.length > 0 ? "Other tracks" : "Practice jobs"}</h2>
-          <JobGrid jobs={others} />
+          <h2 className="mb-[0.8em] text-[1.3em] font-extrabold text-[#14365a]">Jobs for your tracks</h2>
+          {list.jobs.length > 0 ? (
+            <JobGrid jobs={list.jobs} />
+          ) : (
+            <div className="flex flex-col items-center gap-[0.6em] rounded-[1.4em] border border-dashed border-[#c9d3df] bg-white p-[2em] text-center">
+              <Briefcase className="h-[2.4em] w-[2.4em] text-[#c9d3df]" aria-hidden />
+              <p className="text-[0.95em] font-bold text-[#14365a]">No practice jobs for your tracks yet</p>
+              <p className="max-w-[28em] text-[0.85em] text-[#14365a]/70">Start another track to see its practice jobs here.</p>
+              <Link
+                href={"/learner/courses" as Route}
+                className="mt-[0.4em] inline-flex items-center gap-[0.4em] rounded-[0.8em] bg-[#14365a] px-[1.2em] py-[0.6em] text-[0.85em] font-semibold text-white hover:bg-[#0f2a47]"
+              >
+                Explore tracks <ArrowRight className="h-[1em] w-[1em]" />
+              </Link>
+            </div>
+          )}
         </section>
       )}
     </RecruitmentFrame>

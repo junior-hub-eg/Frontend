@@ -27,7 +27,7 @@ export interface PracticeJob {
   skills: string[];
   description: string;
   isSimulation: boolean;
-  /** In a track the student learns (listed first). */
+  /** In a track the student learns (the list has only those). */
   inMyTracks: boolean;
   /** Null until the student applies. */
   myApplication: MyApplication | null;
