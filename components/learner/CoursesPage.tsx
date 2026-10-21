@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
-import { ArrowRight, Award, BookOpen, CheckCircle2, ChevronDown, LoaderCircle, PlayCircle, Star, Trophy } from "lucide-react";
+import { ArrowLeft, Award, BookOpen, CheckCircle2, ChevronDown, LoaderCircle, PlayCircle, Star, Trophy } from "lucide-react";
 import { errorMessage } from "@/lib/api-client";
 import { mentorAvatar } from "@/lib/avatars";
 import { getAchievements, getTrack, getTrackLessons, getTracks, trackPath, type TrackSummary } from "@/lib/learning-api";
@@ -69,8 +69,8 @@ type Sort = (typeof SORTS)[number];
 const card = "rounded-[1.4em] border border-[#e8eef5] bg-white shadow-[0_6px_22px_rgba(20,54,90,0.07)]";
 
 export default function CoursesPage() {
-  // My Courses first; Change / Add track opens every track.
-  const [tab, setTab] = useState<"mine" | "recommended" | "all">("mine");
+  // Only the courses of the student's tracks; Change / Add track opens the other tracks.
+  const [browsing, setBrowsing] = useState(false);
   const [sort, setSort] = useState<Sort>("Top Rated");
   const [sortOpen, setSortOpen] = useState(false);
   const [data, setData] = useState<Loaded | null>(null);
@@ -96,14 +96,12 @@ export default function CoursesPage() {
     { icon: Award, label: "Badges Earned", value: data ? String(data.badges) : "–", color: "#14365a", bg: "#e4ecf5" },
   ];
 
-  // Recommended: the interview's top tracks, else the tracks the student learns.
-  const recommended = courses.some((c) => c.recommendation)
-    ? courses.filter((c) => c.recommendation).sort((a, b) => a.recommendation!.rank - b.recommendation!.rank)
-    : learning;
   const sorted = (list: Course[]) =>
     [...list].sort((a, b) => (sort === "Top Rated" ? (b.mentor?.rating ?? 0) - (a.mentor?.rating ?? 0) : a.name.localeCompare(b.name)));
-  const featured = recommended.slice(0, 3);
-  const listed = sorted(tab === "recommended" ? courses.filter((c) => !featured.includes(c)) : courses);
+  // A student with no track yet sees every track.
+  const showTracks = browsing || (data !== null && learning.length === 0);
+  // Tracks the student learns first.
+  const listed = sorted(courses).sort((a, b) => Number(b.isLearning) - Number(a.isLearning));
 
   return (
     <div className="relative -ml-[4rem] min-h-[calc(100svh-5rem)] min-w-0 flex-1 bg-[#fbfdff] lg:absolute lg:inset-0 lg:ml-0 lg:min-h-0">
@@ -145,32 +143,22 @@ export default function CoursesPage() {
           </div>
         </section>
 
-        {/* ---------- Tabs + sort ---------- */}
+        {/* ---------- Change / Add track: every track, with a way back ---------- */}
+        {showTracks && (
         <div className="mt-[0.9em] flex flex-wrap items-center gap-[0.8em] lg:shrink-0">
-          <div role="tablist" aria-label="Courses view" className="flex flex-wrap gap-[0.5em]">
-            {(
-              [
-                ["mine", "My Courses"],
-                ["recommended", "Recommended Tracks"],
-                ["all", "All Tracks"],
-              ] as const
-            ).map(([id, label]) => (
-              <button
-                key={id}
-                type="button"
-                role="tab"
-                aria-selected={tab === id}
-                onClick={() => setTab(id)}
-                className={`rounded-full px-[1.2em] py-[0.45em] text-[0.9em] font-semibold transition-colors ${
-                  tab === id ? "bg-[#1d7f85] text-white" : "text-[#14365a] hover:bg-[#eef4fa]"
-                }`}
-              >
-                {label}
-              </button>
-            ))}
+          {learning.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setBrowsing(false)}
+              className="flex items-center gap-[0.4em] rounded-full border border-[#e1e8f0] bg-white px-[1em] py-[0.4em] text-[0.85em] font-semibold text-[#12606b] hover:bg-[#eef4fa]"
+            >
+              <ArrowLeft className="size-[1.1em]" /> My Courses
+            </button>
+          )}
+          <div className="leading-tight">
+            <h2 className="text-[1.25em] font-extrabold text-[#14365a]">Change or add a track</h2>
+            <p className="text-[0.75em] text-[#14365a]/70">Open a track to see its courses and start learning it.</p>
           </div>
-
-          {tab !== "mine" && (
           <div className="relative ml-auto flex items-center gap-[0.6em] text-[0.9em] text-[#14365a]">
             Sort by
             <button
@@ -203,8 +191,8 @@ export default function CoursesPage() {
               </ul>
             )}
           </div>
-          )}
         </div>
+        )}
 
         {loadError && (
           <p role="alert" className="mt-[0.9em] rounded-[0.9em] bg-[#fdecec] px-[1em] py-[0.7em] text-[0.85em] font-semibold text-[#b83232] lg:shrink-0">
@@ -217,71 +205,18 @@ export default function CoursesPage() {
           </div>
         )}
 
-        {data && tab === "mine" && <MyCourses learning={learning} onExplore={() => setTab("all")} />}
+        {data && !showTracks && <MyCourses learning={learning} onExplore={() => setBrowsing(true)} />}
 
         {/* ---------- Bottom part: shrinks to fit the remaining height ---------- */}
-        {data && tab !== "mine" && (
+        {data && showTracks && (
         <div className="lg:flex lg:min-h-0 lg:flex-1 lg:flex-col">
-          {/* Featured (recommended tab only) */}
-          {tab === "recommended" && featured.length > 0 && (
-            <section className="mt-[0.9em] grid gap-[1em] md:grid-cols-2 lg:min-h-0 lg:flex-[1.05] lg:grid-cols-3">
-              {featured.map((c) => (
-                <article
-                  key={c.code}
-                  className="relative aspect-[282/150] min-h-0 min-w-0 overflow-hidden rounded-[1.6rem] [container-type:size] lg:aspect-auto lg:h-full"
-                  style={{ background: c.theme.bg }}
-                >
-                  <Link href={trackPath(c.code) as Route} aria-label={`Open ${c.name}`} className="absolute inset-0 z-20 rounded-[1.6rem]" />
-                  {/* Everything inside scales with the card size */}
-                  <div className="relative h-full w-full p-[1.1em]" style={{ fontSize: "min(calc(100cqw / 28), calc(100cqh / 14.9))" }}>
-                    <div className="absolute right-0 top-0 h-full w-[58%] [mask-image:linear-gradient(to_right,transparent,black_28%)]">
-                      <Image src={c.theme.img} alt="" fill sizes="400px" className="object-cover object-right" />
-                    </div>
-
-                    <div className="relative z-10 flex h-full w-[52%] flex-col">
-                      <span className="w-fit rounded-full px-[0.8em] py-[0.2em] text-[0.7em] font-bold" style={{ backgroundColor: c.theme.tagBg, color: c.theme.tagText }}>
-                        {c.recommendation ? `${c.recommendation.matchPercent}% match` : c.isFocus ? "In focus" : "Learning"}
-                      </span>
-                      <h3 className="mt-[0.6em] text-[1.25em] font-extrabold leading-tight text-[#14365a]">{c.name}</h3>
-                      <p className="mt-[0.4em] line-clamp-3 text-[0.75em] leading-snug text-[#14365a]/75">
-                        {c.recommendation?.reason ?? c.shortDescription}
-                      </p>
-
-                      <div className="mt-auto">
-                        <div className="flex items-center gap-[1em] whitespace-nowrap text-[0.75em] font-medium text-[#14365a]">
-                          <span className="flex items-center gap-[0.4em]">
-                            <PlayCircle className="size-[1.1em]" /> {c.videoCount} {c.videoCount === 1 ? "Video" : "Videos"}
-                          </span>
-                          <span className="flex items-center gap-[0.4em]">
-                            <BookOpen className="size-[1.1em]" /> {c.lessons === null ? "Lessons soon" : `${c.lessons} Lessons`}
-                          </span>
-                        </div>
-                        {c.recommendation && (
-                          <p className="mt-[0.6em] text-[0.7em] font-semibold text-[#14365a]/80">Your level: {c.recommendation.level}</p>
-                        )}
-                      </div>
-                    </div>
-
-                    <span className="absolute bottom-[1.1em] right-[1.1em] z-10 grid size-[2.4em] place-items-center rounded-full bg-white text-[#14365a] shadow">
-                      <ArrowRight className="size-[1.1em]" />
-                    </span>
-                  </div>
-                </article>
-              ))}
-            </section>
-          )}
-
           {/* Other tracks / All */}
           <section className="mt-[0.9em] lg:flex lg:min-h-0 lg:flex-1 lg:flex-col">
-            <h2 className="mb-[0.5em] text-[1.25em] font-extrabold text-[#14365a] lg:shrink-0">
-              {tab === "recommended" ? "More Tracks to Explore" : "All Tracks"}
-            </h2>
-
-            <div className="grid gap-[0.9em] md:grid-cols-2 lg:min-h-0 lg:flex-1 lg:grid-cols-3 lg:grid-rows-2 lg:overflow-y-auto">
+            <div className="grid content-start gap-[0.9em] md:grid-cols-2 lg:min-h-0 lg:flex-1 lg:grid-cols-3 lg:overflow-y-auto lg:pb-[0.4em]">
               {listed.map((c) => (
                 <article
                   key={c.code}
-                  className={`${card} relative aspect-[270/125] min-h-0 min-w-0 overflow-hidden rounded-[1.2rem] [container-type:size] lg:aspect-auto lg:h-full`}
+                  className={`${card} relative aspect-[270/125] min-h-0 min-w-0 overflow-hidden rounded-[1.2rem] [container-type:size]`}
                 >
                   <Link href={trackPath(c.code) as Route} aria-label={`Open ${c.name}`} className="absolute inset-0 z-10" />
 
