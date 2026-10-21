@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import type { Route } from "next";
 import Image from "next/image";
 import Link from "next/link";
@@ -11,44 +11,30 @@ import {
   CircleCheck,
   Folder,
   GitBranch,
+  ListChecks,
+  LoaderCircle,
+  Play,
+  Server,
   Palette,
   Target,
   Triangle,
   User,
   Users,
 } from "lucide-react";
+import { errorMessage } from "@/lib/api-client";
+import {
+  getMyProject,
+  getMyProjects,
+  LINK_LABEL,
+  ROLE_LABEL,
+  sprintDates,
+  STATUS_LABEL,
+  type MyProjects,
+  type ProjectDetail,
+  type ProjectLinkKind,
+} from "@/lib/projects-api";
 import { cn } from "@/lib/utils";
 
-
-const IN_SQUAD = true;
-
-const ALL_PROJECTS_COUNT = 3;
-
-const PROJECT = {
-  id: "1",
-  name: "Wedding Website & Mobile App",
-  status: "Active",
-  description:
-    "A wedding planning website and companion mobile app where couples manage guests, schedules and vendors in one place.",
-  squad: "Code Hunters Team",
-  role: "UI/UX Designer",
-  tasksCompleted: 3,
-};
-
-const SPRINT = {
-  name: "Sprint 04",
-  dates: "Sep 21 - Sep 27, 2026",
-  done: 5,
-  total: 8,
-};
-
-const CONTRIBUTION = { mine: 3, squad: 5 };
-
-const WORK_LINKS = [
-  { label: "Figma", note: "Design file", href: "#", icon: <Palette aria-hidden className="size-3.5" /> },
-  { label: "GitHub", note: "Repository", href: "#", icon: <GitBranch aria-hidden className="size-3.5" /> },
-  { label: "Vercel", note: "Live preview", href: "#", icon: <Triangle aria-hidden className="size-3.5" /> },
-];
 
 const OPPORTUNITIES = [
   {
@@ -58,7 +44,7 @@ const OPPORTUNITIES = [
   },
   {
     title: "Recruitment",
-    href: "/learner/placement",
+    href: "/learner/recruitment-practice",
     image: "/images/learner/projects/opportunity-recruitment.png",
   },
 ];
@@ -107,8 +93,71 @@ function PrimaryButton({ href, children }: { href: Route; children: ReactNode })
   );
 }
 
+const LINK_ICONS: Record<ProjectLinkKind, ReactNode> = {
+  Figma: <Palette aria-hidden className="size-3.5" />,
+  GitHub: <GitBranch aria-hidden className="size-3.5" />,
+  LiveSite: <Triangle aria-hidden className="size-3.5" />,
+  Api: <Server aria-hidden className="size-3.5" />,
+  Demo: <Play aria-hidden className="size-3.5" />,
+  TestReport: <ListChecks aria-hidden className="size-3.5" />,
+};
+
+/** My Projects: the current project from GET /student/projects and its sprint from GET /student/projects/{id}. */
 export default function MyProjectsPage() {
-  const percent = Math.round((SPRINT.done / SPRINT.total) * 1000) / 10;
+  const [data, setData] = useState<{ list: MyProjects; detail: ProjectDetail | null } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    getMyProjects()
+      .then(async (list) => ({ list, detail: list.current ? await getMyProject(list.current.id) : null }))
+      .then(
+        (d) => active && setData(d),
+        (e) => active && setError(errorMessage(e, "We couldn't load your projects. Please try again.")),
+      );
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  if (!data) {
+    return (
+      <div className="grid flex-1 place-items-center p-10 pt-24 lg:pl-[calc(var(--sb)+1.5rem)]" role={error ? "alert" : "status"}>
+        {error ? <p className="text-sm font-semibold text-[#b83232]">{error}</p> : <LoaderCircle className="size-8 animate-spin text-[#12939b]" aria-label="Loading" />}
+      </div>
+    );
+  }
+  return <MyProjectsView list={data.list} detail={data.detail} />;
+}
+
+function MyProjectsView({ list, detail }: { list: MyProjects; detail: ProjectDetail | null }) {
+  const current = list.current;
+  const IN_SQUAD = current !== null;
+  const ALL_PROJECTS_COUNT = list.projects.length;
+  const PROJECT = {
+    id: current?.id ?? "",
+    name: current?.title ?? "",
+    status: current ? STATUS_LABEL[current.status] : "",
+    description: current?.description ?? "",
+    squad: current?.squadName ?? "",
+    role: current ? (ROLE_LABEL[current.role] ?? current.role) : "",
+    tasksCompleted: current?.myTasksDone ?? 0,
+  };
+  const SPRINT = {
+    name: detail?.sprint?.name ?? "No sprint yet",
+    dates: detail?.sprint ? sprintDates(detail.sprint) : "",
+    done: detail?.sprint?.tasksDone ?? 0,
+    total: detail?.sprint?.tasksTotal ?? 0,
+  };
+  const CONTRIBUTION = { mine: current?.myTasksDone ?? 0, squad: current?.tasksDone ?? 0 };
+  const WORK_LINKS = (current?.links ?? []).map((l, i) => ({
+    key: `${l.kind}-${i}`,
+    label: LINK_LABEL[l.kind].label,
+    note: LINK_LABEL[l.kind].note,
+    href: l.url,
+    icon: LINK_ICONS[l.kind],
+  }));
+  const percent = SPRINT.total ? Math.round((SPRINT.done / SPRINT.total) * 1000) / 10 : 0;
   const hasProjects = ALL_PROJECTS_COUNT > 0;
 
   return (
@@ -230,10 +279,19 @@ export default function MyProjectsPage() {
             <Card>
               <h2 className="text-sm font-semibold">Work Links</h2>
               <ul className="mt-3 flex flex-col gap-2">
+                {WORK_LINKS.length === 0 && (
+                  <li>
+                    <Link href="/learner/interns/session" className="text-xs font-semibold text-[#14757d] hover:underline">
+                      + Add your links
+                    </Link>
+                  </li>
+                )}
                 {WORK_LINKS.map((link) => (
-                  <li key={link.label}>
+                  <li key={link.key}>
                     <a
                       href={link.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="flex min-w-0 items-center gap-3 rounded-xl bg-[#e9f7f5] px-3 py-2.5 transition-colors hover:bg-[#d9f0ec]"
                     >
                       <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-white text-[#14757d]">
@@ -277,7 +335,7 @@ export default function MyProjectsPage() {
           <h2 className="text-sm font-semibold">All My Projects</h2>
           <p className="mt-1 text-xs font-semibold text-[#14757d]">
             {hasProjects
-              ? `You worked on ${ALL_PROJECTS_COUNT} projects`
+              ? `You worked on ${ALL_PROJECTS_COUNT} ${ALL_PROJECTS_COUNT === 1 ? "project" : "projects"}`
               : "You haven't worked on any projects yet"}
           </p>
           <p className="mt-1 text-[10px] text-[#1B2D54]/60">

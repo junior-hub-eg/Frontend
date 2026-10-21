@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import type { Route } from "next";
 import Image from "next/image";
 import Link from "next/link";
@@ -11,61 +11,28 @@ import {
   CircleCheck,
   Folder,
   GitBranch,
+  ListChecks,
+  LoaderCircle,
+  Play,
+  Server,
   Palette,
   Triangle,
   User,
   Users,
 } from "lucide-react";
+import { errorMessage } from "@/lib/api-client";
+import { mentorAvatar } from "@/lib/avatars";
+import { getMyProjects, LINK_LABEL, projectDuration, ROLE_LABEL, STATUS_LABEL, type ProjectLinkKind, type ProjectSummary } from "@/lib/projects-api";
 import { cn } from "@/lib/utils";
 
 
-type LinkKey = "Figma" | "GitHub" | "Vercel";
-
-const PROJECTS = [
-  {
-    id: "1",
-    name: "Wedding Website & Mobile App",
-    status: "Active",
-    squad: "Code Hunters Team",
-    role: "UI/UX Designer",
-    duration: "Jul 6, 2026 - Present",
-    progress: 60,
-    tasks: 3,
-    links: ["Figma", "GitHub", "Vercel"] as LinkKey[],
-    mentor: "Ahmed Khalid",
-  },
-  {
-    id: "2",
-    name: "Smart Campus Assistant",
-    status: "Completed",
-    squad: "Debug Divas",
-    role: "UI/UX Designer",
-    duration: "Mar 2 - Jun 12, 2026",
-    progress: 100,
-    tasks: 7,
-    links: ["Figma", "GitHub"] as LinkKey[],
-    mentor: "Ahmed Khalid",
-  },
-  {
-    id: "3",
-    name: "Fitness Tracker App",
-    status: "Completed",
-    squad: "Syntax Sorcerers",
-    role: "UI/UX Designer",
-    duration: "Nov 3, 2025 - Feb 20, 2026",
-    progress: 100,
-    tasks: 5,
-    links: ["Figma"] as LinkKey[],
-    mentor: "Ahmed Khalid",
-  },
-];
-
-const MENTOR_AVATAR = "/images/learner/projects/mentor-avatar.png";
-
-const LINK_ICONS: Record<LinkKey, ReactNode> = {
+const LINK_ICONS: Record<ProjectLinkKind, ReactNode> = {
   Figma: <Palette aria-hidden className="size-3" />,
   GitHub: <GitBranch aria-hidden className="size-3" />,
-  Vercel: <Triangle aria-hidden className="size-3" />,
+  LiveSite: <Triangle aria-hidden className="size-3" />,
+  Api: <Server aria-hidden className="size-3" />,
+  Demo: <Play aria-hidden className="size-3" />,
+  TestReport: <ListChecks aria-hidden className="size-3" />,
 };
 
 const OPPORTUNITIES = [
@@ -76,7 +43,7 @@ const OPPORTUNITIES = [
   },
   {
     title: "Recruitment",
-    href: "/learner/placement",
+    href: "/learner/recruitment-practice",
     image: "/images/learner/projects/opportunity-recruitment.png",
   },
 ];
@@ -91,7 +58,45 @@ function Row({ icon, label, value }: { icon: ReactNode; label: string; value: st
   );
 }
 
+/** Every project of the student (GET /student/projects), the current one first. */
 export default function AllProjectsPage() {
+  const [list, setList] = useState<ProjectSummary[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    getMyProjects().then(
+      (d) => active && setList(d.projects),
+      (e) => active && setError(errorMessage(e, "We couldn't load your projects. Please try again.")),
+    );
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  if (!list) {
+    return (
+      <div className="grid flex-1 place-items-center p-10 pt-24 lg:pl-[calc(var(--sb)+1.5rem)]" role={error ? "alert" : "status"}>
+        {error ? <p className="text-sm font-semibold text-[#b83232]">{error}</p> : <LoaderCircle className="size-8 animate-spin text-[#12939b]" aria-label="Loading" />}
+      </div>
+    );
+  }
+
+  const PROJECTS = list.map((p) => ({
+    id: p.id,
+    name: p.title,
+    status: STATUS_LABEL[p.status],
+    squad: p.squadName,
+    role: ROLE_LABEL[p.role] ?? p.role,
+    duration: projectDuration(p),
+    progress: p.progressPercent,
+    tasks: p.myTasksDone,
+    // One chip per kind of link the student shared.
+    links: [...new Set(p.links.map((l) => l.kind))],
+    mentor: p.monitor?.fullName ?? "No monitor yet",
+    mentorAvatar: p.monitor ? mentorAvatar(p.monitor.id) : null,
+  }));
+
   return (
     <div
       dir="ltr"
@@ -122,7 +127,7 @@ export default function AllProjectsPage() {
         <div className="min-w-0">
           <h1 className="text-xl font-bold">All My Projects</h1>
           <p className="text-[11px] text-[#1B2D54]/70">
-            You worked on {PROJECTS.length} projects
+            You worked on {PROJECTS.length} {PROJECTS.length === 1 ? "project" : "projects"}
           </p>
         </div>
       </header>
@@ -190,21 +195,19 @@ export default function AllProjectsPage() {
                     className="inline-flex items-center gap-1 rounded-md bg-[#e4f1fb] px-2 py-1 text-[9px] font-medium"
                   >
                     {LINK_ICONS[l]}
-                    {l}
+                    {LINK_LABEL[l].label}
                   </span>
                 ))}
               </div>
 
               <div className="flex items-center gap-2">
-                <Image
-                  src={MENTOR_AVATAR}
-                  alt={p.mentor}
-                  width={28}
-                  height={28}
-                  className="size-7 shrink-0 rounded-full object-cover"
-                />
+                {p.mentorAvatar && (
+                  <span className="relative size-7 shrink-0 overflow-hidden rounded-full" style={{ backgroundColor: p.mentorAvatar.bg }}>
+                    <Image src={p.mentorAvatar.src} alt={p.mentor} fill sizes="28px" className="object-cover" />
+                  </span>
+                )}
                 <div className="min-w-0 leading-tight">
-                  <p className="text-[9px] text-[#1B2D54]/60">Mentor</p>
+                  <p className="text-[9px] text-[#1B2D54]/60">Monitor</p>
                   <p className="truncate text-[11px] font-semibold">{p.mentor}</p>
                 </div>
               </div>

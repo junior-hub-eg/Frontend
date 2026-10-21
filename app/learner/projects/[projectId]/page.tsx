@@ -1,6 +1,9 @@
-import type { ReactNode } from "react";
+"use client";
+
+import { useEffect, useState, type ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useParams } from "next/navigation";
 import {
   ArrowLeft,
   ArrowRight,
@@ -10,6 +13,9 @@ import {
   Clock,
   GitBranch,
   ListChecks,
+  LoaderCircle,
+  Play,
+  Server,
   Palette,
   Star,
   Target,
@@ -17,56 +23,40 @@ import {
   User,
   Users,
 } from "lucide-react";
+import { errorMessage } from "@/lib/api-client";
+import { mentorAvatar } from "@/lib/avatars";
+import {
+  getMyProject,
+  LINK_LABEL,
+  projectDuration,
+  ROLE_LABEL,
+  sprintDates,
+  STATUS_LABEL,
+  type ProjectDetail,
+  type ProjectLinkKind,
+} from "@/lib/projects-api";
 import { cn } from "@/lib/utils";
 
 
-const PROJECT = {
-  name: "Wedding Website & Mobile App",
-  status: "Active",
-  description:
-    "A wedding planning website and companion mobile app where couples manage guests, schedules and vendors in one place.",
-  squad: "Code Hunters Team",
-  role: "UI/UX Designer",
-  startDate: "Jul 6, 2026 – Present",
-};
+type TaskStatus = "Done" | "In Review" | "In Progress" | "To Do";
 
-const SPRINT = {
-  name: "Sprint 04",
-  dates: "Sep 21 - Sep 27, 2026",
-  daysLeft: 8,
-  done: 5,
-  total: 8,
-  storyPoints: 1200,
-};
-
-type TaskStatus = "Done" | "In Review" | "To Do";
-
-const TASKS: { title: string; tag: string; points: number; status: TaskStatus }[] = [
-  { title: "Design user authentication flow", tag: "UI/UX", points: 3, status: "Done" },
-  { title: "Wireframe guest list screens", tag: "UI/UX", points: 3, status: "Done" },
-  { title: "Design system & color palette", tag: "UI/UX", points: 3, status: "Done" },
-  { title: "Mobile onboarding screens", tag: "UI/UX", points: 3, status: "In Review" },
-  { title: "Vendor directory prototype", tag: "UI/UX", points: 4, status: "To Do" },
-];
+const TASK_STATUS: Record<string, TaskStatus> = { Done: "Done", Review: "In Review", InProgress: "In Progress", ToDo: "To Do" };
 
 const STATUS_STYLES: Record<TaskStatus, string> = {
   Done: "bg-[#dff5e8] text-[#22a559]",
   "In Review": "bg-[#fdeedb] text-[#e08a1e]",
+  "In Progress": "bg-[#e4f1fb] text-[#2f6fc4]",
   "To Do": "bg-[#e8ebf2] text-[#1B2D54]",
 };
 
-const MENTOR = {
-  name: "Ahmed Khalid",
-  title: "Product Designer & Google",
-  avatar: "/images/learner/projects/mentor-avatar.png",
-  skills: ["Product Design", "Interaction Design"],
+const LINK_ICONS: Record<ProjectLinkKind, ReactNode> = {
+  Figma: <Palette aria-hidden className="size-3.5" />,
+  GitHub: <GitBranch aria-hidden className="size-3.5" />,
+  LiveSite: <Triangle aria-hidden className="size-3.5" />,
+  Api: <Server aria-hidden className="size-3.5" />,
+  Demo: <Play aria-hidden className="size-3.5" />,
+  TestReport: <ListChecks aria-hidden className="size-3.5" />,
 };
-
-const WORK_LINKS = [
-  { label: "Figma", note: "Design file", href: "#", icon: <Palette aria-hidden className="size-3.5" /> },
-  { label: "GitHub", note: "Repository", href: "#", icon: <GitBranch aria-hidden className="size-3.5" /> },
-  { label: "Vercel", note: "Live preview", href: "#", icon: <Triangle aria-hidden className="size-3.5" /> },
-];
 
 function Card({ className, children }: { className?: string; children: ReactNode }) {
   return (
@@ -109,15 +99,78 @@ function StatTile({
   );
 }
 
-export default async function ProjectDetailsPage({
-  params,
-}: {
-  params: Promise<{ projectId: string }>;
-}) {
-  const { projectId } = await params;
-  void projectId;
+/** One of the student's projects (GET /student/projects/{id}): sprint, the student's tasks, monitor and links. */
+export default function ProjectDetailsPage() {
+  const { projectId } = useParams<{ projectId: string }>();
+  const [detail, setDetail] = useState<ProjectDetail | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const percent = Math.round((SPRINT.done / SPRINT.total) * 1000) / 10;
+  useEffect(() => {
+    let active = true;
+    getMyProject(projectId).then(
+      (d) => active && setDetail(d),
+      (e) => active && setError(errorMessage(e, "We couldn't load this project. Please try again.")),
+    );
+    return () => {
+      active = false;
+    };
+  }, [projectId]);
+
+  if (!detail) {
+    return (
+      <div className="grid flex-1 place-items-center p-10 pt-24 lg:pl-[calc(var(--sb)+1.5rem)]" role={error ? "alert" : "status"}>
+        {error ? (
+          <p className="text-sm font-semibold text-[#b83232]">
+            {error}{" "}
+            <Link href="/learner/projects/all" className="underline">
+              All my projects
+            </Link>
+          </p>
+        ) : (
+          <LoaderCircle className="size-8 animate-spin text-[#12939b]" aria-label="Loading" />
+        )}
+      </div>
+    );
+  }
+  return <ProjectDetailsView detail={detail} />;
+}
+
+function ProjectDetailsView({ detail }: { detail: ProjectDetail }) {
+  const p = detail.project;
+  const PROJECT = {
+    name: p.title,
+    status: STATUS_LABEL[p.status],
+    description: p.description,
+    squad: p.squadName,
+    role: ROLE_LABEL[p.role] ?? p.role,
+    startDate: projectDuration(p),
+  };
+  const SPRINT = {
+    name: detail.sprint?.name ?? "No sprint yet",
+    dates: detail.sprint ? sprintDates(detail.sprint) : "",
+    daysLeft: detail.sprint?.daysLeft ?? 0,
+    done: detail.sprint?.tasksDone ?? 0,
+    total: detail.sprint?.tasksTotal ?? 0,
+    storyPoints: detail.sprint?.storyPointsTotal ?? 0,
+  };
+  const TASKS = detail.myTasks.map((t) => ({
+    id: t.id,
+    title: t.title,
+    tag: t.sprintName,
+    points: t.storyPoints,
+    status: TASK_STATUS[t.status] ?? "To Do",
+  }));
+  const avatar = p.monitor ? mentorAvatar(p.monitor.id) : null;
+  const MENTOR = { name: p.monitor?.fullName ?? "No monitor yet", title: p.monitor?.title ?? "", skills: p.monitor?.skills.slice(0, 3) ?? [] };
+  const WORK_LINKS = p.links.map((l, i) => ({
+    key: `${l.kind}-${i}`,
+    label: LINK_LABEL[l.kind].label,
+    note: LINK_LABEL[l.kind].note,
+    href: l.url,
+    icon: LINK_ICONS[l.kind],
+  }));
+
+  const percent = SPRINT.total ? Math.round((SPRINT.done / SPRINT.total) * 1000) / 10 : 0;
   const remaining = SPRINT.total - SPRINT.done;
   const completedByYou = TASKS.filter((t) => t.status === "Done").length;
 
@@ -174,13 +227,15 @@ export default async function ProjectDetailsPage({
           </div>
         </div>
 
+        {p.isCurrent && (
         <Link
-          href="#"
+          href="/learner/interns/internship"
           className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-[#14757d] to-[#1B2D54] px-4 py-2 text-[11px] font-semibold text-white shadow-sm transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#12939b]/40"
         >
           Continue Working
           <ArrowRight aria-hidden className="size-3.5" />
         </Link>
+        )}
       </Card>
 
       <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]">
@@ -254,9 +309,10 @@ export default async function ProjectDetailsPage({
             </div>
 
             <ul className="mt-3 flex flex-col gap-2">
+              {TASKS.length === 0 && <li className="text-[11px] text-[#1B2D54]/60">No tasks assigned to you in this project yet.</li>}
               {TASKS.map((task) => (
                 <li
-                  key={task.title}
+                  key={task.id}
                   className="flex min-w-0 items-center gap-3 rounded-lg bg-[#f3f5f5] px-3 py-2.5"
                 >
                   <p className="min-w-0 flex-1 truncate text-[11px] font-medium">{task.title}</p>
@@ -279,15 +335,13 @@ export default async function ProjectDetailsPage({
         </div>
         <div className="flex min-w-0 flex-col gap-4">
           <Card>
-            <h2 className="text-sm font-semibold">Your Mentor</h2>
+            <h2 className="text-sm font-semibold">Project Monitor</h2>
             <div className="mt-3 flex items-center gap-3">
-              <Image
-                src={MENTOR.avatar}
-                alt={MENTOR.name}
-                width={56}
-                height={56}
-                className="size-14 shrink-0 rounded-full object-cover"
-              />
+              {avatar && (
+                <span className="relative size-14 shrink-0 overflow-hidden rounded-full" style={{ backgroundColor: avatar.bg }}>
+                  <Image src={avatar.src} alt={MENTOR.name} fill sizes="56px" className="object-cover" />
+                </span>
+              )}
               <div className="min-w-0 leading-tight">
                 <p className="text-xs font-semibold">{MENTOR.name}</p>
                 <p className="mt-0.5 text-[10px] text-[#1B2D54]/60">{MENTOR.title}</p>
@@ -305,10 +359,13 @@ export default async function ProjectDetailsPage({
           <Card>
             <h2 className="text-sm font-semibold">Work Links</h2>
             <ul className="mt-3 flex flex-col gap-2">
+              {WORK_LINKS.length === 0 && <li className="text-[11px] text-[#1B2D54]/60">No links shared in this project.</li>}
               {WORK_LINKS.map((link) => (
-                <li key={link.label}>
+                <li key={link.key}>
                 <a
   href={link.href}
+  target="_blank"
+  rel="noopener noreferrer"
   className="flex min-w-0 items-center gap-3 rounded-xl bg-[#e9f7f5] px-3 py-2.5 transition-colors hover:bg-[#d9f0ec]"
 >
                     <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-white text-[#14757d]">
