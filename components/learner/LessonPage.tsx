@@ -112,7 +112,7 @@ export default function LessonPage({ code, lessonId }: { code: string; lessonId:
   const steps: { label: string; done: boolean; href?: string; action?: () => void }[] = [
     ...(link ? [{ label: "Read the school link", done: progress.schoolLinkDone, action: () => complete("SchoolLink") }] : []),
     { label: "Watch the lesson video", done: progress.videoDone },
-    { label: "Try it: run the code", done: progress.tryItDone, href: `${base}/challenge` },
+    ...(lesson.tryIt ? [{ label: "Try it: run the code", done: progress.tryItDone, href: `${base}/challenge` }] : []),
     { label: "Pass the lesson quiz", done: progress.done, href: `${base}/quiz` },
   ];
   const nextStep = steps.find((st) => !st.done);
@@ -234,7 +234,7 @@ export default function LessonPage({ code, lessonId }: { code: string; lessonId:
                   </div>
                   <div className="flex items-center justify-between py-[0.35em]">
                     <dt className="text-[#14365a]/65">Format</dt>
-                    <dd className="font-semibold text-[#14365a]">Video · Try it · Quiz</dd>
+                    <dd className="font-semibold text-[#14365a]">{lesson.tryIt ? "Video · Try it · Quiz" : "Video · Quiz"}</dd>
                   </div>
                   <div className="flex items-center justify-between py-[0.35em]">
                     <dt className="text-[#14365a]/65">Lesson</dt>
@@ -278,10 +278,10 @@ export default function LessonPage({ code, lessonId }: { code: string; lessonId:
             )}
 
             <Link
-              href={`${base}/challenge` as Route}
+              href={`${base}/${lesson.tryIt ? "challenge" : "quiz"}` as Route}
               className="inline-flex items-center gap-[0.4em] rounded-[0.5em] bg-[#12606b] px-[1.4em] py-[0.5em] text-[0.7em] font-semibold text-white hover:bg-[#0f505a]"
             >
-              <Code2 className="size-[1.1em]" /> {progress.tryItDone ? "Open Try it again" : "Open Try it"}
+              <Code2 className="size-[1.1em]" /> {lesson.tryIt ? (progress.tryItDone ? "Open Try it again" : "Open Try it") : "Take the quiz"}
             </Link>
 
             {next ? (

@@ -5,11 +5,9 @@ import { createPortal } from "react-dom";
 import { Poppins } from "next/font/google";
 import Image from "next/image";
 import Link from "next/link";
-import type { Route } from "next";
 import { ArrowLeft, LoaderCircle, Lock, PartyPopper } from "lucide-react";
 import { errorMessage } from "@/lib/api-client";
 import { getInternshipAccess, type InternshipAccess, type LevelProgress } from "@/lib/interns-api";
-import { trackPath } from "@/lib/learning-api";
 import InternshipProgress from "./InternshipProgress";
 import SquadMatchmaking from "./SquadMatchmaking";
 
@@ -63,18 +61,22 @@ function LockedInternship({ level, lastProject }: { level: LevelProgress | null;
             <span className="grid h-[4.5em] w-[4.5em] place-items-center rounded-full bg-[#14365a] text-white shadow-lg">
               <Lock className="h-[2em] w-[2em]" />
             </span>
-            <h2 className="text-[1.6em] font-bold">Finish your level to unlock the Internship</h2>
+            <h2 className="text-[1.6em] font-bold">
+              {level?.basis === "Course" && level.courseTitle
+                ? `Finish ${level.courseTitle} to unlock the Internship`
+                : "Finish your first course to unlock the Internship"}
+            </h2>
             {level ? (
               <>
                 <p className="max-w-[26em] text-[1em] leading-relaxed text-[#14365a]/85">
-                  {level.basis === "Lessons"
-                    ? `Complete every ${level.level} lesson of ${level.trackName}. Then you join a squad with students of your level from other tracks and build a real project together.`
+                  {level.basis === "Course"
+                    ? `Finish all 3 levels of ${level.courseTitle ?? "your first course"}, the first ${level.trackName} course. Then you join a squad with students from other tracks and build a real project together.`
                     : `Watch a ${level.trackName} video and pass the track quiz. Then you join a squad with students of your level from other tracks and build a real project together.`}
                 </p>
                 <div className="w-full max-w-[24em]">
                   <div className="flex justify-between text-[0.85em] font-semibold">
                     <span>
-                      {level.trackName} · {level.level}
+                      {level.trackName} · {level.basis === "Course" ? level.courseTitle : level.level}
                     </span>
                     <span>{level.percent}%</span>
                   </div>
@@ -87,14 +89,14 @@ function LockedInternship({ level, lastProject }: { level: LevelProgress | null;
                   >
                     <div className="h-full rounded-full bg-[#2fa59b]" style={{ width: `${level.percent}%` }} />
                   </div>
-                  {level.basis === "Lessons" && (
+                  {level.basis === "Course" && (
                     <p className="mt-[0.3em] text-[0.8em] text-[#14365a]/70">
-                      {level.done} of {level.total} lessons done
+                      {level.done} of {level.total} levels done
                     </p>
                   )}
                 </div>
                 <Link
-                  href={trackPath(level.trackCode) as Route}
+                  href="/learner/courses"
                   className="mt-[0.4em] rounded-[0.8em] bg-[#4f9cf0] px-[2em] py-[0.8em] text-[1em] font-extrabold tracking-wide text-[#14365a] shadow-[0_6px_18px_rgba(47,127,214,0.45)] hover:bg-[#3d8ce6]"
                 >
                   CONTINUE LEARNING

@@ -4,31 +4,47 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { Route } from "next";
-import { ArrowRight, CheckCircle2, CircleDot, HelpCircle, LoaderCircle, Lock, PenTool, Plus, School, Sparkles } from "lucide-react";
+import { ArrowRight, CheckCircle2, HelpCircle, LoaderCircle, Lock, PenTool, Plus, School, Sparkles } from "lucide-react";
 import { errorMessage } from "@/lib/api-client";
 import {
+  coursePath,
   getTrack,
+  getTrackCourses,
   getTrackLessons,
   lessonPath,
   recordVideoProgress,
   selectTrack,
   trackPath,
+  type Course,
   type LessonSummary,
   type TrackDetail,
   type TrackLevel,
 } from "@/lib/learning-api";
 import { LoadState, VideoPlayer, minutes } from "@/components/Courses/course-ui";
+import { CourseIcon, LevelChips } from "./course-levels";
 
-type Data = { track: TrackDetail; lessons: LessonSummary[]; modules: string[]; nextId: string | null; level: TrackLevel | null };
+type Data = {
+  track: TrackDetail;
+  lessons: LessonSummary[];
+  modules: string[];
+  nextId: string | null;
+  level: TrackLevel | null;
+  courses: Course[];
+};
 
 async function load(code: string): Promise<Data> {
-  const [track, lessons] = await Promise.all([getTrack(code), getTrackLessons(code).catch(() => null)]);
+  const [track, lessons, courses] = await Promise.all([
+    getTrack(code),
+    getTrackLessons(code).catch(() => null),
+    getTrackCourses(code).catch(() => null),
+  ]);
   return {
     track,
     lessons: track.hasLessons ? (lessons?.modules.flatMap((m) => m.lessons) ?? []) : [],
     modules: lessons?.modules.map((m) => m.title) ?? [],
     nextId: lessons?.nextLessonId ?? null,
     level: track.isLearning ? (lessons?.level ?? null) : null,
+    courses: courses?.courses ?? [],
   };
 }
 
@@ -81,12 +97,12 @@ export default function TrackDetailPage({ slug }: { slug: string }) {
     );
   }
 
-  const { track, lessons: list, modules, nextId, level } = data;
+  const { track, lessons: list, modules, nextId, level, courses } = data;
   const previewId = nextId ?? list[0]?.id ?? null;
   // Real facts about the track instead of made-up topics.
   const chips = [
     `${track.videos.length} intro ${track.videos.length === 1 ? "video" : "videos"}`,
-    list.length ? `${list.length} lessons` : "Lessons coming soon",
+    courses.length ? `${courses.length} courses · 3 levels each` : list.length ? `${list.length} lessons` : "Lessons coming soon",
     ...(level ? [`Your level: ${level}`] : []),
   ];
   // What you'll learn: the lessons themselves (the API has no separate objectives).
@@ -246,43 +262,55 @@ export default function TrackDetailPage({ slug }: { slug: string }) {
         </div>
       </section>
 
-      {/* ---------- Lessons ---------- */}
+      {/* ---------- Courses ---------- */}
       <section id="track-lessons" className="mt-[1.6em] scroll-mt-4">
         <p className="text-[0.7em] font-bold uppercase tracking-wide text-[#12939b]">Track content</p>
-        <h2 className="mt-[0.3em] text-[1.1em] font-extrabold text-[#14365a]">Lessons in this track</h2>
+        <h2 className="mt-[0.3em] text-[1.1em] font-extrabold text-[#14365a]">Courses in this track</h2>
+        <p className="mt-[0.2em] text-[0.72em] text-[#14365a]/65">The courses open in order. Finish a level&apos;s lessons and pass its exam to open the next one.</p>
 
-        {list.length === 0 ? (
+        {courses.length === 0 ? (
           <p className={`${box} mt-[0.8em] px-[1em] py-[1.2em] text-[0.8em] text-[#14365a]/65`}>
-            Lessons for {track.name} are coming soon. Watch the intro videos and take the quiz meanwhile.
+            Courses for {track.name} are coming soon. Watch the intro videos and take the quiz meanwhile.
           </p>
         ) : (
           <ol className={`${box} mt-[0.8em] divide-y divide-[#e3ebf3] overflow-hidden`}>
-            {list.map((l, i) => (
-              <li key={l.id}>
-                <Link
-                  href={lessonPath(track.code, l.id) as Route}
-                  className="flex w-full items-center gap-[1em] px-[1em] py-[1em] text-left hover:bg-[#f6fafd]"
-                >
-                  <span className="grid size-[2.6em] shrink-0 place-items-center rounded-[0.6em] bg-[#e7f6f3] text-[0.8em] font-bold text-[#12939b]">
-                    {String(i + 1).padStart(2, "0")}
+            {courses.map((c, i) => {
+              const locked = c.status === "Locked";
+              const row = (
+                <>
+                  <span
+                    className={`grid size-[2.6em] shrink-0 place-items-center rounded-[0.6em] ${locked ? "bg-[#f3f5f8] text-[#14365a]/40" : "bg-[#e7f6f3] text-[#12939b]"}`}
+                  >
+                    {locked ? <Lock className="size-[1.2em]" /> : <CourseIcon iconKey={c.iconKey} className="size-[1.3em]" />}
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block text-[0.85em] font-bold text-[#14365a]">{l.title}</span>
-                    <span className="mt-[0.2em] block text-[0.7em] text-[#14365a]/65">
-                      {l.level} · {minutes(l.durationSeconds)}
-                      {l.id === nextId && <span className="ml-[0.6em] font-semibold text-[#12939b]">Up next</span>}
+                    <span className="block text-[0.85em] font-bold text-[#14365a]">
+                      {String(i + 1).padStart(2, "0")} · {c.title}
                     </span>
+                    <span className="mt-[0.2em] block truncate text-[0.7em] text-[#14365a]/65">{c.summary}</span>
                   </span>
-                  {l.status === "Done" ? (
+                  <span className="hidden sm:block">
+                    <LevelChips levels={c.levels} />
+                  </span>
+                  {c.status === "Done" ? (
                     <CheckCircle2 className="size-[1.3em] shrink-0 text-[#12939b]" aria-label="Completed" />
-                  ) : l.status === "InProgress" ? (
-                    <CircleDot className="size-[1.3em] shrink-0 text-[#12939b]" aria-label="In progress" />
+                  ) : !locked ? (
+                    <ArrowRight className="size-[1.2em] shrink-0 text-[#14365a]" aria-label="Open course" />
+                  ) : null}
+                </>
+              );
+              return (
+                <li key={c.id}>
+                  {locked ? (
+                    <div className="flex items-center gap-[1em] px-[1em] py-[0.9em] opacity-70">{row}</div>
                   ) : (
-                    <ArrowRight className="size-[1.2em] shrink-0 text-[#14365a]" aria-label="Open lesson" />
+                    <Link href={coursePath(track.code, c.id) as Route} className="flex items-center gap-[1em] px-[1em] py-[0.9em] hover:bg-[#f6fafd]">
+                      {row}
+                    </Link>
                   )}
-                </Link>
-              </li>
-            ))}
+                </li>
+              );
+            })}
           </ol>
         )}
       </section>

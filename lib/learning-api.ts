@@ -221,7 +221,8 @@ export interface Lesson {
   durationSeconds: number;
   xpReward: number;
   /** JavaScript the student runs in the browser; it should print expectedOutput. */
-  tryIt: { starterCode: string; expectedOutput: string };
+  /** null for lessons with no code to run (design, testing…): no Try it step. */
+  tryIt: { starterCode: string; expectedOutput: string } | null;
   /** Only when the lesson links to a school lesson of the student's grade. */
   schoolLink: SchoolLink | null;
   questions: (QuizQuestion & { isSchoolLinked: boolean })[];
@@ -279,3 +280,63 @@ export interface PlacementResult {
 export const getPlacementTest = (code: string) => api.get<PlacementTest>(`/api/v1/tracks/${encodeURIComponent(code)}/placement`);
 export const submitPlacementTest = (code: string, answers: number[]) =>
   api.post<PlacementResult>(`/api/v1/tracks/${encodeURIComponent(code)}/placement`, { answers });
+
+/* ---------- Courses with levels (decision of 21 Oct 2026) ---------- */
+
+export type CourseStatus = "Locked" | "Open" | "Done";
+/** Skipped: below the student's level from the placement test, open to review. */
+export type LevelStatus = "Locked" | "Open" | "Done" | "Skipped";
+
+export interface CourseLevel {
+  level: TrackLevel;
+  status: LevelStatus;
+  lessons: { id: string; title: string; durationSeconds: number; status: LessonStatus }[];
+  /** 0 when the level has no exam yet. */
+  examQuestions: number;
+  examPassed: boolean;
+}
+
+export interface Course {
+  id: string;
+  title: string;
+  summary: string;
+  iconKey: string;
+  status: CourseStatus;
+  levels: CourseLevel[];
+}
+
+export interface TrackCourses {
+  trackCode: string;
+  trackName: string;
+  /** The student's level in the track (from the placement test or the interview). */
+  level: TrackLevel;
+  courses: Course[];
+}
+
+export interface LevelExam {
+  trackCode: string;
+  courseId: string;
+  courseTitle: string;
+  level: TrackLevel;
+  questions: QuizQuestion[];
+}
+
+export interface LevelExamResult {
+  score: number;
+  total: number;
+  passed: boolean;
+  xpAwarded: number;
+  totalXp: number;
+  results: { questionId: string; correct: boolean; correctOptionIndex: number; explanation: string }[];
+}
+
+export const getTrackCourses = (code: string) => api.get<TrackCourses>(`/api/v1/tracks/${encodeURIComponent(code)}/courses`);
+const examPath = (code: string, courseId: string, level: string) =>
+  `/api/v1/tracks/${encodeURIComponent(code)}/courses/${courseId}/levels/${level}/exam`;
+export const getLevelExam = (code: string, courseId: string, level: string) => api.get<LevelExam>(examPath(code, courseId, level));
+export const submitLevelExam = (code: string, courseId: string, level: string, answers: number[]) =>
+  api.post<LevelExamResult>(examPath(code, courseId, level), { answers });
+
+export const coursePath = (code: string, courseId: string) => `${trackPath(code)}/course/${courseId}`;
+/** Level 1, 2 and 3 in the pages, Beginner / Intermediate / Advanced in the API. */
+export const LEVEL_NUMBER: Record<TrackLevel, number> = { Beginner: 1, Intermediate: 2, Advanced: 3 };
