@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { ApiError, errorMessage } from "@/lib/api-client";
-import { catalogueAvatar } from "@/lib/avatars";
+import { avatarOrDefault } from "@/lib/avatars";
 import {
   getLeaderboard,
   getSprint,
@@ -15,22 +15,10 @@ import {
   type TaskBoard,
 } from "@/lib/interns-api";
 
-const IMG = "/images/Intern";
-
-/** Cartoon avatars from the Figma, used until students upload a photo. */
-const AVATARS = [
-  { src: `${IMG}/char-boy-glasses.png`, bg: "#ffc531" },
-  { src: `${IMG}/char-girl.png`, bg: "#ff9a62" },
-  { src: `${IMG}/char-boy-glasses-2.png`, bg: "#5aa9e6" },
-  { src: `${IMG}/char-girl.png`, bg: "#3fc9b0" },
-];
-
-/** The student's photo, or the Figma avatar for their place in the squad. */
+/** The student's chosen avatar, or a default from the same avatar pack, by their place in the squad. */
 export function avatarFor(photoUrl: string | null, index: number) {
-  const chosen = catalogueAvatar(photoUrl);
-  if (chosen) return { src: chosen.src, bg: chosen.bg };
-  const pick = AVATARS[((index % AVATARS.length) + AVATARS.length) % AVATARS.length];
-  return photoUrl ? { src: photoUrl, bg: pick.bg } : pick;
+  const a = avatarOrDefault(photoUrl, index);
+  return { src: a.src, bg: a.bg };
 }
 
 /** Place of each student in the squad, so a student has the same avatar everywhere. */
