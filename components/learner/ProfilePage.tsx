@@ -347,7 +347,7 @@ export default function ProfilePage() {
               ) : (
                 <ul className="grid gap-[0.6em] sm:grid-cols-2">
                   {data.mentors.currents.map(({ mentor }) => {
-                    const a = mentorAvatar(mentor.id);
+                    const a = mentorAvatar(mentor);
                     return (
                       <li key={mentor.id} className="flex items-center gap-[0.8em] rounded-[1em] border border-[#e8eef5] p-[0.8em]">
                         <span className="relative h-[3em] w-[3em] shrink-0 overflow-hidden rounded-full" style={{ backgroundColor: a.bg }}>

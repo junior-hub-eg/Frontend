@@ -160,7 +160,7 @@ function ProjectDetailsView({ detail }: { detail: ProjectDetail }) {
     points: t.storyPoints,
     status: TASK_STATUS[t.status] ?? "To Do",
   }));
-  const avatar = p.monitor ? mentorAvatar(p.monitor.id) : null;
+  const avatar = p.monitor ? mentorAvatar(p.monitor) : null;
   const MENTOR = { name: p.monitor?.fullName ?? "No monitor yet", title: p.monitor?.title ?? "", skills: p.monitor?.skills.slice(0, 3) ?? [] };
   const WORK_LINKS = p.links.map((l, i) => ({
     key: `${l.kind}-${i}`,

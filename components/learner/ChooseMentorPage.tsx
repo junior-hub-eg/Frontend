@@ -77,8 +77,8 @@ const timeLabel = (iso: string) =>
 
 const DAYS_SHOWN = 5;
 
-function Avatar({ id, className }: { id: string; className: string }) {
-  const a = mentorAvatar(id);
+function Avatar({ mentor, className }: { mentor: { id: string; photoUrl?: string | null }; className: string }) {
+  const a = mentorAvatar(mentor);
   return (
     <span className={`relative shrink-0 overflow-hidden rounded-full ${className}`} style={{ backgroundColor: a.bg }}>
       <Image src={a.src} alt="" fill sizes="170px" className="object-cover" />
@@ -240,7 +240,7 @@ export default function ChooseMentorPage() {
               <p className="mt-[0.8em] text-[0.95em] text-[#14365a]/75">You don&apos;t have a mentor yet. Choose one below.</p>
             ) : mine.length === 1 ? (
               <div className="mt-[0.6em] flex flex-wrap items-center gap-[1.2em]">
-                <Avatar id={mine[0].mentor.id} className="h-[9em] w-[9em]" />
+                <Avatar mentor={mine[0].mentor} className="h-[9em] w-[9em]" />
                 <div className="min-w-0 flex-1">
                   <Availability text={mine[0].mentor.availability} />
                   <div className="mt-[0.5em]">
@@ -260,7 +260,7 @@ export default function ChooseMentorPage() {
               <ul className="mt-[0.6em] grid gap-[0.6em]">
                 {mine.map((a) => (
                   <li key={a.mentor.id} className="flex items-center gap-[0.8em]">
-                    <Avatar id={a.mentor.id} className="h-[3.6em] w-[3.6em]" />
+                    <Avatar mentor={a.mentor} className="h-[3.6em] w-[3.6em]" />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-[1em] font-bold text-[#14365a]">{a.mentor.fullName}</p>
                       <p className="truncate text-[0.8em] text-[#14365a]/75">{a.mentor.title}</p>
@@ -331,7 +331,7 @@ export default function ChooseMentorPage() {
                   className={`flex flex-col rounded-[1.2em] border p-[1em] ${m.id === selectedId ? "border-[#14365a] ring-2 ring-[#14365a]/15" : "border-[#e8eef5]"}`}
                 >
                   <div className="flex items-center gap-[1em]">
-                    <Avatar id={m.id} className="h-[7.5em] w-[7.5em]" />
+                    <Avatar mentor={m} className="h-[7.5em] w-[7.5em]" />
                     <div className="min-w-0">
                       <Availability text={m.availability} />
                       <div className="mt-[0.5em]">
@@ -396,7 +396,7 @@ export default function ChooseMentorPage() {
             ) : (
               <>
                 <div className="flex items-start gap-4">
-                  <Avatar id={profile.mentor.id} className="size-24" />
+                  <Avatar mentor={profile.mentor} className="size-24" />
                   <div className="min-w-0 flex-1">
                     <p className="text-xl font-bold">{profile.mentor.fullName}</p>
                     <p className="text-sm">{profile.mentor.title}</p>
@@ -500,7 +500,7 @@ function BookingPanel({ mentor, onMakeMine, onBooked }: { mentor: Mentor; onMake
     <aside aria-label="Selected mentor" className="rounded-[1.2em] border border-[#e8eef5] p-[1.2em] text-[#14365a] xl:sticky xl:top-0">
       <h2 className="text-[1.25em] font-extrabold">Selected Mentor</h2>
       <div className="mt-[0.8em] flex items-center gap-[1em]">
-        <Avatar id={mentor.id} className="h-[7.5em] w-[7.5em]" />
+        <Avatar mentor={mentor} className="h-[7.5em] w-[7.5em]" />
         <div className="min-w-0">
           <Availability text={mentor.availability} />
           <div className="mt-[0.5em]">
