@@ -12,11 +12,14 @@ import { TOKEN_COOKIE, decodeToken, isTokenExpired } from "@/lib/auth/token";
  * signature is NOT verified here — this is only routing UX; every API call
  * is still authorised by the .NET backend, which does verify it.
  */
+/**
+ * LOCAL ONLY: set NEXT_PUBLIC_SKIP_AUTH=true in .env.local to open the learner pages without a backend or login.
+ * It is ignored in production builds and is off by default, so there is nothing to revert before pushing.
+ */
+const SKIP_AUTH = process.env.NEXT_PUBLIC_SKIP_AUTH === "true" && process.env.NODE_ENV !== "production";
+
 export function proxy(request: NextRequest) {
-  // Local dev only: set SKIP_AUTH=true in .env.local to browse /learner/* without a login.
-  if (process.env.NODE_ENV === "development" && process.env.SKIP_AUTH === "true") {
-    return NextResponse.next();
-  }
+  if (SKIP_AUTH) return NextResponse.next();
 
   const { pathname } = request.nextUrl;
 
@@ -43,8 +46,8 @@ export function proxy(request: NextRequest) {
   return NextResponse.next();
 }
 
-/** Backend role claim → frontend role. The demo backend only issues "Student". */
-const BACKEND_ROLE: Record<string, UserRole> = { Student: "learner" };
+/** Backend role claim → frontend role: students, and mentors who monitor squads (21 Oct 2026). */
+const BACKEND_ROLE: Record<string, UserRole> = { Student: "learner", Mentor: "mentor" };
 
 function readSessionCookie(request: NextRequest): { id: string; role: UserRole } | null {
   const token = request.cookies.get(TOKEN_COOKIE)?.value;

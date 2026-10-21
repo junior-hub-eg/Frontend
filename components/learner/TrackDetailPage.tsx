@@ -1,122 +1,58 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { Route } from "next";
-import { ArrowRight, CheckCircle2, LoaderCircle, PenTool, Plus, Sparkles } from "lucide-react";
-import { getTrack, getTrackLessons, lessonPath, selectTrack, type LessonSummary, type TrackDetail } from "@/lib/learning-api";
+import { ArrowRight, CheckCircle2, CircleDot, HelpCircle, LoaderCircle, Lock, PenTool, Plus, School, Sparkles } from "lucide-react";
+import { errorMessage } from "@/lib/api-client";
+import {
+  getTrack,
+  getTrackLessons,
+  lessonPath,
+  recordVideoProgress,
+  selectTrack,
+  trackPath,
+  type LessonSummary,
+  type TrackDetail,
+  type TrackLevel,
+} from "@/lib/learning-api";
+import { LoadState, VideoPlayer, minutes } from "@/components/Courses/course-ui";
 
-/** The API has no chips/objectives yet, so they live here per track code. */
-const EXTRA: Record<string, { chips: string[]; objectives: string[] }> = {
-  UIUX: {
-    chips: ["User research", "Wireframes", "Interface design"],
-    objectives: ["Understand user needs", "Organize clear layouts", "Explain design decisions"],
-  },
-  FRONTEND: {
-    chips: ["HTML & CSS", "JavaScript", "React"],
-    objectives: ["Structure semantic pages", "Style responsive layouts", "Build interactive components"],
-  },
-  BACKEND: {
-    chips: ["APIs", "Databases", "Authentication"],
-    objectives: ["Design clean endpoints", "Model and query data", "Secure your services"],
-  },
-  MOBILE: {
-    chips: ["Layouts", "Navigation", "State"],
-    objectives: ["Build mobile screens", "Handle navigation", "Manage app state"],
-  },
-  DATA: {
-    chips: ["Python", "Analysis", "Visualization"],
-    objectives: ["Clean and explore data", "Find patterns", "Present clear insights"],
-  },
-  AI: {
-    chips: ["Machine learning", "Datasets", "Models"],
-    objectives: ["Understand core algorithms", "Prepare datasets", "Evaluate model results"],
-  },
-  TESTING: {
-    chips: ["Test cases", "Bug reports", "Automation"],
-    objectives: ["Write clear test cases", "Report issues well", "Automate repeated checks"],
-  },
-};
+type Data = { track: TrackDetail; lessons: LessonSummary[]; modules: string[]; nextId: string | null; level: TrackLevel | null };
 
-const FALLBACK = {
-  chips: ["Fundamentals", "Practice", "Projects"],
-  objectives: ["Learn the basics", "Practice with examples", "Build a small project"],
-};
-
-type State =
-  | { kind: "loading" }
-  | { kind: "ready"; track: TrackDetail; lessons: LessonSummary[]; nextId: string | null; offline: boolean };
-
-export const NAMES: Record<string, string> = {
-  UIUX: "UI/UX Design",
-  FRONTEND: "Frontend",
-  BACKEND: "Backend",
-  MOBILE: "Mobile Development",
-  DATA: "Data Science",
-  AI: "AI",
-  TESTING: "Quality Assurance",
-};
-
-export const toCode = (slug: string) => slug.replace(/[^a-z0-9]/gi, "").toUpperCase();
-
-/** Demo content used when the API can't be reached (e.g. no login on localhost). */
-function offlineTrack(slug: string): TrackDetail {
-  const code = toCode(slug);
-  const name = NAMES[code] ?? slug;
+async function load(code: string): Promise<Data> {
+  const [track, lessons] = await Promise.all([getTrack(code), getTrackLessons(code).catch(() => null)]);
   return {
-    code,
-    name,
-    shortDescription:
-      code === "UIUX"
-        ? "Explore how research, structure, visual hierarchy, and thoughtful interaction come together in digital products."
-        : `Explore the core ideas and skills of the ${name} track step by step.`,
-    iconKey: code.toLowerCase(),
-    hasLessons: true,
-    isLearning: false,
-    videos: [],
-    quiz: { unlocked: false, passed: false, questions: [] },
+    track,
+    lessons: track.hasLessons ? (lessons?.modules.flatMap((m) => m.lessons) ?? []) : [],
+    modules: lessons?.modules.map((m) => m.title) ?? [],
+    nextId: lessons?.nextLessonId ?? null,
+    level: track.isLearning ? (lessons?.level ?? null) : null,
   };
 }
-
-export const offlineLessons = (name: string): LessonSummary[] =>
-  [
-    { id: "1", title: `${name} Foundations`, concept: `Meet the essential ideas and vocabulary used throughout the ${name} track.`, status: "Done" },
-    { id: "2", title: `Plan Your First ${name} Project`, concept: "Turn a simple idea into a clear plan before you start building.", status: "NotStarted" },
-    { id: "3", title: `Build with ${name}`, concept: "Apply the core concepts in a guided practical activity.", status: "NotStarted" },
-  ].map((l) => ({
-    ...l,
-    level: "Beginner" as const,
-    durationSeconds: 0,
-    hasSchoolLink: false,
-    status: l.status as LessonSummary["status"],
-  }));
 
 const noScrollbar = "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden";
 const box = "rounded-[1em] border border-[#e3ebf3] bg-white";
 
 export default function TrackDetailPage({ slug }: { slug: string }) {
   const router = useRouter();
-  const [state, setState] = useState<State>({ kind: "loading" });
+  const [data, setData] = useState<Data | null>(null);
+  const [loadError, setLoadError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
+  const reload = useCallback(() => {
+    setLoadError(null);
+    load(slug).then(setData, setLoadError);
+  }, [slug]);
+
   useEffect(() => {
     let active = true;
-
-    // Local no-login mode: skip the API entirely so a 401 can't send you to /login.
-    if (process.env.NEXT_PUBLIC_SKIP_AUTH === "true") {
-      const track = offlineTrack(slug);
-      setState({ kind: "ready", track, lessons: offlineLessons(track.name), nextId: null, offline: true });
-      return;
-    }
-
-    Promise.all([getTrack(slug).catch(() => null), getTrackLessons(slug).catch(() => null)]).then(([apiTrack, apiLessons]) => {
-      if (!active) return;
-      const track = apiTrack ?? offlineTrack(slug);
-      const lessons = apiLessons ? apiLessons.modules.flatMap((m) => m.lessons) : offlineLessons(track.name);
-      setState({ kind: "ready", track, lessons, nextId: apiLessons?.nextLessonId ?? null, offline: !apiTrack });
-    });
+    load(slug).then(
+      (d) => active && setData(d),
+      (e) => active && setLoadError(e),
+    );
     return () => {
       active = false;
     };
@@ -133,34 +69,46 @@ export default function TrackDetailPage({ slug }: { slug: string }) {
     </div>
   );
 
-  if (state.kind === "loading") {
+  if (!data) {
     return wrapper(
-      <div className="grid min-h-[50vh] place-items-center" role="status" aria-label="Loading">
-        <LoaderCircle className="size-8 animate-spin text-[#12939b]" />
-      </div>,
+      loadError ? (
+        <LoadState error={loadError} onRetry={reload} />
+      ) : (
+        <div className="grid min-h-[50vh] place-items-center" role="status" aria-label="Loading">
+          <LoaderCircle className="size-8 animate-spin text-[#12939b]" />
+        </div>
+      ),
     );
   }
 
-  const { track, lessons: list, nextId, offline } = state;
-  const extra = EXTRA[track.code.toUpperCase()] ?? FALLBACK;
+  const { track, lessons: list, modules, nextId, level } = data;
   const previewId = nextId ?? list[0]?.id ?? null;
+  // Real facts about the track instead of made-up topics.
+  const chips = [
+    `${track.videos.length} intro ${track.videos.length === 1 ? "video" : "videos"}`,
+    list.length ? `${list.length} lessons` : "Lessons coming soon",
+    ...(level ? [`Your level: ${level}`] : []),
+  ];
+  // What you'll learn: the lessons themselves (the API has no separate objectives).
+  const objectives = list.slice(0, 6);
 
   async function choose() {
-    if (offline) {
-      setActionError("The server isn't reachable, so this is demo content.");
-      return;
-    }
     setBusy(true);
     setActionError(null);
     try {
       await selectTrack(track.code);
       if (nextId) router.push(lessonPath(track.code, nextId) as Route);
-      else setState({ kind: "ready", track: { ...track, isLearning: true }, lessons: list, nextId, offline });
+      else reload();
     } catch (e) {
-      setActionError(e instanceof Error ? e.message : "Could not choose this track.");
+      setActionError(errorMessage(e, "We couldn't choose this track. Please try again."));
     } finally {
       setBusy(false);
     }
+  }
+
+  async function videoProgress(videoId: string, percent: number) {
+    const p = await recordVideoProgress(track.code, videoId, percent);
+    if (p.completed) reload();
   }
 
   return wrapper(
@@ -187,7 +135,7 @@ export default function TrackDetailPage({ slug }: { slug: string }) {
           <p className="mt-[0.7em] max-w-[30em] text-[0.8em] leading-relaxed text-[#14365a]/70">{track.shortDescription}</p>
 
           <ul className="mt-[1em] flex flex-wrap gap-[0.5em]">
-            {extra.chips.map((c) => (
+            {chips.map((c) => (
               <li key={c} className="rounded-[0.5em] border border-[#cfe6e1] bg-white/70 px-[0.9em] py-[0.35em] text-[0.7em] text-[#14365a]/80">
                 {c}
               </li>
@@ -231,17 +179,71 @@ export default function TrackDetailPage({ slug }: { slug: string }) {
       </section>
 
       {/* ---------- Learning objectives ---------- */}
+      {objectives.length > 0 && (
+        <section className="mt-[1.6em]">
+          <p className="text-[0.7em] font-bold uppercase tracking-wide text-[#12939b]">What you&apos;ll learn</p>
+          <h2 className="mt-[0.3em] text-[1.1em] font-extrabold text-[#14365a]">{modules[0] ?? "Learning objectives"}</h2>
+          <ul className="mt-[0.8em] grid gap-[0.8em] sm:grid-cols-2 lg:grid-cols-3 xl:max-w-[80%]">
+            {objectives.map((o) => (
+              <li key={o.id} className={`${box} flex items-center gap-[0.7em] px-[1em] py-[0.9em] text-[0.8em] font-semibold text-[#14365a]`}>
+                <CheckCircle2 className="size-[1.4em] shrink-0 text-[#12939b]" />
+                <span className="min-w-0">
+                  {o.title}
+                  {o.hasSchoolLink && (
+                    <span className="mt-[0.2em] flex items-center gap-[0.3em] text-[0.8em] font-medium text-[#12939b]">
+                      <School className="size-[1em]" /> Linked to school
+                    </span>
+                  )}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* ---------- Intro videos + track quiz ---------- */}
       <section className="mt-[1.6em]">
-        <p className="text-[0.7em] font-bold uppercase tracking-wide text-[#12939b]">What you&apos;ll learn</p>
-        <h2 className="mt-[0.3em] text-[1.1em] font-extrabold text-[#14365a]">Learning objectives</h2>
-        <ul className="mt-[0.8em] grid gap-[0.8em] sm:grid-cols-2 lg:grid-cols-3 xl:max-w-[60%]">
-          {extra.objectives.map((o) => (
-            <li key={o} className={`${box} flex items-center gap-[0.7em] px-[1em] py-[0.9em] text-[0.8em] font-semibold text-[#14365a]`}>
-              <CheckCircle2 className="size-[1.4em] shrink-0 text-[#12939b]" />
-              {o}
-            </li>
-          ))}
-        </ul>
+        <p className="text-[0.7em] font-bold uppercase tracking-wide text-[#12939b]">Meet the track</p>
+        <h2 className="mt-[0.3em] text-[1.1em] font-extrabold text-[#14365a]">Intro videos</h2>
+        {track.videos.length === 0 ? (
+          <p className={`${box} mt-[0.8em] px-[1em] py-[1.2em] text-[0.8em] text-[#14365a]/65`}>No intro videos yet.</p>
+        ) : (
+          <div className="mt-[0.8em] grid gap-[0.8em] md:grid-cols-2 xl:grid-cols-3">
+            {track.videos.map((v) => (
+              <article key={v.id} className={`${box} p-[0.6em]`}>
+                <VideoPlayer src={v.fileUrl} poster={v.posterUrl} title={v.title} watchedPercent={v.watchedPercent} onProgress={(p) => videoProgress(v.id, p)} />
+                <div className="mt-[0.5em] flex items-center gap-[0.5em] px-[0.2em] text-[0.8em]">
+                  <span className="min-w-0 flex-1 truncate font-semibold text-[#14365a]">{v.title}</span>
+                  <span className="text-[0.85em] text-[#14365a]/55">{minutes(v.durationSeconds)}</span>
+                  {v.completed && <CheckCircle2 aria-label="Watched" className="size-[1.2em] text-[#12939b]" />}
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+
+        <div className="mt-[0.8em] flex flex-wrap items-center gap-[1em] rounded-[1em] bg-gradient-to-br from-[#14586a] to-[#1d8a8f] p-[1em] text-white">
+          <span className="grid size-[2.6em] place-items-center rounded-[0.7em] bg-white/15">
+            {track.quiz.unlocked ? <HelpCircle className="size-[1.3em]" /> : <Lock className="size-[1.3em]" />}
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-[0.6em] font-bold uppercase tracking-wide text-white/70">Track quiz</p>
+            <p className="text-[0.9em] font-extrabold">
+              {track.quiz.passed ? "You passed the track quiz" : `${track.quiz.questions.length} quick questions about ${track.name}`}
+            </p>
+            <p className="text-[0.7em] text-white/80">
+              {track.quiz.unlocked ? "Answer 2 of 3 correctly to pass." : "Watch one of the videos to unlock the quiz."}
+            </p>
+          </div>
+          {track.quiz.unlocked && (
+            <Link
+              href={`${trackPath(track.code)}/quiz` as Route}
+              className="inline-flex items-center gap-[0.4em] rounded-[0.5em] bg-white px-[1.1em] py-[0.5em] text-[0.75em] font-semibold text-[#12606b] hover:bg-[#eef8f7]"
+            >
+              {track.quiz.passed ? "Take it again" : "Start quiz"} <ArrowRight className="size-[1em]" />
+            </Link>
+          )}
+        </div>
       </section>
 
       {/* ---------- Lessons ---------- */}
@@ -251,7 +253,7 @@ export default function TrackDetailPage({ slug }: { slug: string }) {
 
         {list.length === 0 ? (
           <p className={`${box} mt-[0.8em] px-[1em] py-[1.2em] text-[0.8em] text-[#14365a]/65`}>
-            {track.hasLessons ? "No lessons available yet." : "Lessons for this track are coming soon."}
+            Lessons for {track.name} are coming soon. Watch the intro videos and take the quiz meanwhile.
           </p>
         ) : (
           <ol className={`${box} mt-[0.8em] divide-y divide-[#e3ebf3] overflow-hidden`}>
@@ -266,10 +268,15 @@ export default function TrackDetailPage({ slug }: { slug: string }) {
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="block text-[0.85em] font-bold text-[#14365a]">{l.title}</span>
-                    <span className="mt-[0.2em] block text-[0.7em] text-[#14365a]/65">{l.concept}</span>
+                    <span className="mt-[0.2em] block text-[0.7em] text-[#14365a]/65">
+                      {l.level} · {minutes(l.durationSeconds)}
+                      {l.id === nextId && <span className="ml-[0.6em] font-semibold text-[#12939b]">Up next</span>}
+                    </span>
                   </span>
                   {l.status === "Done" ? (
                     <CheckCircle2 className="size-[1.3em] shrink-0 text-[#12939b]" aria-label="Completed" />
+                  ) : l.status === "InProgress" ? (
+                    <CircleDot className="size-[1.3em] shrink-0 text-[#12939b]" aria-label="In progress" />
                   ) : (
                     <ArrowRight className="size-[1.2em] shrink-0 text-[#14365a]" aria-label="Open lesson" />
                   )}

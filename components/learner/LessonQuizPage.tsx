@@ -3,36 +3,19 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { Route } from "next";
-import { ArrowLeft, ArrowRight, CheckCircle2, LoaderCircle, XCircle } from "lucide-react";
-import { getLesson, lessonPath, submitLessonQuiz } from "@/lib/learning-api";
-import { NAMES, offlineLessons, toCode } from "./TrackDetailPage";
+import { ArrowLeft, ArrowRight, Award, CheckCircle2, LoaderCircle, XCircle } from "lucide-react";
+import { errorMessage } from "@/lib/api-client";
+import { getLesson, getTrackLessons, lessonPath, submitLessonQuiz, trackPath, type Badge } from "@/lib/learning-api";
+import { LoadState } from "@/components/Courses/course-ui";
 
 type Q = { id: string; prompt: string; options: string[] };
 
-type View = {
-  title: string;
-  trackName: string;
-  questions: Q[];
-  /** Demo only: correct option index per question, so the quiz can be graded without the API. */
-  answerKey: number[] | null;
-};
+type View = { title: string; trackName: string; questions: Q[]; nextHref: string };
 
 type Result = { id: string; correct: boolean; help: string | null };
+type Outcome = { results: Result[]; lessonDone: boolean; xpAwarded: number; badge: Badge | null };
 
-type State = { kind: "loading" } | { kind: "ready"; view: View };
-
-const DEMO_QUESTIONS: Q[] = [
-  { id: "q1", prompt: "Which HTML element represents the main heading?", options: ["<p>", "<h1>", "<button>", "<img>"] },
-  { id: "q2", prompt: "What does a wireframe show?", options: ["Final colors", "The basic layout", "Server code", "Marketing copy"] },
-  { id: "q3", prompt: "Who is the product designed for?", options: ["The developer", "The user", "The manager", "The competitor"] },
-];
-const DEMO_KEY = [1, 1, 1];
-
-function offlineView(code: string, lessonId: string): View {
-  const name = NAMES[toCode(code)] ?? code;
-  const cur = offlineLessons(name).find((l) => l.id === lessonId) ?? offlineLessons(name)[0];
-  return { title: cur.title, trackName: name, questions: DEMO_QUESTIONS, answerKey: DEMO_KEY };
-}
+type State = { kind: "loading" } | { kind: "error"; error: unknown } | { kind: "ready"; view: View };
 
 const noScrollbar = "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden";
 
@@ -41,33 +24,28 @@ export default function LessonQuizPage({ code, lessonId }: { code: string; lesso
   const [index, setIndex] = useState(0);
   const [picked, setPicked] = useState<number | null>(null);
   const [answers, setAnswers] = useState<number[]>([]);
-  const [results, setResults] = useState<Result[] | null>(null);
+  const [outcome, setOutcome] = useState<Outcome | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
-
-    // Local no-login mode: skip the API so a 401 can't send you to /login.
-    if (process.env.NEXT_PUBLIC_SKIP_AUTH === "true") {
-      setState({ kind: "ready", view: offlineView(code, lessonId) });
-      return;
-    }
-
-    getLesson(lessonId)
-      .then((lesson) => {
+    Promise.all([getLesson(lessonId), getTrackLessons(code).catch(() => null)])
+      .then(([lesson, track]) => {
         if (!active) return;
+        const lessons = track?.modules.flatMap((m) => m.lessons) ?? [];
+        const next = lessons[lessons.findIndex((l) => l.id === lesson.id) + 1];
         setState({
           kind: "ready",
           view: {
             title: lesson.title,
-            trackName: NAMES[toCode(lesson.trackCode)] ?? lesson.trackCode,
+            trackName: track?.trackName ?? lesson.trackCode,
             questions: lesson.questions.map((q) => ({ id: q.id, prompt: q.prompt, options: q.options })),
-            answerKey: null,
+            nextHref: next ? lessonPath(lesson.trackCode, next.id) : trackPath(lesson.trackCode),
           },
         });
       })
-      .catch(() => active && setState({ kind: "ready", view: offlineView(code, lessonId) }));
+      .catch((e) => active && setState({ kind: "error", error: e }));
     return () => {
       active = false;
     };
@@ -85,6 +63,7 @@ export default function LessonQuizPage({ code, lessonId }: { code: string; lesso
     </div>
   );
 
+  if (state.kind === "error") return wrapper(<LoadState error={state.error} backHref={lessonPath(code, lessonId)} />);
   if (state.kind === "loading") {
     return wrapper(
       <div className="grid min-h-[50vh] place-items-center" role="status" aria-label="Loading">
@@ -108,7 +87,7 @@ export default function LessonQuizPage({ code, lessonId }: { code: string; lesso
     setIndex(0);
     setPicked(null);
     setAnswers([]);
-    setResults(null);
+    setOutcome(null);
     setError(null);
   }
 
@@ -126,36 +105,52 @@ export default function LessonQuizPage({ code, lessonId }: { code: string; lesso
     setAnswers(next);
     setError(null);
 
-    // Demo grading (no API)
-    if (view.answerKey) {
-      const key = view.answerKey;
-      setResults(view.questions.map((qq, i) => ({ id: qq.id, correct: next[i] === key[i], help: next[i] === key[i] ? null : "Review the lesson and try again." })));
-      return;
-    }
-
     setBusy(true);
     try {
       const r = await submitLessonQuiz(lessonId, next);
-      setResults(r.results.map((x) => ({ id: x.questionId, correct: x.correct, help: x.helpIfWrong })));
+      setOutcome({
+        results: r.results.map((x) => ({ id: x.questionId, correct: x.correct, help: x.helpIfWrong })),
+        lessonDone: r.lessonDone,
+        xpAwarded: r.xpAwarded,
+        badge: r.badge,
+      });
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not submit your answers.");
+      setError(errorMessage(e, "We couldn't check your answers. Please try again."));
+      // Let the student send the last answer again.
+      setAnswers(answers);
     } finally {
       setBusy(false);
     }
   }
 
   /* ---------- Results ---------- */
-  if (results) {
+  if (outcome) {
+    const results = outcome.results;
     const score = results.filter((r) => r.correct).length;
     return wrapper(
       <>
         {back}
         <div className="mx-auto mt-[0.6em] max-w-[44em] text-center">
           <p className="text-[0.65em] font-bold uppercase tracking-wide text-[#12939b]">{view.trackName} / Lesson quiz</p>
-          <h1 className="mt-[0.4em] text-[2.1em] font-extrabold leading-tight text-[#14365a]">Quiz complete</h1>
+          <h1 className="mt-[0.4em] text-[2.1em] font-extrabold leading-tight text-[#14365a]">
+            {outcome.lessonDone ? "Lesson complete" : "Almost there"}
+          </h1>
           <p className="mt-[0.5em] text-[0.85em] text-[#14365a]/65">
-            You answered {score} of {total} correctly.
+            You answered {score} of {total} correctly.{" "}
+            {outcome.lessonDone ? "You finished this lesson." : "Read the help under each wrong answer, then try again."}
           </p>
+          {(outcome.xpAwarded > 0 || outcome.badge) && (
+            <div className="mt-[0.8em] flex flex-wrap justify-center gap-[0.5em]">
+              {outcome.xpAwarded > 0 && (
+                <span className="rounded-full bg-[#e7f6f3] px-[0.9em] py-[0.25em] text-[0.75em] font-bold text-[#12939b]">+{outcome.xpAwarded} XP</span>
+              )}
+              {outcome.badge && (
+                <span className="inline-flex items-center gap-[0.4em] rounded-full bg-[#fff4d6] px-[0.9em] py-[0.25em] text-[0.75em] font-bold text-[#a86b00]">
+                  <Award className="size-[1.1em]" /> {outcome.badge.name}
+                </span>
+              )}
+            </div>
+          )}
 
           <ul className="mt-[1.4em] space-y-[0.6em] text-left">
             {view.questions.map((qq, i) => {
@@ -186,9 +181,15 @@ export default function LessonQuizPage({ code, lessonId }: { code: string; lesso
             >
               Try again
             </button>
-            <Link href={backHref} className="rounded-[0.6em] bg-[#12606b] px-[1.4em] py-[0.7em] text-[0.8em] font-semibold text-white hover:bg-[#0f505a]">
-              Back to Lesson
-            </Link>
+            {outcome.lessonDone ? (
+              <Link href={view.nextHref as Route} className="rounded-[0.6em] bg-[#12606b] px-[1.4em] py-[0.7em] text-[0.8em] font-semibold text-white hover:bg-[#0f505a]">
+                Continue
+              </Link>
+            ) : (
+              <Link href={backHref} className="rounded-[0.6em] bg-[#12606b] px-[1.4em] py-[0.7em] text-[0.8em] font-semibold text-white hover:bg-[#0f505a]">
+                Back to Lesson
+              </Link>
+            )}
           </div>
         </div>
       </>,
@@ -203,7 +204,7 @@ export default function LessonQuizPage({ code, lessonId }: { code: string; lesso
       <div className="mx-auto mt-[0.2em] max-w-[44em] text-center">
         <p className="text-[0.62em] font-bold uppercase tracking-wide text-[#12939b]">{view.trackName} / Lesson quiz</p>
         <h1 className="mt-[0.5em] text-[2.1em] font-extrabold leading-tight text-[#14365a]">{view.title}</h1>
-        <p className="mt-[0.7em] text-[0.8em] text-[#14365a]/60">Choose the best answer. This illustrative quiz has no required passing threshold.</p>
+        <p className="mt-[0.7em] text-[0.8em] text-[#14365a]/60">Choose the best answer. Answer every question correctly to finish the lesson.</p>
       </div>
 
       {/* Progress */}
