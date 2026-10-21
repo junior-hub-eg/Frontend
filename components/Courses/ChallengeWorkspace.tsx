@@ -64,12 +64,23 @@ export function ChallengeWorkspace({ code, lessonId }: { code: string; lessonId:
   }, [lessonId]);
 
   if (!lesson) return <LoadState error={loadError} backHref={trackPath(code)} />;
-  return <Workspace lesson={lesson} />;
+  if (!lesson.tryIt) {
+    return (
+      <div className="mx-auto flex max-w-md flex-col items-center gap-3 py-20 text-center">
+        <p className="text-lg font-bold text-[#1b2a5c]">This lesson has no Try it</p>
+        <p className="text-sm text-[#1b2a5c]/65">There is no code to run here. Watch the video, then take the lesson quiz.</p>
+        <Link href={lessonPath(lesson.trackCode, lesson.id) as Route} className="rounded-lg bg-[#12939b] px-4 py-2 text-xs font-semibold text-white">
+          Back to Lesson
+        </Link>
+      </div>
+    );
+  }
+  return <Workspace lesson={lesson} tryIt={lesson.tryIt} />;
 }
 
-function Workspace({ lesson }: { lesson: Lesson }) {
+function Workspace({ lesson, tryIt }: { lesson: Lesson; tryIt: { starterCode: string; expectedOutput: string } }) {
   const lessonHref = lessonPath(lesson.trackCode, lesson.id) as Route;
-  const { starterCode, expectedOutput } = lesson.tryIt;
+  const { starterCode, expectedOutput } = tryIt;
 
   const [source, setSource] = useState(starterCode);
   const [running, setRunning] = useState(false);

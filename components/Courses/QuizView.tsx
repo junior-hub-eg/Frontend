@@ -14,6 +14,10 @@ import {
   submitTrackQuiz,
   getPlacementTest,
   submitPlacementTest,
+  getLevelExam,
+  submitLevelExam,
+  coursePath,
+  LEVEL_NUMBER,
   trackPath,
   type Badge,
   type QuizQuestion,
@@ -127,22 +131,74 @@ async function placementQuiz(code: string): Promise<Quiz> {
   };
 }
 
-/** The lesson quiz (lessonId given), the track quiz, or the placement test: all questions are graded together. */
-export function QuizView({ code, lessonId, placement = false }: { code: string; lessonId?: string; placement?: boolean }) {
+/** A course level's exam: a pass (2 of 3) finishes the level and opens the next one. */
+async function levelExamQuiz(code: string, courseId: string, level: string): Promise<Quiz> {
+  const exam = await getLevelExam(code, courseId, level);
+  const back = coursePath(exam.trackCode, exam.courseId);
+  const number = LEVEL_NUMBER[exam.level];
+  return {
+    eyebrow: `${exam.courseTitle} / Level ${number} exam`,
+    title: `${exam.courseTitle} · Level ${number}`,
+    rule: "Answer 2 of 3 correctly to pass and open the next level.",
+    questions: exam.questions,
+    backHref: back,
+    backLabel: "Back to the course",
+    continueHref: back,
+    continueLabel: "Back to the course",
+    passedText: `You passed Level ${number} of ${exam.courseTitle}.`,
+    failedText: "Look at the right answers below, then try again.",
+    doneLabel: "Level passed",
+    submit: async (answers) => {
+      const r = await submitLevelExam(exam.trackCode, exam.courseId, exam.level, answers);
+      return {
+        passed: r.passed,
+        graded: r.results.map((x) => ({ correct: x.correct, correctIndex: x.correctOptionIndex, note: x.explanation })),
+        xpAwarded: r.xpAwarded,
+        badge: null,
+      };
+    },
+  };
+}
+
+/**
+ * The lesson quiz (lessonId given), the track quiz, the placement test, or a level exam (exam given): all questions
+ * are graded together.
+ */
+export function QuizView({
+  code,
+  lessonId,
+  placement = false,
+  exam,
+}: {
+  code: string;
+  lessonId?: string;
+  placement?: boolean;
+  exam?: { courseId: string; level: string };
+}) {
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [loadError, setLoadError] = useState<unknown>(null);
   const [attempt, setAttempt] = useState(0);
 
+  const examCourse = exam?.courseId;
+  const examLevel = exam?.level;
+
   useEffect(() => {
     let active = true;
-    (placement ? placementQuiz(code) : lessonId ? lessonQuiz(code, lessonId) : trackQuiz(code)).then(
+    (examCourse && examLevel
+      ? levelExamQuiz(code, examCourse, examLevel)
+      : placement
+        ? placementQuiz(code)
+        : lessonId
+          ? lessonQuiz(code, lessonId)
+          : trackQuiz(code)
+    ).then(
       (q) => active && setQuiz(q),
       (e) => active && setLoadError(e)
     );
     return () => {
       active = false;
     };
-  }, [code, lessonId, placement]);
+  }, [code, lessonId, placement, examCourse, examLevel]);
 
   if (!quiz) return <LoadState error={loadError} backHref={trackPath(code)} />;
   return <QuizRun key={attempt} quiz={quiz} onRetry={() => setAttempt((a) => a + 1)} />;

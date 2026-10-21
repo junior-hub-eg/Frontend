@@ -9,6 +9,7 @@ import { errorMessage } from "@/lib/api-client";
 import { mentorAvatar } from "@/lib/avatars";
 import { getAchievements, getTrack, getTrackLessons, getTracks, trackPath, type TrackSummary } from "@/lib/learning-api";
 import { getMentors, type Mentor } from "@/lib/mentorship-api";
+import MyCourses from "./MyCourses";
 
 const IMG = "/images/Intern";
 
@@ -68,7 +69,8 @@ type Sort = (typeof SORTS)[number];
 const card = "rounded-[1.4em] border border-[#e8eef5] bg-white shadow-[0_6px_22px_rgba(20,54,90,0.07)]";
 
 export default function CoursesPage() {
-  const [tab, setTab] = useState<"recommended" | "all">("recommended");
+  // My Courses first; Change / Add track opens every track.
+  const [tab, setTab] = useState<"mine" | "recommended" | "all">("mine");
   const [sort, setSort] = useState<Sort>("Top Rated");
   const [sortOpen, setSortOpen] = useState(false);
   const [data, setData] = useState<Loaded | null>(null);
@@ -148,8 +150,9 @@ export default function CoursesPage() {
           <div role="tablist" aria-label="Courses view" className="flex flex-wrap gap-[0.5em]">
             {(
               [
-                ["recommended", "Courses Recommended to you"],
-                ["all", "All Courses"],
+                ["mine", "My Courses"],
+                ["recommended", "Recommended Tracks"],
+                ["all", "All Tracks"],
               ] as const
             ).map(([id, label]) => (
               <button
@@ -167,6 +170,7 @@ export default function CoursesPage() {
             ))}
           </div>
 
+          {tab !== "mine" && (
           <div className="relative ml-auto flex items-center gap-[0.6em] text-[0.9em] text-[#14365a]">
             Sort by
             <button
@@ -199,6 +203,7 @@ export default function CoursesPage() {
               </ul>
             )}
           </div>
+          )}
         </div>
 
         {loadError && (
@@ -212,8 +217,10 @@ export default function CoursesPage() {
           </div>
         )}
 
+        {data && tab === "mine" && <MyCourses learning={learning} onExplore={() => setTab("all")} />}
+
         {/* ---------- Bottom part: shrinks to fit the remaining height ---------- */}
-        {data && (
+        {data && tab !== "mine" && (
         <div className="lg:flex lg:min-h-0 lg:flex-1 lg:flex-col">
           {/* Featured (recommended tab only) */}
           {tab === "recommended" && featured.length > 0 && (

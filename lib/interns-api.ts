@@ -136,8 +136,10 @@ export interface LevelProgress {
   total: number;
   percent: number;
   complete: boolean;
-  /** Lessons (the level's lessons) or TrackQuiz (a track without lessons at that level). */
-  basis: "Lessons" | "TrackQuiz";
+  /** Course: the levels of the track's first course (21 Oct 2026). TrackQuiz: a track with no course yet. */
+  basis: "Course" | "TrackQuiz";
+  /** The first course, for example HTML, when basis is Course. */
+  courseTitle?: string | null;
 }
 
 export interface InternshipAccess {
