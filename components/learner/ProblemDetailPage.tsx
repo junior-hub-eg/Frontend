@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import Link from "next/link";
 import type { Route } from "next";
+import { relatedMathProblems, type MathProblem } from "@/lib/math-problems";
 import {
   Captions,
   Check,
@@ -23,29 +24,6 @@ const VIDEO_SRC: string | undefined = undefined;
 
 const TABS = ["AI Explanation", "Try it Yourself", "Steps", "Related Problems"] as const;
 type Tab = (typeof TABS)[number];
-
-const PROBLEM = {
-  title: "Solve Linear Equation",
-  formula: "2x + 4 = 12",
-  level: "Beginner",
-  minutes: 10,
-  learn: [
-    "How to isolate the variable",
-    "Step-by-step guide to solving for x",
-    "Techniques to simplify algebraic expressions",
-  ],
-  summary: [
-    { icon: Clock, text: "Estimated time 10 minutes" },
-    { icon: HelpCircle, text: "Techniques to simplify algebraic expressions" },
-  ],
-  steps: [
-    "Write the equation: 2x + 4 = 12.",
-    "Subtract 4 from both sides: 2x = 8.",
-    "Divide both sides by 2: x = 4.",
-    "Check: 2(4) + 4 = 12.",
-  ],
-  related: ["linear-regression-2", "linear-regression-3", "linear-regression-4"],
-};
 
 const fmt = (s: number) => {
   if (!Number.isFinite(s)) return "00:00";
@@ -214,8 +192,13 @@ function VideoPlayer() {
 
 /* ---------------- Page ---------------- */
 
-export default function ProblemDetailPage({ problemId }: { problemId: string }) {
+export default function ProblemDetailPage({ problem }: { problem: MathProblem }) {
   const [tab, setTab] = useState<Tab>("AI Explanation");
+  const related = relatedMathProblems(problem);
+  const summary = [
+    { icon: Clock, text: `Estimated time ${problem.minutes} minutes` },
+    { icon: HelpCircle, text: `${problem.topic} · ${problem.algorithm}` },
+  ];
 
   const crumb = "hover:underline";
 
@@ -236,18 +219,18 @@ export default function ProblemDetailPage({ problemId }: { problemId: string }) 
           </Link>
           <ChevronRight className="h-[1em] w-[1em]" />
           <Link href={"/learner/ai-curriculum/mathematics" as Route} className={crumb}>
-            Linear Regression
+            {problem.algorithm}
           </Link>
           <ChevronRight className="h-[1em] w-[1em]" />
-          <span>{PROBLEM.title}</span>
+          <span>{problem.title}</span>
         </nav>
 
         {/* Title */}
-        <h1 className="mt-[0.5em] text-[2.1em] font-extrabold leading-tight text-[#14365a]">{PROBLEM.title}</h1>
+        <h1 className="mt-[0.5em] text-[2.1em] font-extrabold leading-tight text-[#14365a]">{problem.title}</h1>
         <div className="mt-[0.2em] flex items-center gap-[0.8em]">
-          <p className="font-serif text-[1.05em] text-[#14365a]">{PROBLEM.formula}</p>
+          <p className="font-serif text-[1.05em] text-[#14365a]">{problem.formula}</p>
           <span className="rounded-[0.4em] bg-[#d5f2de] px-[0.7em] py-[0.15em] text-[0.7em] font-semibold text-[#1f7a45]">
-            {PROBLEM.level}
+            {problem.level}
           </span>
         </div>
 
@@ -290,7 +273,7 @@ export default function ProblemDetailPage({ problemId }: { problemId: string }) 
 
           {tab === "Steps" && (
             <ol className="space-y-[0.8em] rounded-[1.2em] border border-[#e3e9f0] bg-white p-[1.4em]">
-              {PROBLEM.steps.map((s, i) => (
+              {problem.steps.map((s, i) => (
                 <li key={s} className="flex items-start gap-[0.9em] text-[0.9em] text-[#14365a]">
                   <span className="grid h-[1.9em] w-[1.9em] shrink-0 place-items-center rounded-full bg-[#e4f7f4] text-[0.85em] font-bold text-[#0f7a81]">
                     {i + 1}
@@ -303,15 +286,16 @@ export default function ProblemDetailPage({ problemId }: { problemId: string }) 
 
           {tab === "Related Problems" && (
             <ul className="space-y-[0.8em]">
-              {PROBLEM.related
-                .filter((id) => id !== problemId)
-                .map((id) => (
-                  <li key={id}>
+              {related.map((r) => (
+                  <li key={r.id}>
                     <Link
-                      href={`/learner/ai-curriculum/mathematics/${id}` as Route}
+                      href={`/learner/ai-curriculum/mathematics/${r.id}` as Route}
                       className="flex items-center justify-between rounded-[1em] border border-[#e3e9f0] bg-white px-[1.2em] py-[1em] text-[0.9em] font-semibold text-[#14365a] transition hover:bg-[#f3f6f9]"
                     >
-                      Solve Linear Regression
+                      <span>
+                        {r.title}
+                        <span className="ml-[0.8em] font-serif font-normal text-[#5b7089]">{r.formula}</span>
+                      </span>
                       <ChevronRight className="h-[1.2em] w-[1.2em]" />
                     </Link>
                   </li>
@@ -325,7 +309,7 @@ export default function ProblemDetailPage({ problemId }: { problemId: string }) 
           <section className="rounded-[1.2em] border border-[#e3e9f0] bg-white p-[1.4em]">
             <h2 className="text-[1em] font-bold text-[#14365a]">What you will learn</h2>
             <ul className="mt-[1em] space-y-[0.9em]">
-              {PROBLEM.learn.map((item) => (
+              {problem.learn.map((item) => (
                 <li key={item} className="flex items-center gap-[0.8em] text-[0.8em] text-[#14365a]">
                   <span className="grid h-[1.8em] w-[1.8em] shrink-0 place-items-center rounded-full bg-[#12939b] text-white">
                     <Check className="h-[1.1em] w-[1.1em]" strokeWidth={3} />
@@ -338,9 +322,9 @@ export default function ProblemDetailPage({ problemId }: { problemId: string }) 
 
           <section className="rounded-[1.2em] border border-[#e3e9f0] bg-white p-[1.4em]">
             <h2 className="text-[1em] font-bold text-[#14365a]">Problem summary</h2>
-            <p className="mt-[0.8em] font-serif text-[1.05em] text-[#14365a]">{PROBLEM.formula}</p>
+            <p className="mt-[0.8em] font-serif text-[1.05em] text-[#14365a]">{problem.formula}</p>
             <ul className="mt-[0.8em] space-y-[0.8em]">
-              {PROBLEM.summary.map(({ icon: Icon, text }) => (
+              {summary.map(({ icon: Icon, text }) => (
                 <li key={text} className="flex items-center gap-[0.8em] text-[0.75em] text-[#14365a]">
                   <span className="grid h-[2em] w-[2em] shrink-0 place-items-center rounded-full bg-[#d9f2f1] text-[#12939b]">
                     <Icon className="h-[1.2em] w-[1.2em]" />
