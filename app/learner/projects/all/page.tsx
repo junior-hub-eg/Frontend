@@ -11,14 +11,16 @@ import {
   CircleCheck,
   Folder,
   GitBranch,
+  Link2,
   ListChecks,
   LoaderCircle,
+  Palette,
   Play,
   Server,
-  Palette,
   Triangle,
   User,
   Users,
+  Video,
 } from "lucide-react";
 import { errorMessage } from "@/lib/api-client";
 import { mentorAvatar } from "@/lib/avatars";
@@ -33,6 +35,9 @@ const LINK_ICONS: Record<ProjectLinkKind, ReactNode> = {
   Api: <Server aria-hidden className="size-3" />,
   Demo: <Play aria-hidden className="size-3" />,
   TestReport: <ListChecks aria-hidden className="size-3" />,
+  Standup: <Video aria-hidden className="size-3" />,
+  Grooming: <CalendarDays aria-hidden className="size-3" />,
+  Other: <Link2 aria-hidden className="size-3" />,
 };
 
 const OPPORTUNITIES = [

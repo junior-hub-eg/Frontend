@@ -2,7 +2,7 @@
 import { api } from "@/lib/api-client";
 
 export type ProjectStatus = "InProgress" | "InReview" | "Completed";
-export type ProjectLinkKind = "Figma" | "GitHub" | "LiveSite" | "Api" | "Demo" | "TestReport";
+export type ProjectLinkKind = "Figma" | "GitHub" | "LiveSite" | "Api" | "Demo" | "TestReport" | "Standup" | "Grooming" | "Other";
 
 /** The mentor who supervises the project (not the student's own mentor). */
 export interface ProjectMonitor {
@@ -95,6 +95,9 @@ export const LINK_LABEL: Record<ProjectLinkKind, { label: string; note: string }
   Api: { label: "API", note: "Server" },
   Demo: { label: "Demo", note: "Try it" },
   TestReport: { label: "Test report", note: "Bugs and checks" },
+  Standup: { label: "Standup", note: "Daily meeting" },
+  Grooming: { label: "Grooming", note: "Backlog meeting" },
+  Other: { label: "Other", note: "More work" },
 };
 
 const date = (iso: string, withYear = true) =>

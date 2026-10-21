@@ -7,19 +7,22 @@ import Link from "next/link";
 import {
   ArrowRight,
   BrainCircuit,
+  CalendarDays,
   ChevronRight,
   CircleCheck,
   Folder,
   GitBranch,
+  Link2,
   ListChecks,
   LoaderCircle,
+  Palette,
   Play,
   Server,
-  Palette,
   Target,
   Triangle,
   User,
   Users,
+  Video,
 } from "lucide-react";
 import { errorMessage } from "@/lib/api-client";
 import {
@@ -100,6 +103,9 @@ const LINK_ICONS: Record<ProjectLinkKind, ReactNode> = {
   Api: <Server aria-hidden className="size-3.5" />,
   Demo: <Play aria-hidden className="size-3.5" />,
   TestReport: <ListChecks aria-hidden className="size-3.5" />,
+  Standup: <Video aria-hidden className="size-3.5" />,
+  Grooming: <CalendarDays aria-hidden className="size-3.5" />,
+  Other: <Link2 aria-hidden className="size-3.5" />,
 };
 
 /** My Projects: the current project from GET /student/projects and its sprint from GET /student/projects/{id}. */

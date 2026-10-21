@@ -12,6 +12,8 @@ export const LINK_KINDS: Record<WorkLinkKind, { label: string; placeholder: stri
   Api: { label: "API / server", placeholder: "https://your-api.../swagger" },
   Demo: { label: "Demo", placeholder: "https://..." },
   TestReport: { label: "Test report", placeholder: "https://..." },
+  Standup: { label: "Standup", placeholder: "https://meet.google.com/..." },
+  Grooming: { label: "Grooming", placeholder: "https://zoom.us/j/..." },
   Other: { label: "Other", placeholder: "https://..." },
 };
 const ORDER = Object.keys(LINK_KINDS) as WorkLinkKind[];
