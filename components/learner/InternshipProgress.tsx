@@ -32,6 +32,7 @@ import {
 } from "@/lib/interns-api";
 import { avatarFor, memberIndex, ROLE_TITLE, ROLE_TAG, useInterns } from "./interns-data";
 import { LinkChips, MyLinksEditor } from "./work-links";
+import { ProjectSubmitCard } from "./ProjectSubmitCard";
 
 const IMG = "/images/Intern";
 const BG = `${IMG}/bg-park.png`;
@@ -578,6 +579,7 @@ export default function InternshipProgress() {
             )}
             <TeamCard squad={squad} />
             <SprintCard sprint={sprint} />
+            <ProjectSubmitCard />
             <ProjectLinks />
             <TaskBoard board={board} members={memberIndex(squad)} onMove={handleMove} onAdd={handleAdd} message={moveError} />
           </div>

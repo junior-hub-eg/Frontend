@@ -46,8 +46,8 @@ export function proxy(request: NextRequest) {
   return NextResponse.next();
 }
 
-/** Backend role claim → frontend role. The demo backend only issues "Student". */
-const BACKEND_ROLE: Record<string, UserRole> = { Student: "learner" };
+/** Backend role claim → frontend role: students, and mentors who monitor squads (21 Oct 2026). */
+const BACKEND_ROLE: Record<string, UserRole> = { Student: "learner", Mentor: "mentor" };
 
 function readSessionCookie(request: NextRequest): { id: string; role: UserRole } | null {
   const token = request.cookies.get(TOKEN_COOKIE)?.value;

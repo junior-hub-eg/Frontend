@@ -6,7 +6,7 @@ import { Poppins } from "next/font/google";
 import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
-import { ArrowLeft, LoaderCircle, Lock } from "lucide-react";
+import { ArrowLeft, LoaderCircle, Lock, PartyPopper } from "lucide-react";
 import { errorMessage } from "@/lib/api-client";
 import { getInternshipAccess, type InternshipAccess, type LevelProgress } from "@/lib/interns-api";
 import { trackPath } from "@/lib/learning-api";
@@ -23,7 +23,7 @@ const glass =
   "rounded-[20px] border border-white/70 bg-gradient-to-r from-[#c8eef8]/75 to-[#a6dfda]/60 shadow-[0_10px_30px_rgba(20,54,90,0.12)] backdrop-blur-md";
 
 /** The Internship before the level is finished (decision of 21 Oct 2026): what is left, and back to the lessons. */
-function LockedInternship({ level }: { level: LevelProgress | null }) {
+function LockedInternship({ level, lastProject }: { level: LevelProgress | null; lastProject?: InternshipAccess["lastProject"] }) {
   const isClient = useSyncExternalStore(noopSubscribe, () => true, () => false);
   if (!isClient) return null;
   return createPortal(
@@ -41,6 +41,23 @@ function LockedInternship({ level }: { level: LevelProgress | null }) {
             </Link>
             <h1 className="px-[3.5em] text-center text-[2.6em] font-semibold leading-tight text-[#14365a]">Internship</h1>
           </div>
+
+          {lastProject && (
+            <section className={`${glass} mx-auto mt-[1.5em] flex max-w-[34em] flex-col items-center gap-[0.6em] p-[1.6em] text-center text-[#14365a]`}>
+              <PartyPopper className="h-[2.4em] w-[2.4em] text-[#f5a623]" aria-hidden />
+              <h2 className="text-[1.4em] font-bold">Your project was approved!</h2>
+              <p className="text-[0.95em] text-[#14365a]/85">
+                {lastProject.squadName} finished <b>{lastProject.projectTitle}</b>
+                {level ? ` and you moved up to the ${level.level} level.` : "."}
+              </p>
+              {lastProject.feedback && (
+                <blockquote className="w-full rounded-[0.9em] bg-white/70 p-[0.9em] text-left text-[0.9em] leading-relaxed">
+                  “{lastProject.feedback}”
+                  {lastProject.monitorName && <span className="mt-[0.3em] block text-[0.85em] font-semibold">— {lastProject.monitorName}, your monitor</span>}
+                </blockquote>
+              )}
+            </section>
+          )}
 
           <section className={`${glass} mx-auto mt-[1.5em] flex max-w-[34em] flex-col items-center gap-[1em] p-[2em] text-center text-[#14365a]`}>
             <span className="grid h-[4.5em] w-[4.5em] place-items-center rounded-full bg-[#14365a] text-white shadow-lg">
@@ -120,6 +137,6 @@ export default function InternshipGate() {
   if (error) return <p className="mx-auto mt-[20vh] max-w-md text-center font-semibold text-[#14365a]">{error}</p>;
   if (!access) return <LoaderCircle className="mx-auto mt-[20vh] h-8 w-8 animate-spin text-[#14365a]" aria-label="Loading" />;
   if (access.inSquad) return <InternshipProgress />;
-  if (!access.open) return <LockedInternship level={access.level} />;
+  if (!access.open) return <LockedInternship level={access.level} lastProject={access.lastProject} />;
   return <SquadMatchmaking level={access.level} />;
 }
