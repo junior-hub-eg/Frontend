@@ -12,16 +12,18 @@ import {
   CircleCheck,
   Clock,
   GitBranch,
+  Link2,
   ListChecks,
   LoaderCircle,
+  Palette,
   Play,
   Server,
-  Palette,
   Star,
   Target,
   Triangle,
   User,
   Users,
+  Video,
 } from "lucide-react";
 import { errorMessage } from "@/lib/api-client";
 import { mentorAvatar } from "@/lib/avatars";
@@ -56,6 +58,9 @@ const LINK_ICONS: Record<ProjectLinkKind, ReactNode> = {
   Api: <Server aria-hidden className="size-3.5" />,
   Demo: <Play aria-hidden className="size-3.5" />,
   TestReport: <ListChecks aria-hidden className="size-3.5" />,
+  Standup: <Video aria-hidden className="size-3.5" />,
+  Grooming: <CalendarDays aria-hidden className="size-3.5" />,
+  Other: <Link2 aria-hidden className="size-3.5" />,
 };
 
 function Card({ className, children }: { className?: string; children: ReactNode }) {

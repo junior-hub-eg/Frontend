@@ -98,7 +98,7 @@ export const moveTask = (taskId: string, status: TaskStatus) =>
 
 /* ---------- Session page: links to each member's work ---------- */
 
-export type WorkLinkKind = "Figma" | "GitHub" | "LiveSite" | "Api" | "Demo" | "TestReport" | "Other";
+export type WorkLinkKind = "Figma" | "GitHub" | "LiveSite" | "Api" | "Demo" | "TestReport" | "Standup" | "Grooming" | "Other";
 
 export interface SquadMemberLinks {
   studentId: string;
