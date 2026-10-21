@@ -32,7 +32,7 @@ function Avatar({ src, bg, size = "h-[9.5em] w-[9.5em]" }: { src: string; bg?: s
 }
 
 function memberAvatar(m: SquadMemberLinks, i: number) {
-  return avatarOrDefault(m.photoUrl, i + 1);
+  return avatarOrDefault(m.photoUrl, i);
 }
 
 /** One teammate: avatar, role, level, ready state and the links they shared. */
