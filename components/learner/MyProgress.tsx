@@ -345,7 +345,7 @@ export default function MyProgress() {
               <ul className="grid gap-[0.8em] sm:grid-cols-2">
                 {[
                   { title: "Internships", text: "Internships and career simulation", href: "/interns", icon: Briefcase, bg: "#fff1e6", color: "#c2571a" },
-                  { title: "Recruitment", text: "Practice for your first job", href: "/recruitment", icon: Award, bg: "#e6f6ee", color: "#1f9d5b" },
+                  { title: "Recruitment", text: "Practice for your first job", href: "/learner/recruitment-practice", icon: Award, bg: "#e6f6ee", color: "#1f9d5b" },
                 ].map((o) => (
                   <li key={o.title}>
                     <Link href={o.href as Route} className="flex h-full items-center gap-[0.8em] rounded-[1em] p-[0.9em] hover:opacity-90" style={{ backgroundColor: o.bg }}>
