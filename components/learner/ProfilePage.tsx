@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import {
   ArrowRight,
   Award,
+  CalendarDays,
   Check,
   Eye,
   EyeOff,
@@ -37,6 +38,7 @@ import { changePassword, getMe, type Me } from "@/lib/profile-api";
 import { getMyCertificates, type Certificate } from "@/lib/recruitment-api";
 import { AvatarPicker } from "./learner-shell";
 import { RecruitmentFrame } from "./recruitment-ui";
+import TaskCalendar from "./TaskCalendar";
 
 const card = "rounded-[1.4em] border border-[#e3e9f0] bg-white p-[1.4em]";
 const primaryBtn =
@@ -362,6 +364,11 @@ export default function ProfilePage() {
                   })}
                 </ul>
               )}
+            </Section>
+
+            {/* Task calendar */}
+            <Section title="Task calendar" icon={CalendarDays}>
+              <TaskCalendar />
             </Section>
           </div>
 
