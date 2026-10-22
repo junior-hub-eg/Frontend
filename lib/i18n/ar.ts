@@ -1,6 +1,7 @@
 import { account } from "./ar/account";
 import { auth } from "./ar/auth";
 import { backend } from "./ar/backend";
+import { calendar } from "./ar/calendar";
 import { common } from "./ar/common";
 import { courses } from "./ar/courses";
 import { errors } from "./ar/errors";
@@ -9,6 +10,7 @@ import { interns } from "./ar/interns";
 import { landing } from "./ar/landing";
 import { math } from "./ar/math";
 import { learner } from "./ar/learner";
+import { lesson } from "./ar/lesson";
 import { mentors } from "./ar/mentors";
 import { recruitment } from "./ar/recruitment";
 
@@ -27,4 +29,6 @@ export const ar: Record<string, string> = {
   ...math,
   ...account,
   ...interns,
+  ...lesson,
+  ...calendar,
 };
