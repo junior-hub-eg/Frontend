@@ -1,4 +1,7 @@
+"use client";
+
 import { Check, X } from "lucide-react";
+import { useT } from "@/lib/i18n/client";
 import { PASSWORD_RULES } from "@/lib/auth/password-rules";
 import { cn } from "@/lib/utils";
 
@@ -21,6 +24,7 @@ function RuleIcon({ state }: { state: "idle" | "ok" | "bad" }) {
 
 /** The password rules with a live tick or cross, as on the Create login design. */
 export function PasswordRuleList({ password, className }: { password: string; className?: string }) {
+  const t = useT();
   return (
     <ul className={cn("flex flex-col gap-[clamp(4px,0.7cqw,7px)] text-[length:clamp(9px,1.1cqw,11px)] text-[#1B2D54]", className)}>
       {PASSWORD_RULES.map((rule) => {
@@ -28,7 +32,7 @@ export function PasswordRuleList({ password, className }: { password: string; cl
         return (
           <li key={rule.id} className="flex items-center gap-2">
             <RuleIcon state={state} />
-            {rule.label}
+            {t(rule.label)}
           </li>
         );
       })}

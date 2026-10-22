@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n/client";
 
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -30,6 +31,7 @@ interface BookingCalendarProps {
 
 /** Month grid. Client-only (uses the current date) — render it after mount to avoid hydration mismatches. */
 export function BookingCalendar({ selected, onSelect }: BookingCalendarProps) {
+  const { t, intl } = useI18n();
   const [today] = useState(() => startOfDay(new Date()));
   const [cursor, setCursor] = useState(() => ({ year: today.getFullYear(), month: today.getMonth() }));
 
@@ -50,14 +52,14 @@ export function BookingCalendar({ selected, onSelect }: BookingCalendarProps) {
   return (
     <div className="rounded-2xl bg-[#F6F9FB] p-4">
       <div className="mb-3 flex items-center gap-2">
-        <p className="text-base font-semibold text-[#1b2a5c]">{first.toLocaleDateString("en-US", { month: "long", year: "numeric" })}</p>
-        <span className="rounded-full bg-[#DDF3E7] px-2 py-0.5 text-[9px] font-semibold text-[#1E9D5B]">{open} youth slots open</span>
-        <div className="ml-auto flex gap-1">
+        <p className="text-base font-semibold text-[#1b2a5c]">{first.toLocaleDateString(intl, { month: "long", year: "numeric" })}</p>
+        <span className="rounded-full bg-[#DDF3E7] px-2 py-0.5 text-[9px] font-semibold text-[#1E9D5B]">{t("{n} youth slots open", { n: open })}</span>
+        <div className="ms-auto flex gap-1">
           <button
             type="button"
             onClick={() => shift(-1)}
             disabled={isCurrentMonth}
-            aria-label="Previous month"
+            aria-label={t("Previous month")}
             className="grid size-7 place-items-center rounded-full bg-white text-[#1b2a5c] shadow-sm hover:bg-[#E9F7F4] disabled:opacity-40"
           >
             <ChevronLeft size={14} />
@@ -65,7 +67,7 @@ export function BookingCalendar({ selected, onSelect }: BookingCalendarProps) {
           <button
             type="button"
             onClick={() => shift(1)}
-            aria-label="Next month"
+            aria-label={t("Next month")}
             className="grid size-7 place-items-center rounded-full bg-white text-[#1b2a5c] shadow-sm hover:bg-[#E9F7F4]"
           >
             <ChevronRight size={14} />
@@ -76,7 +78,7 @@ export function BookingCalendar({ selected, onSelect }: BookingCalendarProps) {
       <div className="grid grid-cols-7 text-center text-[10px] font-medium text-[#1b2a5c]/60">
         {WEEKDAYS.map((d) => (
           <span key={d} className="py-1.5">
-            {d}
+            {t(d)}
           </span>
         ))}
       </div>
@@ -96,7 +98,7 @@ export function BookingCalendar({ selected, onSelect }: BookingCalendarProps) {
               disabled={!available}
               onClick={() => onSelect(date)}
               aria-pressed={isSelected}
-              aria-label={date.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
+              aria-label={date.toLocaleDateString(intl, { weekday: "long", month: "long", day: "numeric" })}
               className={cn(
                 "relative mx-auto grid h-10 w-10 place-items-center rounded-xl text-[11px] font-semibold transition-colors",
                 isSelected
@@ -121,9 +123,9 @@ export function BookingCalendar({ selected, onSelect }: BookingCalendarProps) {
       </div>
 
       <div className="mt-3 flex flex-wrap gap-4 text-[10px] text-[#1b2a5c]/60">
-        <span className="flex items-center gap-1.5"><i className="size-2 rounded-full bg-[#0f6b60]" /> Available</span>
-        <span className="flex items-center gap-1.5"><i className="size-2 rounded-full bg-[#12939b]" /> Selected Day</span>
-        <span className="flex items-center gap-1.5"><i className="size-2 rounded-full bg-[#1b2a5c]/20" /> Unavailable</span>
+        <span className="flex items-center gap-1.5"><i className="size-2 rounded-full bg-[#0f6b60]" /> {t("Available")}</span>
+        <span className="flex items-center gap-1.5"><i className="size-2 rounded-full bg-[#12939b]" /> {t("Selected Day")}</span>
+        <span className="flex items-center gap-1.5"><i className="size-2 rounded-full bg-[#1b2a5c]/20" /> {t("Unavailable")}</span>
       </div>
     </div>
   );

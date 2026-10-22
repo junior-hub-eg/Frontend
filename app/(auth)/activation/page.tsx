@@ -4,32 +4,35 @@ import { ChevronRight, KeyRound, Link2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { AuthPanel } from "@/components/shared/auth-panel";
 import { HelpCard } from "@/components/shared/help-card";
+import { getT } from "@/lib/i18n/server";
+import { tk } from "@/lib/i18n/translate";
 
 const options = [
   {
     href: "/activation/link" as Route,
-    title: "I Have An Activation Link",
-    desc: "Open The Link From Your School",
+    title: tk("I Have An Activation Link"),
+    desc: tk("Open The Link From Your School"),
     icon: Link2,
     tint: "bg-primary/15 text-primary",
   },
   {
     href: "/activation/code" as Route,
-    title: "I Have An Activation Code",
-    desc: "Enter The Code Manually",
+    title: tk("I Have An Activation Code"),
+    desc: tk("Enter The Code Manually"),
     icon: KeyRound,
     tint: "bg-violet-100 text-violet-600",
   },
 ];
 
-export default function ActivationPage() {
+export default async function ActivationPage() {
+  const t = await getT();
   return (
     <AuthPanel>
       <div className="space-y-5">
         <div>
-          <h1 className="text-xl font-bold tracking-tight">Activate Your Account</h1>
+          <h1 className="text-xl font-bold tracking-tight">{t("Activate Your Account")}</h1>
           <p className="mt-1 text-xs leading-5 text-muted-foreground">
-            Activate Your Account Today To Access Exclusive Features And Begin Your Journey Immediately.
+            {t("Activate Your Account Today To Access Exclusive Features And Begin Your Journey Immediately.")}
           </p>
         </div>
 
@@ -41,8 +44,8 @@ export default function ActivationPage() {
                   <Icon className="h-4 w-4" />
                 </span>
                 <span className="flex-1">
-                  <span className="block text-xs font-semibold">{title}</span>
-                  <span className="block text-[10px] text-muted-foreground">{desc}</span>
+                  <span className="block text-xs font-semibold">{t(title)}</span>
+                  <span className="block text-[10px] text-muted-foreground">{t(desc)}</span>
                 </span>
                 <ChevronRight className="h-4 w-4 text-muted-foreground" />
               </Card>

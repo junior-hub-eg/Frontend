@@ -5,6 +5,7 @@
  * is refreshed once from that cookie and the request is retried.
  */
 import { getToken, setToken } from "@/lib/auth/token";
+import { tk, tNow } from "@/lib/i18n/translate";
 
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
 const AI_SERVICE_URL = process.env.NEXT_PUBLIC_AI_SERVICE_URL ?? "";
@@ -44,13 +45,16 @@ export class ApiError extends Error {
   }
 }
 
-/** A plain-language message for the student: the backend's title, or a fallback. */
-export function errorMessage(error: unknown, fallback = "Something went wrong. Please try again."): string {
+/**
+ * A plain-language message for the student: the backend's title, or a fallback,
+ * in the language the page is showing (an unknown backend title stays as sent).
+ */
+export function errorMessage(error: unknown, fallback = tk("Something went wrong. Please try again.")): string {
   if (error instanceof ApiError) {
-    if (error.status === 0) return "We can't reach Junior Hub right now. Check your connection and try again.";
-    return error.problem?.title ?? fallback;
+    if (error.status === 0) return tNow("We can't reach Junior Hub right now. Check your connection and try again.");
+    return tNow(error.problem?.title ?? fallback);
   }
-  return fallback;
+  return tNow(fallback);
 }
 
 async function send(baseUrl: string, path: string, options: RequestInit): Promise<Response> {

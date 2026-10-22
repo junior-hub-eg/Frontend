@@ -20,6 +20,8 @@ import {
 } from "lucide-react";
 import { ApiError, errorMessage } from "@/lib/api-client";
 import { mediaUrl } from "@/lib/learning-api";
+import { useT } from "@/lib/i18n/client";
+import { tNow } from "@/lib/i18n/translate";
 
 const TRACK_ICONS: Record<string, ComponentType<{ size?: number; strokeWidth?: number; className?: string }>> = {
   smartphone: Smartphone,
@@ -37,13 +39,14 @@ export function TrackIcon({ iconKey, size = 40 }: { iconKey: string; size?: numb
   return <Icon size={size} strokeWidth={1.6} />;
 }
 
-export const minutes = (seconds: number) => `${Math.max(1, Math.round(seconds / 60))} min`;
+export const minutes = (seconds: number) => tNow("{n} min", { n: Math.max(1, Math.round(seconds / 60)) });
 
 /** Loading, not found and error states for the course pages. */
 export function LoadState({ error, onRetry, backHref = "/learner/courses" }: { error?: unknown; onRetry?: () => void; backHref?: string }) {
+  const t = useT();
   if (!error) {
     return (
-      <div className="grid flex-1 place-items-center py-20" role="status" aria-label="Loading">
+      <div className="grid flex-1 place-items-center py-20" role="status" aria-label={t("Loading")}>
         <LoaderCircle className="size-8 animate-spin text-[#12939b]" />
       </div>
     );
@@ -56,25 +59,25 @@ export function LoadState({ error, onRetry, backHref = "/learner/courses" }: { e
         <span className="grid size-12 place-items-center rounded-full bg-[#e9f7f4] text-[#12939b]">
           <Lock aria-hidden size={22} />
         </span>
-        <p className="text-lg font-bold text-[#1b2a5c]">This level is still locked</p>
-        <p className="text-sm text-[#1b2a5c]/65">Finish the lessons of the level before and pass its exam to open this one.</p>
+        <p className="text-lg font-bold text-[#1b2a5c]">{t("This level is still locked")}</p>
+        <p className="text-sm text-[#1b2a5c]/65">{t("Finish the lessons of the level before and pass its exam to open this one.")}</p>
         <Link href={backHref as Route} className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-[#12939b] px-4 py-2 text-xs font-semibold text-white">
-          <ArrowLeft aria-hidden size={14} /> Back to the course
+          <ArrowLeft aria-hidden size={14} /> {t("Back to the course")}
         </Link>
       </div>
     );
   }
   return (
     <div className="mx-auto flex max-w-md flex-col items-center gap-3 py-20 text-center">
-      <p className="text-lg font-bold text-[#1b2a5c]">{notFound ? "We couldn't find this page" : "Something went wrong"}</p>
+      <p className="text-lg font-bold text-[#1b2a5c]">{notFound ? t("We couldn't find this page") : t("Something went wrong")}</p>
       <p className="text-sm text-[#1b2a5c]/65">{errorMessage(error, "We couldn't load this page. Please try again.")}</p>
       <div className="mt-2 flex gap-3">
         <Link href={backHref as Route} className="inline-flex items-center gap-1.5 rounded-lg border border-[#12939b] px-4 py-2 text-xs font-semibold text-[#12939b]">
-          <ArrowLeft aria-hidden size={14} /> Back to courses
+          <ArrowLeft aria-hidden size={14} /> {t("Back to courses")}
         </Link>
         {!notFound && onRetry && (
           <button type="button" onClick={onRetry} className="rounded-lg bg-[#12939b] px-4 py-2 text-xs font-semibold text-white">
-            Try again
+            {t("Try again")}
           </button>
         )}
       </div>
@@ -99,6 +102,7 @@ export function VideoPlayer({
   watchedPercent?: number;
   onProgress: (percent: number) => Promise<unknown> | void;
 }) {
+  const t = useT();
   const reported = useRef(watchedPercent);
   const [failed, setFailed] = useState(false);
   const [marking, setMarking] = useState(false);
@@ -118,7 +122,7 @@ export function VideoPlayer({
           <Play size={24} className="fill-white" />
         </span>
         <p className="text-sm font-semibold">{title}</p>
-        <p className="max-w-xs text-[11px] text-white/70">This video isn&apos;t available to play yet.</p>
+        <p className="max-w-xs text-[11px] text-white/70">{t("This video isn't available to play yet.")}</p>
         {!watched && (
           <button
             type="button"
@@ -137,7 +141,7 @@ export function VideoPlayer({
             }}
             className="rounded-lg bg-white px-4 py-2 text-xs font-semibold text-[#1b2a5c] disabled:opacity-60"
           >
-            {marking ? "Saving…" : "Mark as watched"}
+            {marking ? t("Saving…") : t("Mark as watched")}
           </button>
         )}
       </div>
@@ -191,7 +195,7 @@ export function LinearGraph({ spec }: { spec: string }) {
   const axisX = Math.min(Math.max(0, y0), y1), axisY = Math.min(Math.max(0, x0), x1);
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Graph of y = ${g.equation}`} className="w-full max-w-[320px]">
+    <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={tNow("Graph of y = {equation}", { equation: g.equation })} direction="ltr" className="w-full max-w-[320px]">
       <rect x="0" y="0" width={W} height={H} rx="12" fill="#ffffff" />
       <line x1={P} x2={W - P} y1={sy(axisX)} y2={sy(axisX)} stroke="#1b2a5c" strokeOpacity="0.3" />
       <line x1={sx(axisY)} x2={sx(axisY)} y1={P} y2={H - P} stroke="#1b2a5c" strokeOpacity="0.3" />

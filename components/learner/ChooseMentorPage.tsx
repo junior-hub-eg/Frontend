@@ -38,6 +38,8 @@ import {
   type MentorSlots,
   type SessionType,
 } from "@/lib/mentorship-api";
+import { useT } from "@/lib/i18n/client";
+import { dateLocale, tk, tNow } from "@/lib/i18n/translate";
 
 const TRACK_NAMES: Record<string, string> = {
   FRONTEND: "Frontend",
@@ -49,31 +51,31 @@ const TRACK_NAMES: Record<string, string> = {
   TESTING: "Testing",
   GAMING: "Gaming",
 };
-const trackName = (code: string) => TRACK_NAMES[code] ?? code;
+const trackName = (code: string) => tNow(TRACK_NAMES[code] ?? code);
 
 type Sort = "rating" | "experience" | "name";
 const SORTS: { id: Sort; label: string }[] = [
-  { id: "rating", label: "Top Rated" },
-  { id: "experience", label: "Most Experienced" },
-  { id: "name", label: "Name" },
+  { id: "rating", label: tk("Top Rated") },
+  { id: "experience", label: tk("Most Experienced") },
+  { id: "name", label: tk("Name") },
 ];
 
 const FEATURES = [
-  { icon: RouteIcon, title: "1:1 Mentoring", text: "Guidance on your track", color: "bg-[#e3eefd] text-[#2f6fc4]" },
-  { icon: CircleCheck, title: "Practical advice", text: "From real experience", color: "bg-[#e3f6ee] text-[#1f9d5b]" },
-  { icon: Briefcase, title: "Plan your future", text: "Projects and career", color: "bg-[#fff4d6] text-[#c27c00]" },
+  { icon: RouteIcon, title: tk("1:1 Mentoring"), text: tk("Guidance on your track"), color: "bg-[#e3eefd] text-[#2f6fc4]" },
+  { icon: CircleCheck, title: tk("Practical advice"), text: tk("From real experience"), color: "bg-[#e3f6ee] text-[#1f9d5b]" },
+  { icon: Briefcase, title: tk("Plan your future"), text: tk("Projects and career"), color: "bg-[#fff4d6] text-[#c27c00]" },
 ];
 
 /** Day key and labels in school time (Cairo). */
 const CAIRO = "Africa/Cairo";
 const dayKey = (iso: string) => new Date(iso).toLocaleDateString("en-CA", { timeZone: CAIRO });
 const dayParts = (iso: string) => ({
-  weekday: new Date(iso).toLocaleDateString("en-GB", { weekday: "short", timeZone: CAIRO }),
-  day: new Date(iso).toLocaleDateString("en-GB", { day: "numeric", timeZone: CAIRO }),
-  month: new Date(iso).toLocaleDateString("en-GB", { month: "long", year: "numeric", timeZone: CAIRO }),
+  weekday: new Date(iso).toLocaleDateString(dateLocale("en-GB"), { weekday: "short", timeZone: CAIRO }),
+  day: new Date(iso).toLocaleDateString(dateLocale("en-GB"), { day: "numeric", timeZone: CAIRO }),
+  month: new Date(iso).toLocaleDateString(dateLocale("en-GB"), { month: "long", year: "numeric", timeZone: CAIRO }),
 });
 const timeLabel = (iso: string) =>
-  new Date(iso).toLocaleTimeString("en-GB", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: CAIRO }).toUpperCase();
+  new Date(iso).toLocaleTimeString(dateLocale("en-GB"), { hour: "numeric", minute: "2-digit", hour12: true, timeZone: CAIRO }).toUpperCase();
 
 const DAYS_SHOWN = 5;
 
@@ -99,31 +101,34 @@ function Chip({ children }: { children: React.ReactNode }) {
 }
 
 function Availability({ text }: { text: string }) {
-  return <span className="rounded-full bg-[#c9f2d6] px-[0.6em] py-[0.15em] text-[0.7em] font-semibold text-[#1f7a43]">{text}</span>;
+  const t = useT();
+  return <span className="rounded-full bg-[#c9f2d6] px-[0.6em] py-[0.15em] text-[0.7em] font-semibold text-[#1f7a43]">{t(text)}</span>;
 }
 
 function Select<T extends string>({ value, onChange, options, label }: { value: T; onChange: (v: T) => void; options: { id: T; label: string }[]; label: string }) {
+  const t = useT();
   return (
     <label className="relative">
       <span className="sr-only">{label}</span>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value as T)}
-        className="h-[2.9em] appearance-none rounded-[0.9em] border border-[#e1e8f0] bg-white pl-[1.1em] pr-[2.6em] text-[0.9em] text-[#14365a] outline-none focus:ring-2 focus:ring-[#12939b]/30"
+        className="h-[2.9em] appearance-none rounded-[0.9em] border border-[#e1e8f0] bg-white ps-[1.1em] pe-[2.6em] text-[0.9em] text-[#14365a] outline-none focus:ring-2 focus:ring-[#12939b]/30"
       >
         {options.map((o) => (
           <option key={o.id} value={o.id}>
-            {o.label}
+            {t(o.label)}
           </option>
         ))}
       </select>
-      <ChevronDown className="pointer-events-none absolute right-[0.9em] top-1/2 h-[1em] w-[1em] -translate-y-1/2 text-[#14365a]" />
+      <ChevronDown className="pointer-events-none absolute end-[0.9em] top-1/2 h-[1em] w-[1em] -translate-y-1/2 text-[#14365a]" />
     </label>
   );
 }
 
 /** Figma "Choose Your Mentor": the student's mentor in each track, the mentors of their tracks, and booking a session. */
 export default function ChooseMentorPage() {
+  const t = useT();
   const [mentors, setMentors] = useState<Mentor[] | null>(null);
   const [mine, setMine] = useState<MentorAssignment[]>([]);
   const [sessions, setSessions] = useState<MentorSession[]>([]);
@@ -157,8 +162,8 @@ export default function ChooseMentorPage() {
     const list = mentors ?? [];
     const uniq = (xs: string[]) => [...new Set(xs)].sort();
     return {
-      tracks: [{ id: "all", label: "All My Tracks" }, ...uniq(list.map((m) => m.trackCode)).map((c) => ({ id: c, label: trackName(c) }))],
-      skills: [{ id: "all", label: "All Skills" }, ...uniq(list.flatMap((m) => m.skills)).map((s) => ({ id: s, label: s }))],
+      tracks: [{ id: "all", label: t("All My Tracks") }, ...uniq(list.map((m) => m.trackCode)).map((c) => ({ id: c, label: trackName(c) }))],
+      skills: [{ id: "all", label: t("All Skills") }, ...uniq(list.flatMap((m) => m.skills)).map((s) => ({ id: s, label: s }))],
     };
   })();
   const shown = (() => {
@@ -206,14 +211,14 @@ export default function ChooseMentorPage() {
   }
 
   return (
-    <div className="relative min-w-0 flex-1 pb-8 pr-3 sm:pr-4 lg:absolute lg:inset-0 lg:overflow-y-auto lg:pb-[calc(var(--u)*2)] lg:pl-[var(--hl)] lg:pr-[calc(var(--u)*1.6)] lg:pt-[calc(var(--u)*6.5)]">
+    <div className="relative min-w-0 flex-1 pb-8 pe-3 sm:pe-4 lg:absolute lg:inset-0 lg:overflow-y-auto lg:pb-[calc(var(--u)*2)] lg:ps-[var(--hl)] lg:pe-[calc(var(--u)*1.6)] lg:pt-[calc(var(--u)*6.5)]">
       <div style={{ fontSize: "clamp(11px, calc(var(--u) * 1.05), 16px)" }}>
         {/* ---------- Title, features and your mentors ---------- */}
         <div className="grid gap-[1.2em] lg:grid-cols-[1fr_minmax(0,38em)]">
           <section className="flex flex-col justify-between gap-[1.2em] rounded-[1.6em] bg-white/35 p-[1.4em] backdrop-blur-sm">
             <div>
-              <h1 className="text-[2.6em] font-extrabold leading-tight text-[#14365a]">Choose Your Mentor</h1>
-              <p className="mt-[0.3em] text-[0.95em] text-[#14365a]">Track your journey, achievements and growth</p>
+              <h1 className="text-[2.6em] font-extrabold leading-tight text-[#14365a]">{t("Choose Your Mentor")}</h1>
+              <p className="mt-[0.3em] text-[0.95em] text-[#14365a]">{t("Track your journey, achievements and growth")}</p>
             </div>
             <ul className="grid gap-[0.8em] rounded-[1.4em] bg-white p-[1em] shadow-[0_6px_22px_rgba(20,54,90,0.07)] sm:grid-cols-3">
               {FEATURES.map((f) => (
@@ -222,8 +227,8 @@ export default function ChooseMentorPage() {
                     <f.icon className="h-[1.1em] w-[1.1em]" />
                   </span>
                   <span className="min-w-0">
-                    <span className="block text-[0.85em] font-bold text-[#14365a]">{f.title}</span>
-                    <span className="block text-[0.7em] text-[#14365a]/70">{f.text}</span>
+                    <span className="block text-[0.85em] font-bold text-[#14365a]">{t(f.title)}</span>
+                    <span className="block text-[0.7em] text-[#14365a]/70">{t(f.text)}</span>
                   </span>
                 </li>
               ))}
@@ -232,12 +237,12 @@ export default function ChooseMentorPage() {
 
           <section aria-labelledby="your-mentor" className="rounded-[1.6em] bg-white p-[1.2em] shadow-[0_6px_22px_rgba(20,54,90,0.07)]">
             <h2 id="your-mentor" className="text-[1.3em] font-extrabold text-[#14365a]">
-              {mine.length > 1 ? "Your Mentors" : "Your Mentor"}
+              {mine.length > 1 ? t("Your Mentors") : t("Your Mentor")}
             </h2>
             {!mentors ? (
               <LoaderCircle className="mx-auto my-[2em] h-[2em] w-[2em] animate-spin text-[#12939b]" />
             ) : mine.length === 0 ? (
-              <p className="mt-[0.8em] text-[0.95em] text-[#14365a]/75">You don&apos;t have a mentor yet. Choose one below.</p>
+              <p className="mt-[0.8em] text-[0.95em] text-[#14365a]/75">{t("You don't have a mentor yet. Choose one below.")}</p>
             ) : mine.length === 1 ? (
               <div className="mt-[0.6em] flex flex-wrap items-center gap-[1.2em]">
                 <Avatar mentor={mine[0].mentor} className="h-[9em] w-[9em]" />
@@ -247,8 +252,8 @@ export default function ChooseMentorPage() {
                     <Rating value={mine[0].mentor.rating} />
                   </div>
                   <p className="mt-[0.2em] text-[1.35em] font-bold text-[#14365a]">{mine[0].mentor.fullName}</p>
-                  <p className="text-[1em] text-[#14365a]">{mine[0].mentor.title}</p>
-                  <p className="text-[0.9em] text-[#14365a]/75">{trackName(mine[0].mentor.trackCode)} mentor</p>
+                  <p className="text-[1em] text-[#14365a]">{t(mine[0].mentor.title)}</p>
+                  <p className="text-[0.9em] text-[#14365a]/75">{t("{track} mentor", { track: trackName(mine[0].mentor.trackCode) })}</p>
                 </div>
                 <div className="flex flex-col gap-[0.5em]">
                   {mine[0].mentor.skills.slice(0, 3).map((s) => (
@@ -263,7 +268,7 @@ export default function ChooseMentorPage() {
                     <Avatar mentor={a.mentor} className="h-[3.6em] w-[3.6em]" />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-[1em] font-bold text-[#14365a]">{a.mentor.fullName}</p>
-                      <p className="truncate text-[0.8em] text-[#14365a]/75">{a.mentor.title}</p>
+                      <p className="truncate text-[0.8em] text-[#14365a]/75">{t(a.mentor.title)}</p>
                     </div>
                     <span className="rounded-full bg-[#eaf3fb] px-[0.7em] py-[0.2em] text-[0.75em] font-bold text-[#14365a]">
                       {trackName(a.mentor.trackCode)}
@@ -275,17 +280,17 @@ export default function ChooseMentorPage() {
 
             {sessions.length > 0 && (
               <div className="mt-[1em] border-t border-[#e8eef5] pt-[0.8em]">
-                <h3 className="text-[0.9em] font-bold text-[#14365a]">Your sessions</h3>
+                <h3 className="text-[0.9em] font-bold text-[#14365a]">{t("Your sessions")}</h3>
                 <ul className="mt-[0.4em] grid gap-[0.4em]">
                   {sessions.map((s) => (
                     <li key={s.id} className="flex items-center gap-[0.6em] rounded-[0.8em] bg-[#e9f7f4] px-[0.8em] py-[0.5em] text-[0.85em] text-[#14365a]">
                       <CalendarCheck className="h-[1.2em] w-[1.2em] shrink-0 text-[#12939b]" />
                       <span className="min-w-0 flex-1">
-                        <span className="font-bold">{s.type === "OneToOne" ? "1:1" : "Group"} session</span> with {s.mentor.fullName} ·{" "}
-                        {sessionTime(s.startsUtc)}
+                        <span className="font-bold">{s.type === "OneToOne" ? t("1:1 session") : t("Group session")}</span>{" "}
+                        {t("with {name}", { name: s.mentor.fullName })} · {sessionTime(s.startsUtc)}
                       </span>
                       <button type="button" onClick={() => cancel(s)} className="text-[0.85em] font-semibold text-[#b83232] hover:underline">
-                        Cancel
+                        {t("Cancel")}
                       </button>
                     </li>
                   ))}
@@ -296,22 +301,22 @@ export default function ChooseMentorPage() {
         </div>
 
         {/* ---------- Mentors of your tracks, and the selected mentor ---------- */}
-        <section aria-label="Mentors" className="mt-[1.2em] rounded-[1.6em] bg-white p-[1.2em] shadow-[0_6px_22px_rgba(20,54,90,0.07)]">
+        <section aria-label={t("Mentors")} className="mt-[1.2em] rounded-[1.6em] bg-white p-[1.2em] shadow-[0_6px_22px_rgba(20,54,90,0.07)]">
           <div className="flex flex-wrap items-center gap-[0.8em]">
             <label className="relative min-w-[14em] flex-1">
-              <Search className="pointer-events-none absolute left-[1em] top-1/2 h-[1.1em] w-[1.1em] -translate-y-1/2 text-[#14365a]/55" />
+              <Search className="pointer-events-none absolute start-[1em] top-1/2 h-[1.1em] w-[1.1em] -translate-y-1/2 text-[#14365a]/55" />
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search a mentor..."
-                aria-label="Search a mentor"
-                className="h-[2.9em] w-full rounded-[0.9em] border border-[#e1e8f0] bg-white pl-[2.8em] pr-[1em] text-[0.9em] text-[#14365a] outline-none placeholder:text-[#14365a]/45 focus:ring-2 focus:ring-[#12939b]/30"
+                placeholder={t("Search a mentor...")}
+                aria-label={t("Search a mentor")}
+                className="h-[2.9em] w-full rounded-[0.9em] border border-[#e1e8f0] bg-white ps-[2.8em] pe-[1em] text-[0.9em] text-[#14365a] outline-none placeholder:text-[#14365a]/45 focus:ring-2 focus:ring-[#12939b]/30"
               />
             </label>
-            <Select label="Skill" value={skill} onChange={setSkill} options={options.skills} />
-            <Select label="Track" value={track} onChange={setTrack} options={options.tracks} />
-            <span className="ml-auto flex items-center gap-[0.6em] text-[0.9em] text-[#14365a]">
-              Sort by <Select label="Sort by" value={sort} onChange={setSort} options={SORTS} />
+            <Select label={t("Skill")} value={skill} onChange={setSkill} options={options.skills} />
+            <Select label={t("Track")} value={track} onChange={setTrack} options={options.tracks} />
+            <span className="ms-auto flex items-center gap-[0.6em] text-[0.9em] text-[#14365a]">
+              {t("Sort by")} <Select label={t("Sort by")} value={sort} onChange={setSort} options={SORTS} />
             </span>
           </div>
 
@@ -324,7 +329,7 @@ export default function ChooseMentorPage() {
 
           <div className="mt-[1em] grid items-start gap-[1em] xl:grid-cols-[1fr_minmax(0,27em)]">
             <ul className="grid gap-[0.9em] md:grid-cols-2">
-              {mentors && shown.length === 0 && <p className="py-[3em] text-center text-[0.95em] text-[#14365a]/65 md:col-span-2">No mentor matches these filters.</p>}
+              {mentors && shown.length === 0 && <p className="py-[3em] text-center text-[0.95em] text-[#14365a]/65 md:col-span-2">{t("No mentor matches these filters.")}</p>}
               {shown.map((m) => (
                 <li
                   key={m.id}
@@ -338,9 +343,9 @@ export default function ChooseMentorPage() {
                         <Rating value={m.rating} />
                       </div>
                       <p className="mt-[0.2em] truncate text-[1.2em] font-bold text-[#14365a]">{m.fullName}</p>
-                      <p className="text-[0.9em] text-[#14365a]">{m.title}</p>
+                      <p className="text-[0.9em] text-[#14365a]">{t(m.title)}</p>
                       <p className="text-[0.8em] text-[#14365a]/70">
-                        {trackName(m.trackCode)} · {m.yearsOfExperience} years{m.isMyMentor ? " · Your mentor" : ""}
+                        {trackName(m.trackCode)} · {t("{n} years", { n: m.yearsOfExperience })}{m.isMyMentor ? ` · ${t("Your mentor")}` : ""}
                       </p>
                     </div>
                   </div>
@@ -356,14 +361,14 @@ export default function ChooseMentorPage() {
                       onClick={() => openProfile(m)}
                       className="h-[2.8em] rounded-[0.6em] border border-[#e1e8f0] text-[0.95em] font-semibold text-[#14365a] hover:bg-[#f4f8fc]"
                     >
-                      View Profile
+                      {t("View Profile")}
                     </button>
                     <button
                       type="button"
                       onClick={() => setSelectedId(m.id)}
                       className="h-[2.8em] rounded-[0.6em] bg-[#14365a] text-[0.95em] font-semibold text-white hover:bg-[#0f2a47]"
                     >
-                      {m.id === selectedId ? "Selected" : "Select Mentor"}
+                      {m.id === selectedId ? t("Selected") : t("Select Mentor")}
                     </button>
                   </div>
                 </li>
@@ -386,7 +391,7 @@ export default function ChooseMentorPage() {
         <div
           role="dialog"
           aria-modal="true"
-          aria-label="Mentor profile"
+          aria-label={t("Mentor profile")}
           className="fixed inset-0 z-[70] grid place-items-center bg-[#14365a]/40 p-4"
           onClick={(e) => e.target === e.currentTarget && setProfile(null)}
         >
@@ -399,28 +404,29 @@ export default function ChooseMentorPage() {
                   <Avatar mentor={profile.mentor} className="size-24" />
                   <div className="min-w-0 flex-1">
                     <p className="text-xl font-bold">{profile.mentor.fullName}</p>
-                    <p className="text-sm">{profile.mentor.title}</p>
+                    <p className="text-sm">{t(profile.mentor.title)}</p>
                     <div className="mt-1 text-base">
                       <Rating value={profile.mentor.rating} />
                     </div>
                   </div>
-                  <button type="button" onClick={() => setProfile(null)} aria-label="Close" className="grid size-9 place-items-center rounded-full hover:bg-slate-100">
+                  <button type="button" onClick={() => setProfile(null)} aria-label={t("Close")} className="grid size-9 place-items-center rounded-full hover:bg-slate-100">
                     <X className="size-5" />
                   </button>
                 </div>
                 <p className="mt-4 text-sm leading-relaxed text-[#14365a]/85">{profile.mentor.bio}</p>
                 <dl className="mt-4 grid gap-2 text-sm">
                   <div className="flex items-center gap-2">
-                    <Briefcase className="size-4 text-[#12939b]" /> {profile.mentor.yearsOfExperience} years experience · {trackName(profile.mentor.trackCode)}
+                    <Briefcase className="size-4 text-[#12939b]" /> {t("{n} years experience", { n: profile.mentor.yearsOfExperience })} · {trackName(profile.mentor.trackCode)}
                   </div>
                   <div className="flex items-center gap-2">
-                    <MessagesSquare className="size-4 text-[#12939b]" /> {profile.mentor.availability}
+                    <MessagesSquare className="size-4 text-[#12939b]" /> {t(profile.mentor.availability)}
                   </div>
                   <div className="flex items-center gap-2">
-                    <Languages className="size-4 text-[#12939b]" /> {profile.mentor.languages.join(", ")}
+                    <Languages className="size-4 text-[#12939b]" /> {profile.mentor.languages.map((l) => t(l)).join(t(", "))}
                   </div>
                   <div className="flex items-center gap-2">
-                    <Users className="size-4 text-[#12939b]" /> Mentoring {profile.currentStudents} {profile.currentStudents === 1 ? "student" : "students"} now
+                    <Users className="size-4 text-[#12939b]" />{" "}
+                    {profile.currentStudents === 1 ? t("Mentoring 1 student now") : t("Mentoring {n} students now", { n: profile.currentStudents })}
                   </div>
                 </dl>
                 <div className="mt-4 flex flex-wrap gap-1.5 text-base">
@@ -436,7 +442,7 @@ export default function ChooseMentorPage() {
                   }}
                   className="mt-6 h-11 w-full rounded-xl bg-[#14365a] text-sm font-semibold text-white hover:bg-[#0f2a47]"
                 >
-                  Book a session
+                  {t("Book a session")}
                 </button>
               </>
             )}
@@ -449,6 +455,7 @@ export default function ChooseMentorPage() {
 
 /** Figma "Selected Mentor": the session type, a day and a time from the mentor's slots, then Book Session. */
 function BookingPanel({ mentor, onMakeMine, onBooked }: { mentor: Mentor; onMakeMine: () => Promise<void>; onBooked: (s: MentorSession) => void }) {
+  const t = useT();
   const [slots, setSlots] = useState<MentorSlots | null>(null);
   const [failed, setFailed] = useState<string | null>(null);
   const [type, setType] = useState<SessionType>("OneToOne");
@@ -497,8 +504,8 @@ function BookingPanel({ mentor, onMakeMine, onBooked }: { mentor: Mentor; onMake
   }
 
   return (
-    <aside aria-label="Selected mentor" className="rounded-[1.2em] border border-[#e8eef5] p-[1.2em] text-[#14365a] xl:sticky xl:top-0">
-      <h2 className="text-[1.25em] font-extrabold">Selected Mentor</h2>
+    <aside aria-label={t("Selected mentor")} className="rounded-[1.2em] border border-[#e8eef5] p-[1.2em] text-[#14365a] xl:sticky xl:top-0">
+      <h2 className="text-[1.25em] font-extrabold">{t("Selected Mentor")}</h2>
       <div className="mt-[0.8em] flex items-center gap-[1em]">
         <Avatar mentor={mentor} className="h-[7.5em] w-[7.5em]" />
         <div className="min-w-0">
@@ -507,7 +514,7 @@ function BookingPanel({ mentor, onMakeMine, onBooked }: { mentor: Mentor; onMake
             <Rating value={mentor.rating} />
           </div>
           <p className="mt-[0.2em] text-[1.25em] font-bold">{mentor.fullName}</p>
-          <p className="text-[0.9em]">{mentor.title}</p>
+          <p className="text-[0.9em]">{t(mentor.title)}</p>
           <p className="text-[0.8em] text-[#14365a]/70">{trackName(mentor.trackCode)}</p>
         </div>
       </div>
@@ -528,16 +535,16 @@ function BookingPanel({ mentor, onMakeMine, onBooked }: { mentor: Mentor; onMake
           }}
           className="mt-[0.8em] text-[0.85em] font-semibold text-[#12939b] hover:underline disabled:opacity-60"
         >
-          {making ? "Saving…" : `Make ${mentor.fullName.split(" ")[0]} my ${trackName(mentor.trackCode)} mentor`}
+          {making ? t("Saving…") : t("Make {name} my {track} mentor", { name: mentor.fullName.split(" ")[0], track: trackName(mentor.trackCode) })}
         </button>
       )}
 
-      <h3 className="mt-[1.2em] text-[1em] font-bold">Session Type</h3>
+      <h3 className="mt-[1.2em] text-[1em] font-bold">{t("Session Type")}</h3>
       <div className="mt-[0.5em] grid grid-cols-2 gap-[0.6em]">
         {(
           [
-            { id: "OneToOne", icon: User, title: "1:1 Session", text: `${slots?.durationMinutes ?? 45} min, just you` },
-            { id: "Group", icon: Users, title: "Group Session", text: `Up to ${slots?.groupCapacity ?? 5} students` },
+            { id: "OneToOne", icon: User, title: t("1:1 Session"), text: t("{n} min, just you", { n: slots?.durationMinutes ?? 45 }) },
+            { id: "Group", icon: Users, title: t("Group Session"), text: t("Up to {n} students", { n: slots?.groupCapacity ?? 5 }) },
           ] as const
         ).map((o) => (
           <button
@@ -548,7 +555,7 @@ function BookingPanel({ mentor, onMakeMine, onBooked }: { mentor: Mentor; onMake
               setType(o.id);
               setTime(null);
             }}
-            className={`flex items-center gap-[0.6em] rounded-[0.8em] border px-[0.8em] py-[0.7em] text-left ${
+            className={`flex items-center gap-[0.6em] rounded-[0.8em] border px-[0.8em] py-[0.7em] text-start ${
               type === o.id ? "border-[#12939b] bg-[#e3f6fb]" : "border-transparent bg-[#f2f5f8] hover:bg-[#e9eef3]"
             }`}
           >
@@ -561,17 +568,17 @@ function BookingPanel({ mentor, onMakeMine, onBooked }: { mentor: Mentor; onMake
         ))}
       </div>
 
-      <h3 className="mt-[1.2em] text-[1em] font-bold">Choose Date &amp; Time</h3>
+      <h3 className="mt-[1.2em] text-[1em] font-bold">{t("Choose Date & Time")}</h3>
       {failed && <p className="mt-[0.5em] text-[0.85em] text-[#b83232]">{failed}</p>}
       {!slots && !failed && <LoaderCircle className="mx-auto my-[1.5em] h-[1.6em] w-[1.6em] animate-spin text-[#12939b]" />}
-      {slots && days.length === 0 && <p className="mt-[0.5em] text-[0.85em] text-[#14365a]/70">This mentor has no session times yet.</p>}
+      {slots && days.length === 0 && <p className="mt-[0.5em] text-[0.85em] text-[#14365a]/70">{t("This mentor has no session times yet.")}</p>}
       {slots && days.length > 0 && (
         <>
           <div className="mt-[0.5em] rounded-[1em] border border-[#e8eef5] p-[0.8em]">
             <div className="flex items-center justify-between">
               <button
                 type="button"
-                aria-label="Earlier days"
+                aria-label={t("Earlier days")}
                 disabled={page === 0}
                 onClick={() => setPage(page - 1)}
                 className="grid h-[2em] w-[2em] place-items-center rounded-full hover:bg-[#f2f5f8] disabled:opacity-30"
@@ -581,7 +588,7 @@ function BookingPanel({ mentor, onMakeMine, onBooked }: { mentor: Mentor; onMake
               <span className="text-[0.95em] font-semibold">{firstOfPage ? dayParts(firstOfPage.startsUtc).month : ""}</span>
               <button
                 type="button"
-                aria-label="Later days"
+                aria-label={t("Later days")}
                 disabled={(page + 1) * DAYS_SHOWN >= days.length}
                 onClick={() => setPage(page + 1)}
                 className="grid h-[2em] w-[2em] place-items-center rounded-full hover:bg-[#f2f5f8] disabled:opacity-30"
@@ -621,15 +628,15 @@ function BookingPanel({ mentor, onMakeMine, onBooked }: { mentor: Mentor; onMake
                 disabled={!free(s)}
                 aria-pressed={time === s.startsUtc}
                 onClick={() => setTime(s.startsUtc)}
-                title={s.bookedByMe ? "You booked this time" : !free(s) ? "Not available" : undefined}
+                title={s.bookedByMe ? t("You booked this time") : !free(s) ? t("Not available") : undefined}
                 className={`rounded-[0.6em] border py-[0.55em] text-[0.8em] font-semibold disabled:cursor-not-allowed disabled:opacity-40 ${
                   time === s.startsUtc ? "border-[#14365a] bg-[#14365a] text-white" : "border-[#e1e8f0] hover:bg-[#f2f5f8]"
                 }`}
               >
                 {timeLabel(s.startsUtc)}
-                {s.bookedByMe && <span className="block text-[0.8em]">Booked</span>}
+                {s.bookedByMe && <span className="block text-[0.8em]">{t("Booked")}</span>}
                 {!s.bookedByMe && type === "Group" && s.groupSpotsLeft > 0 && (
-                  <span className="block text-[0.8em] font-normal">{s.groupSpotsLeft} places</span>
+                  <span className="block text-[0.8em] font-normal">{t("{n} places", { n: s.groupSpotsLeft })}</span>
                 )}
               </button>
             ))}
@@ -646,7 +653,8 @@ function BookingPanel({ mentor, onMakeMine, onBooked }: { mentor: Mentor; onMake
         <p role="status" className="mt-[0.8em] flex items-start gap-[0.5em] rounded-[0.6em] bg-[#e6f6ec] px-[0.8em] py-[0.6em] text-[0.85em] text-[#1b5e36]">
           <CircleCheck className="mt-[0.1em] h-[1.1em] w-[1.1em] shrink-0" />
           <span>
-            You have a {booked.type === "OneToOne" ? "1:1" : "group"} session with <b>{booked.mentor.fullName}</b> on <b>{sessionTime(booked.startsUtc)}</b>.
+            {booked.type === "OneToOne" ? t("You have a 1:1 session with") : t("You have a group session with")} <b>{booked.mentor.fullName}</b>{" "}
+            {t("on")} <b>{sessionTime(booked.startsUtc)}</b>.
           </span>
         </p>
       )}
@@ -657,7 +665,7 @@ function BookingPanel({ mentor, onMakeMine, onBooked }: { mentor: Mentor; onMake
         className="mt-[1em] flex h-[3em] w-full items-center justify-center gap-[0.5em] rounded-[0.8em] bg-[#14365a] text-[1em] font-semibold text-white hover:bg-[#0f2a47] disabled:opacity-50"
       >
         {busy && <LoaderCircle className="h-[1.1em] w-[1.1em] animate-spin" />}
-        Book Session
+        {t("Book Session")}
       </button>
     </aside>
   );

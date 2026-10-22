@@ -15,6 +15,7 @@ import {
   type Sprint,
   type TaskBoard,
 } from "@/lib/interns-api";
+import { tk, tNow } from "@/lib/i18n/translate";
 
 /** The student's chosen avatar, or a default from the same avatar pack, by their place in the squad. */
 export function avatarFor(photoUrl: string | null, index: number) {
@@ -28,31 +29,31 @@ export function memberIndex(squad: Squad | null): Map<string, number> {
 }
 
 export const ROLE_TITLE: Record<SquadRole, string> = {
-  Frontend: "Front-end Developer",
-  Backend: "Back-end Developer",
-  UIUX: "UI/UX Designer",
-  AI: "AI Engineer",
-  Testing: "QA Tester",
-  Data: "Data Analyst",
-  Mobile: "Mobile Developer",
-  Gaming: "Game Developer",
+  Frontend: tk("Front-end Developer"),
+  Backend: tk("Back-end Developer"),
+  UIUX: tk("UI/UX Designer"),
+  AI: tk("AI Engineer"),
+  Testing: tk("QA Tester"),
+  Data: tk("Data Analyst"),
+  Mobile: tk("Mobile Developer"),
+  Gaming: tk("Game Developer"),
 };
 
 /** Task tags, coloured like the Figma (Backend red, Frontend orange). */
 export const ROLE_TAG: Record<SquadRole, { label: string; bg: string; text: string }> = {
-  Frontend: { label: "Frontend", bg: "#ffdcc8", text: "#c2571a" },
-  Backend: { label: "Backend", bg: "#fbd5d5", text: "#b83232" },
-  UIUX: { label: "UI/UX", bg: "#fbd5ea", text: "#b8327a" },
-  AI: { label: "AI", bg: "#e6dcfb", text: "#6b2fd1" },
-  Testing: { label: "Testing", bg: "#d7f5e4", text: "#1f9d5b" },
-  Data: { label: "Data", bg: "#dcecfb", text: "#2f7fd6" },
-  Mobile: { label: "Mobile", bg: "#fff1c9", text: "#a86a00" },
-  Gaming: { label: "Gaming", bg: "#e1e4ea", text: "#14365a" },
+  Frontend: { label: tk("Frontend"), bg: "#ffdcc8", text: "#c2571a" },
+  Backend: { label: tk("Backend"), bg: "#fbd5d5", text: "#b83232" },
+  UIUX: { label: tk("UI/UX"), bg: "#fbd5ea", text: "#b8327a" },
+  AI: { label: tk("AI"), bg: "#e6dcfb", text: "#6b2fd1" },
+  Testing: { label: tk("Testing"), bg: "#d7f5e4", text: "#1f9d5b" },
+  Data: { label: tk("Data"), bg: "#dcecfb", text: "#2f7fd6" },
+  Mobile: { label: tk("Mobile"), bg: "#fff1c9", text: "#a86a00" },
+  Gaming: { label: tk("Gaming"), bg: "#e1e4ea", text: "#14365a" },
 };
 
 function friendly(e: unknown) {
-  if (e instanceof ApiError && e.code === "NO_SQUAD") return "You are not in a squad yet. Your school will add you to one soon.";
-  if (e instanceof ApiError && e.code === "NO_ACTIVE_SPRINT") return "Your squad has no sprint running right now.";
+  if (e instanceof ApiError && e.code === "NO_SQUAD") return tNow("You are not in a squad yet. Your school will add you to one soon.");
+  if (e instanceof ApiError && e.code === "NO_ACTIVE_SPRINT") return tNow("Your squad has no sprint running right now.");
   return errorMessage(e, "We couldn't load your squad. Please try again.");
 }
 

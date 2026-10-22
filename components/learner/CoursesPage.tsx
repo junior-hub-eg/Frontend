@@ -10,6 +10,8 @@ import { mentorAvatar } from "@/lib/avatars";
 import { getAchievements, getTrack, getTrackLessons, getTracks, trackPath, type TrackSummary } from "@/lib/learning-api";
 import { getMentors, type Mentor } from "@/lib/mentorship-api";
 import MyCourses from "./MyCourses";
+import { useT } from "@/lib/i18n/client";
+import { tk } from "@/lib/i18n/translate";
 
 const IMG = "/images/Intern";
 
@@ -63,12 +65,13 @@ async function load(): Promise<Loaded> {
   return { courses, badges: achievements?.badges.length ?? 0 };
 }
 
-const SORTS = ["Top Rated", "Name"] as const;
+const SORTS = [tk("Top Rated"), tk("Name")] as const;
 type Sort = (typeof SORTS)[number];
 
 const card = "rounded-[1.4em] border border-[#e8eef5] bg-white shadow-[0_6px_22px_rgba(20,54,90,0.07)]";
 
 export default function CoursesPage() {
+  const t = useT();
   // Only the courses of the student's tracks; Change / Add track opens the other tracks.
   const [browsing, setBrowsing] = useState(false);
   const [sort, setSort] = useState<Sort>("Top Rated");
@@ -90,10 +93,10 @@ export default function CoursesPage() {
   const courses = data?.courses ?? [];
   const learning = courses.filter((c) => c.isLearning);
   const stats = [
-    { icon: BookOpen, label: "Tracks You Learn", value: data ? `${learning.length}/${courses.length}` : "–", color: "#12939b", bg: "#e0f4f4" },
-    { icon: CheckCircle2, label: "Lessons Completed", value: data ? String(courses.reduce((n, c) => n + c.lessonsDone, 0)) : "–", color: "#2fb36b", bg: "#e6f5ec" },
-    { icon: Trophy, label: "Track Quizzes Passed", value: data ? String(learning.filter((c) => c.quizPassed).length) : "–", color: "#d9a21b", bg: "#fff4d6" },
-    { icon: Award, label: "Badges Earned", value: data ? String(data.badges) : "–", color: "#14365a", bg: "#e4ecf5" },
+    { icon: BookOpen, label: t("Tracks You Learn"), value: data ? `${learning.length}/${courses.length}` : "–", color: "#12939b", bg: "#e0f4f4" },
+    { icon: CheckCircle2, label: t("Lessons Completed"), value: data ? String(courses.reduce((n, c) => n + c.lessonsDone, 0)) : "–", color: "#2fb36b", bg: "#e6f5ec" },
+    { icon: Trophy, label: t("Track Quizzes Passed"), value: data ? String(learning.filter((c) => c.quizPassed).length) : "–", color: "#d9a21b", bg: "#fff4d6" },
+    { icon: Award, label: t("Badges Earned"), value: data ? String(data.badges) : "–", color: "#14365a", bg: "#e4ecf5" },
   ];
 
   const sorted = (list: Course[]) =>
@@ -104,10 +107,10 @@ export default function CoursesPage() {
   const listed = sorted(courses).sort((a, b) => Number(b.isLearning) - Number(a.isLearning));
 
   return (
-    <div className="relative -ml-[4rem] min-h-[calc(100svh-5rem)] min-w-0 flex-1 bg-[#fbfdff] lg:absolute lg:inset-0 lg:ml-0 lg:min-h-0">
+    <div className="relative -ms-[4rem] min-h-[calc(100svh-5rem)] min-w-0 flex-1 bg-[#fbfdff] lg:absolute lg:inset-0 lg:ms-0 lg:min-h-0">
       {/* Desktop: one screen, no page scroll. The lower sections shrink to fit the window height. */}
       <div
-        className="relative min-w-0 pb-8 pl-[4.75rem] pr-3 pt-2 sm:pr-4 lg:absolute lg:inset-0 lg:flex lg:flex-col lg:overflow-hidden lg:pb-[calc(var(--u)*1.6)] lg:pl-[var(--hl)] lg:pr-[calc(var(--u)*1.6)] lg:pt-[calc(var(--u)*6.5)]"
+        className="relative min-w-0 pb-8 ps-[4.75rem] pe-3 pt-2 sm:pe-4 lg:absolute lg:inset-0 lg:flex lg:flex-col lg:overflow-hidden lg:pb-[calc(var(--u)*1.6)] lg:ps-[var(--hl)] lg:pe-[calc(var(--u)*1.6)] lg:pt-[calc(var(--u)*6.5)]"
         style={{ fontSize: "clamp(11px, calc(var(--u) * 1.05), 17px)" }}
       >
         {/* ---------- Header (the cover also sits behind the top bar: search / EN / profile) ---------- */}
@@ -115,15 +118,15 @@ export default function CoursesPage() {
           <Image src={COVER_IMG} alt="" fill priority sizes="100vw" className="object-cover object-top" />
 
           {/* Courses building (right side) */}
-          <div className="pointer-events-none absolute bottom-0 right-[3%] hidden h-[82%] w-[26%] lg:block">
+          <div className="pointer-events-none absolute bottom-0 end-[3%] hidden h-[82%] w-[26%] lg:block">
             <Image src={BUILDING_IMG} alt="" fill priority sizes="30vw" className="object-contain object-right-bottom" />
           </div>
 
           <div className="relative z-10 flex flex-col gap-[0.7em] p-[1.2em] lg:pt-[0.4em]">
             <div className="max-w-[32em]">
-              <h1 className="text-[2.1em] font-extrabold leading-tight text-[#14365a]">Explore Courses</h1>
+              <h1 className="text-[2.1em] font-extrabold leading-tight text-[#14365a]">{t("Explore Courses")}</h1>
               <p className="text-[0.9em] text-[#14365a]/85">
-                Learn New Skills, Build real projects and Grow with Guides from expert Mentors.
+                {t("Learn New Skills, Build real projects and Grow with Guides from expert Mentors.")}
               </p>
             </div>
 
@@ -152,15 +155,15 @@ export default function CoursesPage() {
               onClick={() => setBrowsing(false)}
               className="flex items-center gap-[0.4em] rounded-full border border-[#e1e8f0] bg-white px-[1em] py-[0.4em] text-[0.85em] font-semibold text-[#12606b] hover:bg-[#eef4fa]"
             >
-              <ArrowLeft className="size-[1.1em]" /> My Courses
+              <ArrowLeft className="size-[1.1em]" /> {t("My Courses")}
             </button>
           )}
           <div className="leading-tight">
-            <h2 className="text-[1.25em] font-extrabold text-[#14365a]">Change or add a track</h2>
-            <p className="text-[0.75em] text-[#14365a]/70">Open a track to see its courses and start learning it.</p>
+            <h2 className="text-[1.25em] font-extrabold text-[#14365a]">{t("Change or add a track")}</h2>
+            <p className="text-[0.75em] text-[#14365a]/70">{t("Open a track to see its courses and start learning it.")}</p>
           </div>
-          <div className="relative ml-auto flex items-center gap-[0.6em] text-[0.9em] text-[#14365a]">
-            Sort by
+          <div className="relative ms-auto flex items-center gap-[0.6em] text-[0.9em] text-[#14365a]">
+            {t("Sort by")}
             <button
               type="button"
               onClick={() => setSortOpen((o) => !o)}
@@ -168,10 +171,10 @@ export default function CoursesPage() {
               aria-expanded={sortOpen}
               className="flex h-[2.4em] items-center gap-[0.8em] rounded-[0.9em] border border-[#e1e8f0] bg-white px-[1.1em] font-medium"
             >
-              {sort} <ChevronDown className="size-[1em]" />
+              {t(sort)} <ChevronDown className="size-[1em]" />
             </button>
             {sortOpen && (
-              <ul role="listbox" className="absolute right-0 top-full z-30 mt-1 min-w-full overflow-hidden rounded-[0.9em] border border-[#e1e8f0] bg-white shadow-lg">
+              <ul role="listbox" className="absolute end-0 top-full z-30 mt-1 min-w-full overflow-hidden rounded-[0.9em] border border-[#e1e8f0] bg-white shadow-lg">
                 {SORTS.map((s) => (
                   <li key={s}>
                     <button
@@ -182,9 +185,9 @@ export default function CoursesPage() {
                         setSort(s);
                         setSortOpen(false);
                       }}
-                      className="w-full whitespace-nowrap px-[1.1em] py-[0.6em] text-left hover:bg-[#eef4fa]"
+                      className="w-full whitespace-nowrap px-[1.1em] py-[0.6em] text-start hover:bg-[#eef4fa]"
                     >
-                      {s}
+                      {t(s)}
                     </button>
                   </li>
                 ))}
@@ -200,7 +203,7 @@ export default function CoursesPage() {
           </p>
         )}
         {!data && !loadError && (
-          <div className="grid flex-1 place-items-center py-[3em]" role="status" aria-label="Loading">
+          <div className="grid flex-1 place-items-center py-[3em]" role="status" aria-label={t("Loading")}>
             <LoaderCircle className="size-8 animate-spin text-[#12939b]" />
           </div>
         )}
@@ -218,7 +221,7 @@ export default function CoursesPage() {
                   key={c.code}
                   className={`${card} relative aspect-[270/125] min-h-0 min-w-0 overflow-hidden rounded-[1.2rem] [container-type:size]`}
                 >
-                  <Link href={trackPath(c.code) as Route} aria-label={`Open ${c.name}`} className="absolute inset-0 z-10" />
+                  <Link href={trackPath(c.code) as Route} aria-label={t("Open {name}", { name: t(c.name) })} className="absolute inset-0 z-10" />
 
                   {/* Everything inside scales with the card size */}
                   <div className="flex h-full w-full gap-[0.8em] p-[0.8em]" style={{ fontSize: "min(calc(100cqw / 22), calc(100cqh / 9.8))" }}>
@@ -229,24 +232,24 @@ export default function CoursesPage() {
                     <div className="flex min-w-0 flex-1 flex-col">
                       <div className="flex items-start justify-between gap-[0.5em]">
                         <span className="w-fit rounded-full px-[0.8em] py-[0.1em] text-[0.7em] font-bold" style={{ backgroundColor: c.theme.tagBg, color: c.theme.tagText }}>
-                          {c.name}
+                          {t(c.name)}
                         </span>
                         {c.isLearning && (
                           <span className="flex items-center gap-[0.3em] text-[0.65em] font-semibold text-[#2fb36b]">
-                            <CheckCircle2 className="size-[1.1em]" /> Learning
+                            <CheckCircle2 className="size-[1.1em]" /> {t("Learning")}
                           </span>
                         )}
                       </div>
 
-                      <h3 className="mt-[0.3em] truncate text-[0.95em] font-extrabold leading-tight text-[#14365a]">{c.name}</h3>
-                      <p className="mt-[0.2em] line-clamp-2 text-[0.68em] leading-snug text-[#14365a]/70">{c.shortDescription}</p>
+                      <h3 className="mt-[0.3em] truncate text-[0.95em] font-extrabold leading-tight text-[#14365a]">{t(c.name)}</h3>
+                      <p className="mt-[0.2em] line-clamp-2 text-[0.68em] leading-snug text-[#14365a]/70">{t(c.shortDescription)}</p>
 
                       <div className="mt-[0.4em] flex items-center gap-[1em] whitespace-nowrap text-[0.7em] text-[#14365a]/80">
                         <span className="flex items-center gap-[0.4em]">
-                          <BookOpen className="size-[1.1em]" /> {c.lessons === null ? "Lessons soon" : `${c.lessons} Lessons`}
+                          <BookOpen className="size-[1.1em]" /> {c.lessons === null ? t("Lessons soon") : t("{n} Lessons", { n: c.lessons })}
                         </span>
                         <span className="flex items-center gap-[0.4em]">
-                          <PlayCircle className="size-[1.1em]" /> {c.videoCount} {c.videoCount === 1 ? "Video" : "Videos"}
+                          <PlayCircle className="size-[1.1em]" /> {c.videoCount === 1 ? t("1 Video") : t("{n} Videos", { n: c.videoCount })}
                         </span>
                       </div>
 
@@ -261,7 +264,7 @@ export default function CoursesPage() {
                             </span>
                             <span className="min-w-0 flex-1 leading-tight">
                               <span className="block truncate text-[0.78em] font-bold text-[#14365a]">{c.mentor.fullName}</span>
-                              <span className="block truncate text-[0.65em] text-[#14365a]/65">{c.mentor.title}</span>
+                              <span className="block truncate text-[0.65em] text-[#14365a]/65">{t(c.mentor.title)}</span>
                             </span>
                             <span className="flex shrink-0 items-center gap-[0.3em] text-[0.7em] font-semibold text-[#14365a]">
                               <Star className="size-[1.1em] fill-[#f5b301] text-[#f5b301]" />
@@ -269,7 +272,7 @@ export default function CoursesPage() {
                             </span>
                           </>
                         ) : (
-                          <span className="text-[0.68em] text-[#14365a]/60">Mentors coming soon</span>
+                          <span className="text-[0.68em] text-[#14365a]/60">{t("Mentors coming soon")}</span>
                         )}
                       </div>
                     </div>

@@ -16,6 +16,8 @@ import { authStyles } from "./auth-styles";
 import { confirmEmail, resendCode, verifyResetCode } from "@/lib/auth/account-api";
 import { resetTokenState } from "@/lib/auth/auth-flow-storage";
 import { errorMessage } from "@/lib/api-client";
+import { useT } from "@/lib/i18n/client";
+import { tk } from "@/lib/i18n/translate";
 
 /** The backend's OneTimeCodes:DemoCode in the Development and Demo environments; no email is sent there. */
 const DEMO_OTP_CODE = "123456";
@@ -23,12 +25,13 @@ const DEMO_OTP_CODE = "123456";
 const RESEND_SECONDS = 30;
 
 const schema = z.object({
-  code: z.string().regex(/^\d{6}$/, "Enter the 6-digit code"),
+  code: z.string().regex(/^\d{6}$/, tk("Enter the 6-digit code")),
 });
 type FormValues = z.infer<typeof schema>;
 
 /** Used after sign-up (?from=signup) and after "Forgot password" (?from=reset). Reads ?email=… from the URL. */
 export function VerifyOtpForm() {
+  const t = useT();
   const router = useRouter();
   const params = useSearchParams();
   const email = params.get("email") ?? "";
@@ -72,7 +75,7 @@ export function VerifyOtpForm() {
       setError(null);
       await resendCode(email, fromSignup ? "Signup" : "PasswordReset");
       reset({ code: "" });
-      setInfo("A new code has been sent to your email.");
+      setInfo(t("A new code has been sent to your email."));
       setSecondsLeft(RESEND_SECONDS);
     } catch (e) {
       setInfo(null);
@@ -86,11 +89,11 @@ export function VerifyOtpForm() {
     return (
       <>
         <BackButton href={backHref} />
-        <AuthHeading title="Verify Your Email" />
+        <AuthHeading title={t("Verify Your Email")} />
         <Alert variant="warning" className="mt-4">
-          We couldn&apos;t find your email.{" "}
+          {t("We couldn't find your email.")}{" "}
           <Link href="/forgot-password" className={authStyles.link}>
-            Start again
+            {t("Start again")}
           </Link>
         </Alert>
       </>
@@ -101,8 +104,8 @@ export function VerifyOtpForm() {
     <>
       <BackButton href={backHref} />
       <AuthHeading
-        title="Verify Your Email"
-        subtitle="We've sent a 6-digit code to your email. Enter it below to continue."
+        title={t("Verify Your Email")}
+        subtitle={t("We've sent a 6-digit code to your email. Enter it below to continue.")}
       />
 
       <form onSubmit={handleSubmit(onSubmit)} noValidate className={authStyles.form}>
@@ -117,28 +120,28 @@ export function VerifyOtpForm() {
           />
           {errors.code && (
             <p role="alert" className="mt-1 px-1 text-xs text-danger">
-              {errors.code.message}
+              {t(errors.code.message ?? "")}
             </p>
           )}
         </div>
 
         <p className={`text-center ${authStyles.smallText}`}>
-          Didn&apos;t receive the code?{" "}
+          {t("Didn't receive the code?")}{" "}
           {secondsLeft > 0 ? (
-            <span className="text-[#1b2a5c]/60">Resend in {secondsLeft}s</span>
+            <span className="text-[#1b2a5c]/60">{t("Resend in {n}s", { n: secondsLeft })}</span>
           ) : (
             <button type="button" onClick={handleResend} className={authStyles.link}>
-              Resend
+              {t("Resend")}
             </button>
           )}
         </p>
 
         <AuthButton type="submit" disabled={isSubmitting}>
-          Verify Code
+          {t("Verify Code")}
         </AuthButton>
 
         {process.env.NODE_ENV !== "production" && (
-          <p className="text-center text-xs text-[#1b2a5c]/60">Demo code: {DEMO_OTP_CODE}</p>
+          <p className="text-center text-xs text-[#1b2a5c]/60">{t("Demo code: {code}", { code: DEMO_OTP_CODE })}</p>
         )}
       </form>
     </>

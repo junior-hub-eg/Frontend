@@ -1,8 +1,11 @@
+"use client";
+
 import Image from "next/image";
 import { Poppins } from "next/font/google";
 import type { ReactNode } from "react";
 import styles from "./AuthLayout.module.css";
 import { Curl, CrossMark, HatchedSquare, WaveLoop } from "./AuthDecorations";
+import { useI18n } from "@/lib/i18n/client";
 
 const poppins = Poppins({
   weight: ["400", "500", "600", "700"],
@@ -19,10 +22,11 @@ interface AuthLayoutProps {
  * Shared decoration layout for all auth pages.
  * Only decoration lives here — put the form inside `children`.
  *
- * The layout is always LTR so the artwork stays on the left. For Arabic forms,
- * set dir="rtl" on your own wrapper inside `children`.
+ * The layout is always LTR so the artwork stays on the left; the form panel
+ * follows the page language (right-to-left in Arabic).
  */
 export default function AuthLayout({ children }: AuthLayoutProps) {
+  const { t, dir } = useI18n();
   return (
     <div dir="ltr" className={`${poppins.variable} ${styles.pageWrapper}`}>
       {/* ---------- Outer decorations (around the card) ---------- */}
@@ -74,16 +78,16 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
           <div className={styles.brand}>
             <Image
               src="/images/Auth/logo.png"
-              alt="Junior Hub"
+              alt={t("Junior Hub")}
               width={305}
               height={60}
               priority
               className={styles.logo}
             />
             <p className={styles.tagline}>
-              Platform built For
+              {t("Platform built For")}
               <br />
-              Your Future
+              {t("Your Future")}
             </p>
           </div>
 
@@ -91,7 +95,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
 
           <Image
             src="/images/Auth/students.png"
-            alt="Students"
+            alt={t("Students")}
             width={1062}
             height={832}
             priority
@@ -106,7 +110,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
         <Curl className={`${styles.inner} ${styles.curlEdge}`} />
 
         {/* Right: form area */}
-        <div className={styles.panel}>
+        <div className={styles.panel} dir={dir}>
           <div className={styles.content}>{children}</div>
         </div>
       </div>

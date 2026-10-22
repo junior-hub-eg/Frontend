@@ -1,13 +1,16 @@
+"use client";
+
 import type { ReactNode } from "react";
 import { CheckCircle2, FlaskConical, RotateCcw, Send } from "lucide-react";
 import type { MyApplication } from "@/lib/recruitment-api";
+import { useT } from "@/lib/i18n/client";
 
 /** Next to the sidebar and under the top bar, like the AI Curriculum pages, and scrolls on its own. */
 export function RecruitmentFrame({ children }: { children: ReactNode }) {
   return (
-    <div className="relative -ml-[4rem] min-h-[calc(100svh-5rem)] min-w-0 flex-1 bg-[#fbfdff] lg:absolute lg:inset-0 lg:ml-0 lg:min-h-0">
+    <div className="relative -ms-[4rem] min-h-[calc(100svh-5rem)] min-w-0 flex-1 bg-[#fbfdff] lg:absolute lg:inset-0 lg:ms-0 lg:min-h-0">
       <div
-        className="relative min-w-0 pb-8 pl-[4.75rem] pr-3 pt-2 sm:pr-4 lg:absolute lg:inset-0 lg:overflow-y-auto lg:pb-[calc(var(--u)*2)] lg:pl-[var(--hl)] lg:pr-[calc(var(--u)*1.6)] lg:pt-[calc(var(--u)*6.5)]"
+        className="relative min-w-0 pb-8 ps-[4.75rem] pe-3 pt-2 sm:pe-4 lg:absolute lg:inset-0 lg:overflow-y-auto lg:pb-[calc(var(--u)*2)] lg:ps-[var(--hl)] lg:pe-[calc(var(--u)*1.6)] lg:pt-[calc(var(--u)*6.5)]"
         style={{ fontSize: "clamp(11px, calc(var(--u) * 1.05), 17px)" }}
       >
         {children}
@@ -18,9 +21,10 @@ export function RecruitmentFrame({ children }: { children: ReactNode }) {
 
 /** BR-12: every Recruitment screen says it is a simulation. */
 export function SimulationBadge() {
+  const t = useT();
   return (
     <span className="inline-flex items-center gap-[0.35em] self-start rounded-full bg-[#fff1d6] px-[0.8em] py-[0.25em] text-[0.75em] font-bold uppercase tracking-wide text-[#a86a00]">
-      <FlaskConical className="h-[1.1em] w-[1.1em]" aria-hidden /> Simulation
+      <FlaskConical className="h-[1.1em] w-[1.1em]" aria-hidden /> {t("Simulation")}
     </span>
   );
 }
@@ -41,22 +45,23 @@ export function CompanyMark({ name, className = "" }: { name: string; className?
 }
 
 export function ApplicationBadge({ application }: { application: MyApplication | null }) {
+  const t = useT();
   if (!application) return null;
   if (application.status === "InterviewPassed")
     return (
       <span className="inline-flex items-center gap-[0.3em] rounded-full bg-[#d8f0df] px-[0.7em] py-[0.2em] text-[0.75em] font-bold text-[#1f7a43]">
-        <CheckCircle2 className="h-[1.1em] w-[1.1em]" /> Passed · {application.bestScorePercent}%
+        <CheckCircle2 className="h-[1.1em] w-[1.1em]" /> {t("Passed · {n}%", { n: application.bestScorePercent })}
       </span>
     );
   if (application.status === "InterviewNotPassed")
     return (
       <span className="inline-flex items-center gap-[0.3em] rounded-full bg-[#fff1d6] px-[0.7em] py-[0.2em] text-[0.75em] font-bold text-[#a86a00]">
-        <RotateCcw className="h-[1em] w-[1em]" /> Try again · best {application.bestScorePercent}%
+        <RotateCcw className="h-[1em] w-[1em]" /> {t("Try again · best {n}%", { n: application.bestScorePercent })}
       </span>
     );
   return (
     <span className="inline-flex items-center gap-[0.3em] rounded-full bg-[#e3eefd] px-[0.7em] py-[0.2em] text-[0.75em] font-bold text-[#2f6fc4]">
-      <Send className="h-[1em] w-[1em]" /> Applied
+      <Send className="h-[1em] w-[1em]" /> {t("Applied")}
     </span>
   );
 }

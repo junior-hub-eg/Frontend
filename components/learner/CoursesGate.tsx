@@ -6,6 +6,7 @@ import { getCurrentDiscovery, getTracks, type InterviewState, type TrackSummary 
 import { LearnerPageFrame } from "./LearnerPageFrame";
 import CoursesPage from "./CoursesPage";
 import FindYourTrack from "./FindYourTrack";
+import { useT } from "@/lib/i18n/client";
 
 type State =
   | { kind: "loading" }
@@ -25,6 +26,7 @@ async function load(): Promise<State> {
 
 /** Courses in the dashboard: "Find your track" until the student has a track, then the catalog. */
 export default function CoursesGate() {
+  const t = useT();
   const [state, setState] = useState<State>({ kind: "loading" });
 
   useEffect(() => {
@@ -39,7 +41,7 @@ export default function CoursesGate() {
   return (
     <LearnerPageFrame>
       {state.kind === "loading" ? (
-        <div className="grid flex-1 place-items-center bg-[#fbfdff] p-10" role="status" aria-label="Loading">
+        <div className="grid flex-1 place-items-center bg-[#fbfdff] p-10" role="status" aria-label={t("Loading")}>
           <LoaderCircle className="size-8 animate-spin text-[#12939b]" />
         </div>
       ) : (

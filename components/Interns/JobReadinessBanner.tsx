@@ -1,13 +1,15 @@
 "use client";
 
 import Image from "next/image";
+import { useT } from "@/lib/i18n/client";
 
 export function JobReadinessBanner() {
+  const t = useT();
   return (
     <div className="relative overflow-hidden rounded-[28px] border border-[#12939b]/15 bg-gradient-to-r from-[#EAF7F4] via-[#E6F5F2] to-[#DEF3EE] p-6 shadow-xs lg:p-8">
       {/* Decorative background curve */}
       <div
-        className="pointer-events-none absolute -right-16 -top-16 h-72 w-72 rounded-full bg-[#12939b]/10 blur-3xl"
+        className="pointer-events-none absolute -end-16 -top-16 h-72 w-72 rounded-full bg-[#12939b]/10 blur-3xl"
         aria-hidden
       />
 
@@ -45,22 +47,22 @@ export function JobReadinessBanner() {
             </div>
           </div>
           <p className="mt-2 text-xs font-bold text-[#1b2a5c] sm:text-sm">
-            Job Readiness Score
+            {t("Job Readiness Score")}
           </p>
         </div>
 
         {/* Center: Improve Profile Information */}
-        <div className="flex-1 text-center lg:text-left">
+        <div className="flex-1 text-center lg:text-start">
           <h2 className="text-2xl font-extrabold text-[#1b2a5c] sm:text-3xl">
-            Improve Profile
+            {t("Improve Profile")}
           </h2>
           <p className="mt-1 text-xs text-[#1b2a5c]/70 sm:text-sm">
-            Linked to external accounts into your profile
+            {t("Linked to external accounts into your profile")}
           </p>
 
           {/* External accounts icons */}
           <div className="mt-3 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
-            <span className="text-xs font-medium text-[#1b2a5c]/60">External accounts:</span>
+            <span className="text-xs font-medium text-[#1b2a5c]/60">{t("External accounts:")}</span>
             
             {/* LinkedIn */}
             <span className="inline-flex items-center gap-1.5 rounded-full border border-black/10 bg-white/80 px-2.5 py-1 text-[11px] font-semibold text-[#0A66C2] shadow-2xs">
@@ -97,13 +99,13 @@ export function JobReadinessBanner() {
               type="button"
               className="rounded-full bg-[#1b2a5c] px-5 py-2.5 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-[#12939b] active:scale-95"
             >
-              Practice Mock Interviews
+              {t("Practice Mock Interviews")}
             </button>
             <button
               type="button"
               className="rounded-full border border-black/15 bg-white/90 px-5 py-2.5 text-xs font-semibold text-[#1b2a5c] shadow-2xs transition-colors hover:bg-white active:scale-95"
             >
-              Review Resume
+              {t("Review Resume")}
             </button>
           </div>
         </div>
@@ -117,7 +119,7 @@ export function JobReadinessBanner() {
             />
             <Image
               src="/images/Intern/banner-student.jpg"
-              alt="Student with laptop and book"
+              alt={t("Student with laptop and book")}
               fill
               className="rounded-2xl object-cover shadow-sm ring-2 ring-white"
             />

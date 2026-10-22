@@ -6,11 +6,13 @@ import { AuthPanel } from "@/components/shared/auth-panel";
 import { AuthStepper } from "@/components/shared/auth-stepper";
 import { AuthButton } from "./AuthButton";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n/client";
 
 // TODO: replace with the real school contact (email, phone, or support URL)
 const CONTACT_HREF = "mailto:support@juniorhub.com";
 
 export default function CodeError() {
+  const t = useT();
   const router = useRouter();
 
   return (
@@ -37,17 +39,17 @@ export default function CodeError() {
           role="alert"
           className="mt-[clamp(16px,3.4cqw,32px)] text-[length:clamp(19px,2.7cqw,25px)] font-semibold leading-tight text-[#8f0a0a]"
         >
-          This Code Is not Valid
+          {t("This Code Is not Valid")}
         </h1>
 
         {/* Full panel width, so only "Expired" wraps to the second line */}
        <p className="mt-1 w-full max-w-[90%] text-[length:clamp(10px,1.3cqw,12px)] leading-snug text-[#1b2a5c]">
-  The Activation Code You Entered Is Incorrect Or Has Expired
+  {t("The Activation Code You Entered Is Incorrect Or Has Expired")}
 </p>
 
         <div className="mt-[clamp(16px,3.1cqw,30px)] flex w-full flex-col gap-[clamp(8px,1.2cqw,12px)]">
           <AuthButton type="button" onClick={() => router.back()}>
-            Try Again
+            {t("Try Again")}
           </AuthButton>
 
           <a
@@ -58,7 +60,7 @@ export default function CodeError() {
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#12939b]/40"
             )}
           >
-            Contact School
+            {t("Contact School")}
           </a>
         </div>
       </div>

@@ -74,6 +74,20 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* Arabic uses Cairo: the display fonts used by the English UI have no Arabic glyphs. */
+html[lang="ar"] body,
+html[lang="ar"] body :where(*:not(code, pre, kbd, samp, .font-mono, .font-mono *)) {
+  font-family: var(--font-cairo), Tahoma, sans-serif !important;
+}
+
+html[lang="ar"] body * { letter-spacing: 0 !important; }
+
+/* Keep code and equations readable in their original left-to-right direction. */
+[dir="rtl"] :is(code, pre, kbd, samp, .font-mono) { direction: ltr; unicode-bidi: isolate; }
+
+/* Navigation icons follow the reading direction. */
+[dir="rtl"] :is(.lucide-arrow-right, .lucide-arrow-left, .lucide-chevron-right, .lucide-chevron-left, .lucide-chevrons-right, .lucide-chevrons-left, .lucide-move-right, .lucide-move-left, .lucide-arrow-up-right, .lucide-log-out, .lucide-send, .lucide-send-horizontal, .lucide-align-left, .lucide-corner-down-left, .lucide-undo-2, .lucide-redo-2) { transform: scaleX(-1); }
+
 /* The AI interview: Karima's voice line moves while she speaks or the student records. */
 @keyframes jh-wave {
   0%,

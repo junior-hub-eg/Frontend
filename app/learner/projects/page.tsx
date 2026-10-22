@@ -37,16 +37,18 @@ import {
   type ProjectLinkKind,
 } from "@/lib/projects-api";
 import { cn } from "@/lib/utils";
+import { useI18n, useT } from "@/lib/i18n/client";
+import { tk } from "@/lib/i18n/translate";
 
 
 const OPPORTUNITIES = [
   {
-    title: "Internships",
+    title: tk("Internships"),
     href: "/learner/interns",
     image: "/images/learner/projects/opportunity-internships.png",
   },
   {
-    title: "Recruitment",
+    title: tk("Recruitment"),
     href: "/learner/recruitment-practice",
     image: "/images/learner/projects/opportunity-recruitment.png",
   },
@@ -110,6 +112,7 @@ const LINK_ICONS: Record<ProjectLinkKind, ReactNode> = {
 
 /** My Projects: the current project from GET /student/projects and its sprint from GET /student/projects/{id}. */
 export default function MyProjectsPage() {
+  const t = useT();
   const [data, setData] = useState<{ list: MyProjects; detail: ProjectDetail | null } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -128,8 +131,8 @@ export default function MyProjectsPage() {
 
   if (!data) {
     return (
-      <div className="grid flex-1 place-items-center p-10 pt-24 lg:pl-[calc(var(--sb)+1.5rem)]" role={error ? "alert" : "status"}>
-        {error ? <p className="text-sm font-semibold text-[#b83232]">{error}</p> : <LoaderCircle className="size-8 animate-spin text-[#12939b]" aria-label="Loading" />}
+      <div className="grid flex-1 place-items-center p-10 pt-24 lg:ps-[calc(var(--sb)+1.5rem)]" role={error ? "alert" : "status"}>
+        {error ? <p className="text-sm font-semibold text-[#b83232]">{error}</p> : <LoaderCircle className="size-8 animate-spin text-[#12939b]" aria-label={t("Loading")} />}
       </div>
     );
   }
@@ -137,20 +140,21 @@ export default function MyProjectsPage() {
 }
 
 function MyProjectsView({ list, detail }: { list: MyProjects; detail: ProjectDetail | null }) {
+  const { t, dir } = useI18n();
   const current = list.current;
   const IN_SQUAD = current !== null;
   const ALL_PROJECTS_COUNT = list.projects.length;
   const PROJECT = {
     id: current?.id ?? "",
     name: current?.title ?? "",
-    status: current ? STATUS_LABEL[current.status] : "",
+    status: current ? t(STATUS_LABEL[current.status]) : "",
     description: current?.description ?? "",
     squad: current?.squadName ?? "",
-    role: current ? (ROLE_LABEL[current.role] ?? current.role) : "",
+    role: current ? t(ROLE_LABEL[current.role] ?? current.role) : "",
     tasksCompleted: current?.myTasksDone ?? 0,
   };
   const SPRINT = {
-    name: detail?.sprint?.name ?? "No sprint yet",
+    name: detail?.sprint?.name ?? t("No sprint yet"),
     dates: detail?.sprint ? sprintDates(detail.sprint) : "",
     done: detail?.sprint?.tasksDone ?? 0,
     total: detail?.sprint?.tasksTotal ?? 0,
@@ -158,8 +162,8 @@ function MyProjectsView({ list, detail }: { list: MyProjects; detail: ProjectDet
   const CONTRIBUTION = { mine: current?.myTasksDone ?? 0, squad: current?.tasksDone ?? 0 };
   const WORK_LINKS = (current?.links ?? []).map((l, i) => ({
     key: `${l.kind}-${i}`,
-    label: LINK_LABEL[l.kind].label,
-    note: LINK_LABEL[l.kind].note,
+    label: t(LINK_LABEL[l.kind].label),
+    note: t(LINK_LABEL[l.kind].note),
     href: l.url,
     icon: LINK_ICONS[l.kind],
   }));
@@ -168,8 +172,8 @@ function MyProjectsView({ list, detail }: { list: MyProjects; detail: ProjectDet
 
   return (
     <div
-      dir="ltr"
-      className="relative isolate flex min-h-0 min-w-0 w-full flex-1 flex-col gap-4 overflow-x-hidden overflow-y-auto bg-[#f6f9f8] px-4 pb-6 pt-24 font-[family-name:var(--font-poppins)] text-[#1B2D54] lg:pl-[calc(var(--sb)+1.5rem)] lg:pr-6"
+      dir={dir}
+      className="relative isolate flex min-h-0 min-w-0 w-full flex-1 flex-col gap-4 overflow-x-hidden overflow-y-auto bg-[#f6f9f8] px-4 pb-6 pt-24 font-[family-name:var(--font-poppins)] text-[#1B2D54] lg:ps-[calc(var(--sb)+1.5rem)] lg:pe-6"
     >
       <div
         aria-hidden
@@ -185,9 +189,9 @@ function MyProjectsView({ list, detail }: { list: MyProjects; detail: ProjectDet
         />
       </div>
       <header className="min-w-0">
-        <h1 className="text-xl font-bold">My Projects</h1>
+        <h1 className="text-xl font-bold">{t("My Projects")}</h1>
         <p className="mt-1 text-[11px] text-[#1B2D54]/70">
-          Track your current project, your squad and the work you&apos;ve delivered.
+          {t("Track your current project, your squad and the work you've delivered.")}
         </p>
       </header>
 
@@ -195,7 +199,7 @@ function MyProjectsView({ list, detail }: { list: MyProjects; detail: ProjectDet
         <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]">
           {/* Current project */}
           <Card className="flex min-w-0 flex-col gap-4">
-            <h2 className="text-sm font-semibold">Current Project</h2>
+            <h2 className="text-sm font-semibold">{t("Current Project")}</h2>
 
             <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-center">
               <span className="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-[#c9efe9] text-[#14757d]">
@@ -214,7 +218,7 @@ function MyProjectsView({ list, detail }: { list: MyProjects; detail: ProjectDet
               </div>
 
               <PrimaryButton href={`/learner/projects/${PROJECT.id}` as Route}>
-                Continue Working
+                {t("Continue Working")}
                 <ArrowRight aria-hidden className="size-3.5" />
               </PrimaryButton>
             </div>
@@ -222,20 +226,20 @@ function MyProjectsView({ list, detail }: { list: MyProjects; detail: ProjectDet
             <div className="grid min-w-0 gap-3 sm:grid-cols-3">
               <InfoTile
                 icon={<Users aria-hidden className="size-4" />}
-                label="Squad"
+                label={t("Squad")}
                 value={PROJECT.squad}
                 className="bg-[#e4f1fb]"
               />
               <InfoTile
                 icon={<User aria-hidden className="size-4" />}
-                label="Your role"
+                label={t("Your role")}
                 value={PROJECT.role}
                 className="bg-[#fdeedb]"
               />
               <InfoTile
                 icon={<CircleCheck aria-hidden className="size-4" />}
-                label="Your tasks"
-                value={`${PROJECT.tasksCompleted} tasks completed`}
+                label={t("Your tasks")}
+                value={t("{n} tasks completed", { n: PROJECT.tasksCompleted })}
                 className="bg-[#dff5e8]"
               />
             </div>
@@ -248,10 +252,10 @@ function MyProjectsView({ list, detail }: { list: MyProjects; detail: ProjectDet
                   <p className="text-xs font-semibold">{SPRINT.name}</p>
                   <p className="text-[10px] text-[#1B2D54]/60">{SPRINT.dates}</p>
                 </div>
-                <div className="ml-auto shrink-0 text-right leading-tight">
+                <div className="ms-auto shrink-0 text-end leading-tight">
                   <p className="text-lg font-bold">{percent}%</p>
                   <p className="text-[10px] text-[#1B2D54]/60">
-                    {SPRINT.done} of {SPRINT.total} tasks done
+                    {t("{n} of {total} tasks done", { n: SPRINT.done, total: SPRINT.total })}
                   </p>
                 </div>
               </div>
@@ -270,25 +274,25 @@ function MyProjectsView({ list, detail }: { list: MyProjects; detail: ProjectDet
 
           <div className="flex min-w-0 flex-col gap-4">
             <Card>
-              <h2 className="text-sm font-semibold">Your Contribution</h2>
+              <h2 className="text-sm font-semibold">{t("Your Contribution")}</h2>
               <div className="mt-3 flex items-center gap-3">
                 <p className="text-4xl font-bold text-[#14757d]">{CONTRIBUTION.mine}</p>
                 <div className="min-w-0 leading-tight">
-                  <p className="text-xs font-semibold">tasks completed by you</p>
+                  <p className="text-xs font-semibold">{t("tasks completed by you")}</p>
                   <p className="text-[10px] text-[#1B2D54]/60">
-                    of the squad&apos;s {CONTRIBUTION.squad} completed tasks
+                    {t("of the squad's {n} completed tasks", { n: CONTRIBUTION.squad })}
                   </p>
                 </div>
               </div>
             </Card>
 
             <Card>
-              <h2 className="text-sm font-semibold">Work Links</h2>
+              <h2 className="text-sm font-semibold">{t("Work Links")}</h2>
               <ul className="mt-3 flex flex-col gap-2">
                 {WORK_LINKS.length === 0 && (
                   <li>
                     <Link href="/learner/interns/session" className="text-xs font-semibold text-[#14757d] hover:underline">
-                      + Add your links
+                      {t("+ Add your links")}
                     </Link>
                   </li>
                 )}
@@ -307,7 +311,7 @@ function MyProjectsView({ list, detail }: { list: MyProjects; detail: ProjectDet
                         <p className="text-xs font-semibold">{link.label}</p>
                         <p className="text-[10px] text-[#1B2D54]/60">{link.note}</p>
                       </div>
-                      <ArrowRight aria-hidden className="ml-auto size-3.5 shrink-0" />
+                      <ArrowRight aria-hidden className="ms-auto size-3.5 shrink-0" />
                     </a>
                   </li>
                 ))}
@@ -322,12 +326,12 @@ function MyProjectsView({ list, detail }: { list: MyProjects; detail: ProjectDet
               <Users aria-hidden className="size-8" strokeWidth={1.6} />
             </span>
           </span>
-          <h2 className="text-lg font-bold">You&apos;re not in a squad yet</h2>
+          <h2 className="text-lg font-bold">{t("You're not in a squad yet")}</h2>
           <p className="max-w-md text-[11px] text-[#1B2D54]/70">
-            Join a squad from Internship to start working on a project with your team.
+            {t("Join a squad from Internship to start working on a project with your team.")}
           </p>
           <PrimaryButton href={"/learner/interns" as Route}>
-            Join a squad
+            {t("Join a squad")}
             <ArrowRight aria-hidden className="size-3.5" />
           </PrimaryButton>
         </Card>
@@ -338,21 +342,23 @@ function MyProjectsView({ list, detail }: { list: MyProjects; detail: ProjectDet
           <Folder aria-hidden className="size-7" strokeWidth={1.6} />
         </span>
         <div className="min-w-0 leading-tight">
-          <h2 className="text-sm font-semibold">All My Projects</h2>
+          <h2 className="text-sm font-semibold">{t("All My Projects")}</h2>
           <p className="mt-1 text-xs font-semibold text-[#14757d]">
             {hasProjects
-              ? `You worked on ${ALL_PROJECTS_COUNT} ${ALL_PROJECTS_COUNT === 1 ? "project" : "projects"}`
-              : "You haven't worked on any projects yet"}
+              ? ALL_PROJECTS_COUNT === 1
+                ? t("You worked on 1 project")
+                : t("You worked on {n} projects", { n: ALL_PROJECTS_COUNT })
+              : t("You haven't worked on any projects yet")}
           </p>
           <p className="mt-1 text-[10px] text-[#1B2D54]/60">
-            View your current and previous projects in one place.
+            {t("View your current and previous projects in one place.")}
           </p>
         </div>
         {hasProjects && (
           <Link
             href="/learner/projects/all"
-            aria-label="View all projects"
-            className="ml-auto flex size-9 shrink-0 items-center justify-center rounded-full bg-[#1B2D54] text-white transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#12939b]/40"
+            aria-label={t("View all projects")}
+            className="ms-auto flex size-9 shrink-0 items-center justify-center rounded-full bg-[#1B2D54] text-white transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#12939b]/40"
           >
             <ChevronRight aria-hidden className="size-4" />
           </Link>
@@ -360,13 +366,13 @@ function MyProjectsView({ list, detail }: { list: MyProjects; detail: ProjectDet
       </Card>
 
       <Card className="min-w-0 p-5">
-        <h2 className="text-sm font-semibold">Opportunities</h2>
+        <h2 className="text-sm font-semibold">{t("Opportunities")}</h2>
         <div className="mt-3 grid min-w-0 gap-4 md:grid-cols-2">
           {OPPORTUNITIES.map((item) => (
             <Link
               key={item.title}
               href={item.href as Route}
-              aria-label={`Explore ${item.title}`}
+              aria-label={t("Explore {track}", { track: t(item.title) })}
               className="block min-w-0 overflow-hidden rounded-xl transition-transform hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#12939b]/40"
             >
               <Image src={item.image} alt="" width={610} height={142} className="h-auto w-full" />

@@ -4,7 +4,7 @@ import { useEffect, useState, type CSSProperties } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
-import { BookOpen, Lock, Users } from "lucide-react";
+import { BookOpen, Folder, Lock, Presentation, Users } from "lucide-react";
 import { useAuth } from "@/lib/auth/auth-context";
 import { getHub } from "@/lib/hub-api";
 import { getInternshipAccess } from "@/lib/interns-api";
@@ -12,6 +12,8 @@ import { getTrackLessons, getTracks } from "@/lib/learning-api";
 import { DailyChallengeCard, LevelCard, NextSessionCard, RewardsButton } from "./dashboard-cards";
 import { avatarFor, useSquad } from "./interns-data";
 import { TeammatesPanel } from "./teammates-panel";
+import { useI18n, useT } from "@/lib/i18n/client";
+import { tk } from "@/lib/i18n/translate";
 
 type Item = {
   src: string;
@@ -31,7 +33,8 @@ const VK = 100 / 1.40625 / 100;
 
 /**
  * The Figma names on two signs differ from the baked-in images ("Mentorship", "Coursers"): a label in the sign's
- * colours covers them. Positions are % of the image.
+ * colours covers them. Positions are % of the image. In Arabic the other two signs are covered the same way
+ * (`arSign`), so every sign reads in Arabic.
  */
 type Sign = { label: string; icon: typeof Users; left: number; top: number; width: number; height: number };
 
@@ -40,9 +43,11 @@ const BUILDINGS: (Item & {
   href: string;
   z: string;
   sign?: Sign;
+  arSign?: Sign;
 })[] = [
   {
-    label: "My Progress",
+    label: tk("My Progress"),
+    arSign: { label: tk("My Progress"), icon: Folder, left: 25, top: 20.2, width: 43, height: 12.4 },
     href: "/learner/interns/progress",
     src: `${IMG}/building-progress.png`,
     w: 559,
@@ -53,7 +58,8 @@ const BUILDINGS: (Item & {
     z: "z-10",
   },
   {
-    label: "Internship",
+    label: tk("Internship"),
+    arSign: { label: tk("Internship"), icon: Presentation, left: 38.6, top: 19.4, width: 38.6, height: 12.4 },
     href: "/learner/interns/internship",
     src: `${IMG}/building-internship.png`,
     w: 535,
@@ -64,9 +70,9 @@ const BUILDINGS: (Item & {
     z: "z-10",
   },
   {
-    label: "My Mentor",
+    label: tk("My Mentor"),
     href: "/learner/mentorship",
-    sign: { label: "My Mentor", icon: Users, left: 26.4, top: 21.3, width: 37.8, height: 12 },
+    sign: { label: tk("My Mentor"), icon: Users, left: 26.4, top: 21.3, width: 37.8, height: 12 },
     src: `${IMG}/building-mentorship.png`,
     w: 624,
     h: 408,
@@ -76,9 +82,9 @@ const BUILDINGS: (Item & {
     z: "z-30",
   },
   {
-    label: "Courses",
+    label: tk("Courses"),
     href: "/learner/courses",
-    sign: { label: "Courses", icon: BookOpen, left: 37.7, top: 20, width: 32, height: 11.1 },
+    sign: { label: tk("Courses"), icon: BookOpen, left: 37.7, top: 20, width: 32, height: 11.1 },
     src: `${IMG}/building-courses.png`,
     w: 626,
     h: 425,
@@ -117,7 +123,9 @@ const CHARACTERS: Item[] = [
 ];
 
 
-function SignLabel({ sign }: { sign: Sign }) {
+function SignLabel({ sign }: { sign?: Sign }) {
+  const t = useT();
+  if (!sign) return null;
   const Icon = sign.icon;
   return (
     <span
@@ -132,7 +140,7 @@ function SignLabel({ sign }: { sign: Sign }) {
       }}
     >
       <Icon className="h-[1.05em] w-[1.05em] shrink-0" strokeWidth={2} />
-      {sign.label}
+      {t(sign.label)}
     </span>
   );
 }
@@ -141,12 +149,13 @@ const INTERNSHIP = "/learner/interns/internship";
 
 /** On the Internship building while it is locked: finish your level first. */
 function LockBadge() {
+  const t = useT();
   return (
     <span
       className="pointer-events-none absolute left-1/2 top-[52%] flex -translate-x-1/2 -translate-y-1/2 items-center gap-[0.4em] whitespace-nowrap rounded-full bg-[#14365a]/90 px-[0.9em] py-[0.45em] font-semibold text-white shadow-lg"
       style={{ fontSize: "3.6cqw" }}
     >
-      <Lock className="h-[1.1em] w-[1.1em]" /> Finish your level to unlock
+      <Lock className="h-[1.1em] w-[1.1em]" /> {t("Finish your level to unlock")}
     </span>
   );
 }
@@ -214,6 +223,7 @@ function Greeting({
   style?: CSSProperties;
   scaled?: boolean;
 }) {
+  const t = useT();
   return (
     <div className={className} style={style}>
       <h1
@@ -224,9 +234,9 @@ function Greeting({
         }`}
       >
         <span className="bg-gradient-to-r from-[#2fb5a6] to-[#2a8fb8] bg-clip-text text-transparent">
-          Good morning
+          {t("Good morning")}
         </span>
-        , {firstName}
+        {t(", {name}", { name: firstName })}
       </h1>
 
       <p
@@ -236,7 +246,7 @@ function Greeting({
             : "mt-1 text-sm sm:text-base"
         }`}
       >
-        Ready to learn new something today?
+        {t("Ready to learn new something today?")}
       </p>
     </div>
   );
@@ -271,6 +281,7 @@ async function loadTrackFocus(): Promise<TrackFocus | null> {
 }
 
 export default function InternDashboard() {
+  const { t, locale } = useI18n();
   const { user } = useAuth();
   const squad = useSquad();
   const me = squad?.members.find((m) => m.isMe);
@@ -311,7 +322,7 @@ export default function InternDashboard() {
   return (
     <>
       {/* Mobile and tablet */}
-      <div className="pb-8 pl-3 pr-4 sm:pl-4 sm:pr-6 lg:hidden">
+      <div className="pb-8 ps-3 pe-4 sm:ps-4 sm:pe-6 lg:hidden">
         <Greeting firstName={firstName} />
         <div className="mt-4 grid gap-3 text-[14px] sm:grid-cols-2">
           {levelCard()}
@@ -358,18 +369,18 @@ export default function InternDashboard() {
             <Link
               key={b.label}
               href={b.href as Route}
-              aria-label={b.label}
+              aria-label={t(b.label)}
               className="group relative z-10 block cursor-pointer rounded-3xl [container-type:inline-size] focus-visible:outline focus-visible:outline-4 focus-visible:outline-[#6b2fd1]"
             >
               <Image
                 src={b.src}
-                alt={b.label}
+                alt={t(b.label)}
                 width={b.w}
                 height={b.h}
                 sizes="(max-width: 1024px) 48vw, 0px"
                 className="pointer-events-none h-auto w-full drop-shadow-[0_14px_16px_rgba(13,43,90,0.22)] transition-transform duration-200 group-hover:-translate-y-1"
               />
-              {b.sign && <SignLabel sign={b.sign} />}
+              <SignLabel sign={b.sign ?? (locale === "ar" ? b.arSign : undefined)} />
               {b.href === INTERNSHIP && internshipLocked && <LockBadge />}
             </Link>
           ))}
@@ -400,9 +411,9 @@ export default function InternDashboard() {
         </div>
 
         <div
-          className="absolute z-40 transition-[left] duration-300"
+          className="absolute z-40 transition-[inset-inline-start] duration-300"
           style={{
-            left: "var(--hl)",
+            insetInlineStart: "var(--hl)",
             top: "min(calc(var(--fh) * 0.11), calc(var(--c) * 20.62 - var(--t) - var(--u) * 6.6))",
             fontSize: "clamp(9px, calc(var(--u) * 1.05), 16px)",
           }}
@@ -416,7 +427,7 @@ export default function InternDashboard() {
         </div>
 
         <div
-          className="absolute bottom-[calc(var(--u)*1.6)] right-[calc(var(--u)*1.6)] z-40"
+          className="absolute bottom-[calc(var(--u)*1.6)] end-[calc(var(--u)*1.6)] z-40"
           style={{ fontSize: "clamp(9px, calc(var(--u) * 1.05), 16px)" }}
         >
           <RewardsButton />
@@ -425,26 +436,26 @@ export default function InternDashboard() {
         <TeammatesPanel
           fluid
           teammates={teammates}
-          className="absolute right-[calc(var(--u)*1.6)] top-[9.8%] z-40"
+          className="absolute end-[calc(var(--u)*1.6)] top-[9.8%] z-40"
         />
 
         {BUILDINGS.map((b) => (
           <Link
             key={b.label}
             href={b.href as Route}
-            aria-label={b.label}
+            aria-label={t(b.label)}
             className={`group absolute ${b.z} block cursor-pointer rounded-3xl transition-[left] duration-300 [container-type:inline-size] focus-visible:outline focus-visible:outline-4 focus-visible:outline-[#6b2fd1]`}
             style={sceneStyle(b)}
           >
             <Image
               src={b.src}
-              alt={b.label}
+              alt={t(b.label)}
               width={b.w}
               height={b.h}
               sizes="40vw"
               className="pointer-events-none h-auto w-full drop-shadow-[0_18px_22px_rgba(13,43,90,0.25)] transition-transform duration-200 group-hover:-translate-y-1.5"
             />
-            {b.sign && <SignLabel sign={b.sign} />}
+            <SignLabel sign={b.sign ?? (locale === "ar" ? b.arSign : undefined)} />
             {b.href === INTERNSHIP && internshipLocked && <LockBadge />}
           </Link>
         ))}

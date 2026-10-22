@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { GraduationCap, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n/client";
 import { LEARNER_NAV_MAIN, LEARNER_NAV_SECONDARY, type LearnerNavItem } from "./learner-nav";
 
 interface LearnerSidebarProps {
@@ -34,7 +35,9 @@ function NavLink({
   onNavigate?: () => void;
   locked?: boolean;
 }) {
+  const t = useT();
   const Icon = item.icon;
+  const name = t(item.label);
 
   const align = collapsed
     ? rail
@@ -50,12 +53,12 @@ function NavLink({
     return (
       <span
         aria-disabled="true"
-        title={`${item.label}: choose your track first`}
+        title={t("{page}: choose your track first", { page: name })}
         className={cn("flex h-[2.8em] cursor-not-allowed items-center gap-[0.9em] rounded-[0.7em] text-[1.05em] font-medium text-[#14365a]/40", align)}
       >
         <Icon className="h-[1.3em] w-[1.3em] shrink-0" />
-        <span className={label}>{item.label}</span>
-        <Lock className={cn("ml-auto h-[0.9em] w-[0.9em] shrink-0", label)} />
+        <span className={label}>{name}</span>
+        <Lock className={cn("ms-auto h-[0.9em] w-[0.9em] shrink-0", label)} />
       </span>
     );
   }
@@ -63,7 +66,7 @@ function NavLink({
   return (
     <Link
       href={item.href}
-      title={item.label}
+      title={name}
       onClick={onNavigate}
       className={cn(
         "flex h-[2.8em] items-center gap-[0.9em] rounded-[0.7em] text-[1.05em] transition-colors",
@@ -74,13 +77,14 @@ function NavLink({
       )}
     >
       <Icon className="h-[1.3em] w-[1.3em] shrink-0" />
-      <span className={label}>{item.label}</span>
+      <span className={label}>{name}</span>
     </Link>
   );
 }
 
 /** The parent (LearnerShell frame) must be `relative` and define `--sb` and `--u`. */
 export function LearnerSidebar({ activeHref, collapsed = false, mobileOpen = false, onNavigate, locked = false }: LearnerSidebarProps) {
+  const t = useT();
   const pathname = usePathname();
   const current = activeHref ?? pathname;
   const isActive = (item: LearnerNavItem) =>
@@ -103,32 +107,32 @@ export function LearnerSidebar({ activeHref, collapsed = false, mobileOpen = fal
   return (
     <aside
       className={cn(
-        "absolute inset-y-0 left-0 z-30 flex flex-col overflow-hidden border-r border-white/70 bg-[linear-gradient(180deg,rgba(198,236,255,0.78)_0%,rgba(217,243,255,0.45)_55%,rgba(203,233,252,0.6)_100%)] backdrop-blur-xl pb-[2.4em] shadow-[0_8px_40px_rgba(20,54,90,0.10)] transition-[width] duration-300",
+        "absolute inset-y-0 start-0 z-30 flex flex-col overflow-hidden border-e border-white/70 bg-[linear-gradient(180deg,rgba(198,236,255,0.78)_0%,rgba(217,243,255,0.45)_55%,rgba(203,233,252,0.6)_100%)] backdrop-blur-xl pb-[2.4em] shadow-[0_8px_40px_rgba(20,54,90,0.10)] transition-[width] duration-300",
         // mobile / tablet
         mobileOpen
-          ? "w-64 rounded-r-[2rem] px-[1.2em] pt-[4.4em]"
-          : "w-[3.5rem] rounded-r-[2rem] px-[0.5rem] pt-[1.6rem]",
+          ? "w-64 rounded-e-[2rem] px-[1.2em] pt-[4.4em]"
+          : "w-[3.5rem] rounded-e-[2rem] px-[0.5rem] pt-[1.6rem]",
         // desktop
-        "lg:w-[var(--sb)] lg:rounded-br-[4.7em] lg:rounded-tr-[6.5em] lg:pt-[4.4em] lg:[font-size:clamp(9px,var(--u),16px)]",
+        "lg:w-[var(--sb)] lg:rounded-ee-[4.7em] lg:rounded-se-[6.5em] lg:pt-[4.4em] lg:[font-size:clamp(9px,var(--u),16px)]",
         collapsed ? "lg:px-[0.7em]" : "lg:px-[1.2em]",
       )}
     >
       {/* soft blue hills at the bottom (like the Figma) */}
       <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-[40%]">
-        <div className="absolute -left-[35%] top-[22%] h-[140%] w-[150%] rounded-[50%] bg-[#9fd3f6]/80" />
-        <div className="absolute -right-[45%] top-[48%] h-[120%] w-[150%] rounded-[50%] bg-[#c3e7fb]/90" />
+        <div className="absolute -start-[35%] top-[22%] h-[140%] w-[150%] rounded-[50%] bg-[#9fd3f6]/80" />
+        <div className="absolute -end-[45%] top-[48%] h-[120%] w-[150%] rounded-[50%] bg-[#c3e7fb]/90" />
       </div>
 
       {/* logo: full logo when open, graduation cap on the rail / collapsed. Opens the landing page. */}
       <Link
         href="/"
-        aria-label="Junior Hub home"
+        aria-label={t("Junior Hub home")}
         onClick={onNavigate}
         className={cn("mb-[2.6em] flex h-[2.6em] items-center rounded-[0.7em]", logoBox)}
       >
         <Image
           src="/images/Auth/logo.png"
-          alt="Junior Hub"
+          alt={t("Junior Hub")}
           width={160}
           height={32}
           priority
@@ -171,12 +175,12 @@ export function LearnerSidebar({ activeHref, collapsed = false, mobileOpen = fal
       <div className={cn("mt-auto px-[0.6em] pt-[1.5em]", brand)}>
         <Image
           src="/images/Auth/logo.png"
-          alt="Junior Hub"
+          alt={t("Junior Hub")}
           width={130}
           height={26}
           style={{ height: "2em", width: "auto" }}
         />
-        <p className="mt-[0.5em] text-[1.1em] tracking-wide text-[#14365a]">BUILD YOUR DREAMS</p>
+        <p className="mt-[0.5em] text-[1.1em] tracking-wide text-[#14365a]">{t("BUILD YOUR DREAMS")}</p>
       </div>
     </aside>
   );

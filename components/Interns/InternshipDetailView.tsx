@@ -4,17 +4,19 @@ import Link from "next/link";
 import { Check, CheckCircle2, ArrowLeft } from "lucide-react";
 import { InternsTestimonials } from "./InternsTestimonials";
 import { FaqAccordion } from "./FaqAccordion";
+import { useT } from "@/lib/i18n/client";
 
 interface DetailViewProps {
   id?: string;
 }
 
 export function InternshipDetailView({ id }: DetailViewProps) {
+  const t = useT();
   const responsibilities = [
-    "Conduct user research and define user needs",
-    "Create wireframes, prototypes, and UI designs",
-    "Improve user experience and usability",
-    "Collaborate with cross-functional teams",
+    t("Conduct user research and define user needs"),
+    t("Create wireframes, prototypes, and UI designs"),
+    t("Improve user experience and usability"),
+    t("Collaborate with cross-functional teams"),
   ];
 
   return (
@@ -26,16 +28,16 @@ export function InternshipDetailView({ id }: DetailViewProps) {
           className="mb-6 inline-flex items-center gap-1.5 text-xs font-semibold text-[#12939b] hover:underline"
         >
           <ArrowLeft size={14} />
-          <span>Back to Internships</span>
+          <span>{t("Back to Internships")}</span>
         </Link>
 
         {/* 1. Top Banner */}
         <div className="rounded-[24px] bg-[#E9F7F4] p-6 sm:p-8">
           <h1 className="text-2xl font-extrabold text-[#1b2a5c] sm:text-3xl">
-            Your Internship
+            {t("Your Internship")}
           </h1>
           <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-[#12939b]">
-            Career
+            {t("Career")}
           </p>
         </div>
 
@@ -57,10 +59,10 @@ export function InternshipDetailView({ id }: DetailViewProps) {
 
               <div>
                 <h2 className="text-xl font-extrabold text-[#1b2a5c] sm:text-2xl">
-                  UI/UX Design Intern
+                  {t("UI/UX Design Intern")}
                 </h2>
                 <p className="mt-0.5 text-xs text-[#1b2a5c]/60 sm:text-sm">
-                  TechCrop | Full-Time | Remote
+                  TechCrop | {t("Full-Time")} | {t("Remote")}
                 </p>
               </div>
             </div>
@@ -69,7 +71,7 @@ export function InternshipDetailView({ id }: DetailViewProps) {
             <div className="flex shrink-0 items-center">
               <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-[#E6F9F0] px-4 py-1.5 text-xs font-semibold text-[#027A48] shadow-2xs">
                 <CheckCircle2 size={14} className="fill-[#027A48] text-white" />
-                <span>Assessment Completed</span>
+                <span>{t("Assessment Completed")}</span>
               </span>
             </div>
           </div>
@@ -79,7 +81,7 @@ export function InternshipDetailView({ id }: DetailViewProps) {
           {/* 3. Responsibilities */}
           <div>
             <h3 className="text-base font-bold text-[#1b2a5c] sm:text-lg">
-              Responsibilities
+              {t("Responsibilities")}
             </h3>
             <ul className="mt-4 space-y-2.5">
               {responsibilities.map((resp) => (
@@ -98,7 +100,7 @@ export function InternshipDetailView({ id }: DetailViewProps) {
           {/* 4. Your Assessment Section */}
           <div>
             <h3 className="text-center text-lg font-bold text-[#1b2a5c] sm:text-xl">
-              Your Assessment
+              {t("Your Assessment")}
             </h3>
 
             <div className="mt-6 flex flex-col items-center justify-center gap-8 sm:flex-row sm:gap-12">
@@ -137,15 +139,15 @@ export function InternshipDetailView({ id }: DetailViewProps) {
                 <div className="flex flex-col gap-3 text-xs font-semibold text-[#1b2a5c]">
                   <div className="flex items-center gap-2">
                     <span className="size-2 rounded-full bg-[#12939b]" />
-                    <span>Applied-12 Apr 2024</span>
+                    <span>{t("Applied - 12 Apr 2024")}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="size-2 rounded-full bg-[#10B981]" />
-                    <span>Assessment Completed</span>
+                    <span>{t("Assessment Completed")}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="size-2 rounded-full bg-[#12939b]" />
-                    <span>Interview Completed</span>
+                    <span>{t("Interview Completed")}</span>
                   </div>
                 </div>
               </div>
@@ -153,9 +155,9 @@ export function InternshipDetailView({ id }: DetailViewProps) {
 
             {/* Bottom Status text */}
             <div className="mt-6 text-center">
-              <span className="text-sm font-semibold text-[#1b2a5c]/80">Status: </span>
+              <span className="text-sm font-semibold text-[#1b2a5c]/80">{t("Status:")} </span>
               <span className="text-sm font-bold text-emerald-600 sm:text-base">
-                Interview Completed
+                {t("Interview Completed")}
               </span>
             </div>
           </div>

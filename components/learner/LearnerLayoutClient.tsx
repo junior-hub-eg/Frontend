@@ -11,6 +11,7 @@ import { getToken } from "@/lib/auth/token";
 import { LoaderCircle, RotateCcw } from "lucide-react";
 import { AssistantChat } from "./AssistantChat";
 import { LearnerShell } from "./learner-shell";
+import { useT } from "@/lib/i18n/client";
 
 /** LOCAL ONLY: NEXT_PUBLIC_SKIP_AUTH=true in .env.local skips the login check and the "needs a track" lock. Off by default and ignored in production. */
 const SKIP_AUTH = process.env.NEXT_PUBLIC_SKIP_AUTH === "true" && process.env.NODE_ENV !== "production";
@@ -43,6 +44,7 @@ async function loadAccess(): Promise<Access> {
 }
 
 export function LearnerLayoutClient({ children }: { children: ReactNode }) {
+  const t = useT();
   const { user, logout } = useAuth();
   const router = useRouter();
 
@@ -100,7 +102,7 @@ export function LearnerLayoutClient({ children }: { children: ReactNode }) {
   if (!allowed) {
     return (
       <div className="flex min-h-screen items-center justify-center p-10 text-muted-foreground">
-        جاري التحميل...
+        {t("Loading...")}
       </div>
     );
   }
@@ -135,12 +137,12 @@ export function LearnerLayoutClient({ children }: { children: ReactNode }) {
               onClick={() => setAttempt((n) => n + 1)}
               className="flex items-center gap-1.5 rounded-full bg-[#12939b] px-5 py-2 text-sm font-bold text-white hover:bg-[#0f7a81]"
             >
-              <RotateCcw className="size-4" /> Try again
+              <RotateCcw className="size-4" /> {t("Try again")}
             </button>
           </div>
         </div>
       ) : locked && !onboarding ? (
-        <div className="grid flex-1 place-items-center p-10" role="status" aria-label="Loading">
+        <div className="grid flex-1 place-items-center p-10" role="status" aria-label={t("Loading")}>
           <LoaderCircle className="size-8 animate-spin text-[#12939b]" />
         </div>
       ) : (

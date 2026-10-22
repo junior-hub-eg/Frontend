@@ -26,6 +26,8 @@ import { errorMessage } from "@/lib/api-client";
 import { mentorAvatar } from "@/lib/avatars";
 import { getMyProjects, LINK_LABEL, projectDuration, ROLE_LABEL, STATUS_LABEL, type ProjectLinkKind, type ProjectSummary } from "@/lib/projects-api";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n/client";
+import { tk } from "@/lib/i18n/translate";
 
 
 const LINK_ICONS: Record<ProjectLinkKind, ReactNode> = {
@@ -42,12 +44,12 @@ const LINK_ICONS: Record<ProjectLinkKind, ReactNode> = {
 
 const OPPORTUNITIES = [
   {
-    title: "Internships",
+    title: tk("Internships"),
     href: "/learner/interns",
     image: "/images/learner/projects/opportunity-internships.png",
   },
   {
-    title: "Recruitment",
+    title: tk("Recruitment"),
     href: "/learner/recruitment-practice",
     image: "/images/learner/projects/opportunity-recruitment.png",
   },
@@ -57,7 +59,7 @@ function Row({ icon, label, value }: { icon: ReactNode; label: string; value: st
   return (
     <div className="flex min-w-0 items-center gap-2 text-[10px]">
       <span className="shrink-0 text-[#1B2D54]/60">{icon}</span>
-      <span className="w-12 shrink-0 text-[#1B2D54]/60">{label}</span>
+      <span className="w-16 shrink-0 text-[#1B2D54]/60">{label}</span>
       <span className="truncate font-medium">{value}</span>
     </div>
   );
@@ -65,6 +67,7 @@ function Row({ icon, label, value }: { icon: ReactNode; label: string; value: st
 
 /** Every project of the student (GET /student/projects), the current one first. */
 export default function AllProjectsPage() {
+  const { t, dir } = useI18n();
   const [list, setList] = useState<ProjectSummary[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -81,8 +84,8 @@ export default function AllProjectsPage() {
 
   if (!list) {
     return (
-      <div className="grid flex-1 place-items-center p-10 pt-24 lg:pl-[calc(var(--sb)+1.5rem)]" role={error ? "alert" : "status"}>
-        {error ? <p className="text-sm font-semibold text-[#b83232]">{error}</p> : <LoaderCircle className="size-8 animate-spin text-[#12939b]" aria-label="Loading" />}
+      <div className="grid flex-1 place-items-center p-10 pt-24 lg:ps-[calc(var(--sb)+1.5rem)]" role={error ? "alert" : "status"}>
+        {error ? <p className="text-sm font-semibold text-[#b83232]">{error}</p> : <LoaderCircle className="size-8 animate-spin text-[#12939b]" aria-label={t("Loading")} />}
       </div>
     );
   }
@@ -92,20 +95,20 @@ export default function AllProjectsPage() {
     name: p.title,
     status: STATUS_LABEL[p.status],
     squad: p.squadName,
-    role: ROLE_LABEL[p.role] ?? p.role,
+    role: t(ROLE_LABEL[p.role] ?? p.role),
     duration: projectDuration(p),
     progress: p.progressPercent,
     tasks: p.myTasksDone,
     // One chip per kind of link the student shared.
     links: [...new Set(p.links.map((l) => l.kind))],
-    mentor: p.monitor?.fullName ?? "No monitor yet",
+    mentor: p.monitor?.fullName ?? t("No monitor yet"),
     mentorAvatar: p.monitor ? mentorAvatar(p.monitor) : null,
   }));
 
   return (
     <div
-      dir="ltr"
-      className="relative isolate flex min-h-0 min-w-0 w-full flex-1 flex-col gap-4 overflow-x-hidden overflow-y-auto bg-[#f6f9f8] px-4 pb-6 pt-24 font-[family-name:var(--font-poppins)] text-[#1B2D54] lg:pl-[calc(var(--sb)+1.5rem)] lg:pr-6"
+      dir={dir}
+      className="relative isolate flex min-h-0 min-w-0 w-full flex-1 flex-col gap-4 overflow-x-hidden overflow-y-auto bg-[#f6f9f8] px-4 pb-6 pt-24 font-[family-name:var(--font-poppins)] text-[#1B2D54] lg:ps-[calc(var(--sb)+1.5rem)] lg:pe-6"
     >
       <div
         aria-hidden
@@ -124,15 +127,15 @@ export default function AllProjectsPage() {
       <header className="flex min-w-0 items-center gap-3">
         <Link
           href="/learner/projects"
-          aria-label="Back to My Projects"
+          aria-label={t("Back to My Projects")}
           className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#1B2D54]/70 text-white transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#12939b]/40"
         >
           <ArrowLeft aria-hidden className="size-4" />
         </Link>
         <div className="min-w-0">
-          <h1 className="text-xl font-bold">All My Projects</h1>
+          <h1 className="text-xl font-bold">{t("All My Projects")}</h1>
           <p className="text-[11px] text-[#1B2D54]/70">
-            You worked on {PROJECTS.length} {PROJECTS.length === 1 ? "project" : "projects"}
+            {PROJECTS.length === 1 ? t("You worked on 1 project") : t("You worked on {n} projects", { n: PROJECTS.length })}
           </p>
         </div>
       </header>
@@ -161,20 +164,20 @@ export default function AllProjectsPage() {
                       aria-hidden
                       className={cn("size-1.5 rounded-full", active ? "bg-[#22a559]" : "bg-[#14757d]")}
                     />
-                    {p.status}
+                    {t(p.status)}
                   </span>
                 </div>
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <Row icon={<Users aria-hidden className="size-3" />} label="Squad" value={p.squad} />
-                <Row icon={<User aria-hidden className="size-3" />} label="Role" value={p.role} />
-                <Row icon={<CalendarDays aria-hidden className="size-3" />} label="Duration" value={p.duration} />
+                <Row icon={<Users aria-hidden className="size-3" />} label={t("Squad")} value={p.squad} />
+                <Row icon={<User aria-hidden className="size-3" />} label={t("Role")} value={p.role} />
+                <Row icon={<CalendarDays aria-hidden className="size-3" />} label={t("Duration")} value={p.duration} />
               </div>
 
               <div>
                 <div className="flex items-center justify-between text-[10px]">
-                  <span className="text-[#1B2D54]/60">Project progress</span>
+                  <span className="text-[#1B2D54]/60">{t("Project progress")}</span>
                   <span className="font-semibold">{p.progress}%</span>
                 </div>
                 <div
@@ -190,7 +193,7 @@ export default function AllProjectsPage() {
 
               <div className="flex items-center gap-2 rounded-lg bg-[#dff5e8] px-3 py-2 text-[10px] font-medium">
                 <CircleCheck aria-hidden className="size-3.5 text-[#22a559]" />
-                {p.tasks} tasks completed by you
+                {t("{n} tasks completed by you", { n: p.tasks })}
               </div>
 
               <div className="flex flex-wrap gap-1.5">
@@ -200,7 +203,7 @@ export default function AllProjectsPage() {
                     className="inline-flex items-center gap-1 rounded-md bg-[#e4f1fb] px-2 py-1 text-[9px] font-medium"
                   >
                     {LINK_ICONS[l]}
-                    {LINK_LABEL[l].label}
+                    {t(LINK_LABEL[l].label)}
                   </span>
                 ))}
               </div>
@@ -212,7 +215,7 @@ export default function AllProjectsPage() {
                   </span>
                 )}
                 <div className="min-w-0 leading-tight">
-                  <p className="text-[9px] text-[#1B2D54]/60">Monitor</p>
+                  <p className="text-[9px] text-[#1B2D54]/60">{t("Monitor")}</p>
                   <p className="truncate text-[11px] font-semibold">{p.mentor}</p>
                 </div>
               </div>
@@ -221,7 +224,7 @@ export default function AllProjectsPage() {
                 href={`/learner/projects/${p.id}` as Route}
                 className="mt-auto inline-flex items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-[#14757d] to-[#1B2D54] px-4 py-2 text-[11px] font-semibold text-white shadow-sm transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#12939b]/40"
               >
-                View details
+                {t("View details")}
                 <ArrowRight aria-hidden className="size-3.5" />
               </Link>
             </section>
@@ -230,13 +233,13 @@ export default function AllProjectsPage() {
       </div>
 
       <section className="min-w-0 rounded-2xl border border-[#e3ece9] bg-white p-5 shadow-sm">
-        <h2 className="text-sm font-semibold">Opportunities</h2>
+        <h2 className="text-sm font-semibold">{t("Opportunities")}</h2>
         <div className="mt-3 grid min-w-0 gap-4 md:grid-cols-2">
           {OPPORTUNITIES.map((item) => (
             <Link
               key={item.title}
               href={item.href as Route}
-              aria-label={`Explore ${item.title}`}
+              aria-label={t("Explore {track}", { track: t(item.title) })}
               className="block min-w-0 overflow-hidden rounded-xl transition-transform hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#12939b]/40"
             >
               <Image src={item.image} alt="" width={610} height={142} className="h-auto w-full" />

@@ -29,6 +29,8 @@ import {
   type JobDetail,
 } from "@/lib/recruitment-api";
 import { ApplicationBadge, Chip, CompanyMark, RecruitmentFrame, SimulationBadge } from "./recruitment-ui";
+import { useT } from "@/lib/i18n/client";
+import { dateLocale } from "@/lib/i18n/translate";
 
 const LIST = "/learner/recruitment-practice" as Route;
 
@@ -38,12 +40,13 @@ const ghostBtn =
   "inline-flex items-center justify-center gap-[0.4em] rounded-[0.8em] border border-[#c9d3df] px-[1.3em] py-[0.7em] text-[0.9em] font-semibold text-[#14365a] transition hover:bg-[#f3f6f9] disabled:opacity-50";
 const card = "rounded-[1.4em] border border-[#e3e9f0] bg-white p-[1.4em]";
 
-const day = (iso: string) => new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+const day = (iso: string) => new Date(iso).toLocaleDateString(dateLocale("en-GB"), { day: "numeric", month: "long", year: "numeric" });
 
 type View = "overview" | "interview" | "result";
 
 /** US-40: the practice certificate, loaded by its code. Always says it is not a job offer. */
 function CertificateCard({ code }: { code: string }) {
+  const t = useT();
   const [certificate, setCertificate] = useState<Certificate | null>(null);
   const [copied, setCopied] = useState(false);
 
@@ -68,31 +71,31 @@ function CertificateCard({ code }: { code: string }) {
   }
 
   return (
-    <section aria-label="Practice certificate" className="relative overflow-hidden rounded-[1.4em] border-[0.2em] border-[#12939b]/40 bg-gradient-to-br from-[#f2fbfa] to-white p-[1.6em] text-center text-[#14365a]">
+    <section aria-label={t("Practice certificate")} className="relative overflow-hidden rounded-[1.4em] border-[0.2em] border-[#12939b]/40 bg-gradient-to-br from-[#f2fbfa] to-white p-[1.6em] text-center text-[#14365a]">
       <Award className="mx-auto h-[2.6em] w-[2.6em] text-[#f5a623]" aria-hidden />
-      <p className="mt-[0.4em] text-[0.75em] font-bold uppercase tracking-[0.2em] text-[#0f7a81]">Practice certificate</p>
+      <p className="mt-[0.4em] text-[0.75em] font-bold uppercase tracking-[0.2em] text-[#0f7a81]">{t("Practice certificate")}</p>
       {certificate ? (
         <>
-          <p className="mt-[0.8em] text-[0.85em]">This certifies that</p>
+          <p className="mt-[0.8em] text-[0.85em]">{t("This certifies that")}</p>
           <p className="text-[1.6em] font-extrabold">{certificate.studentName}</p>
           <p className="mt-[0.3em] text-[0.9em]">
-            completed the practice interview for <b>{certificate.role}</b> at {certificate.companyName} with a score of{" "}
+            {t("completed the practice interview for")} <b>{t(certificate.role)}</b> {t("at {company} with a score of", { company: certificate.companyName })}{" "}
             <b>{certificate.scorePercent}%</b>.
           </p>
           <p className="mt-[0.3em] text-[0.8em] text-[#14365a]/70">
-            {certificate.trackName} · {day(certificate.issuedUtc)}
+            {t(certificate.trackName)} · {day(certificate.issuedUtc)}
           </p>
           <p className="mx-auto mt-[0.9em] max-w-[28em] rounded-[0.7em] bg-[#fff6e8] px-[0.9em] py-[0.4em] text-[0.8em] font-bold text-[#a86a00]">
-            {certificate.disclaimer}
+            {t(certificate.disclaimer)}
           </p>
         </>
       ) : (
-        <LoaderCircle className="mx-auto my-[1.2em] h-[1.6em] w-[1.6em] animate-spin text-[#12939b]" aria-label="Loading" />
+        <LoaderCircle className="mx-auto my-[1.2em] h-[1.6em] w-[1.6em] animate-spin text-[#12939b]" aria-label={t("Loading")} />
       )}
       <div className="mt-[1em] flex flex-wrap items-center justify-center gap-[0.6em]">
         <span className="rounded-[0.6em] bg-white px-[0.8em] py-[0.35em] font-mono text-[0.9em] font-bold tracking-wider ring-1 ring-[#e3e9f0]">{code}</span>
         <button type="button" onClick={copy} className="inline-flex items-center gap-[0.3em] text-[0.8em] font-semibold text-[#0f7a81] hover:underline">
-          {copied ? <Check className="h-[1em] w-[1em]" /> : <Copy className="h-[1em] w-[1em]" />} {copied ? "Copied" : "Copy code"}
+          {copied ? <Check className="h-[1em] w-[1em]" /> : <Copy className="h-[1em] w-[1em]" />} {copied ? t("Copied") : t("Copy code")}
         </button>
         <a
           href={`/certificates/${code}`}
@@ -100,7 +103,7 @@ function CertificateCard({ code }: { code: string }) {
           rel="noopener noreferrer"
           className="inline-flex items-center gap-[0.3em] text-[0.8em] font-semibold text-[#0f7a81] hover:underline"
         >
-          <ExternalLink className="h-[1em] w-[1em]" /> View and print
+          <ExternalLink className="h-[1em] w-[1em]" /> {t("View and print")}
         </a>
       </div>
     </section>
@@ -117,6 +120,7 @@ function Interview({
   onDone: (result: InterviewResult) => void;
   onCancel: () => void;
 }) {
+  const t = useT();
   const { questions } = detail;
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<(number | null)[]>(() => questions.map(() => null));
@@ -142,10 +146,10 @@ function Interview({
     <section className={card}>
       <div className="flex items-center justify-between gap-[1em]">
         <p className="text-[0.85em] font-semibold text-[#14365a]/70">
-          Question {index + 1} of {questions.length}
+          {t("Question {n} of {total}", { n: index + 1, total: questions.length })}
         </p>
         <button type="button" onClick={onCancel} className="text-[0.8em] font-semibold text-[#14365a]/60 hover:underline">
-          Leave the interview
+          {t("Leave the interview")}
         </button>
       </div>
       <div className="mt-[0.6em] flex gap-[0.3em]" aria-hidden>
@@ -155,7 +159,7 @@ function Interview({
       </div>
 
       <fieldset className="mt-[1.2em]">
-        <legend className="text-[1.25em] font-bold leading-snug text-[#14365a]">{question.prompt}</legend>
+        <legend className="text-[1.25em] font-bold leading-snug text-[#14365a]">{t(question.prompt)}</legend>
         <div className="mt-[1em] grid gap-[0.6em]">
           {question.options.map((option, i) => {
             const selected = chosen === i;
@@ -173,7 +177,7 @@ function Interview({
                   onChange={() => setAnswers((a) => a.map((v, j) => (j === index ? i : v)))}
                   className="h-[1.1em] w-[1.1em] accent-[#12939b]"
                 />
-                {option}
+                {t(option)}
               </label>
             );
           })}
@@ -188,15 +192,15 @@ function Interview({
 
       <div className="mt-[1.4em] flex flex-wrap justify-between gap-[0.6em]">
         <button type="button" onClick={() => setIndex((i) => i - 1)} disabled={index === 0 || sending} className={ghostBtn}>
-          <ArrowLeft className="h-[1.1em] w-[1.1em]" /> Back
+          <ArrowLeft className="h-[1.1em] w-[1.1em]" /> {t("Back")}
         </button>
         {last ? (
           <button type="button" onClick={submit} disabled={answers.some((a) => a === null) || sending} className={primaryBtn}>
-            {sending ? <LoaderCircle className="h-[1.1em] w-[1.1em] animate-spin" /> : <Send className="h-[1.1em] w-[1.1em]" />} Submit my answers
+            {sending ? <LoaderCircle className="h-[1.1em] w-[1.1em] animate-spin" /> : <Send className="h-[1.1em] w-[1.1em]" />} {t("Submit my answers")}
           </button>
         ) : (
           <button type="button" onClick={() => setIndex((i) => i + 1)} disabled={chosen === null} className={primaryBtn}>
-            Next <ArrowRight className="h-[1.1em] w-[1.1em]" />
+            {t("Next")} <ArrowRight className="h-[1.1em] w-[1.1em]" />
           </button>
         )}
       </div>
@@ -206,6 +210,7 @@ function Interview({
 
 /** US-39: the score, pass or not, why each answer was right or wrong, and the certificate on a pass. */
 function Result({ result, onRetry }: { result: InterviewResult; onRetry: () => void }) {
+  const t = useT();
   const right = result.results.filter((r) => r.correct).length;
   return (
     <div className="flex flex-col gap-[1em]">
@@ -218,20 +223,20 @@ function Result({ result, onRetry }: { result: InterviewResult; onRetry: () => v
           {result.scorePercent}%
         </span>
         <div className="min-w-0 flex-1">
-          <h2 className="text-[1.5em] font-extrabold text-[#14365a]">{result.passed ? "Passed! Well done." : "Not passed this time"}</h2>
+          <h2 className="text-[1.5em] font-extrabold text-[#14365a]">{result.passed ? t("Passed! Well done.") : t("Not passed this time")}</h2>
           <p className="text-[0.9em] text-[#14365a]/80">
-            {right} of {result.results.length} answers right. You need {result.passPercent}% to pass.
-            {!result.passed && " Read why below, then try again."}
+            {t("{n} of {total} answers right. You need {percent}% to pass.", { n: right, total: result.results.length, percent: result.passPercent })}
+            {!result.passed && ` ${t("Read why below, then try again.")}`}
           </p>
           {result.xpAwarded > 0 && (
             <p className="mt-[0.4em] inline-flex items-center gap-[0.3em] rounded-full bg-[#fff4d6] px-[0.7em] py-[0.2em] text-[0.8em] font-bold text-[#a86a00]">
-              <Sparkles className="h-[1em] w-[1em]" /> +{result.xpAwarded} XP
+              <Sparkles className="h-[1em] w-[1em]" /> {t("+{xp} XP", { xp: result.xpAwarded })}
             </p>
           )}
         </div>
         {!result.passed && (
           <button type="button" onClick={onRetry} className={primaryBtn}>
-            <RotateCcw className="h-[1.1em] w-[1.1em]" /> Try again
+            <RotateCcw className="h-[1.1em] w-[1.1em]" /> {t("Try again")}
           </button>
         )}
       </section>
@@ -239,28 +244,28 @@ function Result({ result, onRetry }: { result: InterviewResult; onRetry: () => v
       {result.certificate && <CertificateCard code={result.certificate.code} />}
 
       <section className={card}>
-        <h2 className="text-[1.1em] font-bold text-[#14365a]">Your answers</h2>
+        <h2 className="text-[1.1em] font-bold text-[#14365a]">{t("Your answers")}</h2>
         <ol className="mt-[0.8em] grid gap-[0.8em]">
           {result.results.map((r, i) => (
             <li key={r.questionId} className={`rounded-[1em] p-[0.9em] ${r.correct ? "bg-[#eef9f2]" : "bg-[#fdf3f3]"}`}>
               <p className="flex items-start gap-[0.5em] text-[0.9em] font-bold text-[#14365a]">
                 {r.correct ? (
-                  <CheckCircle2 className="mt-[0.1em] h-[1.1em] w-[1.1em] shrink-0 text-[#1f9d55]" aria-label="Right" />
+                  <CheckCircle2 className="mt-[0.1em] h-[1.1em] w-[1.1em] shrink-0 text-[#1f9d55]" aria-label={t("Right")} />
                 ) : (
-                  <XCircle className="mt-[0.1em] h-[1.1em] w-[1.1em] shrink-0 text-[#c0392b]" aria-label="Wrong" />
+                  <XCircle className="mt-[0.1em] h-[1.1em] w-[1.1em] shrink-0 text-[#c0392b]" aria-label={t("Wrong")} />
                 )}
-                {i + 1}. {r.prompt}
+                {i + 1}. {t(r.prompt)}
               </p>
-              <p className="mt-[0.3em] pl-[1.6em] text-[0.85em] text-[#14365a]">
-                Your answer: {r.options[r.chosen]}
+              <p className="mt-[0.3em] ps-[1.6em] text-[0.85em] text-[#14365a]">
+                {t("Your answer: {answer}", { answer: t(r.options[r.chosen]) })}
                 {!r.correct && (
                   <>
                     <br />
-                    Right answer: <b>{r.options[r.correctOptionIndex]}</b>
+                    {t("Right answer:")} <b>{t(r.options[r.correctOptionIndex])}</b>
                   </>
                 )}
               </p>
-              <p className="mt-[0.3em] pl-[1.6em] text-[0.8em] text-[#14365a]/75">{r.feedback}</p>
+              <p className="mt-[0.3em] ps-[1.6em] text-[0.8em] text-[#14365a]/75">{t(r.feedback)}</p>
             </li>
           ))}
         </ol>
@@ -271,6 +276,7 @@ function Result({ result, onRetry }: { result: InterviewResult; onRetry: () => v
 
 /** US-37 to US-40 for one practice job: apply, the interview, the result and the certificate. */
 export default function PracticeJobPage({ jobId }: { jobId: string }) {
+  const t = useT();
   const [detail, setDetail] = useState<JobDetail | null>(null);
   const [error, setError] = useState<{ message: string; notFound: boolean } | null>(null);
   const [view, setView] = useState<View>("overview");
@@ -318,25 +324,25 @@ export default function PracticeJobPage({ jobId }: { jobId: string }) {
 
   return (
     <RecruitmentFrame>
-      <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-[0.5em] text-[0.8em] text-[#14365a]">
+      <nav aria-label={t("Breadcrumb")} className="flex flex-wrap items-center gap-[0.5em] text-[0.8em] text-[#14365a]">
         <Link href={LIST} className="font-semibold hover:underline">
-          Recruitment Practice
+          {t("Recruitment Practice")}
         </Link>
         <ChevronRight className="h-[1em] w-[1em]" />
-        <span>{job?.role ?? "Practice job"}</span>
+        <span>{t(job?.role ?? "Practice job")}</span>
       </nav>
 
       {error && (
         <div className="mt-[2em] flex flex-col items-start gap-[0.8em]">
           <p role="alert" className="rounded-[0.9em] bg-[#fdecec] px-[1em] py-[0.7em] text-[0.9em] font-semibold text-[#b83232]">
-            {error.notFound ? "We could not find this practice job." : error.message}
+            {error.notFound ? t("We could not find this practice job.") : error.message}
           </p>
           <Link href={LIST} className={ghostBtn}>
-            <ArrowLeft className="h-[1.1em] w-[1.1em]" /> All practice jobs
+            <ArrowLeft className="h-[1.1em] w-[1.1em]" /> {t("All practice jobs")}
           </Link>
         </div>
       )}
-      {!detail && !error && <LoaderCircle className="mx-auto my-[4em] h-[2em] w-[2em] animate-spin text-[#12939b]" aria-label="Loading" />}
+      {!detail && !error && <LoaderCircle className="mx-auto my-[4em] h-[2em] w-[2em] animate-spin text-[#12939b]" aria-label={t("Loading")} />}
 
       {detail && job && (
         <>
@@ -347,13 +353,13 @@ export default function PracticeJobPage({ jobId }: { jobId: string }) {
                 <SimulationBadge />
                 <ApplicationBadge application={application} />
               </div>
-              <h1 className="mt-[0.3em] text-[2em] font-extrabold leading-tight text-[#14365a]">{job.role}</h1>
+              <h1 className="mt-[0.3em] text-[2em] font-extrabold leading-tight text-[#14365a]">{t(job.role)}</h1>
               <p className="text-[0.95em] text-[#14365a]/75">
-                {job.companyName} · {job.trackName} · {job.level}
+                {job.companyName} · {t(job.trackName)} · {t(job.level)}
               </p>
             </div>
           </header>
-          <p className="mt-[0.6em] text-[0.8em] font-semibold text-[#a86a00]">{detail.disclaimer}</p>
+          <p className="mt-[0.6em] text-[0.8em] font-semibold text-[#a86a00]">{t(detail.disclaimer)}</p>
 
           <div className="mt-[1.2em]">
             {view === "interview" && detail.questions.length > 0 && (
@@ -365,35 +371,35 @@ export default function PracticeJobPage({ jobId }: { jobId: string }) {
             {view === "overview" && (
               <div className="grid items-start gap-[1em] lg:grid-cols-[1.5fr_1fr]">
                 <section className={card}>
-                  <h2 className="text-[1.1em] font-bold text-[#14365a]">About this practice job</h2>
-                  <p className="mt-[0.5em] text-[0.9em] leading-relaxed text-[#14365a]/85">{job.description}</p>
-                  <h3 className="mt-[1em] text-[0.9em] font-bold text-[#14365a]">Skills</h3>
+                  <h2 className="text-[1.1em] font-bold text-[#14365a]">{t("About this practice job")}</h2>
+                  <p className="mt-[0.5em] text-[0.9em] leading-relaxed text-[#14365a]/85">{t(job.description)}</p>
+                  <h3 className="mt-[1em] text-[0.9em] font-bold text-[#14365a]">{t("Skills")}</h3>
                   <div className="mt-[0.4em] flex flex-wrap gap-[0.4em]">
                     {job.skills.map((s) => (
                       <Chip key={s}>{s}</Chip>
                     ))}
                   </div>
-                  <h3 className="mt-[1em] text-[0.9em] font-bold text-[#14365a]">The interview</h3>
+                  <h3 className="mt-[1em] text-[0.9em] font-bold text-[#14365a]">{t("The interview")}</h3>
                   <ul className="mt-[0.4em] grid gap-[0.3em] text-[0.85em] text-[#14365a]/85">
-                    <li>• 5 questions about teamwork and the job. Choose one answer for each.</li>
-                    <li>• You pass with 60% (3 of 5) or more.</li>
-                    <li>• You get XP the first time you finish it, and a practice certificate when you pass.</li>
-                    <li>• Not passed? Read why, then try again.</li>
+                    <li>• {t("5 questions about teamwork and the job. Choose one answer for each.")}</li>
+                    <li>• {t("You pass with 60% (3 of 5) or more.")}</li>
+                    <li>• {t("You get XP the first time you finish it, and a practice certificate when you pass.")}</li>
+                    <li>• {t("Not passed? Read why, then try again.")}</li>
                   </ul>
                 </section>
 
                 <aside className={`${card} flex flex-col gap-[0.9em]`}>
                   {!application && (
                     <>
-                      <h2 className="text-[1.1em] font-bold text-[#14365a]">Ready to apply?</h2>
-                      <p className="text-[0.85em] text-[#14365a]/80">Your application is sent at once. Then you can start the interview.</p>
+                      <h2 className="text-[1.1em] font-bold text-[#14365a]">{t("Ready to apply?")}</h2>
+                      <p className="text-[0.85em] text-[#14365a]/80">{t("Your application is sent at once. Then you can start the interview.")}</p>
                       {applyError && (
                         <p role="alert" className="rounded-[0.8em] bg-[#fdecec] px-[0.9em] py-[0.5em] text-[0.8em] font-semibold text-[#b83232]">
                           {applyError}
                         </p>
                       )}
                       <button type="button" onClick={apply} disabled={applying} className={primaryBtn}>
-                        {applying ? <LoaderCircle className="h-[1.1em] w-[1.1em] animate-spin" /> : <Send className="h-[1.1em] w-[1.1em]" />} Apply
+                        {applying ? <LoaderCircle className="h-[1.1em] w-[1.1em] animate-spin" /> : <Send className="h-[1.1em] w-[1.1em]" />} {t("Apply")}
                       </button>
                     </>
                   )}
@@ -401,24 +407,26 @@ export default function PracticeJobPage({ jobId }: { jobId: string }) {
                   {application && application.status !== "InterviewPassed" && (
                     <>
                       <h2 className="text-[1.1em] font-bold text-[#14365a]">
-                        {application.status === "Applied" ? "You applied!" : "Ready to try again?"}
+                        {application.status === "Applied" ? t("You applied!") : t("Ready to try again?")}
                       </h2>
                       <p className="text-[0.85em] text-[#14365a]/80">
                         {application.status === "Applied"
-                          ? "The next step is the interview: 5 questions, and 60% passes."
-                          : `Your best score so far is ${application.bestScorePercent}%. You need 60% to pass.`}
+                          ? t("The next step is the interview: 5 questions, and 60% passes.")
+                          : t("Your best score so far is {n}%. You need 60% to pass.", { n: application.bestScorePercent })}
                       </p>
                       <button type="button" onClick={() => setView("interview")} className={primaryBtn}>
-                        {application.status === "Applied" ? "Start the interview" : "Try the interview again"} <ArrowRight className="h-[1.1em] w-[1.1em]" />
+                        {application.status === "Applied" ? t("Start the interview") : t("Try the interview again")} <ArrowRight className="h-[1.1em] w-[1.1em]" />
                       </button>
                     </>
                   )}
 
                   {application?.status === "InterviewPassed" && (
                     <>
-                      <h2 className="text-[1.1em] font-bold text-[#14365a]">You passed this interview</h2>
+                      <h2 className="text-[1.1em] font-bold text-[#14365a]">{t("You passed this interview")}</h2>
                       <p className="text-[0.85em] text-[#14365a]/80">
-                        Best score {application.bestScorePercent}% in {application.attempts} {application.attempts === 1 ? "try" : "tries"}.
+                        {application.attempts === 1
+                          ? t("Best score {n}% in 1 try.", { n: application.bestScorePercent })
+                          : t("Best score {n}% in {tries} tries.", { n: application.bestScorePercent, tries: application.attempts })}
                       </p>
                     </>
                   )}
@@ -435,7 +443,7 @@ export default function PracticeJobPage({ jobId }: { jobId: string }) {
 
           {view === "result" && (
             <Link href={LIST} className={`${ghostBtn} mt-[1em]`}>
-              <ArrowLeft className="h-[1.1em] w-[1.1em]" /> All practice jobs
+              <ArrowLeft className="h-[1.1em] w-[1.1em]" /> {t("All practice jobs")}
             </Link>
           )}
         </>

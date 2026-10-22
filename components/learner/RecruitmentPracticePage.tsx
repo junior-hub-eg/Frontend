@@ -7,45 +7,48 @@ import { ArrowRight, Briefcase, ClipboardList, Info, LoaderCircle, MessagesSquar
 import { errorMessage } from "@/lib/api-client";
 import { getPracticeJobs, type JobList, type PracticeJob } from "@/lib/recruitment-api";
 import { ApplicationBadge, Chip, CompanyMark, RecruitmentFrame, SimulationBadge } from "./recruitment-ui";
+import { useT } from "@/lib/i18n/client";
+import { tk } from "@/lib/i18n/translate";
 
 const STEPS = [
-  { icon: Briefcase, title: "Pick a job", text: "Practice jobs at made-up companies" },
-  { icon: ClipboardList, title: "Apply", text: "Send your application in one click" },
-  { icon: MessagesSquare, title: "Interview", text: "Answer 5 questions, 60% passes" },
-  { icon: Trophy, title: "Certificate", text: "Get a practice certificate and XP" },
+  { icon: Briefcase, title: tk("Pick a job"), text: tk("Practice jobs at made-up companies") },
+  { icon: ClipboardList, title: tk("Apply"), text: tk("Send your application in one click") },
+  { icon: MessagesSquare, title: tk("Interview"), text: tk("Answer 5 questions, 60% passes") },
+  { icon: Trophy, title: tk("Certificate"), text: tk("Get a practice certificate and XP") },
 ];
 
 function JobCard({ job }: { job: PracticeJob }) {
+  const t = useT();
   const href = `/learner/recruitment-practice/${job.id}` as Route;
   const action =
     job.myApplication?.status === "InterviewPassed"
-      ? "View result"
+      ? t("View result")
       : job.myApplication?.status === "InterviewNotPassed"
-        ? "Try again"
+        ? t("Try again")
         : job.myApplication
-          ? "Start interview"
-          : "View and apply";
+          ? t("Start interview")
+          : t("View and apply");
 
   return (
     <article className="relative flex flex-col gap-[0.9em] rounded-[1.4em] border border-[#e3e9f0] bg-white p-[1.2em] transition hover:shadow-lg hover:shadow-[#14365a]/5">
       <div className="flex items-start gap-[0.9em]">
         <CompanyMark name={job.companyName} className="h-[2.6em] w-[2.6em]" />
         <div className="min-w-0 flex-1">
-          <h3 className="text-[1.05em] font-bold leading-snug text-[#14365a]">{job.role}</h3>
+          <h3 className="text-[1.05em] font-bold leading-snug text-[#14365a]">{t(job.role)}</h3>
           <p className="text-[0.85em] text-[#14365a]/70">{job.companyName}</p>
         </div>
         <ApplicationBadge application={job.myApplication} />
       </div>
 
       <div className="flex flex-wrap gap-[0.4em]">
-        <span className="rounded-[0.5em] bg-[#e4f7f4] px-[0.6em] py-[0.3em] text-[0.75em] font-bold text-[#0f7a81]">{job.trackName}</span>
-        <span className="rounded-[0.5em] bg-[#d5f2de] px-[0.6em] py-[0.3em] text-[0.75em] font-semibold text-[#1f7a45]">{job.level}</span>
+        <span className="rounded-[0.5em] bg-[#e4f7f4] px-[0.6em] py-[0.3em] text-[0.75em] font-bold text-[#0f7a81]">{t(job.trackName)}</span>
+        <span className="rounded-[0.5em] bg-[#d5f2de] px-[0.6em] py-[0.3em] text-[0.75em] font-semibold text-[#1f7a45]">{t(job.level)}</span>
         {job.skills.map((s) => (
           <Chip key={s}>{s}</Chip>
         ))}
       </div>
 
-      <p className="line-clamp-3 text-[0.85em] leading-relaxed text-[#14365a]/85">{job.description}</p>
+      <p className="line-clamp-3 text-[0.85em] leading-relaxed text-[#14365a]/85">{t(job.description)}</p>
 
       <Link
         href={href}
@@ -69,6 +72,7 @@ function JobGrid({ jobs }: { jobs: PracticeJob[] }) {
 
 /** US-36: Recruitment Practice, the practice jobs of the student's tracks only. Always a simulation (BR-12). */
 export default function RecruitmentPracticePage() {
+  const t = useT();
   const [list, setList] = useState<JobList | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -88,12 +92,12 @@ export default function RecruitmentPracticePage() {
     <RecruitmentFrame>
       <section className="flex flex-col gap-[0.6em]">
         <SimulationBadge />
-        <h1 className="text-[2.3em] font-extrabold leading-tight text-[#14365a]">Recruitment Practice</h1>
+        <h1 className="text-[2.3em] font-extrabold leading-tight text-[#14365a]">{t("Recruitment Practice")}</h1>
         <p className="max-w-[40em] text-[0.95em] leading-snug text-[#14365a]">
-          Practise applying for a job and passing an interview, so you are ready for the real thing one day.
+          {t("Practise applying for a job and passing an interview, so you are ready for the real thing one day.")}
         </p>
         <p className="flex items-center gap-[0.5em] self-start rounded-[0.8em] bg-[#fff6e8] px-[0.9em] py-[0.5em] text-[0.85em] font-semibold text-[#a86a00]">
-          <Info className="h-[1.1em] w-[1.1em] shrink-0" /> {list?.disclaimer ?? "Practice only. These are not real jobs."}
+          <Info className="h-[1.1em] w-[1.1em] shrink-0" /> {t(list?.disclaimer ?? "Practice only. These are not real jobs.")}
         </p>
       </section>
 
@@ -105,9 +109,9 @@ export default function RecruitmentPracticePage() {
             </span>
             <span className="min-w-0">
               <span className="block text-[0.85em] font-bold text-[#14365a]">
-                {i + 1}. {title}
+                {i + 1}. {t(title)}
               </span>
-              <span className="block text-[0.75em] text-[#14365a]/70">{text}</span>
+              <span className="block text-[0.75em] text-[#14365a]/70">{t(text)}</span>
             </span>
           </li>
         ))}
@@ -118,23 +122,23 @@ export default function RecruitmentPracticePage() {
           {error}
         </p>
       )}
-      {!list && !error && <LoaderCircle className="mx-auto my-[4em] h-[2em] w-[2em] animate-spin text-[#12939b]" aria-label="Loading" />}
+      {!list && !error && <LoaderCircle className="mx-auto my-[4em] h-[2em] w-[2em] animate-spin text-[#12939b]" aria-label={t("Loading")} />}
 
       {list && (
         <section className="mt-[2em]">
-          <h2 className="mb-[0.8em] text-[1.3em] font-extrabold text-[#14365a]">Jobs for your tracks</h2>
+          <h2 className="mb-[0.8em] text-[1.3em] font-extrabold text-[#14365a]">{t("Jobs for your tracks")}</h2>
           {list.jobs.length > 0 ? (
             <JobGrid jobs={list.jobs} />
           ) : (
             <div className="flex flex-col items-center gap-[0.6em] rounded-[1.4em] border border-dashed border-[#c9d3df] bg-white p-[2em] text-center">
               <Briefcase className="h-[2.4em] w-[2.4em] text-[#c9d3df]" aria-hidden />
-              <p className="text-[0.95em] font-bold text-[#14365a]">No practice jobs for your tracks yet</p>
-              <p className="max-w-[28em] text-[0.85em] text-[#14365a]/70">Start another track to see its practice jobs here.</p>
+              <p className="text-[0.95em] font-bold text-[#14365a]">{t("No practice jobs for your tracks yet")}</p>
+              <p className="max-w-[28em] text-[0.85em] text-[#14365a]/70">{t("Start another track to see its practice jobs here.")}</p>
               <Link
                 href={"/learner/courses" as Route}
                 className="mt-[0.4em] inline-flex items-center gap-[0.4em] rounded-[0.8em] bg-[#14365a] px-[1.2em] py-[0.6em] text-[0.85em] font-semibold text-white hover:bg-[#0f2a47]"
               >
-                Explore tracks <ArrowRight className="h-[1em] w-[1em]" />
+                {t("Explore tracks")} <ArrowRight className="h-[1em] w-[1em]" />
               </Link>
             </div>
           )}

@@ -37,6 +37,7 @@ import { LinkChips, MyLinksEditor } from "./work-links";
 import { ProjectSubmitCard } from "./ProjectSubmitCard";
 import RedirectToSquad, { SQUAD_PAGE } from "./RedirectToSquad";
 import { TeamChatButton, TeamChatPanel, useTeamChat, type ChatKey } from "./TeamChat";
+import { useT } from "@/lib/i18n/client";
 
 const IMG = "/images/Intern";
 const BG = `${IMG}/bg-park.png`;
@@ -96,6 +97,7 @@ function TeamCard({
   unreadTotal: number;
   onChat: (key: ChatKey | undefined) => void;
 }) {
+  const t = useT();
   return (
     <section className="flex min-w-0 flex-col gap-[0.8em]">
       <div className={`${glass} flex items-center gap-[1em] p-[1em]`}>
@@ -115,7 +117,7 @@ function TeamCard({
           </p>
         </div>
         {squad && (
-          <div className="ml-auto shrink-0 self-start">
+          <div className="ms-auto shrink-0 self-start">
             <TeamChatButton unread={unreadTotal} onClick={() => onChat(undefined)} />
           </div>
         )}
@@ -125,7 +127,7 @@ function TeamCard({
         <ul className="flex items-center gap-[1.2em] overflow-x-auto pb-[0.2em]">
           {/* The project's monitor (a mentor picked for the squad), then the members. */}
           {squad?.monitor && (
-            <li className="flex min-w-[9em] shrink-0 flex-col items-center border-r border-[#e3ebf3] pr-[1.2em] text-center">
+            <li className="flex min-w-[9em] shrink-0 flex-col items-center border-e border-[#e3ebf3] pe-[1.2em] text-center">
               <button
                 type="button"
                 onClick={() => onChat(squad.monitor!.id)}
@@ -142,8 +144,8 @@ function TeamCard({
                 </span>
               </button>
               <span className="mt-[0.5em] whitespace-nowrap text-[0.95em] font-bold text-[#14365a]">{squad.monitor.fullName}</span>
-              <span className="mt-[0.15em] rounded-full bg-[#e9f7f4] px-[0.7em] py-[0.1em] text-[0.7em] font-bold text-[#12939b]">Monitor</span>
-              <span className="mt-[0.15em] max-w-[11em] truncate text-[0.7em] text-[#14365a]/60">{squad.monitor.title}</span>
+              <span className="mt-[0.15em] rounded-full bg-[#e9f7f4] px-[0.7em] py-[0.1em] text-[0.7em] font-bold text-[#12939b]">{t("Monitor")}</span>
+              <span className="mt-[0.15em] max-w-[11em] truncate text-[0.7em] text-[#14365a]/60">{t(squad.monitor.title)}</span>
             </li>
           )}
           {squad?.members.map((m, i) => {
@@ -175,7 +177,7 @@ function TeamCard({
                   </button>
                 )}
                 <span className="mt-[0.5em] whitespace-nowrap text-[0.95em] font-bold text-[#14365a]">{m.fullName}</span>
-                <span className="text-[0.75em] text-[#14365a]/60">{ROLE_TITLE[m.role]}</span>
+                <span className="text-[0.75em] text-[#14365a]/60">{t(ROLE_TITLE[m.role])}</span>
               </li>
             );
           })}
@@ -591,6 +593,7 @@ function ProjectLinks() {
 }
 
 export default function InternshipProgress() {
+  const t = useT();
   const { squad, sprint, board, leaderboard, error, notReady, reload } = useInterns();
   const [moveError, setMoveError] = useState<string | null>(null);
   const chat = useTeamChat(squad);
@@ -623,7 +626,7 @@ export default function InternshipProgress() {
   if (notReady) return <RedirectToSquad />;
 
   return (
-    <div className="relative -ml-[4rem] min-h-[calc(100svh-5rem)] min-w-0 flex-1 lg:absolute lg:inset-0 lg:ml-0 lg:min-h-0">
+    <div className="relative -ms-[4rem] min-h-[calc(100svh-5rem)] min-w-0 flex-1 lg:absolute lg:inset-0 lg:ms-0 lg:min-h-0">
       {/* Background: on mobile it only covers the top and fades out, on desktop it fills the frame */}
       <div
         aria-hidden="true"
@@ -644,7 +647,7 @@ export default function InternshipProgress() {
             <Link href={SQUAD_PAGE} aria-label="Your squad" className="block transition-transform hover:scale-[1.02]">
               <Image
                 src={`${IMG}/building-internship.png`}
-                alt="Internship"
+                alt={t("Internship")}
                 width={535}
                 height={388}
                 sizes="(max-width: 1024px) 80vw, 30vw"

@@ -1,14 +1,18 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import { Play } from "lucide-react";
 import { Curl } from "@/components/Auth/AuthDecorations";
+import { useT } from "@/lib/i18n/client";
 
 export function Hero() {
+  const t = useT();
   return (
     <section className="relative overflow-hidden bg-white">
       {/* Decorative curl */}
       <Curl
-        className="absolute left-0 top-24 w-10 -scale-x-100 opacity-60"
+        className="absolute start-0 top-24 w-10 -scale-x-100 opacity-60"
         aria-hidden
       />
 
@@ -21,26 +25,24 @@ export function Hero() {
             alt=""
             width={290}
             height={296}
-            className="pointer-events-none absolute -left-2 top-0 w-64 opacity-50 sm:left-8 sm:w-72"
+            className="pointer-events-none absolute -start-2 top-0 w-64 opacity-50 sm:start-8 sm:w-72"
             aria-hidden
           />
 
           <span className="inline-flex items-center rounded-full border border-[#C6EBDD] bg-white/90 px-3 py-1.5 text-[10px] font-semibold tracking-wide text-[#1B2A5C]/80 shadow-sm sm:text-xs">
-            YOUR FUTURE STARTS HERE
+            {t("YOUR FUTURE STARTS HERE")}
           </span>
 
           <h1 className="mt-4 max-w-[540px] text-[34px] font-bold leading-[1.12] tracking-tight text-[#1B2A5C] sm:text-4xl lg:text-[38px] xl:text-[42px]">
-            Discover
+            {t("Discover")}
             <br />
-            Your <span className="text-[#128B91]">Interests.</span>
+            {t("Your")} <span className="text-[#128B91]">{t("Interests.")}</span>
             <br />
-            Build Your <span className="text-[#128B91]">Future.</span>
+            {t("Build Your")} <span className="text-[#128B91]">{t("Future.")}</span>
           </h1>
 
           <p className="mt-4 max-w-[440px] text-[12px] leading-[1.65] text-[#1B2A5C]/75 sm:text-[13px]">
-            Explore technology tracks, learn through short videos, connect
-            with mentors, and experience the world of internships and
-            recruitment.
+            {t("Explore technology tracks, learn through short videos, connect with mentors, and experience the world of internships and recruitment.")}
           </p>
 
           {/* Hero Actions */}
@@ -49,8 +51,8 @@ export function Hero() {
               href="/courses"
               className="inline-flex h-11 items-center gap-2 rounded-full bg-[#128B91] px-4 text-[11px] font-semibold text-white transition-colors hover:bg-[#0F777D] sm:px-5"
             >
-              Explore Courses
-              <span aria-hidden>→</span>
+              {t("Explore Courses")}
+              <span aria-hidden className="inline-block rtl:-scale-x-100">→</span>
             </Link>
 
             <button
@@ -73,9 +75,9 @@ export function Hero() {
               />
               <span className="relative z-10 flex items-center gap-2">
                 <span className="grid size-7 shrink-0 place-items-center rounded-full bg-white">
-                  <Play size={13} className="ml-0.5 fill-[#B45B65] text-[#B45B65]" />
+                  <Play size={13} className="ms-0.5 fill-[#B45B65] text-[#B45B65]" />
                 </span>
-                How It Works
+                {t("How It Works")}
               </span>
             </button>
           </div>
@@ -89,13 +91,13 @@ export function Hero() {
             alt=""
             width={339}
             height={220}
-            className="pointer-events-none absolute -left-3 top-0 z-0 w-28 sm:-left-5 sm:w-40 lg:-left-4 lg:w-44"
+            className="pointer-events-none absolute -start-3 top-0 z-0 w-28 sm:-start-5 sm:w-40 lg:-start-4 lg:w-44"
             aria-hidden
           />
 
           <Image
             src="/images/Landing%20Page/Home/Group%205.png"
-            alt="Two Junior Hub students with AI assessment, real projects, and mentorship"
+            alt={t("Two Junior Hub students with AI assessment, real projects, and mentorship")}
             width={754}
             height={565}
             priority

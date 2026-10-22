@@ -5,12 +5,15 @@ import { InternshipListings } from "@/components/Interns/InternshipListings";
 import { AssessmentBanner } from "@/components/Interns/AssessmentBanner";
 import { InternsTestimonials } from "@/components/Interns/InternsTestimonials";
 import { CtaBand } from "@/components/Landing/CtaBand";
+import { getT } from "@/lib/i18n/server";
 
-export const metadata: Metadata = {
-  title: "Internship Program | Junior Hub",
-  description:
-    "Join an agile squad, work on real projects, and gain hands-on experience under the guidance of a Senior Team Leader.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return {
+    title: t("Internship Program | Junior Hub"),
+    description: t("Join an agile squad, work on real projects, and gain hands-on experience under the guidance of a Senior Team Leader."),
+  };
+}
 
 export default function InternsLandingPage() {
   return (

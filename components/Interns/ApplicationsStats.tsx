@@ -1,6 +1,10 @@
+"use client";
+
 import { FileText, Briefcase, CheckCircle2, TrendingUp } from "lucide-react";
+import { useT } from "@/lib/i18n/client";
 
 export function ApplicationsStats() {
+  const t = useT();
   return (
     <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
       {/* 1. Total Applications */}
@@ -10,8 +14,8 @@ export function ApplicationsStats() {
         </div>
         <div className="mt-6">
           <span className="text-3xl font-extrabold tracking-tight sm:text-4xl">3</span>
-          <p className="mt-1 text-xs font-semibold text-white/80">Total Applications</p>
-          <p className="mt-2 text-[11px] font-bold text-emerald-400">+2 vs last month</p>
+          <p className="mt-1 text-xs font-semibold text-white/80">{t("Total Applications")}</p>
+          <p className="mt-2 text-[11px] font-bold text-emerald-400">{t("{n} vs last month", { n: "+2" })}</p>
         </div>
       </div>
 
@@ -22,8 +26,8 @@ export function ApplicationsStats() {
         </div>
         <div className="mt-6">
           <span className="text-3xl font-extrabold tracking-tight sm:text-4xl">1</span>
-          <p className="mt-1 text-xs font-semibold text-white/80">Under Review</p>
-          <p className="mt-2 text-[11px] font-bold text-emerald-300">In Progress</p>
+          <p className="mt-1 text-xs font-semibold text-white/80">{t("Under Review")}</p>
+          <p className="mt-2 text-[11px] font-bold text-emerald-300">{t("In Progress")}</p>
         </div>
       </div>
 
@@ -34,8 +38,8 @@ export function ApplicationsStats() {
         </div>
         <div className="mt-6">
           <span className="text-3xl font-extrabold tracking-tight sm:text-4xl">1</span>
-          <p className="mt-1 text-xs font-semibold text-white/80">Accepted Offers</p>
-          <p className="mt-2 text-[11px] font-bold text-emerald-400">+1 vs last month</p>
+          <p className="mt-1 text-xs font-semibold text-white/80">{t("Accepted Offers")}</p>
+          <p className="mt-2 text-[11px] font-bold text-emerald-400">{t("{n} vs last month", { n: "+1" })}</p>
         </div>
       </div>
 
@@ -46,8 +50,8 @@ export function ApplicationsStats() {
         </div>
         <div className="mt-6">
           <span className="text-3xl font-extrabold tracking-tight sm:text-4xl">85%</span>
-          <p className="mt-1 text-xs font-semibold text-[#1b2a5c]/80">Profile Strength</p>
-          <p className="mt-2 text-[11px] font-bold text-emerald-700">+10% vs last month</p>
+          <p className="mt-1 text-xs font-semibold text-[#1b2a5c]/80">{t("Profile Strength")}</p>
+          <p className="mt-2 text-[11px] font-bold text-emerald-700">{t("{n} vs last month", { n: "+10%" })}</p>
         </div>
       </div>
     </div>

@@ -1,3 +1,4 @@
+import { tk } from "@/lib/i18n/translate";
 /**
  * The cartoon avatars. A student picks one of the young characters and one of its faces; the backend
  * (PUT /api/v1/me/avatar) accepts these keys only and stores the image path as the student's photoUrl.
@@ -27,34 +28,34 @@ interface Character {
 
 /** The young characters students choose from (same ids as the backend's ChangeAvatarHandler). */
 export const CHARACTERS: Character[] = [
-  { id: "boy-1", gender: "Male", label: "Boy with a purple cap", bg: "#ffc107" },
-  { id: "boy-2", gender: "Male", label: "Boy with a blue cap", bg: "#ffb38a" },
-  { id: "boy-3", gender: "Male", label: "Boy with brown hair", bg: "#9ad9c8" },
-  { id: "boy-4", gender: "Male", label: "Boy in a dark jacket", bg: "#8fd3ff" },
-  { id: "girl-1", gender: "Female", label: "Girl with an orange cap", bg: "#bde4ff" },
-  { id: "girl-2", gender: "Female", label: "Girl with a purple cap", bg: "#ffe0a3" },
-  { id: "girl-3", gender: "Female", label: "Girl in a yellow hoodie", bg: "#c9b8f5" },
-  { id: "girl-4", gender: "Female", label: "Girl in a mustard hoodie", bg: "#f7b2b0" },
+  { id: "boy-1", gender: "Male", label: tk("Boy with a purple cap"), bg: "#ffc107" },
+  { id: "boy-2", gender: "Male", label: tk("Boy with a blue cap"), bg: "#ffb38a" },
+  { id: "boy-3", gender: "Male", label: tk("Boy with brown hair"), bg: "#9ad9c8" },
+  { id: "boy-4", gender: "Male", label: tk("Boy in a dark jacket"), bg: "#8fd3ff" },
+  { id: "girl-1", gender: "Female", label: tk("Girl with an orange cap"), bg: "#bde4ff" },
+  { id: "girl-2", gender: "Female", label: tk("Girl with a purple cap"), bg: "#ffe0a3" },
+  { id: "girl-3", gender: "Female", label: tk("Girl in a yellow hoodie"), bg: "#c9b8f5" },
+  { id: "girl-4", gender: "Female", label: tk("Girl in a mustard hoodie"), bg: "#f7b2b0" },
 ];
 
 /** Every character has each of these faces, happiest first. */
 export const EMOTIONS: { id: string; label: string }[] = [
-  { id: "smile", label: "Smile" },
-  { id: "happy", label: "Happy" },
-  { id: "laughs", label: "Laughing" },
-  { id: "good", label: "Thumbs up" },
-  { id: "ok", label: "OK" },
-  { id: "in-love", label: "Heart" },
-  { id: "reading", label: "Reading" },
-  { id: "thinking", label: "Thinking" },
-  { id: "listening", label: "Music" },
-  { id: "texting", label: "Texting" },
-  { id: "strong", label: "Strong" },
-  { id: "surprised", label: "Surprised" },
-  { id: "neutral", label: "Calm" },
-  { id: "sad", label: "Sad" },
-  { id: "scared", label: "Scared" },
-  { id: "crying", label: "Crying" },
+  { id: "smile", label: tk("Smile") },
+  { id: "happy", label: tk("Happy") },
+  { id: "laughs", label: tk("Laughing") },
+  { id: "good", label: tk("Thumbs up") },
+  { id: "ok", label: tk("OK") },
+  { id: "in-love", label: tk("Heart") },
+  { id: "reading", label: tk("Reading") },
+  { id: "thinking", label: tk("Thinking") },
+  { id: "listening", label: tk("Music") },
+  { id: "texting", label: tk("Texting") },
+  { id: "strong", label: tk("Strong") },
+  { id: "surprised", label: tk("Surprised") },
+  { id: "neutral", label: tk("Calm") },
+  { id: "sad", label: tk("Sad") },
+  { id: "scared", label: tk("Scared") },
+  { id: "crying", label: tk("Crying") },
 ];
 
 export const DEFAULT_EMOTION = "smile";
@@ -85,8 +86,8 @@ export function charactersFor(gender: Gender | null | undefined): Character[] {
 
 /** The sign-up choices, each with the avatar it starts with (same as the backend's default). */
 export const GENDERS: { id: Gender; label: string; avatar: Avatar }[] = [
-  { id: "Male", label: "Boy", avatar: avatarOf("boy-1") },
-  { id: "Female", label: "Girl", avatar: avatarOf("girl-1") },
+  { id: "Male", label: tk("Boy"), avatar: avatarOf("boy-1") },
+  { id: "Female", label: tk("Girl"), avatar: avatarOf("girl-1") },
 ];
 
 /** Smiling faces, boys and girls mixed, used when a student has not chosen one yet. */

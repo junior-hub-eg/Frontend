@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type
 import { createPortal } from "react-dom";
 import { Poppins } from "next/font/google";
 import Image from "next/image";
-import { ArrowLeft, LoaderCircle, MessagesSquare, Send, Users, X } from "lucide-react";
+import { ArrowLeft, LoaderCircle, MessagesSquare, RotateCw, Send, Users, X } from "lucide-react";
 import { errorMessage } from "@/lib/api-client";
 import { mentorAvatar } from "@/lib/avatars";
 import {
@@ -20,6 +20,7 @@ import {
   type SquadRole,
 } from "@/lib/interns-api";
 import { useLiveChannel } from "@/lib/live-channel";
+import { useI18n, useT } from "@/lib/i18n/client";
 import { avatarFor, ROLE_TITLE } from "./interns-data";
 
 /** Same font as the learner shell (the drawer is rendered outside it). */
@@ -39,16 +40,25 @@ type Listener = (message: ChatMessageEvent) => void;
  * threads are polled.
  */
 export function useTeamChat(squad: Squad | null) {
+  const t = useT();
   const [threads, setThreads] = useState<ChatThread[]>([]);
+  /** The chats were loaded at least once. */
+  const [loaded, setLoaded] = useState(false);
+  /** Why the last load failed (the API offline or restarting, the project not ready, ...); null when it worked. */
+  const [error, setError] = useState<string | null>(null);
   const listeners = useRef(new Set<Listener>());
 
   const reloadThreads = useCallback(
     () =>
       getChatThreads().then(
-        (r) => setThreads(r.threads),
-        () => {},
+        (r) => {
+          setThreads(r.threads);
+          setLoaded(true);
+          setError(null);
+        },
+        (e) => setError(errorMessage(e, t("We couldn't load your team chat. Please try again."))),
       ),
-    [],
+    [t],
   );
 
   const enabled = !!squad?.projectRevealed;
@@ -82,7 +92,7 @@ export function useTeamChat(squad: Squad | null) {
   const unreadTotal = threads.reduce((n, t) => n + t.unread, 0);
   const unreadFor = useCallback((key: ChatKey) => threads.find((t) => t.with === key)?.unread ?? 0, [threads]);
 
-  return { threads, unreadTotal, unreadFor, reloadThreads, subscribe, live, enabled };
+  return { threads, loaded, error, unreadTotal, unreadFor, reloadThreads, subscribe, live, enabled };
 }
 
 export type TeamChatState = ReturnType<typeof useTeamChat>;
@@ -123,15 +133,45 @@ function Badge({ count }: { count: number }) {
   );
 }
 
-/** "14:05" today, else "Oct 21, 14:05". */
-function when(utc: string) {
-  const d = new Date(utc);
-  const time = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-  return d.toDateString() === new Date().toDateString() ? time : `${d.toLocaleDateString([], { month: "short", day: "numeric" })}, ${time}`;
+/** A failed load: what went wrong and a Retry button, instead of a spinner that never ends. */
+function LoadError({ message, onRetry }: { message: string; onRetry: () => unknown }) {
+  const t = useT();
+  const [retrying, setRetrying] = useState(false);
+  return (
+    <div role="alert" className="mx-[1em] mt-[2.5em] flex flex-col items-center gap-[0.7em] text-center">
+      <p className="text-[0.9em] font-semibold text-[#b83232]">{message}</p>
+      <button
+        type="button"
+        disabled={retrying}
+        onClick={async () => {
+          setRetrying(true);
+          try {
+            await onRetry();
+          } finally {
+            setRetrying(false);
+          }
+        }}
+        className="flex items-center gap-[0.4em] rounded-[0.8em] bg-[#14365a] px-[1em] py-[0.45em] text-[0.85em] font-bold text-white hover:bg-[#1d4a7a] disabled:opacity-60"
+      >
+        <RotateCw className={`h-[1em] w-[1em] ${retrying ? "animate-spin" : ""}`} aria-hidden /> {retrying ? t("Retrying…") : t("Retry")}
+      </button>
+    </div>
+  );
 }
 
-const subtitle = (t: ChatThread) =>
-  t.kind === "Group" ? "Your squad and monitor" : t.kind === "Monitor" ? `Monitor · ${t.role ?? ""}` : (ROLE_TITLE[t.role as SquadRole] ?? t.role ?? "");
+/** "14:05" today, else "Oct 21, 14:05". */
+function when(utc: string, locale: string) {
+  const d = new Date(utc);
+  const time = d.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
+  return d.toDateString() === new Date().toDateString() ? time : `${d.toLocaleDateString(locale, { month: "short", day: "numeric" })}, ${time}`;
+}
+
+const subtitle = (thread: ChatThread, t: ReturnType<typeof useT>) =>
+  thread.kind === "Group"
+    ? t("Your squad and monitor")
+    : thread.kind === "Monitor"
+      ? t("Monitor · {role}", { role: thread.role ? t(thread.role) : "" })
+      : t(ROLE_TITLE[thread.role as SquadRole] ?? thread.role ?? "");
 
 /** An event from the live channel, as a message of the chat it belongs to (from my side). */
 function fromEvent(e: ChatMessageEvent, me: string): ChatMessage {
@@ -148,29 +188,31 @@ function fromEvent(e: ChatMessageEvent, me: string): ChatMessage {
 }
 
 function ThreadList({ chat, avatars, onOpen }: { chat: TeamChatState; avatars: Map<string, { src: string; bg: string }>; onOpen: (key: ChatKey) => void }) {
-  if (chat.threads.length === 0)
-    return <LoaderCircle className="mx-auto mt-[3em] h-[2em] w-[2em] animate-spin text-[#14365a]" aria-label="Loading chats" />;
+  const { t, intl } = useI18n();
+  if (!chat.loaded && chat.error) return <LoadError message={chat.error} onRetry={chat.reloadThreads} />;
+  if (!chat.loaded)
+    return <LoaderCircle className="mx-auto mt-[3em] h-[2em] w-[2em] animate-spin text-[#14365a]" aria-label={t("Loading chats")} />;
   return (
     <ul className="grid gap-[0.3em] overflow-y-auto p-[0.6em]">
-      {chat.threads.map((t) => (
-        <li key={t.with ?? "group"}>
+      {chat.threads.map((thread) => (
+        <li key={thread.with ?? "group"}>
           <button
             type="button"
-            onClick={() => onOpen(t.with)}
-            className="flex w-full items-center gap-[0.7em] rounded-[0.9em] p-[0.6em] text-left hover:bg-[#eef6fb]"
+            onClick={() => onOpen(thread.with)}
+            className="flex w-full items-center gap-[0.7em] rounded-[0.9em] p-[0.6em] text-start hover:bg-[#eef6fb]"
           >
-            <Face avatar={t.with ? avatars.get(t.with) : undefined} />
+            <Face avatar={thread.with ? avatars.get(thread.with) : undefined} />
             <span className="min-w-0 flex-1">
               <span className="flex items-center gap-[0.4em]">
-                <span className="truncate text-[0.95em] font-bold text-[#14365a]">{t.kind === "Group" ? `${t.name} (group)` : t.name}</span>
-                {t.lastMessage && <span className="ml-auto shrink-0 text-[0.7em] text-[#14365a]/50">{when(t.lastMessage.sentUtc)}</span>}
+                <span className="truncate text-[0.95em] font-bold text-[#14365a]">{thread.kind === "Group" ? `${thread.name} (${t("group")})` : thread.name}</span>
+                {thread.lastMessage && <span className="ms-auto shrink-0 text-[0.7em] text-[#14365a]/50">{when(thread.lastMessage.sentUtc, intl)}</span>}
               </span>
               <span className="flex items-center gap-[0.4em]">
                 <span className="truncate text-[0.78em] text-[#14365a]/65">
-                  {t.lastMessage ? `${t.lastMessage.isMine ? "You" : t.lastMessage.senderName.split(" ")[0]}: ${t.lastMessage.body}` : subtitle(t)}
+                  {thread.lastMessage ? `${thread.lastMessage.isMine ? t("You") : thread.lastMessage.senderName.split(" ")[0]}: ${thread.lastMessage.body}` : subtitle(thread, t)}
                 </span>
-                <span className="ml-auto shrink-0">
-                  <Badge count={t.unread} />
+                <span className="ms-auto shrink-0">
+                  <Badge count={thread.unread} />
                 </span>
               </span>
             </span>
@@ -192,6 +234,7 @@ function Conversation({
   me: string;
   avatars: Map<string, { src: string; bg: string }>;
 }) {
+  const { t, intl } = useI18n();
   const key = thread.with;
   const [messages, setMessages] = useState<ChatMessage[] | null>(null);
   const [hasMore, setHasMore] = useState(false);
@@ -199,6 +242,9 @@ function Conversation({
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** The first load failed: shown instead of the messages, with Retry. */
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
   const bottom = useRef<HTMLDivElement>(null);
   const stickToBottom = useRef(true);
   const { reloadThreads, subscribe, live } = chat;
@@ -221,16 +267,17 @@ function Conversation({
       (r) => {
         if (!active) return;
         stickToBottom.current = true;
+        setLoadError(null);
         setMessages(r.messages);
         setHasMore(r.hasMore);
         markRead();
       },
-      (e) => active && setError(errorMessage(e, "We couldn't load this chat. Please try again.")),
+      (e) => active && setLoadError(errorMessage(e, t("We couldn't load this chat. Please try again."))),
     );
     return () => {
       active = false;
     };
-  }, [key, markRead]);
+  }, [key, markRead, attempt, t]);
 
   // New messages of this chat, live.
   useEffect(
@@ -278,7 +325,7 @@ function Conversation({
       merge(r.messages);
       setHasMore(r.hasMore);
     } catch (e) {
-      setError(errorMessage(e, "We couldn't load older messages."));
+      setError(errorMessage(e, t("We couldn't load older messages.")));
     } finally {
       setLoadingOlder(false);
     }
@@ -297,7 +344,7 @@ function Conversation({
       setDraft("");
       void reloadThreads();
     } catch (err) {
-      setError(errorMessage(err, "We couldn't send your message. Please try again."));
+      setError(errorMessage(err, t("We couldn't send your message. Please try again.")));
     } finally {
       setSending(false);
     }
@@ -321,13 +368,22 @@ function Conversation({
             disabled={loadingOlder}
             className="mx-auto mb-[0.6em] block rounded-full bg-[#eef6fb] px-[0.9em] py-[0.25em] text-[0.75em] font-semibold text-[#12939b] hover:bg-[#e1eff8] disabled:opacity-60"
           >
-            {loadingOlder ? "Loading…" : "Load older messages"}
+            {loadingOlder ? t("Loading…") : t("Load older messages")}
           </button>
         )}
-        {messages === null && !error && <LoaderCircle className="mx-auto mt-[2em] h-[1.8em] w-[1.8em] animate-spin text-[#14365a]" aria-label="Loading messages" />}
+        {messages === null && loadError && (
+          <LoadError
+            message={loadError}
+            onRetry={() => {
+              setLoadError(null);
+              setAttempt((n) => n + 1);
+            }}
+          />
+        )}
+        {messages === null && !loadError && <LoaderCircle className="mx-auto mt-[2em] h-[1.8em] w-[1.8em] animate-spin text-[#14365a]" aria-label={t("Loading messages")} />}
         {messages?.length === 0 && (
           <p className="mt-[2em] text-center text-[0.85em] text-[#14365a]/60">
-            {isGroup ? "Say hi to your squad and your monitor!" : `Start your private chat with ${thread.name.split(" ")[0]}.`}
+            {isGroup ? t("Say hi to your squad and your monitor!") : t("Start your private chat with {name}.", { name: thread.name.split(" ")[0] })}
           </p>
         )}
         <ul className="grid gap-[0.55em]">
@@ -336,12 +392,12 @@ function Conversation({
               {!m.isMine && isGroup && <Face avatar={avatars.get(m.senderId)} size="h-[1.9em] w-[1.9em]" />}
               <div
                 className={`max-w-[78%] rounded-[1em] px-[0.8em] py-[0.45em] text-[0.88em] leading-snug ${
-                  m.isMine ? "rounded-br-[0.3em] bg-[#4f9cf0] text-white" : "rounded-bl-[0.3em] bg-[#eef2f7] text-[#14365a]"
+                  m.isMine ? "rounded-ee-[0.3em] bg-[#4f9cf0] text-white" : "rounded-es-[0.3em] bg-[#eef2f7] text-[#14365a]"
                 }`}
               >
                 {!m.isMine && isGroup && <p className="text-[0.78em] font-bold text-[#12939b]">{m.senderName}</p>}
                 <p className="whitespace-pre-wrap break-words">{m.body}</p>
-                <p className={`mt-[0.15em] text-right text-[0.68em] ${m.isMine ? "text-white/75" : "text-[#14365a]/50"}`}>{when(m.sentUtc)}</p>
+                <p className={`mt-[0.15em] text-end text-[0.68em] ${m.isMine ? "text-white/75" : "text-[#14365a]/50"}`}>{when(m.sentUtc, intl)}</p>
               </div>
             </li>
           ))}
@@ -349,6 +405,7 @@ function Conversation({
         <div ref={bottom} />
       </div>
 
+      {messages !== null && (
       <form onSubmit={send} className="border-t border-[#14365a]/10 p-[0.6em]">
         {error && (
           <p role="alert" className="mb-[0.4em] text-[0.75em] font-semibold text-[#b83232]">
@@ -357,7 +414,7 @@ function Conversation({
         )}
         <div className="flex items-end gap-[0.5em]">
           <label className="sr-only" htmlFor="team-chat-draft">
-            Message
+            {t("Message")}
           </label>
           <textarea
             id="team-chat-draft"
@@ -366,24 +423,25 @@ function Conversation({
             onKeyDown={onKeyDown}
             maxLength={CHAT_MAX_LENGTH}
             rows={1}
-            placeholder={isGroup ? "Message your squad…" : `Message ${thread.name.split(" ")[0]}…`}
+            placeholder={isGroup ? t("Message your squad…") : t("Message {name}…", { name: thread.name.split(" ")[0] })}
             className="max-h-[7em] min-h-[2.6em] flex-1 resize-none rounded-[0.9em] border border-[#14365a]/15 bg-white px-[0.8em] py-[0.55em] text-[0.9em] text-[#14365a] outline-none focus:border-[#4f9cf0]"
           />
           <button
             type="submit"
             disabled={!draft.trim() || sending}
-            aria-label="Send"
+            aria-label={t("Send")}
             className="grid h-[2.6em] w-[2.6em] shrink-0 place-items-center rounded-[0.9em] bg-[#14365a] text-white hover:bg-[#1d4a7a] disabled:opacity-40"
           >
             {sending ? <LoaderCircle className="h-[1.1em] w-[1.1em] animate-spin" /> : <Send className="h-[1.1em] w-[1.1em]" />}
           </button>
         </div>
         {draft.length > CHAT_MAX_LENGTH - 100 && (
-          <p className="mt-[0.2em] text-right text-[0.7em] text-[#14365a]/60">
+          <p className="mt-[0.2em] text-end text-[0.7em] text-[#14365a]/60">
             {draft.length}/{CHAT_MAX_LENGTH}
           </p>
         )}
       </form>
+      )}
     </>
   );
 }
@@ -405,6 +463,7 @@ export function TeamChatPanel({
   onOpen: (key: ChatKey | undefined) => void;
   onClose: () => void;
 }) {
+  const { t, dir } = useI18n();
   const avatars = useAvatars(squad);
   const me = squad.members.find((m) => m.isMe)?.studentId ?? "";
   const thread = open === undefined ? null : (chat.threads.find((t) => t.with === open) ?? null);
@@ -418,8 +477,8 @@ export function TeamChatPanel({
   // Into <body>: the shell's <main> is its own stacking context, so a fixed layer inside it stays under the top bar.
   // Above the assistant's bubble (z-61), under the shell's own dialogs (z-70).
   return createPortal(
-    <div dir="ltr" className={`${poppins.className} fixed inset-0 z-[65] flex justify-end`} role="dialog" aria-modal="true" aria-label="Team chat">
-      <button type="button" aria-label="Close the chat" onClick={onClose} className="absolute inset-0 bg-[#14365a]/25 backdrop-blur-[2px]" />
+    <div dir={dir} className={`${poppins.className} fixed inset-0 z-[65] flex justify-end`} role="dialog" aria-modal="true" aria-label={t("Team chat")}>
+      <button type="button" aria-label={t("Close the chat")} onClick={onClose} className="absolute inset-0 bg-[#14365a]/25 backdrop-blur-[2px]" />
       <section
         className="relative flex h-full w-full max-w-[26rem] flex-col bg-white shadow-2xl"
         style={{ fontSize: "clamp(13px, 1vw, 16px)" }}
@@ -427,30 +486,34 @@ export function TeamChatPanel({
         <header className="flex items-center gap-[0.6em] border-b border-[#14365a]/10 p-[0.8em]">
           {thread ? (
             <>
-              <button type="button" onClick={() => onOpen(undefined)} aria-label="All chats" className="rounded-[0.6em] p-[0.3em] text-[#14365a] hover:bg-[#eef6fb]">
+              <button type="button" onClick={() => onOpen(undefined)} aria-label={t("All chats")} className="rounded-[0.6em] p-[0.3em] text-[#14365a] hover:bg-[#eef6fb]">
                 <ArrowLeft className="h-[1.3em] w-[1.3em]" />
               </button>
               <Face avatar={thread.with ? avatars.get(thread.with) : undefined} size="h-[2.3em] w-[2.3em]" />
               <span className="min-w-0 leading-tight">
-                <span className="block truncate font-bold text-[#14365a]">{thread.kind === "Group" ? `${thread.name} (group)` : thread.name}</span>
-                <span className="block truncate text-[0.75em] text-[#14365a]/60">{subtitle(thread)}</span>
+                <span className="block truncate font-bold text-[#14365a]">{thread.kind === "Group" ? `${thread.name} (${t("group")})` : thread.name}</span>
+                <span className="block truncate text-[0.75em] text-[#14365a]/60">{subtitle(thread, t)}</span>
               </span>
             </>
           ) : (
             <>
               <MessagesSquare className="h-[1.5em] w-[1.5em] text-[#12939b]" aria-hidden />
-              <span className="font-extrabold text-[#14365a]">Team chat</span>
+              <span className="font-extrabold text-[#14365a]">{t("Team chat")}</span>
             </>
           )}
-          <button type="button" onClick={onClose} aria-label="Close the chat" className="ml-auto rounded-[0.6em] p-[0.3em] text-[#14365a] hover:bg-[#eef6fb]">
+          <button type="button" onClick={onClose} aria-label={t("Close the chat")} className="ms-auto rounded-[0.6em] p-[0.3em] text-[#14365a] hover:bg-[#eef6fb]">
             <X className="h-[1.3em] w-[1.3em]" />
           </button>
         </header>
 
         {thread ? (
           <Conversation key={thread.with ?? "group"} chat={chat} thread={thread} me={me} avatars={avatars} />
+        ) : open !== undefined && chat.error ? (
+          <LoadError message={chat.error} onRetry={chat.reloadThreads} />
+        ) : open !== undefined && chat.loaded ? (
+          <LoadError message={t("This chat isn't available. Open the list of chats.")} onRetry={() => onOpen(undefined)} />
         ) : open !== undefined ? (
-          <LoaderCircle className="mx-auto mt-[3em] h-[2em] w-[2em] animate-spin text-[#14365a]" aria-label="Loading chat" />
+          <LoaderCircle className="mx-auto mt-[3em] h-[2em] w-[2em] animate-spin text-[#14365a]" aria-label={t("Loading chat")} />
         ) : (
           <ThreadList chat={chat} avatars={avatars} onOpen={onOpen} />
         )}
@@ -462,13 +525,14 @@ export function TeamChatPanel({
 
 /** The "Team chat" button of the team card, with the unread count of every chat. */
 export function TeamChatButton({ unread, onClick }: { unread: number; onClick: () => void }) {
+  const t = useT();
   return (
     <button
       type="button"
       onClick={onClick}
       className="flex items-center gap-[0.45em] rounded-[0.8em] bg-[#14365a] px-[0.9em] py-[0.5em] text-[0.85em] font-bold text-white shadow-md hover:bg-[#1d4a7a]"
     >
-      <MessagesSquare className="h-[1.15em] w-[1.15em]" aria-hidden /> Team chat
+      <MessagesSquare className="h-[1.15em] w-[1.15em]" aria-hidden /> {t("Team chat")}
       <Badge count={unread} />
     </button>
   );
