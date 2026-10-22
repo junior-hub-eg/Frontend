@@ -5,12 +5,20 @@ import Link from "next/link";
 import type { Route } from "next";
 import { ArrowLeft, ArrowRight, Award, CheckCircle2, LoaderCircle, XCircle } from "lucide-react";
 import { errorMessage } from "@/lib/api-client";
-import { getLesson, getTrackLessons, lessonPath, submitLessonQuiz, type Badge, lessonAfter } from "@/lib/learning-api";
+import { getLesson, getTrackLessons, lessonPath, trackPath, submitLessonQuiz, type Badge, lessonAfter } from "@/lib/learning-api";
 import { LoadState } from "@/components/Courses/course-ui";
+import { offlineLessons, offlineQuiz, trackName } from "./offline-data";
 
 type Q = { id: string; prompt: string; options: string[] };
 
-type View = { title: string; trackName: string; questions: Q[]; nextHref: string };
+type View = {
+  title: string;
+  trackName: string;
+  questions: Q[];
+  nextHref: string;
+  /** Present only in offline/demo mode: correct answers are checked locally. */
+  local?: { answer: number; help: string }[];
+};
 
 type Result = { id: string; correct: boolean; help: string | null };
 type Outcome = { results: Result[]; lessonDone: boolean; xpAwarded: number; badge: Badge | null };
@@ -30,6 +38,30 @@ export default function LessonQuizPage({ code, lessonId }: { code: string; lesso
 
   useEffect(() => {
     let active = true;
+
+    // Offline / demo mode: build the quiz locally so the page works without the API.
+    const offline = process.env.NEXT_PUBLIC_SKIP_AUTH === "true" || lessonId.startsWith("offline-");
+    if (offline) {
+      const name = trackName(code);
+      const list = offlineLessons(name);
+      const i = Math.max(0, list.findIndex((l) => l.id === lessonId));
+      const qs = offlineQuiz(name);
+      const nextLesson = list[i + 1];
+      setState({
+        kind: "ready",
+        view: {
+          title: list[i].title,
+          trackName: name,
+          questions: qs.map(({ id, prompt, options }) => ({ id, prompt, options })),
+          nextHref: nextLesson ? lessonPath(code, nextLesson.id) : trackPath(code),
+          local: qs.map(({ answer, help }) => ({ answer, help })),
+        },
+      });
+      return () => {
+        active = false;
+      };
+    }
+
     Promise.all([getLesson(lessonId), getTrackLessons(code).catch(() => null)])
       .then(([lesson, track]) => {
         if (!active) return;
@@ -102,6 +134,19 @@ export default function LessonQuizPage({ code, lessonId }: { code: string; lesso
 
     setAnswers(next);
     setError(null);
+
+    // Offline / demo mode: check the answers locally.
+    if (view.local) {
+      const local = view.local;
+      const results: Result[] = view.questions.map((qq, i) => ({
+        id: qq.id,
+        correct: next[i] === local[i].answer,
+        help: local[i].help,
+      }));
+      const allRight = results.every((r) => r.correct);
+      setOutcome({ results, lessonDone: allRight, xpAwarded: allRight ? 10 : 0, badge: null });
+      return;
+    }
 
     setBusy(true);
     try {
