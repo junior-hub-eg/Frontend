@@ -19,8 +19,9 @@ const glass =
   "rounded-[20px] border border-white/70 bg-gradient-to-r from-[#c8eef8]/75 to-[#a6dfda]/60 shadow-[0_10px_30px_rgba(20,54,90,0.12)] backdrop-blur-md";
 
 /**
- * First thing a student without a squad sees when opening the Internship: join a squad (teammates from other roles)
- * and get a random project. After joining they go to "Paste Your Links To Get Ready" (/learner/interns/session).
+ * First thing a student without a squad sees when opening the Internship (decision of 22 Oct 2026): are you ready to
+ * join a team and work together? Yes takes a free seat in a squad of the student's level and opens the squad page,
+ * where the cube rolls the project once the team is complete.
  */
 export default function SquadMatchmaking({ level = null }: { level?: LevelProgress | null }) {
   const router = useRouter();
@@ -74,9 +75,10 @@ export default function SquadMatchmaking({ level = null }: { level?: LevelProgre
             <h2 className="text-[1.6em] font-bold text-[#14365a]">
               {level ? `You finished the ${level.level} level of ${level.trackName}` : "You finished your level"}
             </h2>
+            <p className="text-[1.25em] font-bold text-[#14365a]">Ready to join a team and build a project together?</p>
             <p className="max-w-[26em] text-[1em] leading-relaxed text-[#14365a]/85">
-              Now join a squad and build a real project. We&apos;ll place you with students of your level from other tracks, with a
-              monitor, and give your squad a random project that fits your level. Then you share your links, get ready, and start.
+              We&apos;ll place you in a squad with students of your level from other tracks and a monitor. When every seat is
+              taken, the cube rolls and picks your squad&apos;s project — then you start working together.
             </p>
 
             <div className="flex items-center gap-[1.4em] text-[0.9em] font-semibold text-[#14365a]">
@@ -99,9 +101,14 @@ export default function SquadMatchmaking({ level = null }: { level?: LevelProgre
                   <LoaderCircle className="h-[1.3em] w-[1.3em] animate-spin" aria-hidden /> FINDING YOUR SQUAD…
                 </>
               ) : (
-                "JOIN A SQUAD"
+                "YES, JOIN A TEAM"
               )}
             </button>
+            {!joining && (
+              <Link href="/learner/dashboard" className="text-[0.85em] font-semibold text-[#14365a]/70 hover:underline">
+                Not now
+              </Link>
+            )}
 
             {error && (
               <p role="alert" className="text-[0.85em] font-semibold text-[#b83232]">

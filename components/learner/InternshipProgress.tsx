@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type DragEvent } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import {
   ArrowLeft,
   ArrowRight,
@@ -34,6 +35,8 @@ import { mentorAvatar } from "@/lib/avatars";
 import { avatarFor, memberIndex, ROLE_TITLE, ROLE_TAG, useInterns } from "./interns-data";
 import { LinkChips, MyLinksEditor } from "./work-links";
 import { ProjectSubmitCard } from "./ProjectSubmitCard";
+import RedirectToSquad, { SQUAD_PAGE } from "./RedirectToSquad";
+import { TeamChatButton, TeamChatPanel, useTeamChat, type ChatKey } from "./TeamChat";
 
 const IMG = "/images/Intern";
 const BG = `${IMG}/bg-park.png`;
@@ -68,7 +71,31 @@ function sprintDates(start: string, end: string) {
 const glass = "rounded-[1.6em] border border-white/80 bg-white/40 shadow-lg shadow-[#14365a]/10 backdrop-blur-md";
 const solid = "rounded-[1.6em] border border-white bg-white shadow-lg shadow-[#14365a]/10";
 
-function TeamCard({ squad }: { squad: Squad | null }) {
+/** Unread messages on a teammate's or the monitor's avatar. */
+function AvatarBadge({ count }: { count: number }) {
+  if (count <= 0) return null;
+  return (
+    <span className="absolute -right-[0.2em] -top-[0.2em] z-10 grid h-[1.6em] min-w-[1.6em] place-items-center rounded-full bg-[#ef5b5b] px-[0.35em] text-[0.7em] font-bold text-white ring-2 ring-white">
+      {count > 99 ? "99+" : count}
+    </span>
+  );
+}
+
+/**
+ * The team: the squad's monitor, then the members. Clicking the monitor or a teammate opens a private chat with them
+ * (decision of 22 Oct 2026); "Team chat" opens the list with the squad's group chat.
+ */
+function TeamCard({
+  squad,
+  unreadFor,
+  unreadTotal,
+  onChat,
+}: {
+  squad: Squad | null;
+  unreadFor: (key: ChatKey) => number;
+  unreadTotal: number;
+  onChat: (key: ChatKey | undefined) => void;
+}) {
   return (
     <section className="flex min-w-0 flex-col gap-[0.8em]">
       <div className={`${glass} flex items-center gap-[1em] p-[1em]`}>
@@ -87,6 +114,11 @@ function TeamCard({ squad }: { squad: Squad | null }) {
             {squad?.projectDescription}
           </p>
         </div>
+        {squad && (
+          <div className="ml-auto shrink-0 self-start">
+            <TeamChatButton unread={unreadTotal} onClick={() => onChat(undefined)} />
+          </div>
+        )}
       </div>
 
       <div className={`${solid} min-w-0 p-[1em]`}>
@@ -94,12 +126,21 @@ function TeamCard({ squad }: { squad: Squad | null }) {
           {/* The project's monitor (a mentor picked for the squad), then the members. */}
           {squad?.monitor && (
             <li className="flex min-w-[9em] shrink-0 flex-col items-center border-r border-[#e3ebf3] pr-[1.2em] text-center">
-              <span
-                className="relative h-[5.2em] w-[5.2em] overflow-hidden rounded-full shadow-md ring-[0.25em] ring-[#12939b]"
-                style={{ backgroundColor: mentorAvatar(squad.monitor).bg }}
+              <button
+                type="button"
+                onClick={() => onChat(squad.monitor!.id)}
+                aria-label={`Chat with ${squad.monitor.fullName}`}
+                title={`Chat with ${squad.monitor.fullName}`}
+                className="relative rounded-full transition-transform hover:scale-105"
               >
-                <Image src={mentorAvatar(squad.monitor).src} alt="" fill sizes="96px" className="object-cover" />
-              </span>
+                <AvatarBadge count={unreadFor(squad.monitor.id)} />
+                <span
+                  className="relative block h-[5.2em] w-[5.2em] overflow-hidden rounded-full shadow-md ring-[0.25em] ring-[#12939b]"
+                  style={{ backgroundColor: mentorAvatar(squad.monitor).bg }}
+                >
+                  <Image src={mentorAvatar(squad.monitor).src} alt="" fill sizes="96px" className="object-cover" />
+                </span>
+              </button>
               <span className="mt-[0.5em] whitespace-nowrap text-[0.95em] font-bold text-[#14365a]">{squad.monitor.fullName}</span>
               <span className="mt-[0.15em] rounded-full bg-[#e9f7f4] px-[0.7em] py-[0.1em] text-[0.7em] font-bold text-[#12939b]">Monitor</span>
               <span className="mt-[0.15em] max-w-[11em] truncate text-[0.7em] text-[#14365a]/60">{squad.monitor.title}</span>
@@ -109,12 +150,30 @@ function TeamCard({ squad }: { squad: Squad | null }) {
             const avatar = avatarFor(m.photoUrl, i);
             return (
               <li key={m.studentId} className="flex min-w-[9em] shrink-0 flex-col items-center text-center">
-                <span
-                  className="relative h-[5.2em] w-[5.2em] overflow-hidden rounded-full shadow-md ring-[0.25em] ring-white"
-                  style={{ backgroundColor: avatar.bg }}
-                >
-                  <Image src={avatar.src} alt="" fill sizes="96px" className="object-cover" />
-                </span>
+                {m.isMe ? (
+                  <span
+                    className="relative h-[5.2em] w-[5.2em] overflow-hidden rounded-full shadow-md ring-[0.25em] ring-white"
+                    style={{ backgroundColor: avatar.bg }}
+                  >
+                    <Image src={avatar.src} alt="" fill sizes="96px" className="object-cover" />
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => onChat(m.studentId)}
+                    aria-label={`Chat with ${m.fullName}`}
+                    title={`Chat with ${m.fullName}`}
+                    className="relative rounded-full transition-transform hover:scale-105"
+                  >
+                    <AvatarBadge count={unreadFor(m.studentId)} />
+                    <span
+                      className="relative block h-[5.2em] w-[5.2em] overflow-hidden rounded-full shadow-md ring-[0.25em] ring-white"
+                      style={{ backgroundColor: avatar.bg }}
+                    >
+                      <Image src={avatar.src} alt="" fill sizes="96px" className="object-cover" />
+                    </span>
+                  </button>
+                )}
                 <span className="mt-[0.5em] whitespace-nowrap text-[0.95em] font-bold text-[#14365a]">{m.fullName}</span>
                 <span className="text-[0.75em] text-[#14365a]/60">{ROLE_TITLE[m.role]}</span>
               </li>
@@ -532,8 +591,11 @@ function ProjectLinks() {
 }
 
 export default function InternshipProgress() {
-  const { squad, sprint, board, leaderboard, error, reload } = useInterns();
+  const { squad, sprint, board, leaderboard, error, notReady, reload } = useInterns();
   const [moveError, setMoveError] = useState<string | null>(null);
+  const chat = useTeamChat(squad);
+  /** The chat drawer: closed (false), the list (undefined), the group (null) or a private chat (an id). */
+  const [chatOpen, setChatOpen] = useState<ChatKey | undefined | false>(false);
 
   async function handleMove(task: SquadTask, to: TaskStatus) {
     setMoveError(null);
@@ -557,6 +619,9 @@ export default function InternshipProgress() {
     }
   }
 
+  // No project yet: the dashboard is closed, the squad page shows the cube (decision of 22 Oct 2026).
+  if (notReady) return <RedirectToSquad />;
+
   return (
     <div className="relative -ml-[4rem] min-h-[calc(100svh-5rem)] min-w-0 flex-1 lg:absolute lg:inset-0 lg:ml-0 lg:min-h-0">
       {/* Background: on mobile it only covers the top and fades out, on desktop it fills the frame */}
@@ -575,14 +640,17 @@ export default function InternshipProgress() {
         <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-[1em] lg:grid-cols-[minmax(0,1fr)_calc(var(--u)*27)] lg:grid-rows-[auto_1fr]">
           {/* Internship pod: first on mobile, top-right on desktop */}
           <div className="order-1 min-w-0 lg:order-none lg:col-start-2 lg:row-start-1">
-            <Image
-              src={`${IMG}/building-internship.png`}
-              alt="Internship"
-              width={535}
-              height={388}
-              sizes="(max-width: 1024px) 80vw, 30vw"
-              className="mx-auto h-auto w-full max-w-[18em] drop-shadow-[0_18px_22px_rgba(13,43,90,0.25)] sm:max-w-[22em] lg:-mb-[0.5em] lg:max-w-[26em]"
-            />
+            {/* The squad page: the monitor, the team and the project the cube picked */}
+            <Link href={SQUAD_PAGE} aria-label="Your squad" className="block transition-transform hover:scale-[1.02]">
+              <Image
+                src={`${IMG}/building-internship.png`}
+                alt="Internship"
+                width={535}
+                height={388}
+                sizes="(max-width: 1024px) 80vw, 30vw"
+                className="mx-auto h-auto w-full max-w-[18em] drop-shadow-[0_18px_22px_rgba(13,43,90,0.25)] sm:max-w-[22em] lg:-mb-[0.5em] lg:max-w-[26em]"
+              />
+            </Link>
           </div>
 
           {/* Team, sprint, task board */}
@@ -592,7 +660,7 @@ export default function InternshipProgress() {
                 {error}
               </p>
             )}
-            <TeamCard squad={squad} />
+            <TeamCard squad={squad} unreadFor={chat.unreadFor} unreadTotal={chat.unreadTotal} onChat={(key) => setChatOpen(key)} />
             <SprintCard sprint={sprint} />
             <ProjectSubmitCard />
             <ProjectLinks />
@@ -605,6 +673,10 @@ export default function InternshipProgress() {
           </div>
         </div>
       </div>
+
+      {squad && chatOpen !== false && (
+        <TeamChatPanel chat={chat} squad={squad} open={chatOpen} onOpen={setChatOpen} onClose={() => setChatOpen(false)} />
+      )}
     </div>
   );
 }

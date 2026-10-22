@@ -90,3 +90,41 @@ body {
     transform: scaleY(0.7);
   }
 }
+
+/* The Internship cube: it floats while the squad fills its seats, then rolls when the project is revealed. */
+@keyframes jh-cube-float {
+  0%,
+  100% {
+    transform: translateY(0) rotateX(-22deg) rotateY(-32deg);
+  }
+  50% {
+    transform: translateY(-0.4em) rotateX(-22deg) rotateY(-50deg);
+  }
+}
+
+@keyframes jh-cube-roll {
+  0% {
+    transform: rotateX(-22deg) rotateY(-32deg);
+  }
+  100% {
+    transform: rotateX(698deg) rotateY(1048deg);
+  }
+}
+
+@keyframes jh-pop-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jh-cube,
+  .jh-pop-in {
+    animation: none !important;
+  }
+}
