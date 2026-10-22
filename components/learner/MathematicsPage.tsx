@@ -22,6 +22,7 @@ import {
   type MathAlgorithm,
   type MathProblem as Problem,
 } from "@/lib/math-problems";
+import { useT } from "@/lib/i18n/client";
 
 const IMG = "/images/Intern/AI%20Curriculum";
 
@@ -31,6 +32,7 @@ type Level = (typeof LEVELS)[number];
 /* ---------------- Pieces ---------------- */
 
 function ProblemCard({ problem }: { problem: Problem }) {
+  const t = useT();
   const detail = `/learner/ai-curriculum/mathematics/${problem.id}` as Route;
   const pill =
     "inline-flex items-center gap-[0.5em] rounded-[0.7em] px-[1.2em] py-[0.7em] text-[0.8em] font-semibold text-[#14365a] transition hover:brightness-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2bb8a6]";
@@ -44,10 +46,10 @@ function ProblemCard({ problem }: { problem: Problem }) {
 
       {/* Title / formula / level */}
       <div className="min-w-0 flex-1">
-        <h3 className="text-[1em] font-bold text-[#14365a]">{problem.title}</h3>
-        <p className="mt-[0.3em] font-serif text-[0.85em] text-[#14365a]">{problem.formula}</p>
+        <h3 className="text-[1em] font-bold text-[#14365a]">{t(problem.title)}</h3>
+        <p dir="ltr" className="mt-[0.3em] font-serif text-[0.85em] text-[#14365a] rtl:text-end">{problem.formula}</p>
         <span className="mt-[0.5em] inline-block rounded-[0.4em] bg-[#d5f2de] px-[0.6em] py-[0.15em] text-[0.7em] font-semibold text-[#1f7a45]">
-          {problem.level}
+          {t(problem.level)}
         </span>
       </div>
 
@@ -55,22 +57,22 @@ function ProblemCard({ problem }: { problem: Problem }) {
       <div className="flex flex-wrap items-center gap-[0.8em]">
         <Link href={detail} className={pill} style={{ backgroundColor: "#e6f0fd" }}>
           <PlayCircle className="h-[1.3em] w-[1.3em]" style={{ color: "#1d6fe0" }} />
-          AI Video
+          {t("AI Video")}
         </Link>
 
         {/* Simulation and Code pages are not built yet */}
-        <button type="button" title="Coming soon" className={pill} style={{ backgroundColor: "#e3f6e8" }}>
+        <button type="button" title={t("Coming soon")} className={pill} style={{ backgroundColor: "#e3f6e8" }}>
           <Box className="h-[1.3em] w-[1.3em]" style={{ color: "#1f9d55" }} />
-          Simulation
+          {t("Simulation")}
         </button>
-        <button type="button" title="Coming soon" className={pill} style={{ backgroundColor: "#e4dcf5" }}>
+        <button type="button" title={t("Coming soon")} className={pill} style={{ backgroundColor: "#e4dcf5" }}>
           <Code2 className="h-[1.3em] w-[1.3em]" style={{ color: "#14365a" }} />
-          Code
+          {t("Code")}
         </button>
 
         <Link
           href={detail}
-          aria-label={`Open ${problem.title}`}
+          aria-label={t("Open {name}", { name: t(problem.title) })}
           className="grid h-[2.6em] w-[2.6em] place-items-center rounded-full border border-[#c9d3df] text-[#14365a] transition hover:bg-[#f3f6f9]"
         >
           <ChevronRight className="h-[1.2em] w-[1.2em]" />
@@ -83,6 +85,7 @@ function ProblemCard({ problem }: { problem: Problem }) {
 /* ---------------- Page ---------------- */
 
 export default function MathematicsPage() {
+  const t = useT();
   const [query, setQuery] = useState("");
   const [level, setLevel] = useState<Level>("All Levels");
   const [topic, setTopic] = useState<Topic>("All Topics");
@@ -111,14 +114,14 @@ export default function MathematicsPage() {
           <div className="shrink-0">
             <nav className="flex items-center gap-[0.5em] text-[0.85em] text-[#14365a]">
               <Link href="/learner/ai-curriculum" className="hover:underline">
-                AI Curriculum
+                {t("AI Curriculum")}
               </Link>
               <ChevronRight className="h-[1em] w-[1em]" />
-              <span>Mathematics</span>
+              <span>{t("Mathematics")}</span>
             </nav>
-            <h1 className="mt-[0.3em] text-[2.3em] font-extrabold leading-tight text-[#14365a]">Mathematics</h1>
+            <h1 className="mt-[0.3em] text-[2.3em] font-extrabold leading-tight text-[#14365a]">{t("Mathematics")}</h1>
             <p className="max-w-[20em] text-[0.95em] leading-snug text-[#14365a]">
-              Choose a topic, then pick a problem to explore
+              {t("Choose a topic, then pick a problem to explore")}
             </p>
           </div>
           <div className="relative aspect-[751/121] w-full min-w-0 lg:ms-auto lg:w-[54%]">
@@ -133,7 +136,7 @@ export default function MathematicsPage() {
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search anything...."
+              placeholder={t("Search anything....")}
               className="w-full bg-transparent text-[0.9em] text-[#14365a] outline-none placeholder:text-[#8a9bb0]"
             />
           </label>
@@ -142,11 +145,11 @@ export default function MathematicsPage() {
             <select
               value={level}
               onChange={(e) => setLevel(e.target.value as Level)}
-              aria-label="Filter by level"
+              aria-label={t("Filter by level")}
               className="appearance-none rounded-[0.9em] border border-[#e3e9f0] bg-white py-[0.7em] ps-[1em] pe-[2.4em] text-[0.9em] text-[#14365a] outline-none focus:border-[#2bb8a6]"
             >
               {LEVELS.map((l) => (
-                <option key={l}>{l}</option>
+                <option key={l} value={l}>{t(l)}</option>
               ))}
             </select>
             <ChevronDown className="pointer-events-none absolute end-[0.8em] top-1/2 h-[1.1em] w-[1.1em] -translate-y-1/2 text-[#14365a]" />
@@ -156,25 +159,25 @@ export default function MathematicsPage() {
         {/* Topic tabs */}
         <div
           role="tablist"
-          aria-label="Mathematics topics"
+          aria-label={t("Mathematics topics")}
           className="mt-[1.2em] flex overflow-x-auto rounded-[0.9em] border border-[#e3e9f0] bg-white"
         >
-          {TOPICS.map((t) => {
-            const active = t === topic;
+          {TOPICS.map((tp) => {
+            const active = tp === topic;
             return (
               <button
-                key={t}
+                key={tp}
                 role="tab"
                 type="button"
                 aria-selected={active}
-                onClick={() => setTopic(t)}
+                onClick={() => setTopic(tp)}
                 className={`relative shrink-0 px-[1.6em] py-[1.2em] text-[0.8em] font-medium text-[#14365a] transition ${
                   active
                     ? "bg-[#e4f7f4] font-semibold after:absolute after:inset-x-0 after:bottom-0 after:h-[0.2em] after:bg-[#2bb8a6]"
                     : "hover:bg-[#f3f6f9]"
                 }`}
               >
-                {t}
+                {t(tp)}
               </button>
             );
           })}
@@ -208,7 +211,7 @@ export default function MathematicsPage() {
           <section className="flex min-w-0 flex-col gap-[1em]">
             {problems.length === 0 ? (
               <div className="rounded-[1.2em] border border-dashed border-[#c9d3df] p-[2.5em] text-center text-[0.9em] text-[#5b7089]">
-                No problems match your filters. Try a different topic or level.
+                {t("No problems match your filters. Try a different topic or level.")}
               </div>
             ) : (
               problems.map((p) => <ProblemCard key={p.id} problem={p} />)

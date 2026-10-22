@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Check, RotateCcw } from "lucide-react";
+import { useT } from "@/lib/i18n/client";
 
 const f = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1));
 
@@ -28,6 +29,7 @@ function Pan({ cx, label, angle, color }: { cx: number; label: string; angle: nu
  * a balance scale you tilt with a slider, and a step-by-step solver.
  */
 export default function EquationSimulation({ a = 2, b = 4, c = 12 }: { a?: number; b?: number; c?: number }) {
+  const t = useT();
   const [x, setX] = useState(0);
   const [stage, setStage] = useState<0 | 1 | 2>(0);
 
@@ -42,19 +44,20 @@ export default function EquationSimulation({ a = 2, b = 4, c = 12 }: { a?: numbe
   const equation = [`${a}x + ${b} = ${c}`, `${a}x = ${f(c - b)}`, `x = ${f(solution)}`][stage];
 
   return (
-    <section aria-label="Equation balance simulation" className="rounded-[1.2em] border border-[#e3e9f0] bg-white p-[1.4em]">
+    <section aria-label={t("Equation balance simulation")} className="rounded-[1.2em] border border-[#e3e9f0] bg-white p-[1.4em]">
       <div className="grid gap-[1.8em] lg:grid-cols-[1.2fr_1fr]">
         {/* Balance */}
         <div>
-          <h2 className="text-[1em] font-bold text-[#14365a]">Balance the equation</h2>
+          <h2 className="text-[1em] font-bold text-[#14365a]">{t("Balance the equation")}</h2>
           <p className="mt-[0.3em] text-[0.8em] text-[#14365a]/70">
-            Move the slider to try values for x until both sides are equal.
+            {t("Move the slider to try values for x until both sides are equal.")}
           </p>
 
           <svg
             viewBox="0 0 300 160"
             role="img"
-            aria-label={`Balance scale: left side ${f(lhs)}, right side ${c}`}
+            direction="ltr"
+            aria-label={t("Balance scale: left side {left}, right side {right}", { left: f(lhs), right: c })}
             className="mx-auto mt-[0.8em] w-full max-w-[28em]"
           >
             <path d="M150 40 V140 M110 140 H190" stroke="#14365a" strokeWidth="5" strokeLinecap="round" fill="none" />
@@ -66,7 +69,7 @@ export default function EquationSimulation({ a = 2, b = 4, c = 12 }: { a?: numbe
             <circle cx="150" cy="40" r="6" fill={panColor} />
           </svg>
 
-          <label className="mt-[0.8em] block text-[0.85em] font-semibold text-[#14365a]">
+          <label dir="ltr" className="mt-[0.8em] block text-[0.85em] font-semibold text-[#14365a]">
             x = <span className="tabular-nums">{f(x)}</span>
             <input
               type="range"
@@ -80,7 +83,7 @@ export default function EquationSimulation({ a = 2, b = 4, c = 12 }: { a?: numbe
           </label>
 
           <p className="mt-[0.5em] text-[0.8em] tabular-nums text-[#14365a]">
-            Left side: {a}({f(x)}) + {b} = {f(lhs)} &nbsp;|&nbsp; Right side: {c}
+            {t("Left side:")} <span dir="ltr">{a}({f(x)}) + {b} = {f(lhs)}</span> &nbsp;|&nbsp; {t("Right side:")} {c}
           </p>
 
           <p
@@ -90,31 +93,33 @@ export default function EquationSimulation({ a = 2, b = 4, c = 12 }: { a?: numbe
             }`}
           >
             {balanced
-              ? `Balanced! x = ${f(x)} makes both sides equal.`
-              : `The left side is ${diff > 0 ? "heavier" : "lighter"}. Try a ${diff > 0 ? "smaller" : "bigger"} x.`}
+              ? t("Balanced! x = {x} makes both sides equal.", { x: f(x) })
+              : diff > 0
+                ? t("The left side is heavier. Try a smaller x.")
+                : t("The left side is lighter. Try a bigger x.")}
           </p>
         </div>
 
         {/* Step by step */}
         <div>
-          <h2 className="text-[1em] font-bold text-[#14365a]">Solve it step by step</h2>
+          <h2 className="text-[1em] font-bold text-[#14365a]">{t("Solve it step by step")}</h2>
           <p className="mt-[0.3em] text-[0.8em] text-[#14365a]/70">
-            Do the same thing to both sides until x is alone.
+            {t("Do the same thing to both sides until x is alone.")}
           </p>
 
-          <p className="mt-[0.8em] rounded-[0.9em] bg-[#f3f8fb] px-[1em] py-[1em] text-center font-serif text-[1.6em] text-[#14365a]">
+          <p dir="ltr" className="mt-[0.8em] rounded-[0.9em] bg-[#f3f8fb] px-[1em] py-[1em] text-center font-serif text-[1.6em] text-[#14365a]">
             {equation}
           </p>
 
           <div className="mt-[0.9em] flex flex-wrap items-center gap-[0.6em]">
             {stage === 0 && (
               <button type="button" onClick={() => setStage(1)} className={primaryBtn}>
-                Subtract {b} from both sides
+                {t("Subtract {n} from both sides", { n: b })}
               </button>
             )}
             {stage === 1 && (
               <button type="button" onClick={() => setStage(2)} className={primaryBtn}>
-                Divide both sides by {a}
+                {t("Divide both sides by {n}", { n: a })}
               </button>
             )}
             {stage === 2 && (
@@ -123,20 +128,20 @@ export default function EquationSimulation({ a = 2, b = 4, c = 12 }: { a?: numbe
                   <span className="grid h-[1.6em] w-[1.6em] place-items-center rounded-full bg-[#12939b] text-white">
                     <Check className="h-[1em] w-[1em]" strokeWidth={3} />
                   </span>
-                  Solved: x = {f(solution)}
+                  {t("Solved:")} <span dir="ltr">x = {f(solution)}</span>
                 </p>
                 <button
                   type="button"
                   onClick={() => setX(Math.max(-10, Math.min(10, solution)))}
                   className={primaryBtn}
                 >
-                  Test it on the balance
+                  {t("Test it on the balance")}
                 </button>
               </>
             )}
             {stage > 0 && (
               <button type="button" onClick={() => setStage(0)} className={ghostBtn}>
-                <RotateCcw className="h-[1em] w-[1em]" /> Start over
+                <RotateCcw className="h-[1em] w-[1em]" /> {t("Start over")}
               </button>
             )}
           </div>

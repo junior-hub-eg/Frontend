@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import CertificateCheckPage from "@/components/certificates/CertificateCheckPage";
+import { getT } from "@/lib/i18n/server";
 
-export const metadata: Metadata = { title: "Practice certificate · Junior Hub" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return { title: t("Practice certificate · Junior Hub") };
+}
 
 export default async function CertificatePage({ params }: { params: Promise<{ code: string }> }) {
   const { code } = await params;
