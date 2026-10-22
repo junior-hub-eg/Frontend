@@ -7,6 +7,7 @@ import { internship } from "./ar/internship";
 import { landing } from "./ar/landing";
 import { learner } from "./ar/learner";
 import { mentors } from "./ar/mentors";
+import { recruitment } from "./ar/recruitment";
 
 /** Arabic translations, keyed by the English text. `node scripts/i18n-check.mjs` lists missing ones. */
 export const ar: Record<string, string> = {
@@ -19,4 +20,5 @@ export const ar: Record<string, string> = {
   ...courses,
   ...mentors,
   ...internship,
+  ...recruitment,
 };

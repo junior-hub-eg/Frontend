@@ -3,19 +3,21 @@
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
+import { useT } from "@/lib/i18n/client";
+import { tk } from "@/lib/i18n/translate";
 
 const TEXT_QUESTIONS = [
   {
-    title: "Tell us about yourself and your interest in UI/UX design.",
-    description: "Share a little about your background, what drew you to design, and what you hope to learn.",
+    title: tk("Tell us about yourself and your interest in UI/UX design."),
+    description: tk("Share a little about your background, what drew you to design, and what you hope to learn."),
   },
   {
-    title: "Describe a project you have worked on.",
-    description: "This can be a school, personal, volunteer, or practice project. Tell us about your role and process.",
+    title: tk("Describe a project you have worked on."),
+    description: tk("This can be a school, personal, volunteer, or practice project. Tell us about your role and process."),
   },
   {
-    title: "Why are you interested in this simulation?",
-    description: "Share a little about your background, what drew you to design, and what you hope to learn.",
+    title: tk("Why are you interested in this simulation?"),
+    description: tk("Share a little about your background, what drew you to design, and what you hope to learn."),
   },
 ] as const;
 
@@ -23,6 +25,7 @@ const DESIGN_TOOLS = ["Figma", "Adobe XD", "Sketch", "Canva", "Miro", "Other"] a
 type DesignTool = (typeof DESIGN_TOOLS)[number];
 
 export function RecruitmentApplicationForm() {
+  const t = useT();
   const [step, setStep] = useState(1);
   const [answers, setAnswers] = useState(["", "", ""]);
   const [selectedTools, setSelectedTools] = useState<DesignTool[]>([]);
@@ -45,7 +48,7 @@ export function RecruitmentApplicationForm() {
 
     if (step < 4) {
       if (!answers[step - 1]?.trim()) {
-        setError("Please answer this question before continuing.");
+        setError(t("Please answer this question before continuing."));
         return;
       }
       setStep((current) => current + 1);
@@ -53,7 +56,7 @@ export function RecruitmentApplicationForm() {
     }
 
     if (selectedTools.length === 0) {
-      setError("Select at least one design tool to continue.");
+      setError(t("Select at least one design tool to continue."));
       return;
     }
 
@@ -69,9 +72,9 @@ export function RecruitmentApplicationForm() {
     <div className="flex-1 bg-[radial-gradient(ellipse_at_50%_18%,rgba(219,240,237,0.62),transparent_45%),#fff]">
       <div className="mx-auto max-w-[900px] px-5 pb-24 pt-14 sm:px-0 sm:pt-[110px]">
         <div className="mb-12">
-          <p className="text-lg text-[#64748b]">Application for</p>
+          <p className="text-lg text-[#64748b]">{t("Application for")}</p>
           <h1 className="mt-1 text-3xl font-extrabold leading-tight text-[#1b2a5c] sm:text-[40px]">
-            Junior UI/UX Designer
+            {t("Junior UI/UX Designer")}
           </h1>
         </div>
 
@@ -80,28 +83,27 @@ export function RecruitmentApplicationForm() {
             <div className="mx-auto grid size-12 place-items-center rounded-full bg-[#dff3ee] text-[#07858c]">
               <Check size={24} aria-hidden />
             </div>
-            <h2 className="mt-4 text-center text-xl font-semibold text-[#1b2a5c]">Practice application complete</h2>
+            <h2 className="mt-4 text-center text-xl font-semibold text-[#1b2a5c]">{t("Practice application complete")}</h2>
             <p className="mx-auto mt-2 max-w-lg text-center text-sm leading-relaxed text-[#64748b]">
-              Your answers are ready for this hiring simulation. This is a practice exercise and has not been sent to
-              an employer.
+              {t("Your answers are ready for this hiring simulation. This is a practice exercise and has not been sent to an employer.")}
             </p>
             <Link
               href="/recruitment"
               className="mx-auto mt-6 flex w-fit items-center gap-2 rounded-md bg-[#128b91] px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#0e747a]"
             >
-              Back to opportunities <ArrowRight size={16} aria-hidden />
+              {t("Back to opportunities")} <ArrowRight size={16} aria-hidden />
             </Link>
           </section>
         ) : (
           <>
             <div className="mb-1.5 flex items-center justify-between px-2 text-lg text-[#64748b]">
-              <span>Question {step} of 4</span>
-              <span className="text-[#07858c]">{progress}% complete</span>
+              <span>{t("Question {n} of {total}", { n: step, total: 4 })}</span>
+              <span className="text-[#07858c]">{t("{percent}% complete", { percent: progress })}</span>
             </div>
             <div
               className="mb-7 h-1.5 overflow-hidden rounded-full bg-[#dcecea]"
               role="progressbar"
-              aria-label="Application progress"
+              aria-label={t("Application progress")}
               aria-valuemin={0}
               aria-valuemax={100}
               aria-valuenow={progress}
@@ -115,17 +117,17 @@ export function RecruitmentApplicationForm() {
             <h2 className="text-xl font-medium text-[#64748b] sm:text-[25px]">
               {step === 4 ? (
                 <>
-                  Which design tools have you used?<span className="text-[#b3002d]">*</span>
+                  {t("Which design tools have you used?")}<span className="text-[#b3002d]">*</span>
                 </>
               ) : (
                 <>
-                  {TEXT_QUESTIONS[step - 1].title}
+                  {t(TEXT_QUESTIONS[step - 1].title)}
                   <span className="text-[#b3002d]">*</span>
                 </>
               )}
             </h2>
             <p className="mt-5 text-base leading-snug text-[#64748b]">
-              {step === 4 ? "Select all that apply. It’s completely fine if you’re still learning." : TEXT_QUESTIONS[step - 1].description}
+              {step === 4 ? t("Select all that apply. It’s completely fine if you’re still learning.") : t(TEXT_QUESTIONS[step - 1].description)}
             </p>
 
             <form
@@ -137,7 +139,7 @@ export function RecruitmentApplicationForm() {
               {step < 4 ? (
                 <div className="relative">
                   <label className="sr-only" htmlFor={`application-answer-${step}`}>
-                    Your answer
+                    {t("Your answer")}
                   </label>
                   <textarea
                     id={`application-answer-${step}`}
@@ -149,7 +151,8 @@ export function RecruitmentApplicationForm() {
                       setAnswers(nextAnswers);
                       setError("");
                     }}
-                    placeholder="Write your answer here..."
+                    dir="auto"
+                    placeholder={t("Write your answer here...")}
                     aria-invalid={Boolean(error)}
                     aria-describedby="answer-count application-error"
                     className="h-[250px] w-full resize-none rounded-2xl border border-[#9aa3a8] bg-white px-10 pb-10 pt-10 text-base leading-relaxed text-[#1b2a5c] outline-none transition placeholder:text-[#64748b] focus:border-[#12939b] focus:ring-2 focus:ring-[#12939b]/20"
@@ -160,7 +163,7 @@ export function RecruitmentApplicationForm() {
                 </div>
               ) : (
                 <fieldset>
-                  <legend className="sr-only">Select the design tools you have used</legend>
+                  <legend className="sr-only">{t("Select the design tools you have used")}</legend>
                   <div className="grid gap-x-[84px] gap-y-[30px] sm:grid-cols-2">
                     {DESIGN_TOOLS.map((tool) => (
                       <label
@@ -183,17 +186,17 @@ export function RecruitmentApplicationForm() {
                         >
                           {selectedTools.includes(tool) && <Check size={18} strokeWidth={3} />}
                         </span>
-                        {tool}
+                        {t(tool)}
                       </label>
                     ))}
                   </div>
                   {selectedTools.includes("Other") && (
                     <label className="mt-4 block text-sm font-medium text-[#475569]">
-                      Which other design tools?
+                      {t("Which other design tools?")}
                       <input
                         value={otherTool}
                         onChange={(event) => setOtherTool(event.target.value)}
-                        placeholder="Optional"
+                        placeholder={t("Optional")}
                         className="mt-2 h-11 w-full rounded-lg border border-[#cbd0d3] px-3 text-sm outline-none focus:border-[#12939b] focus:ring-2 focus:ring-[#12939b]/20"
                       />
                     </label>
@@ -211,7 +214,7 @@ export function RecruitmentApplicationForm() {
                     onClick={goBack}
                     className="inline-flex h-[38px] items-center gap-2 rounded-md bg-[#128b91] px-4 text-base font-bold text-white shadow-[0_8px_16px_rgba(18,139,145,0.25)] transition-colors hover:bg-[#0e747a]"
                   >
-                    <ArrowLeft size={15} aria-hidden /> Back
+                    <ArrowLeft size={15} aria-hidden /> {t("Back")}
                   </button>
                 )}
                 <button
@@ -220,7 +223,7 @@ export function RecruitmentApplicationForm() {
                     step === 4 ? "bg-gradient-to-r from-[#128084] to-[#1b2d55]" : "bg-[#128b91]"
                   }`}
                 >
-                  {step === 4 ? "Submit" : "Next"}
+                  {step === 4 ? t("Submit") : t("Next")}
                   <ArrowRight size={15} aria-hidden />
                 </button>
               </div>
