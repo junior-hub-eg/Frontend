@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import {
   ArrowRight,
   Award,
+  CalendarDays,
   Check,
   Eye,
   EyeOff,
@@ -37,6 +38,7 @@ import { changePassword, getMe, type Me } from "@/lib/profile-api";
 import { getMyCertificates, type Certificate } from "@/lib/recruitment-api";
 import { AvatarPicker } from "./learner-shell";
 import { RecruitmentFrame } from "./recruitment-ui";
+import TaskCalendar from "./TaskCalendar";
 import { useT } from "@/lib/i18n/client";
 import { tk, tNow } from "@/lib/i18n/translate";
 
@@ -341,94 +343,3 @@ export default function ProfilePage() {
 
             {/* My mentors */}
             <Section
-              title={tk("My mentors")}
-              icon={UserRound}
-              action={
-                <Link href={"/learner/mentorship" as Route} className={ghostBtn}>
-                  {t("Change mentor")} <ArrowRight className="h-[1em] w-[1em]" />
-                </Link>
-              }
-            >
-              {data.mentors.currents.length === 0 ? (
-                <p className="text-[0.85em] text-[#14365a]/70">{t("You don't have a mentor yet.")}</p>
-              ) : (
-                <ul className="grid gap-[0.6em] sm:grid-cols-2">
-                  {data.mentors.currents.map(({ mentor }) => {
-                    const a = mentorAvatar(mentor);
-                    return (
-                      <li key={mentor.id} className="flex items-center gap-[0.8em] rounded-[1em] border border-[#e8eef5] p-[0.8em]">
-                        <span className="relative h-[3em] w-[3em] shrink-0 overflow-hidden rounded-full" style={{ backgroundColor: a.bg }}>
-                          <Image src={a.src} alt="" fill sizes="60px" className="object-cover" />
-                        </span>
-                        <span className="min-w-0">
-                          <span className="block truncate text-[0.9em] font-bold text-[#14365a]">{mentor.fullName}</span>
-                          <span className="block truncate text-[0.75em] text-[#14365a]/65">{t(mentor.title)}</span>
-                        </span>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </Section>
-          </div>
-
-          <div className="grid gap-[1em]">
-            {/* Achievements */}
-            <Section
-              title={tk("Achievements")}
-              icon={Award}
-              action={
-                <Link href={"/learner/certification" as Route} className={ghostBtn}>
-                  {t("See all")} <ArrowRight className="h-[1em] w-[1em]" />
-                </Link>
-              }
-            >
-              {data.certificates.length === 0 && data.achievements.badges.length === 0 ? (
-                <p className="text-[0.85em] text-[#14365a]/70">
-                  {t("No certificates or badges yet. Pass a practice interview or a lesson linked to school to earn one.")}
-                </p>
-              ) : (
-                <ul className="grid gap-[0.5em]">
-                  {data.certificates.slice(0, 3).map((c) => (
-                    <li key={c.code} className="flex items-center gap-[0.6em] text-[0.85em] text-[#14365a]">
-                      <Award className="h-[1.2em] w-[1.2em] shrink-0 text-[#f5a623]" />
-                      <span className="min-w-0 flex-1 truncate font-semibold">{t(c.role)}</span>
-                      <span className="text-[0.85em] text-[#14365a]/60">{c.scorePercent}%</span>
-                    </li>
-                  ))}
-                  {data.achievements.badges.slice(0, 3).map((b) => (
-                    <li key={b.code} className="flex items-center gap-[0.6em] text-[0.85em] text-[#14365a]">
-                      <Medal className="h-[1.2em] w-[1.2em] shrink-0 text-[#d4a017]" />
-                      <span className="min-w-0 flex-1 truncate font-semibold">{t(b.name)}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </Section>
-
-            {/* Account */}
-            <Section title={tk("Password")} icon={KeyRound}>
-              <PasswordForm />
-            </Section>
-
-            <Section title={tk("Privacy")} icon={ShieldCheck}>
-              <ul className="grid gap-[0.4em] text-[0.85em] leading-relaxed text-[#14365a]/85">
-                <li>• {t("Your voice in the AI interview is never saved.")}</li>
-                <li>• {t("The AI never gets your name, only a reference number.")}</li>
-                <li>• {t("Recruitment Practice is a simulation. Its certificates are not job offers.")}</li>
-              </ul>
-            </Section>
-
-            <button type="button" onClick={signOut} className={`${ghostBtn} justify-self-start border-[#f2c4c4] text-[#b83232] hover:bg-[#fdecec]`}>
-              <LogOut className="h-[1.1em] w-[1.1em]" /> {t("Sign out")}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {pickingAvatar && (
-        <AvatarPicker current={avatar} gender={gender} onClose={() => setPickingAvatar(false)} onChoose={changeAvatar} onSetGender={setGender} />
-      )}
-    </RecruitmentFrame>
-  );
-}

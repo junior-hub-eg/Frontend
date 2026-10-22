@@ -252,7 +252,6 @@ function SprintCard({ sprint }: { sprint: Sprint | null }) {
 
 function TaskCard({ task, avatarIndex, onMove }: { task: SquadTask; avatarIndex: number; onMove: (task: SquadTask, to: TaskStatus) => void }) {
   const [menuOpen, setMenuOpen] = useState(false);
-  // Decision of 21 Oct 2026: a task can go to any other column (drag it, or use this menu).
   const moves = BOARD_COLUMNS.filter((s) => s !== task.status);
   const tag = task.assignee ? ROLE_TAG[task.assignee.role] : null;
   const avatar = task.assignee ? avatarFor(task.assignee.photoUrl, avatarIndex) : null;
