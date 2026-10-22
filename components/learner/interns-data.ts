@@ -8,6 +8,7 @@ import {
   getSprint,
   getSquad,
   getTasks,
+  PROJECT_NOT_READY,
   type Leaderboard,
   type Squad,
   type SquadRole,
@@ -74,14 +75,14 @@ export function useSquad() {
 
 type Loaded =
   | { squad: Squad; sprint: Sprint; board: TaskBoard; leaderboard: Leaderboard }
-  | { error: string };
+  | { error: string; notReady?: boolean };
 
 async function loadAll(): Promise<Loaded> {
   try {
     const [squad, sprint, board, leaderboard] = await Promise.all([getSquad(), getSprint(), getTasks(), getLeaderboard()]);
     return { squad, sprint, board, leaderboard };
   } catch (e) {
-    return { error: friendly(e) };
+    return { error: friendly(e), notReady: e instanceof ApiError && e.code === PROJECT_NOT_READY };
   }
 }
 
@@ -92,9 +93,14 @@ export function useInterns() {
   const [board, setBoard] = useState<TaskBoard | null>(null);
   const [leaderboard, setLeaderboard] = useState<Leaderboard | null>(null);
   const [error, setError] = useState<string | null>(null);
+  /** The squad's project is not revealed yet: the dashboard is closed (decision of 22 Oct 2026). */
+  const [notReady, setNotReady] = useState(false);
 
   const apply = useCallback((result: Loaded) => {
-    if ("error" in result) return setError(result.error);
+    if ("error" in result) {
+      setNotReady(!!result.notReady);
+      return setError(result.error);
+    }
     setSquad(result.squad);
     setSprint(result.sprint);
     setBoard(result.board);
@@ -112,5 +118,5 @@ export function useInterns() {
     };
   }, [apply]);
 
-  return { squad, sprint, board, leaderboard, error, reload };
+  return { squad, sprint, board, leaderboard, error, notReady, reload };
 }
