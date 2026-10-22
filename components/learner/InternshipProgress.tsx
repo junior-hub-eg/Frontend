@@ -39,7 +39,6 @@ import { useT } from "@/lib/i18n/client";
 import { currentLocale, tk } from "@/lib/i18n/translate";
 import RedirectToSquad, { SQUAD_PAGE } from "./RedirectToSquad";
 import { TeamChatButton, TeamChatPanel, useTeamChat, type ChatKey } from "./TeamChat";
-import { useT } from "@/lib/i18n/client";
 
 const IMG = "/images/Intern";
 const BG = `${IMG}/bg-park.png`;
@@ -256,6 +255,7 @@ function SprintCard({ sprint }: { sprint: Sprint | null }) {
 }
 
 function TaskCard({ task, avatarIndex, onMove }: { task: SquadTask; avatarIndex: number; onMove: (task: SquadTask, to: TaskStatus) => void }) {
+  const t = useT();
   const [menuOpen, setMenuOpen] = useState(false);
   const moves = BOARD_COLUMNS.filter((s) => s !== task.status);
   const tag = task.assignee ? ROLE_TAG[task.assignee.role] : null;
