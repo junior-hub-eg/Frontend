@@ -10,6 +10,7 @@ import { ArrowLeft, Dices, LoaderCircle, PartyPopper, Users } from "lucide-react
 import { ApiError, errorMessage } from "@/lib/api-client";
 import { DEFAULT_AVATARS } from "@/lib/avatars";
 import { joinSquad, type LevelProgress } from "@/lib/interns-api";
+import { useI18n } from "@/lib/i18n/client";
 
 const IMG = "/images/Intern";
 const poppins = Poppins({ subsets: ["latin"], weight: ["400", "500", "600", "700", "800"] });
@@ -23,6 +24,7 @@ const glass =
  * and get a random project. After joining they go to "Paste Your Links To Get Ready" (/learner/interns/session).
  */
 export default function SquadMatchmaking({ level = null }: { level?: LevelProgress | null }) {
+  const { t, dir } = useI18n();
   const router = useRouter();
   const isClient = useSyncExternalStore(noopSubscribe, () => true, () => false);
   const [joining, setJoining] = useState(false);
@@ -45,7 +47,7 @@ export default function SquadMatchmaking({ level = null }: { level?: LevelProgre
   if (!isClient) return null;
 
   return createPortal(
-    <div dir="ltr" className={`${poppins.className} fixed inset-0 z-50 bg-[#bfe4f7]`} style={{ fontSize: "clamp(11px, 1.05vw, 16px)" }}>
+    <div dir={dir} className={`${poppins.className} fixed inset-0 z-50 bg-[#bfe4f7]`} style={{ fontSize: "clamp(11px, 1.05vw, 16px)" }}>
       <Image src={`${IMG}/bg-park.png`} alt="" fill priority sizes="100vw" className="pointer-events-none object-cover" />
 
       <div className="absolute inset-0 overflow-y-auto">
@@ -53,12 +55,12 @@ export default function SquadMatchmaking({ level = null }: { level?: LevelProgre
           <div className="relative flex items-center justify-center py-[1em]">
             <Link
               href="/learner/dashboard"
-              aria-label="Back to the dashboard"
+              aria-label={t("Back to the dashboard")}
               className="absolute start-0 grid h-[3em] w-[3em] place-items-center rounded-[0.8em] bg-[#6c86ad]/80 text-white shadow-md hover:bg-[#5a759d]"
             >
               <ArrowLeft className="h-[1.6em] w-[1.6em]" />
             </Link>
-            <h1 className="px-[3.5em] text-center text-[2.6em] font-semibold leading-tight text-[#14365a]">Congratulations!</h1>
+            <h1 className="px-[3.5em] text-center text-[2.6em] font-semibold leading-tight text-[#14365a]">{t("Congratulations!")}</h1>
           </div>
 
           <section className={`${glass} mx-auto mt-[1.5em] flex max-w-[34em] flex-col items-center gap-[1em] p-[2em] text-center`}>
@@ -72,19 +74,18 @@ export default function SquadMatchmaking({ level = null }: { level?: LevelProgre
 
             <PartyPopper className="h-[2.6em] w-[2.6em] text-[#f5a623]" aria-hidden />
             <h2 className="text-[1.6em] font-bold text-[#14365a]">
-              {level ? `You finished the ${level.level} level of ${level.trackName}` : "You finished your level"}
+              {level ? t("You finished the {level} level of {track}", { level: t(level.level), track: t(level.trackName) }) : t("You finished your level")}
             </h2>
             <p className="max-w-[26em] text-[1em] leading-relaxed text-[#14365a]/85">
-              Now join a squad and build a real project. We&apos;ll place you with students of your level from other tracks, with a
-              monitor, and give your squad a random project that fits your level. Then you share your links, get ready, and start.
+              {t("Now join a squad and build a real project. We'll place you with students of your level from other tracks, with a monitor, and give your squad a random project that fits your level. Then you share your links, get ready, and start.")}
             </p>
 
             <div className="flex items-center gap-[1.4em] text-[0.9em] font-semibold text-[#14365a]">
               <span className="flex items-center gap-[0.4em]">
-                <Users className="h-[1.3em] w-[1.3em]" aria-hidden /> A squad of teammates
+                <Users className="h-[1.3em] w-[1.3em]" aria-hidden /> {t("A squad of teammates")}
               </span>
               <span className="flex items-center gap-[0.4em]">
-                <Dices className="h-[1.3em] w-[1.3em]" aria-hidden /> A random project
+                <Dices className="h-[1.3em] w-[1.3em]" aria-hidden /> {t("A random project")}
               </span>
             </div>
 
@@ -96,10 +97,10 @@ export default function SquadMatchmaking({ level = null }: { level?: LevelProgre
             >
               {joining ? (
                 <>
-                  <LoaderCircle className="h-[1.3em] w-[1.3em] animate-spin" aria-hidden /> FINDING YOUR SQUAD…
+                  <LoaderCircle className="h-[1.3em] w-[1.3em] animate-spin" aria-hidden /> {t("FINDING YOUR SQUAD…")}
                 </>
               ) : (
-                "JOIN A SQUAD"
+                t("JOIN A SQUAD")
               )}
             </button>
 

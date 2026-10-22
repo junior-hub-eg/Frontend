@@ -12,6 +12,7 @@ import { getSquad, getSquadLinks, type SquadLinks, type SquadMemberLinks } from 
 import { XP_PER_LEVEL } from "./dashboard-cards";
 import { ROLE_TITLE } from "./interns-data";
 import { LinkChips, MyLinksEditor } from "./work-links";
+import { useI18n, useT } from "@/lib/i18n/client";
 
 const IMG = "/images/Intern";
 
@@ -37,15 +38,16 @@ function memberAvatar(m: SquadMemberLinks, i: number) {
 
 /** One teammate: avatar, role, level, ready state and the links they shared. */
 function MemberCard({ member, index }: { member: SquadMemberLinks; index: number }) {
+  const t = useT();
   const a = memberAvatar(member, index);
   return (
     <li className={`${glass} flex items-center gap-[0.8em] p-[0.6em]`}>
       <Avatar src={a.src} bg={a.bg} />
       <div className="min-w-0 leading-snug">
         <p className="text-[1.35em] font-bold text-[#14365a]">{member.fullName}</p>
-        <p className="mt-[0.3em] text-[0.95em] text-[#14365a]">{ROLE_TITLE[member.role]}</p>
-        <p className="mt-[0.2em] text-[0.95em] font-bold text-[#14365a]">Level {level(member.totalXp)}</p>
-        <p className={`mt-[0.2em] text-[0.95em] font-bold ${member.ready ? "text-[#1f9d5b]" : "text-[#14365a]"}`}>{member.ready ? "Ready" : "Not Ready"}</p>
+        <p className="mt-[0.3em] text-[0.95em] text-[#14365a]">{t(ROLE_TITLE[member.role])}</p>
+        <p className="mt-[0.2em] text-[0.95em] font-bold text-[#14365a]">{t("Level {n}", { n: level(member.totalXp) })}</p>
+        <p className={`mt-[0.2em] text-[0.95em] font-bold ${member.ready ? "text-[#1f9d5b]" : "text-[#14365a]"}`}>{member.ready ? t("Ready") : t("Not Ready")}</p>
         <LinkChips member={member} className="mt-[0.4em]" />
       </div>
     </li>
@@ -69,30 +71,31 @@ function ProjectCard({
   project: { title: string; description: string } | null;
   className?: string;
 }) {
+  const t = useT();
   return (
     <section aria-live="polite" className={`${glass} flex min-h-[14em] flex-col items-center justify-center gap-[0.6em] p-[1.2em] text-center ${className}`}>
       <Dices className="h-[3.4em] w-[3.4em] text-[#14365a]" strokeWidth={1.6} aria-hidden />
       {project ? (
         <>
-          <p className="text-[0.85em] font-bold uppercase tracking-wide text-[#14365a]/70">Your project is ready</p>
+          <p className="text-[0.85em] font-bold uppercase tracking-wide text-[#14365a]/70">{t("Your project is ready")}</p>
           {project.title && <h2 className="text-[1.4em] font-extrabold leading-tight text-[#14365a]">{project.title}</h2>}
           {project.description && <p className="line-clamp-4 text-[0.85em] text-[#14365a]/80">{project.description}</p>}
           <Link
             href="/learner/interns/internship"
             className="mt-[0.4em] rounded-[0.8em] bg-[#4f9cf0] px-[1.4em] py-[0.7em] text-[0.95em] font-extrabold tracking-wide text-[#14365a] shadow-[0_6px_18px_rgba(47,127,214,0.45)] hover:bg-[#3d8ce6]"
           >
-            START INTERNSHIP
+            {t("START INTERNSHIP")}
           </Link>
         </>
       ) : countdown !== null ? (
         <p className="text-[1.15em] font-bold text-[#14365a]">
-          Your Project will be Ready in {countdown > 0 ? countdown : "…"} sec..
+          {t("Your Project will be Ready in {n} sec..", { n: countdown > 0 ? countdown : "…" })}
         </p>
       ) : (
         <>
-          <p className="text-[1.15em] font-bold text-[#14365a]">Waiting for your squad</p>
+          <p className="text-[1.15em] font-bold text-[#14365a]">{t("Waiting for your squad")}</p>
           <p className="text-[0.85em] text-[#14365a]/75">
-            {ready} of {total} ready. Paste your links and press READY — your project appears when everyone is ready.
+            {t("{n} of {total} ready. Paste your links and press READY — your project appears when everyone is ready.", { n: ready, total })}
           </p>
         </>
       )}
@@ -107,6 +110,7 @@ const noopSubscribe = () => () => {};
  * (Figma, GitHub, the live site, ...). When everyone is ready the project is revealed.
  */
 export default function SquadSession() {
+  const { t, dir } = useI18n();
   // Rendered into <body>: the shell's <main> is its own stacking context, so a fixed layer inside it stays under the sidebar.
   const isClient = useSyncExternalStore(noopSubscribe, () => true, () => false);
   const [squad, setSquad] = useState<SquadLinks | null>(null);
@@ -191,7 +195,7 @@ export default function SquadSession() {
 
   return createPortal(
     // Full screen over the learner shell, like the Figma (no sidebar or top bar on this page).
-    <div dir="ltr" className={`${poppins.className} fixed inset-0 z-50 bg-[#bfe4f7]`} style={{ fontSize: "clamp(11px, 1.05vw, 16px)" }}>
+    <div dir={dir} className={`${poppins.className} fixed inset-0 z-50 bg-[#bfe4f7]`} style={{ fontSize: "clamp(11px, 1.05vw, 16px)" }}>
       {/* The park stays put behind the whole page; only the content layer scrolls */}
       <Image src={`${IMG}/bg-park.png`} alt="" fill priority sizes="100vw" className="pointer-events-none object-cover" />
 
@@ -200,18 +204,18 @@ export default function SquadSession() {
           <div className="relative flex items-center justify-center py-[1em]">
             <Link
               href="/learner/dashboard"
-              aria-label="Back to the dashboard"
+              aria-label={t("Back to the dashboard")}
               className="absolute start-0 grid h-[3em] w-[3em] place-items-center rounded-[0.8em] bg-[#6c86ad]/80 text-white shadow-md hover:bg-[#5a759d]"
             >
               <ArrowLeft className="h-[1.6em] w-[1.6em]" />
             </Link>
-            <h1 className="px-[3.5em] text-center text-[2.6em] font-semibold leading-tight text-[#14365a]">Paste Your Links To Get Ready</h1>
+            <h1 className="px-[3.5em] text-center text-[2.6em] font-semibold leading-tight text-[#14365a]">{t("Paste Your Links To Get Ready")}</h1>
           </div>
 
           {loadError && <p className={`${glass} mx-auto mt-[1em] max-w-[47em] p-[1em] text-center text-[#b83232]`}>{loadError}</p>}
           {noSquad && (
             <p className={`${glass} mx-auto mt-[1em] max-w-[47em] p-[1em] text-center text-[0.95em] text-[#14365a]`}>
-              You&apos;re not in a squad yet. Your teammates will show here once you join one.
+              {t("You're not in a squad yet. Your teammates will show here once you join one.")}
             </p>
           )}
           {!squad && !noSquad && !loadError && <LoaderCircle className="mx-auto mt-[4em] h-[2.4em] w-[2.4em] animate-spin text-[#14365a]" />}
@@ -220,30 +224,30 @@ export default function SquadSession() {
             <div className="mx-auto mt-[1.2em] grid max-w-[47em] gap-[1em] md:grid-cols-[15em_1fr]">
               {/* Monitor */}
               <section className={`${glass} flex flex-col items-center p-[1em] text-center md:items-start md:text-start`}>
-                <h2 className="text-[1.3em] font-bold text-[#14365a]">Your Monitor</h2>
+                <h2 className="text-[1.3em] font-bold text-[#14365a]">{t("Your Monitor")}</h2>
                 {monitor ? (
                   <>
                     <Avatar src={mentorAvatar(monitor).src} bg={mentorAvatar(monitor).bg} size="mt-[0.5em] h-[10em] w-[10em] self-center" />
                     <p className="mt-[0.8em] text-[1.05em] font-bold text-[#14365a]">{monitor.fullName}</p>
-                    <p className="text-[0.85em] text-[#14365a]">{monitor.title}</p>
+                    <p className="text-[0.85em] text-[#14365a]">{t(monitor.title)}</p>
                   </>
                 ) : (
-                  <p className="mt-[0.8em] text-[0.95em] leading-snug text-[#14365a]/80">Your squad&apos;s monitor will show here.</p>
+                  <p className="mt-[0.8em] text-[0.95em] leading-snug text-[#14365a]/80">{t("Your squad's monitor will show here.")}</p>
                 )}
               </section>
 
               {/* You */}
               <section className={`${glass} p-[1em]`}>
-                <h2 className="text-[1.3em] font-bold text-[#14365a]">You</h2>
+                <h2 className="text-[1.3em] font-bold text-[#14365a]">{t("You")}</h2>
                 <div className="mt-[0.5em] flex items-center gap-[0.8em]">
                   <Avatar src={myAvatar.src} bg={myAvatar.bg} size="h-[8em] w-[8em]" />
                   <div className="min-w-0 leading-snug">
                     <p className="text-[1.35em] font-bold text-[#14365a]">{me.fullName}</p>
-                    <p className="mt-[0.3em] text-[0.95em] text-[#14365a]">{ROLE_TITLE[me.role]}</p>
-                    <p className="mt-[0.2em] text-[0.95em] font-bold text-[#14365a]">Level {level(me.totalXp)}</p>
+                    <p className="mt-[0.3em] text-[0.95em] text-[#14365a]">{t(ROLE_TITLE[me.role])}</p>
+                    <p className="mt-[0.2em] text-[0.95em] font-bold text-[#14365a]">{t("Level {n}", { n: level(me.totalXp) })}</p>
                     {me.ready && (
                       <p className="mt-[0.2em] flex items-center gap-[0.3em] text-[0.95em] font-bold text-[#1f9d5b]">
-                        <CircleCheck className="h-[1.1em] w-[1.1em]" /> Ready
+                        <CircleCheck className="h-[1.1em] w-[1.1em]" /> {t("Ready")}
                       </p>
                     )}
                   </div>
@@ -252,7 +256,7 @@ export default function SquadSession() {
                 <div className="mt-[0.8em]">
                   <MyLinksEditor
                     me={me}
-                    submitLabel="READY"
+                    submitLabel={t("READY")}
                     onSaved={(updated) => {
                       setSquad(updated);
                       startIfAllReady(updated);
@@ -274,13 +278,13 @@ export default function SquadSession() {
                 className="order-first lg:order-2 lg:self-center"
               />
               <ul className="grid content-start gap-[1em] lg:order-1">
-                {leftColumn.map((t) => (
-                  <MemberCard key={t.studentId} member={t} index={squad.members.indexOf(t)} />
+                {leftColumn.map((m) => (
+                  <MemberCard key={m.studentId} member={m} index={squad.members.indexOf(m)} />
                 ))}
               </ul>
               <ul className="grid content-start gap-[1em] lg:order-3">
-                {rightColumn.map((t) => (
-                  <MemberCard key={t.studentId} member={t} index={squad.members.indexOf(t)} />
+                {rightColumn.map((m) => (
+                  <MemberCard key={m.studentId} member={m} index={squad.members.indexOf(m)} />
                 ))}
               </ul>
             </div>
