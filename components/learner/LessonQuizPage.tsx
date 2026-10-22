@@ -240,7 +240,7 @@ export default function LessonQuizPage({ code, lessonId }: { code: string; lesso
                     on ? "bg-[#12606b] text-white" : "bg-[#eef2f6] text-[#14365a]"
                   }`}
                 >
-                  {locale === "ar" ? "أبجدهـ"[i] : String.fromCharCode(65 + i)}
+                  {locale === "ar" ? ["أ", "ب", "ج", "د", "هـ"][i] : String.fromCharCode(65 + i)}
                 </span>
                 <span className="text-[0.8em] text-[#14365a]">{opt}</span>
               </button>

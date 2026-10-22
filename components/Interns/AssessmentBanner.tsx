@@ -1,7 +1,11 @@
+"use client";
+
 import Link from "next/link";
 import { GraduationCap, ArrowRight } from "lucide-react";
+import { useT } from "@/lib/i18n/client";
 
 export function AssessmentBanner() {
+  const t = useT();
   return (
     <section className="bg-white py-6">
       <div className="mx-auto max-w-7xl px-6 lg:px-10">
@@ -24,10 +28,10 @@ export function AssessmentBanner() {
               </div>
               <div>
                 <h3 className="text-lg font-bold text-[#1b2a5c] sm:text-xl md:text-2xl">
-                  Not sure which track is for you?
+                  {t("Not sure which track is for you?")}
                 </h3>
                 <p className="mt-1 text-xs text-[#1b2a5c]/70 sm:text-sm">
-                  Ensure which internship path suits you best!
+                  {t("Ensure which internship path suits you best!")}
                 </p>
               </div>
             </div>
@@ -37,7 +41,7 @@ export function AssessmentBanner() {
               href="/interns/portal"
               className="inline-flex shrink-0 items-center gap-2 rounded-full bg-[#1b2a5c] px-6 py-3 text-xs font-semibold text-white shadow-md transition-all hover:bg-[#12939b] hover:shadow-lg active:scale-95 sm:text-sm"
             >
-              <span>Take assessment</span>
+              <span>{t("Take assessment")}</span>
               <ArrowRight size={15} />
             </Link>
           </div>

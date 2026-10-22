@@ -3,8 +3,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Zap, Play, ArrowRight } from "lucide-react";
+import { useT } from "@/lib/i18n/client";
 
 export function InternsHero() {
+  const t = useT();
   const scrollToInternships = () => {
     document.getElementById("find-internships")?.scrollIntoView({ behavior: "smooth" });
   };
@@ -22,21 +24,20 @@ export function InternsHero() {
             {/* Pill Badge */}
             <div className="inline-flex items-center gap-2 rounded-full border border-[#12939b]/25 bg-[#E9F7F4] px-3.5 py-1.5 text-xs font-semibold tracking-wide text-[#12939b] shadow-xs">
               <Zap size={13} className="fill-[#12939b]" />
-              <span>INTERNSHIP PROGRAM</span>
+              <span>{t("INTERNSHIP PROGRAM")}</span>
             </div>
 
             {/* Main Headline */}
             <h1 className="mt-5 text-4xl font-extrabold tracking-tight text-[#1b2a5c] sm:text-5xl lg:text-[54px] lg:leading-[1.12]">
-              Real Projects.<br />
-              Real <span className="text-[#12939b]">Teams.</span>
+              {t("Real Projects.")}<br />
+              {t("Real")} <span className="text-[#12939b]">{t("Teams.")}</span>
               <br />
-              <span className="text-[#12939b]">Real Experience.</span>
+              <span className="text-[#12939b]">{t("Real Experience.")}</span>
             </h1>
 
             {/* Description */}
             <p className="mt-5 max-w-xl text-sm leading-relaxed text-[#1b2a5c]/75 sm:text-base">
-              Join an Agile squad, work on real projects, and gain hands-on experience with the guidance of a
-              Senior Team Leader. Build your skills, collaborate with your team, and prepare for your career.
+              {t("Join an Agile squad, work on real projects, and gain hands-on experience with the guidance of a Senior Team Leader. Build your skills, collaborate with your team, and prepare for your career.")}
             </p>
 
             {/* CTA Buttons */}
@@ -45,7 +46,7 @@ export function InternsHero() {
                 href="/interns/portal"
                 className="inline-flex items-center gap-2 rounded-full bg-[#12939b] px-6 py-3.5 text-sm font-semibold text-white shadow-md shadow-[#12939b]/20 transition-all hover:bg-[#0f7a81] hover:shadow-lg active:scale-95"
               >
-                <span>Explore interns</span>
+                <span>{t("Explore interns")}</span>
                 <ArrowRight size={16} />
               </Link>
 
@@ -61,7 +62,7 @@ export function InternsHero() {
                   <span className="grid size-7 shrink-0 place-items-center rounded-full bg-white">
                     <Play size={13} className="ms-0.5 fill-[#B45B65] text-[#B45B65]" />
                   </span>
-                  How It Works
+                  {t("How It Works")}
                 </span>
               </button>
             </div>
@@ -71,7 +72,7 @@ export function InternsHero() {
           <div className="lg:col-span-6 xl:col-span-6">
             <Image
               src="/images/Landing%20Page/Interns/image%2042.png"
-              alt="Three Junior Hub interns working together on a laptop: real projects, team collaboration and career growth"
+              alt={t("Three Junior Hub interns working together on a laptop: real projects, team collaboration and career growth")}
               width={826}
               height={465}
               priority

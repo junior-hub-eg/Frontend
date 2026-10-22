@@ -1,5 +1,7 @@
 "use client";
 
+import { useT } from "@/lib/i18n/client";
+
 export interface FilterState {
   categories: string[];
   types: string[];
@@ -12,6 +14,7 @@ interface FilterSidebarProps {
 }
 
 export function InternshipFilterSidebar({ filters, onChange }: FilterSidebarProps) {
+  const t = useT();
   const toggleFilter = (section: keyof FilterState, value: string) => {
     const current = filters[section];
     const updated = current.includes(value)
@@ -32,20 +35,20 @@ export function InternshipFilterSidebar({ filters, onChange }: FilterSidebarProp
   return (
     <aside className="h-fit rounded-[24px] border border-black/8 bg-white p-6 shadow-sm">
       <div className="flex items-center justify-between pb-3 border-b border-black/5">
-        <h3 className="text-base font-bold text-[#1b2a5c]">Filters</h3>
+        <h3 className="text-base font-bold text-[#1b2a5c]">{t("Filters")}</h3>
         {hasActiveFilters && (
           <button
             onClick={clearAll}
             className="text-xs font-semibold text-[#12939b] hover:underline"
           >
-            Clear all
+            {t("Clear all")}
           </button>
         )}
       </div>
 
       {/* Category Section */}
       <div className="mt-5">
-        <h4 className="text-sm font-bold text-[#1b2a5c]">Category</h4>
+        <h4 className="text-sm font-bold text-[#1b2a5c]">{t("Category")}</h4>
         <div className="mt-3 flex flex-col gap-2.5">
           {["UI/UX", "Software", "Marketing"].map((item) => {
             const checked = filters.categories.includes(item);
@@ -60,7 +63,7 @@ export function InternshipFilterSidebar({ filters, onChange }: FilterSidebarProp
                   onChange={() => toggleFilter("categories", item)}
                   className="size-4 rounded-md border-gray-300 text-[#12939b] focus:ring-[#12939b]"
                 />
-                <span>{item}</span>
+                <span>{t(item)}</span>
               </label>
             );
           })}
@@ -71,7 +74,7 @@ export function InternshipFilterSidebar({ filters, onChange }: FilterSidebarProp
 
       {/* Type Section */}
       <div>
-        <h4 className="text-sm font-bold text-[#1b2a5c]">Type</h4>
+        <h4 className="text-sm font-bold text-[#1b2a5c]">{t("Type")}</h4>
         <div className="mt-3 flex flex-col gap-2.5">
           {["Full-Time", "Part-Time"].map((item) => {
             const checked = filters.types.includes(item);
@@ -86,7 +89,7 @@ export function InternshipFilterSidebar({ filters, onChange }: FilterSidebarProp
                   onChange={() => toggleFilter("types", item)}
                   className="size-4 rounded-md border-gray-300 text-[#12939b] focus:ring-[#12939b]"
                 />
-                <span>{item}</span>
+                <span>{t(item)}</span>
               </label>
             );
           })}
@@ -97,7 +100,7 @@ export function InternshipFilterSidebar({ filters, onChange }: FilterSidebarProp
 
       {/* Location Section */}
       <div>
-        <h4 className="text-sm font-bold text-[#1b2a5c]">Location</h4>
+        <h4 className="text-sm font-bold text-[#1b2a5c]">{t("Location")}</h4>
         <div className="mt-3 flex flex-col gap-2.5">
           {["Remote", "In-Site", "Hybrid"].map((item) => {
             const checked = filters.locations.includes(item);
@@ -112,7 +115,7 @@ export function InternshipFilterSidebar({ filters, onChange }: FilterSidebarProp
                   onChange={() => toggleFilter("locations", item)}
                   className="size-4 rounded-md border-gray-300 text-[#12939b] focus:ring-[#12939b]"
                 />
-                <span>{item}</span>
+                <span>{t(item)}</span>
               </label>
             );
           })}

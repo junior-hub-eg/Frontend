@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import type { UserRole } from "@/lib/types";
 import { useAuth } from "@/lib/auth/auth-context";
 import { AppShell } from "@/components/layout/app-shell";
+import { useT } from "@/lib/i18n/client";
 
 /**
  * Client-side belt-and-suspenders on top of proxy.ts's cookie-based guard:
@@ -12,6 +13,7 @@ import { AppShell } from "@/components/layout/app-shell";
  * localStorage session isn't (dev-only edge case with the mock auth layer).
  */
 export function RoleLayout({ role, children }: { role: UserRole; children: React.ReactNode }) {
+  const t = useT();
   const { user } = useAuth();
   const router = useRouter();
 
@@ -22,7 +24,7 @@ export function RoleLayout({ role, children }: { role: UserRole; children: React
   }, [user, role, router]);
 
   if (!user || user.role !== role) {
-    return <div className="flex flex-1 items-center justify-center p-10 text-muted-foreground">جاري التحميل...</div>;
+    return <div className="flex flex-1 items-center justify-center p-10 text-muted-foreground">{t("Loading...")}</div>;
   }
 
   return <AppShell role={role}>{children}</AppShell>;

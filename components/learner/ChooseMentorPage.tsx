@@ -422,7 +422,7 @@ export default function ChooseMentorPage() {
                     <MessagesSquare className="size-4 text-[#12939b]" /> {t(profile.mentor.availability)}
                   </div>
                   <div className="flex items-center gap-2">
-                    <Languages className="size-4 text-[#12939b]" /> {profile.mentor.languages.map((l) => t(l)).join("، ")}
+                    <Languages className="size-4 text-[#12939b]" /> {profile.mentor.languages.map((l) => t(l)).join(t(", "))}
                   </div>
                   <div className="flex items-center gap-2">
                     <Users className="size-4 text-[#12939b]" />{" "}

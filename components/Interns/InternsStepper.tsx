@@ -1,26 +1,31 @@
+"use client";
+
 import Image from "next/image";
+import { useT } from "@/lib/i18n/client";
+import { tk } from "@/lib/i18n/translate";
 
 export function InternsStepper() {
+  const t = useT();
   const steps = [
     {
       num: 1,
-      title: "Apply & Assessment",
-      desc: "Submit your application and complete the technical assessment.",
+      title: tk("Apply & Assessment"),
+      desc: tk("Submit your application and complete the technical assessment."),
     },
     {
       num: 2,
-      title: "Team Matching",
-      desc: "Get matched with the right squad and Senior Team Leader.",
+      title: tk("Team Matching"),
+      desc: tk("Get matched with the right squad and Senior Team Leader."),
     },
     {
       num: 3,
-      title: "Work & Learn",
-      desc: "Complete weekly sprints, work on tasks, and submit GitHub PRs.",
+      title: tk("Work & Learn"),
+      desc: tk("Complete weekly sprints, work on tasks, and submit GitHub PRs."),
     },
     {
       num: 4,
-      title: "Get Certified",
-      desc: "Complete your internship and receive your certificate.",
+      title: tk("Get Certified"),
+      desc: tk("Complete your internship and receive your certificate."),
     },
   ];
 
@@ -41,12 +46,12 @@ export function InternsStepper() {
             {/* Left intro label */}
             <div className="lg:col-span-3">
               <span className="text-xs font-bold uppercase tracking-wider text-[#12939b]">
-                WHY CHOOSE US
+                {t("WHY CHOOSE US")}
               </span>
               <h3 className="mt-1 text-base font-bold text-[#1b2a5c] sm:text-lg">
-                Weekly Sprints Real tasks &amp; PRs
+                {t("Weekly Sprints Real tasks & PRs")}
               </h3>
-              <p className="mt-1 text-xs text-[#1b2a5c]/60">Follow a clear path</p>
+              <p className="mt-1 text-xs text-[#1b2a5c]/60">{t("Follow a clear path")}</p>
             </div>
 
             {/* Stepper items */}
@@ -70,9 +75,9 @@ export function InternsStepper() {
                       {num}
                     </div>
 
-                    <h4 className="mt-3 text-xs font-bold text-[#1b2a5c] sm:text-sm">{title}</h4>
+                    <h4 className="mt-3 text-xs font-bold text-[#1b2a5c] sm:text-sm">{t(title)}</h4>
                     <p className="mt-1 max-w-[190px] text-[11px] leading-relaxed text-[#1b2a5c]/65">
-                      {desc}
+                      {t(desc)}
                     </p>
                   </div>
                 ))}

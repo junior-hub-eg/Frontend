@@ -328,7 +328,7 @@ function LearnByDoing() {
             <span className="size-2 rounded-full bg-[#ff6b6b]" />
             <span className="size-2 rounded-full bg-[#ffd166]" />
             <span className="size-2 rounded-full bg-[#06d6a0]" />
-            <span className="ms-auto text-[10px] font-semibold text-white/80">Try It</span>
+            <span className="ms-auto text-[10px] font-semibold text-white/80">{t("Try It")}</span>
           </div>
           <div className="grid grid-cols-[1.15fr_1fr]">
             <pre className="min-h-[170px] px-4 pb-6 font-mono text-[10px] leading-6 text-[#9fe0d9]">
@@ -336,11 +336,11 @@ function LearnByDoing() {
               <span className="text-white/40">2 </span>&lt;p&gt;I built this.&lt;/p&gt;{"\n"}
               <span className="text-white/40">3 </span>button {"{"} color: teal; {"}"}
             </pre>
-            <div className="m-2 rounded-xl bg-white p-4">
-              <p className="text-[9px] font-semibold tracking-wide text-[#1b2a5c]/50">RESULT</p>
+            <div dir="auto" className="m-2 rounded-xl bg-white p-4">
+              <p className="text-[9px] font-semibold tracking-wide text-[#1b2a5c]/50">{t("RESULT")}</p>
               <p className="mt-4 text-base font-bold text-[#1b2a5c]">Hello, Junior Hub!</p>
               <p className="mt-1 text-[10px] text-[#1b2a5c]/60">I built this.</p>
-              <span className="mt-3 inline-flex rounded-full bg-[#12939b] px-3 py-1.5 text-[10px] font-semibold text-white">Keep exploring</span>
+              <span className="mt-3 inline-flex rounded-full bg-[#12939b] px-3 py-1.5 text-[10px] font-semibold text-white">{t("Keep exploring")}</span>
             </div>
           </div>
         </div>
