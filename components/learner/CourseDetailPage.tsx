@@ -8,11 +8,13 @@ import { ApiError } from "@/lib/api-client";
 import { coursePath, getTrackCourses, lessonPath, type Course, type TrackCourses } from "@/lib/learning-api";
 import { LoadState, minutes } from "@/components/Courses/course-ui";
 import { COURSE_STYLE, CourseIcon, LEVEL_STYLE, levelName, levelsDone } from "./course-levels";
+import { useT } from "@/lib/i18n/client";
 
 const box = "rounded-[1em] border border-[#e3ebf3] bg-white";
 
 /** One course of a track: its 3 levels, each with its lessons and the exam that opens the next level. */
 export default function CourseDetailPage({ code, courseId }: { code: string; courseId: string }) {
+  const t = useT();
   const [data, setData] = useState<{ track: TrackCourses; course: Course; next: Course | null } | null>(null);
   const [loadError, setLoadError] = useState<unknown>(null);
 
@@ -53,7 +55,7 @@ export default function CourseDetailPage({ code, courseId }: { code: string; cou
       loadError ? (
         <LoadState error={loadError} onRetry={() => load().then(setData, setLoadError)} />
       ) : (
-        <div className="grid min-h-[50vh] place-items-center" role="status" aria-label="Loading">
+        <div className="grid min-h-[50vh] place-items-center" role="status" aria-label={t("Loading")}>
           <LoaderCircle className="size-8 animate-spin text-[#12939b]" />
         </div>
       ),
@@ -67,7 +69,7 @@ export default function CourseDetailPage({ code, courseId }: { code: string; cou
   return wrapper(
     <>
       <Link href="/learner/courses" className="inline-flex w-fit items-center gap-[0.5em] text-[0.8em] font-semibold text-[#12606b] hover:underline">
-        <ArrowLeft className="size-[1.1em]" /> My Courses
+        <ArrowLeft className="size-[1.1em]" /> {t("My Courses")}
       </Link>
 
       {/* ---------- Header ---------- */}
@@ -76,15 +78,15 @@ export default function CourseDetailPage({ code, courseId }: { code: string; cou
           <CourseIcon iconKey={course.iconKey} className="size-[2em]" />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-[0.7em] font-bold uppercase tracking-wide text-[#12939b]">{track.trackName} course</p>
+          <p className="text-[0.7em] font-bold uppercase tracking-wide text-[#12939b]">{t("{track} course", { track: t(track.trackName) })}</p>
           <h1 className="text-[2.2em] font-extrabold leading-tight text-[#14365a]">{course.title}</h1>
           <p className="mt-[0.3em] max-w-[40em] text-[0.85em] text-[#14365a]/75">{course.summary}</p>
         </div>
         <div className="text-end">
           <span className="rounded-full px-[0.9em] py-[0.25em] text-[0.75em] font-semibold" style={{ backgroundColor: style.bg, color: style.text }}>
-            {style.label}
+            {t(style.label)}
           </span>
-          <p className="mt-[0.5em] text-[0.8em] font-semibold text-[#14365a]">{done} of 3 levels</p>
+          <p className="mt-[0.5em] text-[0.8em] font-semibold text-[#14365a]">{t("{n} of 3 levels", { n: done })}</p>
         </div>
       </section>
 
@@ -103,11 +105,11 @@ export default function CourseDetailPage({ code, courseId }: { code: string; cou
                   className="flex items-center gap-[0.3em] rounded-full px-[0.7em] py-[0.15em] text-[0.65em] font-semibold"
                   style={{ backgroundColor: ls.bg, color: ls.text }}
                 >
-                  <ls.icon className="size-[1.1em]" /> {ls.label}
+                  <ls.icon className="size-[1.1em]" /> {t(ls.label)}
                 </span>
               </div>
               {level.status === "Skipped" && (
-                <p className="mt-[0.3em] text-[0.68em] text-[#14365a]/60">Below your level, so you can skip it. It stays open to review.</p>
+                <p className="mt-[0.3em] text-[0.68em] text-[#14365a]/60">{t("Below your level, so you can skip it. It stays open to review.")}</p>
               )}
 
               <ul className="mt-[0.7em] space-y-[0.3em]">
@@ -115,13 +117,13 @@ export default function CourseDetailPage({ code, courseId }: { code: string; cou
                   const row = (
                     <>
                       {l.status === "Done" ? (
-                        <CheckCircle2 className="size-[1.2em] shrink-0 text-[#12939b]" aria-label="Completed" />
+                        <CheckCircle2 className="size-[1.2em] shrink-0 text-[#12939b]" aria-label={t("Completed")} />
                       ) : l.status === "InProgress" ? (
-                        <CircleDot className="size-[1.2em] shrink-0 text-[#12939b]" aria-label="In progress" />
+                        <CircleDot className="size-[1.2em] shrink-0 text-[#12939b]" aria-label={t("In progress")} />
                       ) : reachable ? (
                         <ArrowRight className="size-[1.1em] shrink-0 text-[#14365a]/60" aria-hidden />
                       ) : (
-                        <Lock className="size-[1.1em] shrink-0 text-[#14365a]/40" aria-label="Locked" />
+                        <Lock className="size-[1.1em] shrink-0 text-[#14365a]/40" aria-label={t("Locked")} />
                       )}
                       <span className="min-w-0 flex-1 truncate">{l.title}</span>
                       <span className="text-[0.85em] text-[#14365a]/50">{minutes(l.durationSeconds)}</span>
@@ -150,18 +152,18 @@ export default function CourseDetailPage({ code, courseId }: { code: string; cou
                       href={examHref as Route}
                       className="flex items-center justify-center gap-[0.4em] rounded-[0.6em] bg-[#e6f5ec] py-[0.55em] text-[0.75em] font-semibold text-[#2a9a5f]"
                     >
-                      <CheckCircle2 className="size-[1.2em]" /> Exam passed · take it again
+                      <CheckCircle2 className="size-[1.2em]" /> {t("Exam passed · take it again")}
                     </Link>
                   ) : reachable && lessonsDone ? (
                     <Link
                       href={examHref as Route}
                       className="flex items-center justify-center gap-[0.4em] rounded-[0.6em] bg-[#12606b] py-[0.55em] text-[0.75em] font-semibold text-white hover:bg-[#0f505a]"
                     >
-                      <ClipboardCheck className="size-[1.2em]" /> Take the Level {level.level === "Beginner" ? 1 : level.level === "Intermediate" ? 2 : 3} exam
+                      <ClipboardCheck className="size-[1.2em]" /> {t("Take the Level {n} exam", { n: level.level === "Beginner" ? 1 : level.level === "Intermediate" ? 2 : 3 })}
                     </Link>
                   ) : (
                     <p className="flex items-center justify-center gap-[0.4em] rounded-[0.6em] bg-[#f3f5f8] py-[0.55em] text-[0.72em] font-semibold text-[#14365a]/55">
-                      <Lock className="size-[1.1em]" /> {reachable ? "Finish the lessons to take the exam" : "Locked"}
+                      <Lock className="size-[1.1em]" /> {reachable ? t("Finish the lessons to take the exam") : t("Locked")}
                     </p>
                   )}
                 </div>
@@ -177,8 +179,8 @@ export default function CourseDetailPage({ code, courseId }: { code: string; cou
           className="mt-[1.2em] flex items-center justify-between rounded-[1em] bg-gradient-to-r from-[#14586a] to-[#1d8a8f] p-[1em] text-white"
         >
           <span>
-            <span className="block text-[0.7em] uppercase tracking-wide text-white/70">Course completed</span>
-            <span className="text-[1em] font-extrabold">Next course: {next.title}</span>
+            <span className="block text-[0.7em] uppercase tracking-wide text-white/70">{t("Course completed")}</span>
+            <span className="text-[1em] font-extrabold">{t("Next course: {title}", { title: next.title })}</span>
           </span>
           <ArrowRight className="size-[1.4em]" />
         </Link>

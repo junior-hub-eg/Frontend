@@ -1,3 +1,5 @@
+"use client";
+
 import type { ComponentType } from "react";
 import {
   Atom,
@@ -33,6 +35,8 @@ import {
   Zap,
 } from "lucide-react";
 import { LEVEL_NUMBER, type CourseLevel, type CourseStatus, type LevelStatus } from "@/lib/learning-api";
+import { useT } from "@/lib/i18n/client";
+import { tk, tNow } from "@/lib/i18n/translate";
 
 type Icon = ComponentType<{ className?: string; style?: React.CSSProperties }>;
 
@@ -76,26 +80,28 @@ export function CourseIcon({ iconKey, className }: { iconKey: string; className?
 }
 
 export const LEVEL_STYLE: Record<LevelStatus, { label: string; bg: string; text: string; icon: Icon }> = {
-  Open: { label: "Open", bg: "#e7f6f3", text: "#12939b", icon: PlayCircle },
-  Done: { label: "Done", bg: "#e6f5ec", text: "#2a9a5f", icon: CheckCircle2 },
-  Skipped: { label: "Skipped", bg: "#eef2f6", text: "#14365a99", icon: SkipForward },
-  Locked: { label: "Locked", bg: "#f3f5f8", text: "#14365a66", icon: Lock },
+  Open: { label: tk("Open"), bg: "#e7f6f3", text: "#12939b", icon: PlayCircle },
+  Done: { label: tk("Done"), bg: "#e6f5ec", text: "#2a9a5f", icon: CheckCircle2 },
+  Skipped: { label: tk("Skipped"), bg: "#eef2f6", text: "#14365a99", icon: SkipForward },
+  Locked: { label: tk("Locked"), bg: "#f3f5f8", text: "#14365a66", icon: Lock },
 };
 
 export const COURSE_STYLE: Record<CourseStatus, { label: string; bg: string; text: string }> = {
-  Open: { label: "In progress", bg: "#e7f6f3", text: "#12939b" },
-  Done: { label: "Completed", bg: "#e6f5ec", text: "#2a9a5f" },
-  Locked: { label: "Locked", bg: "#f3f5f8", text: "#14365a80" },
+  Open: { label: tk("In progress"), bg: "#e7f6f3", text: "#12939b" },
+  Done: { label: tk("Completed"), bg: "#e6f5ec", text: "#2a9a5f" },
+  Locked: { label: tk("Locked"), bg: "#f3f5f8", text: "#14365a80" },
 };
 
-/** "Level 1 · Beginner". */
-export const levelName = (l: CourseLevel) => `Level ${LEVEL_NUMBER[l.level]} · ${l.level}`;
+/** "Level 1 · Beginner", in the page's language (course pages load their data in the browser). */
+export const levelName = (l: CourseLevel) =>
+  tNow("Level {n} · {level}", { n: LEVEL_NUMBER[l.level], level: tNow(l.level) });
 
 /** Levels Done or Skipped, out of 3. */
 export const levelsDone = (levels: CourseLevel[]) => levels.filter((l) => l.status === "Done" || l.status === "Skipped").length;
 
 /** A small chip per level: Level 1 ✓, Level 2 ▶, Level 3 🔒. */
 export function LevelChips({ levels }: { levels: CourseLevel[] }) {
+  const t = useT();
   return (
     <ul className="flex flex-wrap gap-[0.4em]">
       {levels.map((l) => {
@@ -103,11 +109,11 @@ export function LevelChips({ levels }: { levels: CourseLevel[] }) {
         return (
           <li
             key={l.level}
-            title={`${levelName(l)}: ${style.label}`}
+            title={`${levelName(l)}: ${t(style.label)}`}
             className="flex items-center gap-[0.3em] rounded-full px-[0.7em] py-[0.2em] text-[0.68em] font-semibold"
             style={{ backgroundColor: style.bg, color: style.text }}
           >
-            <style.icon className="size-[1.1em]" /> Level {LEVEL_NUMBER[l.level]}
+            <style.icon className="size-[1.1em]" /> {t("Level {n}", { n: LEVEL_NUMBER[l.level] })}
           </li>
         );
       })}

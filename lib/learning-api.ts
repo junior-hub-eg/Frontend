@@ -1,3 +1,4 @@
+import { tk } from "@/lib/i18n/translate";
 /**
  * Tracks, Track Discovery and lessons (backend TracksController, DiscoveryController, LessonsController,
  * StudentController). Errors are thrown as ApiError with the backend's code.
@@ -347,10 +348,10 @@ export const LEVEL_NUMBER: Record<TrackLevel, number> = { Beginner: 1, Intermedi
  */
 export function lessonAfter(track: TrackLessons | null, code: string, lessonId: string): { href: string; label: string } {
   const course = track?.modules.find((m) => m.lessons.some((l) => l.id === lessonId));
-  if (!course) return { href: trackPath(code), label: "Back to Track" };
+  if (!course) return { href: trackPath(code), label: tk("Back to Track") };
   const i = course.lessons.findIndex((l) => l.id === lessonId);
   const lesson = course.lessons[i];
   const next = course.lessons[i + 1];
-  if (next && next.level === lesson.level) return { href: lessonPath(code, next.id), label: "Next Lesson" };
-  return { href: coursePath(code, course.id), label: next ? "Take the level exam" : "Back to Course" };
+  if (next && next.level === lesson.level) return { href: lessonPath(code, next.id), label: tk("Next Lesson") };
+  return { href: coursePath(code, course.id), label: next ? tk("Take the level exam") : tk("Back to Course") };
 }

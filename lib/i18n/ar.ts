@@ -1,6 +1,7 @@
 import { auth } from "./ar/auth";
 import { backend } from "./ar/backend";
 import { common } from "./ar/common";
+import { courses } from "./ar/courses";
 import { errors } from "./ar/errors";
 import { landing } from "./ar/landing";
 import { learner } from "./ar/learner";
@@ -13,4 +14,5 @@ export const ar: Record<string, string> = {
   ...errors,
   ...backend,
   ...learner,
+  ...courses,
 };

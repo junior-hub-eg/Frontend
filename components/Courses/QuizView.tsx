@@ -25,8 +25,11 @@ import {
 } from "@/lib/learning-api";
 import { cn } from "@/lib/utils";
 import { LoadState } from "./course-ui";
+import { useI18n } from "@/lib/i18n/client";
+import { tNow } from "@/lib/i18n/translate";
 
 const LETTERS = ["A", "B", "C", "D", "E"];
+const LETTERS_AR = ["أ", "ب", "ج", "د", "هـ"];
 
 /** One graded question: the track quiz also says which option was right. */
 type Graded = { correct: boolean; correctIndex?: number; note: string | null };
@@ -54,16 +57,16 @@ async function lessonQuiz(code: string, lessonId: string): Promise<Quiz> {
   const after = lessonAfter(track, lesson.trackCode, lesson.id);
   const lessonHref = lessonPath(lesson.trackCode, lesson.id);
   return {
-    eyebrow: `${track?.trackName ?? lesson.trackCode} / Lesson quiz`,
+    eyebrow: tNow("{track} / Lesson quiz", { track: tNow(track?.trackName ?? lesson.trackCode) }),
     title: lesson.title,
-    rule: "Answer every question correctly to finish the lesson.",
+    rule: tNow("Answer every question correctly to finish the lesson."),
     questions: lesson.questions,
     backHref: lessonHref,
-    backLabel: "Back to Lesson",
+    backLabel: tNow("Back to Lesson"),
     continueHref: after.href,
-    continueLabel: after.label,
-    passedText: "You finished this lesson.",
-    failedText: "Read the help under each wrong answer, then try again.",
+    continueLabel: tNow(after.label),
+    passedText: tNow("You finished this lesson."),
+    failedText: tNow("Read the help under each wrong answer, then try again."),
     submit: async (answers) => {
       const r = await submitLessonQuiz(lesson.id, answers);
       return {
@@ -80,16 +83,16 @@ async function trackQuiz(code: string): Promise<Quiz> {
   const track = await getTrack(code);
   const href = trackPath(track.code);
   return {
-    eyebrow: `${track.name} / Track quiz`,
-    title: `How well do you know ${track.name}?`,
-    rule: track.quiz.unlocked ? "Answer 2 of 3 correctly to pass." : "Watch one of the track videos first to unlock this quiz.",
+    eyebrow: tNow("{track} / Track quiz", { track: tNow(track.name) }),
+    title: tNow("How well do you know {track}?", { track: tNow(track.name) }),
+    rule: track.quiz.unlocked ? tNow("Answer 2 of 3 correctly to pass.") : tNow("Watch one of the track videos first to unlock this quiz."),
     questions: track.quiz.unlocked ? track.quiz.questions : [],
     backHref: href,
-    backLabel: "Back to Track",
+    backLabel: tNow("Back to Track"),
     continueHref: href,
-    continueLabel: "Back to Track",
-    passedText: `You passed the ${track.name} quiz.`,
-    failedText: "Look at the right answers below, then try again.",
+    continueLabel: tNow("Back to Track"),
+    passedText: tNow("You passed the {track} quiz.", { track: tNow(track.name) }),
+    failedText: tNow("Look at the right answers below, then try again."),
     submit: async (answers) => {
       const r = await submitTrackQuiz(track.code, answers);
       return {
@@ -106,17 +109,17 @@ async function trackQuiz(code: string): Promise<Quiz> {
 async function placementQuiz(code: string): Promise<Quiz> {
   const test = await getPlacementTest(code);
   return {
-    eyebrow: `${test.trackName} / Find your level`,
-    title: `Let's find your level in ${test.trackName}`,
-    rule: "6 quick technical questions, from easy to hard. Answer what you know.",
+    eyebrow: tNow("{track} / Find your level", { track: tNow(test.trackName) }),
+    title: tNow("Let's find your level in {track}", { track: tNow(test.trackName) }),
+    rule: tNow("6 quick technical questions, from easy to hard. Answer what you know."),
     questions: test.questions,
     backHref: "/learner/courses",
-    backLabel: "Choose another track",
+    backLabel: tNow("Choose another track"),
     continueHref: trackPath(test.trackCode),
-    continueLabel: `Start learning ${test.trackName}`,
+    continueLabel: tNow("Start learning {track}", { track: tNow(test.trackName) }),
     passedText: "",
     failedText: "",
-    doneLabel: "Your level",
+    doneLabel: tNow("Your level"),
     submit: async (answers) => {
       const r = await submitPlacementTest(test.trackCode, answers);
       return {
@@ -124,8 +127,11 @@ async function placementQuiz(code: string): Promise<Quiz> {
         graded: r.results.map((x) => ({ correct: x.correct, correctIndex: x.correctOptionIndex, note: x.explanation })),
         xpAwarded: 0,
         badge: null,
-        level: r.level,
-        message: `You start ${test.trackName} at ${r.level} level. You can take this test again to change it.`,
+        level: tNow(r.level),
+        message: tNow("You start {track} at {level} level. You can take this test again to change it.", {
+          track: tNow(test.trackName),
+          level: tNow(r.level),
+        }),
       };
     },
   };
@@ -137,17 +143,17 @@ async function levelExamQuiz(code: string, courseId: string, level: string): Pro
   const back = coursePath(exam.trackCode, exam.courseId);
   const number = LEVEL_NUMBER[exam.level];
   return {
-    eyebrow: `${exam.courseTitle} / Level ${number} exam`,
-    title: `${exam.courseTitle} · Level ${number}`,
-    rule: "Answer 2 of 3 correctly to pass and open the next level.",
+    eyebrow: tNow("{course} / Level {n} exam", { course: exam.courseTitle, n: number }),
+    title: tNow("{course} · Level {n}", { course: exam.courseTitle, n: number }),
+    rule: tNow("Answer 2 of 3 correctly to pass and open the next level."),
     questions: exam.questions,
     backHref: back,
-    backLabel: "Back to the course",
+    backLabel: tNow("Back to the course"),
     continueHref: back,
-    continueLabel: "Back to the course",
-    passedText: `You passed Level ${number} of ${exam.courseTitle}.`,
-    failedText: "Look at the right answers below, then try again.",
-    doneLabel: "Level passed",
+    continueLabel: tNow("Back to the course"),
+    passedText: tNow("You passed Level {n} of {course}.", { n: number, course: exam.courseTitle }),
+    failedText: tNow("Look at the right answers below, then try again."),
+    doneLabel: tNow("Level passed"),
     submit: async (answers) => {
       const r = await submitLevelExam(exam.trackCode, exam.courseId, exam.level, answers);
       return {
@@ -205,6 +211,8 @@ export function QuizView({
 }
 
 function QuizRun({ quiz, onRetry }: { quiz: Quiz; onRetry: () => void }) {
+  const { t, locale } = useI18n();
+  const letters = locale === "ar" ? LETTERS_AR : LETTERS;
   const total = quiz.questions.length;
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<(number | null)[]>(() => quiz.questions.map(() => null));
@@ -258,19 +266,19 @@ function QuizRun({ quiz, onRetry }: { quiz: Quiz; onRetry: () => void }) {
             {outcome.passed ? <Trophy size={26} /> : <RotateCcw size={24} />}
           </span>
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-[#12939b]">{outcome.passed ? (quiz.doneLabel ?? "Quiz passed") : "Almost there"}</p>
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-[#12939b]">{outcome.passed ? (quiz.doneLabel ?? t("Quiz passed")) : t("Almost there")}</p>
             <h1 className="mt-1 text-2xl font-bold text-[#1b2a5c]">
-              {outcome.level ? `${outcome.level}` : `You answered ${score} of ${total} correctly.`}
+              {outcome.level ? `${outcome.level}` : t("You answered {score} of {total} correctly.", { score, total })}
             </h1>
             <p className="mt-1 text-sm text-[#1b2a5c]/65">
-              {outcome.level && `You answered ${score} of ${total} correctly. `}
+              {outcome.level && `${t("You answered {score} of {total} correctly.", { score, total })} `}
               {outcome.message ?? (outcome.passed ? quiz.passedText : quiz.failedText)}
             </p>
           </div>
           {(outcome.xpAwarded > 0 || outcome.badge) && (
             <div className="flex flex-wrap justify-center gap-2">
               {outcome.xpAwarded > 0 && (
-                <span className="rounded-full bg-[#E9F7F4] px-3 py-1 text-xs font-bold text-[#12939b]">+{outcome.xpAwarded} XP</span>
+                <span className="rounded-full bg-[#E9F7F4] px-3 py-1 text-xs font-bold text-[#12939b]">{t("+{xp} XP", { xp: outcome.xpAwarded })}</span>
               )}
               {outcome.badge && (
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-[#fff4d6] px-3 py-1 text-xs font-bold text-[#a86b00]">
@@ -281,10 +289,10 @@ function QuizRun({ quiz, onRetry }: { quiz: Quiz; onRetry: () => void }) {
           )}
           <div className="flex flex-wrap justify-center gap-3">
             <Link href={quiz.backHref as Route} className="rounded-lg border border-[#12939b] px-4 py-2 text-xs font-semibold text-[#12939b] hover:bg-[#E9F7F4]">
-              {quiz.backLabel === quiz.continueLabel ? "Review" : quiz.backLabel}
+              {quiz.backLabel === quiz.continueLabel ? t("Review") : quiz.backLabel}
             </Link>
             <button type="button" onClick={onRetry} className="rounded-lg border border-[#12939b] px-4 py-2 text-xs font-semibold text-[#12939b] hover:bg-[#E9F7F4]">
-              Try Again
+              {t("Try Again")}
             </button>
             {outcome.passed && (
               <Link href={quiz.continueHref as Route} className="rounded-lg bg-linear-to-r from-[#14757d] to-[#1b2a5c] px-4 py-2 text-xs font-semibold text-white hover:opacity-90">
@@ -294,22 +302,22 @@ function QuizRun({ quiz, onRetry }: { quiz: Quiz; onRetry: () => void }) {
           </div>
         </section>
 
-        <ol className="flex flex-col gap-3" aria-label="Your answers">
+        <ol className="flex flex-col gap-3" aria-label={t("Your answers")}>
           {quiz.questions.map((q, i) => {
             const g = outcome.graded[i];
             return (
               <li key={q.id} className="rounded-2xl border border-[#dfe7e5] bg-white p-4">
                 <p className="flex items-start gap-2 text-sm font-semibold text-[#1b2a5c]">
                   {g.correct ? (
-                    <Check aria-label="Correct" size={18} className="mt-0.5 shrink-0 text-[#1E9D5B]" />
+                    <Check aria-label={t("Correct")} size={18} className="mt-0.5 shrink-0 text-[#1E9D5B]" />
                   ) : (
-                    <X aria-label="Wrong" size={18} className="mt-0.5 shrink-0 text-[#D1365A]" />
+                    <X aria-label={t("Wrong")} size={18} className="mt-0.5 shrink-0 text-[#D1365A]" />
                   )}
                   {q.prompt}
                 </p>
                 <p className="ms-6 mt-1 text-xs text-[#1b2a5c]/70">
-                  Your answer: {q.options[answers[i]!]}
-                  {!g.correct && g.correctIndex !== undefined && <span className="block text-[#1E9D5B]">Right answer: {q.options[g.correctIndex]}</span>}
+                  {t("Your answer: {answer}", { answer: q.options[answers[i]!] })}
+                  {!g.correct && g.correctIndex !== undefined && <span className="block text-[#1E9D5B]">{t("Right answer: {answer}", { answer: q.options[g.correctIndex] })}</span>}
                 </p>
                 {g.note && (!g.correct || g.correctIndex !== undefined) && (
                   <p className={cn("ms-6 mt-2 rounded-lg px-3 py-2 text-xs", g.correct ? "bg-[#E6F6EC] text-[#1b2a5c]" : "bg-[#E9F7F4] text-[#0f7a81]")}>{g.note}</p>
@@ -331,12 +339,12 @@ function QuizRun({ quiz, onRetry }: { quiz: Quiz; onRetry: () => void }) {
       <header className="text-center">
         <p className="text-[10px] font-semibold uppercase tracking-wide text-[#12939b]">{quiz.eyebrow}</p>
         <h1 className="mt-1 text-2xl font-bold text-[#1b2a5c]">{quiz.title}</h1>
-        <p className="mt-1 text-xs text-[#1b2a5c]/60">Choose the best answer. {quiz.rule}</p>
+        <p className="mt-1 text-xs text-[#1b2a5c]/60">{t("Choose the best answer.")} {quiz.rule}</p>
       </header>
 
       <div className="flex items-center gap-3 text-[11px] text-[#1b2a5c]/60">
         <span>
-          Question {index + 1} of {total}
+          {t("Question {n} of {total}", { n: index + 1, total })}
         </span>
         <div role="progressbar" aria-valuemin={0} aria-valuemax={total} aria-valuenow={index} className="h-1.5 flex-1 rounded-full bg-[#e8eeed]">
           <div className="h-full rounded-full bg-[#12939b] transition-all" style={{ width: `${(index / total) * 100}%` }} />
@@ -366,7 +374,7 @@ function QuizRun({ quiz, onRetry }: { quiz: Quiz; onRetry: () => void }) {
                   isSelected ? "border-[#12939b] bg-[#E9F7F4]" : "border-[#dfe7e5] hover:border-[#12939b]/60"
                 )}
               >
-                <span className="grid size-6 shrink-0 place-items-center rounded-full bg-[#E9F7F4] text-[10px] font-bold">{LETTERS[i]}</span>
+                <span className="grid size-6 shrink-0 place-items-center rounded-full bg-[#E9F7F4] text-[10px] font-bold">{letters[i]}</span>
                 <span className="flex-1 font-medium">{option}</span>
                 {isSelected && <Check aria-hidden size={15} className="text-[#12939b]" />}
               </button>
@@ -376,7 +384,7 @@ function QuizRun({ quiz, onRetry }: { quiz: Quiz; onRetry: () => void }) {
 
         {missing && (
           <p role="alert" className="mt-4 text-xs font-medium text-danger">
-            Choose an answer before continuing.
+            {t("Choose an answer before continuing.")}
           </p>
         )}
         {error && (
@@ -392,7 +400,7 @@ function QuizRun({ quiz, onRetry }: { quiz: Quiz; onRetry: () => void }) {
               onClick={() => setIndex(index - 1)}
               className="inline-flex items-center gap-1.5 rounded-lg border border-[#12939b] px-4 py-2.5 text-xs font-semibold text-[#12939b] hover:bg-[#E9F7F4]"
             >
-              <ArrowLeft aria-hidden size={13} /> Previous
+              <ArrowLeft aria-hidden size={13} /> {t("Previous")}
             </button>
           )}
           <button
@@ -401,7 +409,7 @@ function QuizRun({ quiz, onRetry }: { quiz: Quiz; onRetry: () => void }) {
             onClick={nextOrSubmit}
             className="inline-flex items-center gap-2 rounded-lg bg-linear-to-r from-[#14757d] to-[#1b2a5c] px-4 py-2.5 text-xs font-semibold text-white hover:opacity-90 disabled:opacity-60"
           >
-            {last ? (sending ? "Checking…" : "Submit Quiz") : "Next Question"} <ArrowRight aria-hidden size={13} />
+            {last ? (sending ? t("Checking…") : t("Submit Quiz")) : t("Next Question")} <ArrowRight aria-hidden size={13} />
           </button>
         </div>
       </section>
