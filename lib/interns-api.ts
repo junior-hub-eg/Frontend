@@ -262,9 +262,14 @@ const withQuery = (w: string | null, before?: string) => {
   return s ? `?${s}` : "";
 };
 
-export const getChatThreads = () => api.get<{ threads: ChatThread[] }>("/api/v1/interns/chat/threads");
+/** A chat request that hangs (the API restarting, a slow network) fails after this long instead of loading forever. */
+export const CHAT_TIMEOUT_MS = 15000;
+const timeout = () => ({ signal: AbortSignal.timeout(CHAT_TIMEOUT_MS) });
+
+export const getChatThreads = () => api.get<{ threads: ChatThread[] }>("/api/v1/interns/chat/threads", timeout());
 /** The last 50 messages, oldest first; with before (the first message's sentUtc), the 50 before it. */
 export const getChatMessages = (w: string | null, before?: string) =>
-  api.get<{ messages: ChatMessage[]; hasMore: boolean }>(`/api/v1/interns/chat/messages${withQuery(w, before)}`);
-export const sendChatMessage = (w: string | null, body: string) => api.post<ChatMessage>("/api/v1/interns/chat/messages", { with: w, body });
-export const markChatRead = (w: string | null) => api.post<void>("/api/v1/interns/chat/read", { with: w });
+  api.get<{ messages: ChatMessage[]; hasMore: boolean }>(`/api/v1/interns/chat/messages${withQuery(w, before)}`, timeout());
+export const sendChatMessage = (w: string | null, body: string) =>
+  api.post<ChatMessage>("/api/v1/interns/chat/messages", { with: w, body }, timeout());
+export const markChatRead = (w: string | null) => api.post<void>("/api/v1/interns/chat/read", { with: w }, timeout());
