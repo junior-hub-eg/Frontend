@@ -15,14 +15,12 @@ import {
   ChevronRight,
   ChevronUp,
   Heart,
+  FileText,
   LoaderCircle,
-  MessageCircle,
   Play,
-  Send,
   Share2,
   Volume2,
   VolumeX,
-  XCircle,
 } from "lucide-react";
 
 import { errorMessage } from "@/lib/api-client";
@@ -37,8 +35,11 @@ import {
   type TrackLevel,
 } from "@/lib/learning-api";
 import { offlineLessons, trackName } from "./offline-data";
+import LessonPractice, { type Practice } from "./LessonPractice";
+import { webPractice } from "./web-practice";
 import { useT } from "@/lib/i18n/client";
 import { tk, tNow } from "@/lib/i18n/translate";
+import { youTubeId, youTubeEmbed } from "@/lib/youtube";
 
 type View = {
   id: string;
@@ -51,17 +52,11 @@ type View = {
   trackName: string;
   list: LessonSummary[];
   offline: boolean;
+  practice: Practice | null;
+  tryItDone: boolean;
 };
 
 type State = { kind: "loading" } | { kind: "ready"; view: View };
-
-type Comment = { id: string; name: string; text: string; time: string };
-
-const OBJECTIVES = [
-  tk("Understand what UI/UX design really is"),
-  tk("Learn the core vocabulary designers use"),
-  tk("Spot the difference between good and poor usability"),
-];
 
 const RESOURCES = [
   {
@@ -93,105 +88,7 @@ const DEMO_META = [
   tk("18 min · Hands-on project"),
 ];
 
-/** Demo comments + like count until the backend has them. */
-const SEED_COMMENTS: Comment[] = [
-  {
-    id: "d1",
-    name: "Sara Ahmed",
-    text: tk("This explained it so clearly, thank you!"),
-    time: "2h",
-  },
-  {
-    id: "d2",
-    name: "Omar Hassan",
-    text: tk("Can we get the wireframe kit in Figma?"),
-    time: "5h",
-  },
-  {
-    id: "d3",
-    name: "Mariam Tarek",
-    text: tk("The vocabulary part helped me a lot."),
-    time: "1d",
-  },
-];
-
 const BASE_LIKES = 128;
-
-/* ---------- Try-it-yourself challenge ---------- */
-
-const CHALLENGE = {
-  task: tk("Write a function named sum that takes two numbers and returns their total."),
-  starter: "function sum(a, b) {\n  // write your code here\n}",
-  fn: "sum",
-  hint: tk("Use the return keyword to send the result back."),
-  tests: [
-    { args: [2, 3], expected: 5 },
-    { args: [10, -4], expected: 6 },
-    { args: [0, 0], expected: 0 },
-  ],
-};
-
-type TestResult = {
-  label: string;
-  pass: boolean;
-  got: string;
-};
-
-type CheckResult = {
-  ok: boolean;
-  results: TestResult[];
-  error?: string;
-};
-
-function runChallenge(source: string): CheckResult {
-  try {
-    const fn = new Function(
-      `${source}\nreturn typeof ${CHALLENGE.fn} === "function" ? ${CHALLENGE.fn} : null;`,
-    )() as ((...a: number[]) => unknown) | null;
-
-    if (!fn) {
-      return {
-        ok: false,
-        results: [],
-        error: tNow("Define a function named {name}.", { name: CHALLENGE.fn }),
-      };
-    }
-
-    const results = CHALLENGE.tests.map((t) => {
-      const label = tNow("{call} should return {value}", { call: `${CHALLENGE.fn}(${t.args.join(", ")})`, value: t.expected });
-
-      try {
-        const got = fn(...t.args);
-
-        return {
-          label,
-          pass: got === t.expected,
-          got: String(got),
-        };
-      } catch {
-        return {
-          label,
-          pass: false,
-          got: "error",
-        };
-      }
-    });
-
-    return {
-      ok: results.every((r) => r.pass),
-      results,
-    };
-  } catch (e) {
-    return {
-      ok: false,
-      results: [],
-      error:
-        e instanceof Error
-          ? e.message
-          : tNow("Your code has an error."),
-    };
-  }
-}
 
 const lessonMeta = (l: LessonSummary, i: number) =>
   l.durationSeconds > 0
@@ -231,6 +128,8 @@ function offlineView(code: string, lessonId: string): View {
     trackName: name,
     list,
     offline: true,
+    practice: null,
+    tryItDone: false,
   };
 }
 
@@ -256,33 +155,22 @@ export default function LessonPage({
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  const [state, setState] = useState<State>({
-    kind: "loading",
-  });
+  const [state, setState] = useState<State>({ kind: "loading" });
 
   const [marked, setMarked] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Reel state
+  // Native video state (a YouTube reel has its own controls)
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(true);
-  const [progress, setProgress] = useState(8);
+  const [progress, setProgress] = useState(0);
 
   // Social state
   const [liked, setLiked] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [mine, setMine] = useState<Comment[]>([]);
-  const [panel, setPanel] = useState<"comments" | "overview">(
-    "comments",
-  );
-  const [draft, setDraft] = useState("");
   const [copied, setCopied] = useState(false);
-
-  // Try-it-yourself state
-  const [snippet, setSnippet] = useState(CHALLENGE.starter);
-  const [check, setCheck] = useState<CheckResult | null>(null);
-  const [solved, setSolved] = useState(false);
+  const [panel, setPanel] = useState<"practice" | "overview">("practice");
 
   useEffect(() => {
     let active = true;
@@ -291,42 +179,15 @@ export default function LessonPage({
     setMarked(false);
     setError(null);
     setPlaying(false);
-    setProgress(8);
+    setProgress(0);
+    setPanel("practice");
 
     setLiked(readStore(`jh:lesson:${lessonId}:liked`, false));
     setSaved(readStore(`jh:lesson:${lessonId}:saved`, false));
 
-    setMine(
-      readStore<Comment[]>(
-        `jh:lesson:${lessonId}:comments`,
-        [],
-      ),
-    );
-
-    // Restore saved practice code and solution status
-    setSnippet(
-      readStore(
-        `jh:lesson:${lessonId}:code`,
-        CHALLENGE.starter,
-      ),
-    );
-
-    setSolved(
-      readStore(
-        `jh:lesson:${lessonId}:solved`,
-        false,
-      ),
-    );
-
-    setCheck(null);
-
     // Local no-login mode
     if (process.env.NEXT_PUBLIC_SKIP_AUTH === "true") {
-      setState({
-        kind: "ready",
-        view: offlineView(code, lessonId),
-      });
-
+      setState({ kind: "ready", view: offlineView(code, lessonId) });
       return;
     }
 
@@ -337,13 +198,11 @@ export default function LessonPage({
       if (!active) return;
 
       if (!lesson || !track) {
-        setState({
-          kind: "ready",
-          view: offlineView(code, lessonId),
-        });
-
+        setState({ kind: "ready", view: offlineView(code, lessonId) });
         return;
       }
+
+      const web = webPractice(lesson.title);
 
       setState({
         kind: "ready",
@@ -352,17 +211,18 @@ export default function LessonPage({
           title: lesson.title,
           concept: lesson.concept,
           level: lesson.level,
-          minutes: Math.max(
-            1,
-            Math.round(lesson.durationSeconds / 60),
-          ),
-          videoUrl: lesson.videoUrl
-            ? mediaUrl(lesson.videoUrl)
-            : null,
+          minutes: Math.max(1, Math.round(lesson.durationSeconds / 60)),
+          videoUrl: lesson.videoUrl ? mediaUrl(lesson.videoUrl) : null,
           questionCount: lesson.questions.length,
           trackName: track.trackName,
           list: track.modules.flatMap((m) => m.lessons),
           offline: false,
+          practice: lesson.tryIt
+            ? { kind: "js", ...lesson.tryIt }
+            : web
+              ? { kind: "web", web }
+              : null,
+          tryItDone: lesson.progress.tryItDone,
         },
       });
     });
@@ -376,12 +236,7 @@ export default function LessonPage({
   const ready = state.kind === "ready" ? state.view : null;
   const list = ready?.list ?? [];
 
-  const idx = ready
-    ? Math.max(
-        0,
-        list.findIndex((l) => l.id === ready.id),
-      )
-    : 0;
+  const idx = ready ? Math.max(0, list.findIndex((l) => l.id === ready.id)) : 0;
 
   const prev = list[idx - 1];
   const next = list[idx + 1];
@@ -394,27 +249,14 @@ export default function LessonPage({
     const onKey = (e: KeyboardEvent) => {
       const el = e.target as HTMLElement | null;
 
-      if (
-        el &&
-        (el.tagName === "INPUT" ||
-          el.tagName === "TEXTAREA")
-      ) {
-        return;
-      }
+      if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA")) return;
 
-      if (e.key === "ArrowDown" && nextId) {
-        router.push(lessonPath(code, nextId) as Route);
-      }
-
-      if (e.key === "ArrowUp" && prevId) {
-        router.push(lessonPath(code, prevId) as Route);
-      }
+      if (e.key === "ArrowDown" && nextId) router.push(lessonPath(code, nextId) as Route);
+      if (e.key === "ArrowUp" && prevId) router.push(lessonPath(code, prevId) as Route);
     };
 
     window.addEventListener("keydown", onKey);
-
-    return () =>
-      window.removeEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
   }, [code, nextId, prevId, router]);
 
   /* Desktop: one screen, no page scroll. */
@@ -422,9 +264,7 @@ export default function LessonPage({
     <div className="relative -ms-[4rem] min-h-[calc(100svh-5rem)] min-w-0 flex-1 bg-[#fbfdff] lg:absolute lg:inset-0 lg:ms-0 lg:min-h-0">
       <div
         className="relative min-w-0 pb-8 ps-[4.75rem] pe-3 pt-2 sm:pe-4 lg:absolute lg:inset-0 lg:flex lg:flex-col lg:overflow-hidden lg:pb-[calc(var(--u)*1.2)] lg:ps-[var(--hl)] lg:pe-[calc(var(--u)*1.6)] lg:pt-[calc(var(--u)*6.5)]"
-        style={{
-          fontSize: "clamp(11px, calc(var(--u) * 1.05), 17px)",
-        }}
+        style={{ fontSize: "clamp(11px, calc(var(--u) * 1.05), 17px)" }}
       >
         {children}
       </div>
@@ -433,11 +273,7 @@ export default function LessonPage({
 
   if (state.kind === "loading") {
     return wrapper(
-      <div
-        className="grid min-h-[50vh] flex-1 place-items-center"
-        role="status"
-        aria-label={t("Loading")}
-      >
+      <div className="grid min-h-[50vh] flex-1 place-items-center" role="status" aria-label={t("Loading")}>
         <LoaderCircle className="size-8 animate-spin text-[#12939b]" />
       </div>,
     );
@@ -447,129 +283,47 @@ export default function LessonPage({
 
   const current = list[idx];
 
-  const completed =
-    marked ||
-    (!view.offline && current?.status === "Done");
+  const completed = marked || (!view.offline && current?.status === "Done");
 
-  const doneOthers = view.offline
-    ? 0
-    : list.filter(
-        (l) => l.status === "Done" && l.id !== view.id,
-      ).length;
+  const doneOthers = view.offline ? 0 : list.filter((l) => l.status === "Done" && l.id !== view.id).length;
 
   const doneCount = doneOthers + (completed ? 1 : 0);
 
   const percent =
-    view.offline && !completed
-      ? 15
-      : list.length
-        ? Math.round((doneCount / list.length) * 100)
-        : 0;
+    view.offline && !completed ? 15 : list.length ? Math.round((doneCount / list.length) * 100) : 0;
 
   const base = lessonPath(code, view.id);
-
-  const comments = [...mine, ...SEED_COMMENTS];
   const likes = BASE_LIKES + (liked ? 1 : 0);
+  const ytId = view.videoUrl ? youTubeId(view.videoUrl) : null;
+  const tab = view.practice ? panel : "overview";
 
   function togglePlay() {
     const v = videoRef.current;
-
-    if (v) {
-      if (v.paused) void v.play();
-      else v.pause();
-    } else {
-      setPlaying((p) => !p);
-    }
+    if (!v) return;
+    if (v.paused) void v.play();
+    else v.pause();
   }
 
   function toggleLike() {
     const nextLiked = !liked;
-
     setLiked(nextLiked);
-
-    writeStore(
-      `jh:lesson:${view.id}:liked`,
-      nextLiked,
-    );
+    writeStore(`jh:lesson:${view.id}:liked`, nextLiked);
   }
 
   function toggleSave() {
     const nextSaved = !saved;
-
     setSaved(nextSaved);
-
-    writeStore(
-      `jh:lesson:${view.id}:saved`,
-      nextSaved,
-    );
-  }
-
-  // Run challenge tests and save the code
-  function checkCode() {
-    const r = runChallenge(snippet);
-
-    setCheck(r);
-
-    writeStore(
-      `jh:lesson:${view.id}:code`,
-      snippet,
-    );
-
-    if (r.ok) {
-      setSolved(true);
-
-      writeStore(
-        `jh:lesson:${view.id}:solved`,
-        true,
-      );
-    }
-  }
-
-  // Reset the editor to the starter code
-  function resetCode() {
-    setSnippet(CHALLENGE.starter);
-    setCheck(null);
+    writeStore(`jh:lesson:${view.id}:saved`, nextSaved);
   }
 
   async function share() {
     try {
-      await navigator.clipboard.writeText(
-        window.location.href,
-      );
-
+      await navigator.clipboard.writeText(window.location.href);
       setCopied(true);
-
       setTimeout(() => setCopied(false), 1800);
     } catch {
       /* clipboard may be blocked */
     }
-  }
-
-  function addComment(e: React.FormEvent) {
-    e.preventDefault();
-
-    const text = draft.trim();
-
-    if (!text) return;
-
-    const updated = [
-      {
-        id: String(Date.now()),
-        name: t("You"),
-        text,
-        time: t("Just now"),
-      },
-      ...mine,
-    ];
-
-    setMine(updated);
-
-    writeStore(
-      `jh:lesson:${view.id}:comments`,
-      updated,
-    );
-
-    setDraft("");
   }
 
   async function markComplete() {
@@ -585,12 +339,7 @@ export default function LessonPage({
       await completeLessonStep(view.id, "Video");
       setMarked(true);
     } catch (e) {
-      setError(
-        errorMessage(
-          e,
-          tk("We couldn't save your progress. Please try again."),
-        ),
-      );
+      setError(errorMessage(e, tk("We couldn't save your progress. Please try again.")));
     } finally {
       setBusy(false);
     }
@@ -606,108 +355,79 @@ export default function LessonPage({
         {t("Track Details")}
       </Link>
 
-      <div className="grid gap-[1em] lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1fr)_27%]">
-        {/* ================= Left: reel + comments ================= */}
+      <div className="grid gap-[1em] lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1fr)_23%]">
+        {/* ================= Left: reel + practice ================= */}
 
-        <div className="grid min-h-0 min-w-0 gap-[1em] lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
+        <div className="grid min-h-0 min-w-0 gap-[1em] lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
           {/* ---------- Reel + actions ---------- */}
 
           <div className="flex min-h-0 min-w-0 flex-col">
             <div className="relative mx-auto w-full max-w-[20em] lg:max-w-none lg:min-h-0 lg:flex-1">
               <div className="relative aspect-[9/16] w-full overflow-hidden rounded-[1.2em] bg-gradient-to-b from-[#14586a] via-[#1d7a85] to-[#0f4252] shadow-[0_14px_34px_rgba(20,54,90,0.22)] lg:absolute lg:inset-y-0 lg:left-1/2 lg:w-auto lg:max-w-full lg:-translate-x-1/2">
-                {view.videoUrl ? (
-                  <video
-                    ref={videoRef}
-                    src={view.videoUrl}
-                    loop
-                    playsInline
-                    muted={muted}
-                    autoPlay
-                    onPlay={() => setPlaying(true)}
-                    onPause={() => setPlaying(false)}
-                    onTimeUpdate={(e) => {
-                      const v = e.currentTarget;
-
-                      if (v.duration) {
-                        setProgress(
-                          (v.currentTime / v.duration) * 100,
-                        );
-                      }
-                    }}
-                    className="absolute inset-0 size-full object-cover"
+                {ytId ? (
+                  <iframe
+                    key={ytId}
+                    src={youTubeEmbed(ytId)}
+                    title={view.title}
+                    allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+                    allowFullScreen
+                    referrerPolicy="strict-origin-when-cross-origin"
+                    className="absolute inset-0 size-full border-0 bg-black"
                   />
+                ) : view.videoUrl ? (
+                  <>
+                    <video
+                      ref={videoRef}
+                      src={view.videoUrl}
+                      loop
+                      playsInline
+                      muted={muted}
+                      autoPlay
+                      onPlay={() => setPlaying(true)}
+                      onPause={() => setPlaying(false)}
+                      onTimeUpdate={(e) => {
+                        const v = e.currentTarget;
+                        if (v.duration) setProgress((v.currentTime / v.duration) * 100);
+                      }}
+                      className="absolute inset-0 size-full object-cover"
+                    />
+
+                    <button
+                      type="button"
+                      onClick={togglePlay}
+                      aria-label={playing ? t("Pause video") : t("Play video")}
+                      className="absolute inset-0 grid place-items-center"
+                    >
+                      {!playing && (
+                        <span className="grid size-[4em] place-items-center rounded-full bg-white/25 ring-1 ring-white/50 backdrop-blur-sm">
+                          <Play className="size-[1.6em] fill-white text-white" />
+                        </span>
+                      )}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setMuted((m) => !m)}
+                      aria-label={muted ? t("Unmute") : t("Mute")}
+                      className="absolute end-[0.8em] top-[0.8em] grid size-[2.2em] place-items-center rounded-full bg-black/40 text-white"
+                    >
+                      {muted ? <VolumeX className="size-[1.1em]" /> : <Volume2 className="size-[1.1em]" />}
+                    </button>
+
+                    <span className="absolute inset-x-0 bottom-0 h-[0.25em] bg-white/25">
+                      <span className="block h-full bg-[#5fe0d0]" style={{ width: `${progress}%` }} />
+                    </span>
+                  </>
                 ) : (
-                  <span className="absolute start-[1em] top-[1em] rounded-[0.4em] bg-black/40 px-[0.6em] py-[0.15em] text-[0.55em] font-bold text-white">
-                    {t("Video preview")}
-                  </span>
-                )}
-
-                {/* Tap anywhere to play / pause */}
-
-                <button
-                  type="button"
-                  onClick={togglePlay}
-                  aria-label={
-                    playing ? t("Pause video") : t("Play video")
-                  }
-                  className="absolute inset-0 grid place-items-center"
-                >
-                  {!playing && (
-                    <span className="grid size-[4em] place-items-center rounded-full bg-white/25 ring-1 ring-white/50 backdrop-blur-sm">
-                      <Play className="size-[1.6em] fill-white text-white" />
-                    </span>
-                  )}
-                </button>
-
-                {/* Mute */}
-
-                <button
-                  type="button"
-                  onClick={() => setMuted((m) => !m)}
-                  aria-label={muted ? t("Unmute") : t("Mute")}
-                  className="absolute end-[0.8em] top-[0.8em] grid size-[2.2em] place-items-center rounded-full bg-black/40 text-white"
-                >
-                  {muted ? (
-                    <VolumeX className="size-[1.1em]" />
-                  ) : (
-                    <Volume2 className="size-[1.1em]" />
-                  )}
-                </button>
-
-                {/* Caption overlay */}
-
-                <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 via-black/35 to-transparent p-[1em] pt-[3em] text-white">
-                  <div className="flex items-center gap-[0.6em]">
-                    <span className="grid size-[2.2em] place-items-center rounded-full bg-white/90 text-[0.7em] font-bold text-[#12606b]">
-                      AY
-                    </span>
-
-                    <span className="text-[0.75em] font-bold">
-                      Ahmed Yasser
-                    </span>
-
-                    <span className="rounded-full border border-white/60 px-[0.7em] py-[0.05em] text-[0.55em] font-semibold">
-                      {t(view.trackName)}
+                  <div className="absolute inset-0 grid place-items-center p-[1.5em] text-center text-white">
+                    <span>
+                      <Play className="mx-auto size-[2em] text-white/70" />
+                      <span className="mt-[0.6em] block text-[0.75em] font-semibold text-white/80">
+                        {t("The video of this lesson is coming soon.")}
+                      </span>
                     </span>
                   </div>
-
-                  <h1 className="mt-[0.6em] text-[1.05em] font-extrabold leading-tight">
-                    {view.title}
-                  </h1>
-
-                  <p className="mt-[0.2em] line-clamp-2 text-[0.65em] text-white/80">
-                    {view.concept}
-                  </p>
-                </div>
-
-                {/* Progress */}
-
-                <span className="absolute inset-x-0 bottom-0 h-[0.25em] bg-white/25">
-                  <span
-                    className="block h-full bg-[#5fe0d0]"
-                    style={{ width: `${progress}%` }}
-                  />
-                </span>
+                )}
               </div>
             </div>
 
@@ -715,11 +435,7 @@ export default function LessonPage({
 
             <div className="mt-[0.7em] flex items-center justify-center gap-[1.2em] lg:shrink-0">
               {prev ? (
-                <Link
-                  href={lessonPath(code, prev.id) as Route}
-                  aria-label={t("Previous lesson")}
-                  className={circleBtn}
-                >
+                <Link href={lessonPath(code, prev.id) as Route} aria-label={t("Previous lesson")} className={circleBtn}>
                   <ChevronUp className="size-[1.3em]" />
                 </Link>
               ) : (
@@ -736,48 +452,16 @@ export default function LessonPage({
                 className="flex flex-col items-center gap-[0.15em]"
               >
                 <span className={circleBtn}>
-                  <Heart
-                    className={`size-[1.3em] ${
-                      liked
-                        ? "fill-[#e0245e] text-[#e0245e]"
-                        : ""
-                    }`}
-                  />
+                  <Heart className={`size-[1.3em] ${liked ? "fill-[#e0245e] text-[#e0245e]" : ""}`} />
                 </span>
-
-                <span className="text-[0.6em] font-semibold text-[#14365a]">
-                  {likes}
-                </span>
+                <span className="text-[0.6em] font-semibold text-[#14365a]">{likes}</span>
               </button>
 
-              <button
-                type="button"
-                onClick={() => setPanel("comments")}
-                aria-label={t("Comments")}
-                className="flex flex-col items-center gap-[0.15em]"
-              >
-                <span className={circleBtn}>
-                  <MessageCircle className="size-[1.3em]" />
-                </span>
-
-                <span className="text-[0.6em] font-semibold text-[#14365a]">
-                  {comments.length}
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={share}
-                aria-label={t("Share")}
-                className="flex flex-col items-center gap-[0.15em]"
-              >
+              <button type="button" onClick={share} aria-label={t("Share")} className="flex flex-col items-center gap-[0.15em]">
                 <span className={circleBtn}>
                   <Share2 className="size-[1.2em]" />
                 </span>
-
-                <span className="text-[0.6em] font-semibold text-[#14365a]">
-                  {copied ? t("Copied") : t("Share")}
-                </span>
+                <span className="text-[0.6em] font-semibold text-[#14365a]">{copied ? t("Copied") : t("Share")}</span>
               </button>
 
               <button
@@ -788,26 +472,13 @@ export default function LessonPage({
                 className="flex flex-col items-center gap-[0.15em]"
               >
                 <span className={circleBtn}>
-                  <Bookmark
-                    className={`size-[1.2em] ${
-                      saved
-                        ? "fill-[#12606b] text-[#12606b]"
-                        : ""
-                    }`}
-                  />
+                  <Bookmark className={`size-[1.2em] ${saved ? "fill-[#12606b] text-[#12606b]" : ""}`} />
                 </span>
-
-                <span className="text-[0.6em] font-semibold text-[#14365a]">
-                  {saved ? t("Saved") : t("Save")}
-                </span>
+                <span className="text-[0.6em] font-semibold text-[#14365a]">{saved ? t("Saved") : t("Save")}</span>
               </button>
 
               {next ? (
-                <Link
-                  href={lessonPath(code, next.id) as Route}
-                  aria-label={t("Next lesson")}
-                  className={circleBtn}
-                >
+                <Link href={lessonPath(code, next.id) as Route} aria-label={t("Next lesson")} className={circleBtn}>
                   <ChevronDown className="size-[1.3em]" />
                 </Link>
               ) : (
@@ -818,173 +489,115 @@ export default function LessonPage({
             </div>
           </div>
 
-          {/* ---------- Comments / Overview panel ---------- */}
+          {/* ---------- Practice / Overview panel ---------- */}
 
-          <section
-            className={`${box} flex min-h-[22em] min-w-0 flex-col overflow-hidden lg:min-h-0`}
-          >
-            <div
-              role="tablist"
-              aria-label={t("Lesson panel")}
-              className="flex shrink-0 border-b border-[#e3ebf3] p-[0.3em]"
-            >
-              {(
-                [
-                  ["comments", t("Comments ({n})", { n: comments.length })],
-                  ["overview", t("Overview")],
-                ] as const
-              ).map(([id, text]) => (
-                <button
-                  key={id}
-                  type="button"
-                  role="tab"
-                  aria-selected={panel === id}
-                  onClick={() => setPanel(id)}
-                  className={`flex-1 rounded-[0.6em] px-[1em] py-[0.5em] text-[0.75em] font-semibold transition-colors ${
-                    panel === id
-                      ? "bg-[#e7f6f3] text-[#12606b]"
-                      : "text-[#14365a]/70 hover:bg-[#f3f8fb]"
-                  }`}
-                >
-                  {text}
-                </button>
-              ))}
-            </div>
+          <section className={`${box} flex min-h-[30em] min-w-0 flex-col overflow-hidden lg:min-h-0`}>
+            <header className="shrink-0 border-b border-[#e3ebf3] px-[1.1em] pb-[0.7em] pt-[0.9em]">
+              <div className="flex flex-wrap items-center gap-[0.5em]">
+                <span className="rounded-full bg-[#e7f6f3] px-[0.8em] py-[0.15em] text-[0.6em] font-semibold text-[#12606b]">
+                  {t(view.trackName)}
+                </span>
+                <span className="rounded-full bg-[#dff5e8] px-[0.8em] py-[0.15em] text-[0.6em] font-semibold text-[#2a9a5f]">
+                  {t(view.level)}
+                </span>
+                <span className="text-[0.62em] font-semibold text-[#14365a]/55">
+                  {t("Lesson {n} of {total}", { n: idx + 1, total: list.length })}
+                </span>
+              </div>
+              <h1 className="mt-[0.35em] text-[1.25em] font-extrabold leading-tight text-[#14365a]">{t(view.title)}</h1>
+              <p dir="auto" className="mt-[0.2em] line-clamp-2 text-[0.75em] text-[#14365a]/70">
+                {view.concept}
+              </p>
 
-            {panel === "comments" ? (
-              <>
-                <ul
-                  className={`min-h-0 flex-1 space-y-[0.9em] overflow-y-auto p-[1em] ${noScrollbar}`}
-                >
-                  {comments.map((c) => (
-                    <li
-                      key={c.id}
-                      className="flex gap-[0.7em]"
+              {view.practice && (
+                <div role="tablist" aria-label={t("Lesson panel")} className="mt-[0.7em] flex gap-[0.4em]">
+                  {(
+                    [
+                      ["practice", t("Practice")],
+                      ["overview", t("Overview")],
+                    ] as const
+                  ).map(([id, text]) => (
+                    <button
+                      key={id}
+                      type="button"
+                      role="tab"
+                      aria-selected={tab === id}
+                      onClick={() => setPanel(id)}
+                      className={`rounded-full px-[1.1em] py-[0.35em] text-[0.72em] font-semibold transition-colors ${
+                        tab === id ? "bg-[#14365a] text-white" : "bg-[#f1f6fa] text-[#14365a]/70 hover:bg-[#e6eef5]"
+                      }`}
                     >
-                      <span className="grid size-[2.2em] shrink-0 place-items-center rounded-full bg-[#e7f6f3] text-[0.7em] font-bold text-[#12606b]">
-                        {c.name
-                          .split(" ")
-                          .map((p) => p[0])
-                          .join("")
-                          .slice(0, 2)
-                          .toUpperCase()}
-                      </span>
-
-                      <span className="min-w-0 leading-snug">
-                        <span className="text-[0.75em] font-bold text-[#14365a]">
-                          {c.name}{" "}
-                          <span className="font-normal text-[#14365a]/50">
-                            · {c.time}
-                          </span>
-                        </span>
-
-                        <span dir="auto" className="mt-[0.1em] block break-words text-[0.75em] text-[#14365a]/85">
-                          {t(c.text)}
-                        </span>
-                      </span>
-                    </li>
+                      {text}
+                    </button>
                   ))}
-                </ul>
+                </div>
+              )}
+            </header>
 
-                <form
-                  onSubmit={addComment}
-                  className="flex shrink-0 items-center gap-[0.6em] border-t border-[#e3ebf3] p-[0.7em]"
-                >
-                  <input
-                    value={draft}
-                    onChange={(e) => setDraft(e.target.value)}
-                    dir="auto"
-                    placeholder={t("Add a comment...")}
-                    maxLength={300}
-                    className="h-[2.6em] min-w-0 flex-1 rounded-full border border-[#e1e8f0] bg-[#f6fafd] px-[1.1em] text-[0.75em] text-[#14365a] outline-none placeholder:text-[#14365a]/45 focus:ring-2 focus:ring-[#12939b]/30"
-                  />
-
-                  <button
-                    type="submit"
-                    disabled={!draft.trim()}
-                    aria-label={t("Post comment")}
-                    className="grid size-[2.6em] shrink-0 place-items-center rounded-full bg-[#12606b] text-white disabled:opacity-40"
-                  >
-                    <Send className="size-[1.1em]" />
-                  </button>
-                </form>
-              </>
+            {tab === "practice" && view.practice ? (
+              <LessonPractice
+                key={view.id}
+                lessonId={view.id}
+                practice={view.practice}
+                offline={view.offline}
+                initiallySolved={view.tryItDone}
+              />
             ) : (
-              <div
-                className={`min-h-0 flex-1 space-y-[1em] overflow-y-auto p-[1em] ${noScrollbar}`}
-              >
-                <div>
-                  <h2 className="text-[0.85em] font-extrabold text-[#14365a]">
-                    {t("What you will learn")}
+              <div className={`min-h-0 flex-1 space-y-[1.1em] overflow-y-auto p-[1.1em] ${noScrollbar}`}>
+                <div className="rounded-[0.8em] bg-[#f3f9fb] p-[1em]">
+                  <h2 className="flex items-center gap-[0.5em] text-[0.85em] font-extrabold text-[#14365a]">
+                    <FileText className="size-[1.1em] text-[#12939b]" />
+                    {t("Key idea")}
                   </h2>
-
-                  <ul className="mt-[0.5em] space-y-[0.4em]">
-                    {OBJECTIVES.map((o) => (
-                      <li
-                        key={o}
-                        className="flex items-center gap-[0.5em] text-[0.72em] text-[#14365a]/85"
-                      >
-                        <CheckCircle2 className="size-[1.3em] shrink-0 text-[#12939b]" />
-                        {t(o)}
-                      </li>
-                    ))}
-                  </ul>
+                  <p dir="auto" className="mt-[0.4em] text-[0.8em] leading-relaxed text-[#14365a]/85">
+                    {view.concept}
+                  </p>
                 </div>
 
                 <div>
-                  <h2 className="text-[0.85em] font-extrabold text-[#14365a]">
-                    {t("Lesson summary")}
-                  </h2>
+                  <h2 className="text-[0.85em] font-extrabold text-[#14365a]">{t("Lesson summary")}</h2>
 
-                  <dl className="mt-[0.3em] divide-y divide-[#eef2f6] text-[0.72em]">
-                    <div className="flex items-center justify-between py-[0.4em]">
-                      <dt className="text-[#14365a]/65">
-                        {t("Estimated time")}
-                      </dt>
-
-                      <dd className="font-semibold text-[#14365a]">
-                        {t("{n} minutes", { n: view.minutes })}
-                      </dd>
+                  <dl className="mt-[0.3em] divide-y divide-[#eef2f6] text-[0.75em]">
+                    <div className="flex items-center justify-between py-[0.45em]">
+                      <dt className="text-[#14365a]/65">{t("Estimated time")}</dt>
+                      <dd className="font-semibold text-[#14365a]">{t("{n} min", { n: view.minutes })}</dd>
                     </div>
-
-                    <div className="flex items-center justify-between py-[0.4em]">
-                      <dt className="text-[#14365a]/65">
-                        {t("Level")}
-                      </dt>
-
+                    <div className="flex items-center justify-between py-[0.45em]">
+                      <dt className="text-[#14365a]/65">{t("Level")}</dt>
                       <dd className="rounded-full bg-[#dff5e8] px-[0.8em] py-[0.05em] text-[0.9em] font-semibold text-[#2a9a5f]">
                         {t(view.level)}
                       </dd>
                     </div>
-
-                    <div className="flex items-center justify-between py-[0.4em]">
-                      <dt className="text-[#14365a]/65">
-                        {t("Format")}
-                      </dt>
-
+                    <div className="flex items-center justify-between py-[0.45em]">
+                      <dt className="text-[#14365a]/65">{t("Format")}</dt>
                       <dd className="font-semibold text-[#14365a]">
-                        {t("Video lesson")}
+                        {view.practice ? t("Short video + code practice") : t("Short video")}
                       </dd>
                     </div>
-
-                    <div className="flex items-center justify-between py-[0.4em]">
-                      <dt className="text-[#14365a]/65">
-                        {t("Lesson")}
-                      </dt>
-
-                      <dd className="font-semibold text-[#14365a]">
-                        {t("{n} of {total}", { n: idx + 1, total: list.length })}
-                      </dd>
+                    <div className="flex items-center justify-between py-[0.45em]">
+                      <dt className="text-[#14365a]/65">{t("Lesson")}</dt>
+                      <dd className="font-semibold text-[#14365a]">{t("{n} of {total}", { n: idx + 1, total: list.length })}</dd>
                     </div>
                   </dl>
                 </div>
 
-                <Link
-                  href={`${base}/challenge` as Route}
-                  className="inline-flex rounded-[0.5em] bg-[#12606b] px-[1.4em] py-[0.55em] text-[0.75em] font-semibold text-white hover:bg-[#0f505a]"
-                >
-                  {t("Open Lesson")}
-                </Link>
+                <div className="flex flex-wrap gap-[0.6em]">
+                  {view.practice && (
+                    <button
+                      type="button"
+                      onClick={() => setPanel("practice")}
+                      className="inline-flex rounded-[0.5em] bg-[#12939b] px-[1.4em] py-[0.6em] text-[0.75em] font-semibold text-white hover:bg-[#0f7f86]"
+                    >
+                      {t("Start practising")}
+                    </button>
+                  )}
+                  <Link
+                    href={`${base}/quiz` as Route}
+                    className="inline-flex rounded-[0.5em] border border-[#12939b]/60 px-[1.4em] py-[0.6em] text-[0.75em] font-semibold text-[#12606b] hover:bg-[#eef8f7]"
+                  >
+                    {t("Start quiz")}
+                  </Link>
+                </div>
               </div>
             )}
           </section>
@@ -992,33 +605,23 @@ export default function LessonPage({
 
         {/* ================= Right column ================= */}
 
-        <aside
-          className={`flex min-h-0 min-w-0 flex-col gap-[0.6em] lg:overflow-y-auto ${noScrollbar}`}
-        >
+        <aside className={`flex min-h-0 min-w-0 flex-col gap-[0.6em] lg:overflow-y-auto ${noScrollbar}`}>
           {/* Progress */}
 
           <section className={`${box} p-[0.8em]`}>
             <div className="flex items-center gap-[0.8em]">
               <span
                 className="grid size-[3.6em] shrink-0 place-items-center rounded-full text-[0.75em] font-extrabold text-[#14365a]"
-                style={{
-                  background: `conic-gradient(#12939b ${percent * 3.6}deg, #e3ebf3 0)`,
-                }}
+                style={{ background: `conic-gradient(#12939b ${percent * 3.6}deg, #e3ebf3 0)` }}
               >
-                <span className="grid size-[78%] place-items-center rounded-full bg-white">
-                  {percent}%
-                </span>
+                <span className="grid size-[78%] place-items-center rounded-full bg-white">{percent}%</span>
               </span>
 
               <span className="leading-tight">
-                <span className={`${label} block`}>
-                  {t("Your progress")}
-                </span>
-
+                <span className={`${label} block`}>{t("Your progress")}</span>
                 <span className="mt-[0.2em] block text-[0.85em] font-extrabold text-[#14365a]">
                   {t("Lesson {n} of {total}", { n: idx + 1, total: list.length })}
                 </span>
-
                 <span className="mt-[0.25em] inline-block rounded-full bg-[#e7f6f3] px-[0.7em] py-[0.05em] text-[0.55em] font-semibold text-[#12939b]">
                   {completed ? t("Completed") : t("In progress")}
                 </span>
@@ -1031,21 +634,30 @@ export default function LessonPage({
               disabled={busy || completed}
               className="mt-[0.6em] w-full rounded-[0.5em] border border-[#12939b]/60 bg-white py-[0.45em] text-[0.7em] font-semibold text-[#12606b] hover:bg-[#eef8f7] disabled:opacity-60"
             >
-              {busy
-                ? t("Saving...")
-                : completed
-                  ? t("Completed")
-                  : t("Mark as Complete")}
+              {busy ? t("Saving...") : completed ? t("Completed") : t("Mark as Complete")}
             </button>
 
             {error && (
-              <p
-                role="alert"
-                className="mt-[0.4em] text-[0.65em] font-medium text-[#c0392b]"
-              >
+              <p role="alert" className="mt-[0.4em] text-[0.65em] font-medium text-[#c0392b]">
                 {error}
               </p>
             )}
+          </section>
+
+          {/* Quiz */}
+
+          <section className="rounded-[0.9em] bg-gradient-to-br from-[#14586a] to-[#1d8a8f] p-[0.9em] text-white">
+            <p className="text-[0.5em] font-bold uppercase tracking-wide text-white/70">{t("Lesson quiz")}</p>
+            <h2 className="mt-[0.2em] text-[1em] font-extrabold">{t("Check your understanding")}</h2>
+            <p className="mt-[0.15em] text-[0.6em] text-white/80">
+              {t("{n} questions · about 5 minutes", { n: view.questionCount })}
+            </p>
+            <Link
+              href={`${base}/quiz` as Route}
+              className="mt-[0.6em] inline-flex items-center rounded-[0.5em] bg-white px-[1.1em] py-[0.4em] text-[0.7em] font-semibold text-[#12606b] hover:bg-[#eef8f7]"
+            >
+              {t("Start quiz")}
+            </Link>
           </section>
 
           {/* Track content */}
@@ -1054,12 +666,8 @@ export default function LessonPage({
             <div className="flex items-start justify-between">
               <div>
                 <p className={label}>{t("Track content")}</p>
-
-                <h2 className="text-[0.9em] font-extrabold text-[#14365a]">
-                  {t("Lessons")}
-                </h2>
+                <h2 className="text-[0.9em] font-extrabold text-[#14365a]">{t("Lessons")}</h2>
               </div>
-
               <span className="rounded-full bg-[#e7f6f3] px-[0.7em] py-[0.1em] text-[0.55em] font-semibold text-[#12939b]">
                 {t("{n} lessons", { n: list.length })}
               </span>
@@ -1068,180 +676,33 @@ export default function LessonPage({
             <ol className="mt-[0.4em] space-y-[0.2em]">
               {list.map((l, i) => {
                 const active = l.id === view.id;
-
-                const done =
-                  !view.offline &&
-                  l.status === "Done" &&
-                  !active;
+                const done = !view.offline && l.status === "Done" && !active;
 
                 return (
                   <li key={l.id}>
                     <Link
                       href={lessonPath(code, l.id) as Route}
                       className={`flex items-center gap-[0.6em] rounded-[0.6em] px-[0.5em] py-[0.4em] ${
-                        active
-                          ? "bg-[#e7f6f3]"
-                          : "hover:bg-[#f3f8fb]"
+                        active ? "bg-[#e7f6f3]" : "hover:bg-[#f3f8fb]"
                       }`}
                     >
                       <span
                         className={`grid size-[1.9em] shrink-0 place-items-center rounded-full text-[0.65em] font-bold ${
-                          active
-                            ? "bg-[#12606b] text-white"
-                            : "border border-[#cfdbe6] text-[#14365a]/70"
+                          active ? "bg-[#12606b] text-white" : "border border-[#cfdbe6] text-[#14365a]/70"
                         }`}
                       >
-                        {done ? (
-                          <CheckCircle2 className="size-[1.3em] text-[#12939b]" />
-                        ) : (
-                          i + 1
-                        )}
+                        {done ? <CheckCircle2 className="size-[1.3em] text-[#12939b]" /> : i + 1}
                       </span>
 
                       <span className="min-w-0 flex-1 leading-tight">
-                        <span className="block truncate text-[0.72em] font-semibold text-[#14365a]">
-                          {t(l.title)}
-                        </span>
-
-                        <span className="block text-[0.58em] text-[#14365a]/60">
-                          {lessonMeta(l, i)}
-                        </span>
+                        <span className="block truncate text-[0.72em] font-semibold text-[#14365a]">{t(l.title)}</span>
+                        <span className="block text-[0.58em] text-[#14365a]/60">{lessonMeta(l, i)}</span>
                       </span>
                     </Link>
                   </li>
                 );
               })}
             </ol>
-          </section>
-
-          {/* Try it yourself */}
-
-          <section className={`${box} p-[0.8em]`}>
-            <div className="flex items-start justify-between">
-              <div>
-                <p className={label}>{t("Practice")}</p>
-
-                <h2 className="text-[0.9em] font-extrabold text-[#14365a]">
-                  {t("Try it yourself")}
-                </h2>
-              </div>
-
-              {solved && (
-                <span className="rounded-full bg-[#dff5e8] px-[0.7em] py-[0.1em] text-[0.55em] font-semibold text-[#2a9a5f]">
-                  {t("Solved")}
-                </span>
-              )}
-            </div>
-
-            <p className="mt-[0.3em] text-[0.65em] text-[#14365a]/75">
-              {t(CHALLENGE.task)}
-            </p>
-
-            <textarea
-              value={snippet}
-              onChange={(e) => setSnippet(e.target.value)}
-              spellCheck={false}
-              dir="ltr"
-              aria-label={t("Your code")}
-              rows={5}
-              className="mt-[0.5em] w-full resize-none rounded-[0.5em] border border-[#e1e8f0] bg-[#0f2a3d] p-[0.6em] font-mono text-[0.65em] leading-relaxed text-[#d6f5ef] outline-none focus:ring-2 focus:ring-[#12939b]/40"
-            />
-
-            <div className="mt-[0.5em] flex gap-[0.5em]">
-              <button
-                type="button"
-                onClick={checkCode}
-                className="flex-1 rounded-[0.5em] bg-[#12606b] py-[0.45em] text-[0.7em] font-semibold text-white hover:bg-[#0f505a]"
-              >
-                {t("Run & Check")}
-              </button>
-
-              <button
-                type="button"
-                onClick={resetCode}
-                className="rounded-[0.5em] border border-[#12939b]/60 bg-white px-[1em] py-[0.45em] text-[0.7em] font-semibold text-[#12606b] hover:bg-[#eef8f7]"
-              >
-                {t("Reset")}
-              </button>
-            </div>
-
-            {check && (
-              <div
-                role="status"
-                className="mt-[0.5em] space-y-[0.3em]"
-              >
-                <p
-                  className={`text-[0.7em] font-bold ${
-                    check.ok
-                      ? "text-[#2a9a5f]"
-                      : "text-[#c0392b]"
-                  }`}
-                >
-                  {check.ok
-                    ? t("Correct! Nice work.")
-                    : t("Not quite yet. Check the details and try again.")}
-                </p>
-
-                {check.error && (
-                  <p className="text-[0.62em] text-[#c0392b]">
-                    {check.error}
-                  </p>
-                )}
-
-                {check.results.map((r) => (
-                  <p
-                    key={r.label}
-                    className="flex items-start gap-[0.4em] text-[0.62em] text-[#14365a]/80"
-                  >
-                    {r.pass ? (
-                      <CheckCircle2 className="mt-[0.1em] size-[1.2em] shrink-0 text-[#2a9a5f]" />
-                    ) : (
-                      <XCircle className="mt-[0.1em] size-[1.2em] shrink-0 text-[#c0392b]" />
-                    )}
-
-                    <span dir="auto">
-                      {r.label}
-
-                      {!r.pass && (
-                        <span className="text-[#c0392b]">
-                          {" "}
-                          {t("(you got {value})", { value: r.got })}
-                        </span>
-                      )}
-                    </span>
-                  </p>
-                ))}
-
-                {!check.ok && (
-                  <p className="text-[0.6em] italic text-[#14365a]/60">
-                    {t("Hint: {hint}", { hint: t(CHALLENGE.hint) })}
-                  </p>
-                )}
-              </div>
-            )}
-          </section>
-
-          {/* Quiz */}
-
-          <section className="rounded-[0.9em] bg-gradient-to-br from-[#14586a] to-[#1d8a8f] p-[0.9em] text-white">
-            <p className="text-[0.5em] font-bold uppercase tracking-wide text-white/70">
-              {t("Lesson quiz")}
-            </p>
-
-            <h2 className="mt-[0.2em] text-[1em] font-extrabold">
-              {t("Check your understanding")}
-            </h2>
-
-            <p className="mt-[0.15em] text-[0.6em] text-white/80">
-              {t("{n} questions · about 5 minutes", { n: view.questionCount })}
-            </p>
-
-            <Link
-              href={`${base}/quiz` as Route}
-              className="mt-[0.6em] inline-flex items-center rounded-[0.5em] bg-white px-[1.1em] py-[0.4em] text-[0.7em] font-semibold text-[#12606b] hover:bg-[#eef8f7]"
-            >
-              {t("Start quiz")}
-            </Link>
           </section>
 
           {/* Resources */}
@@ -1258,25 +719,15 @@ export default function LessonPage({
                   >
                     <span
                       className="grid size-[2em] shrink-0 place-items-center rounded-[0.5em] text-[0.5em] font-bold"
-                      style={{
-                        backgroundColor: r.bg,
-                        color: r.color,
-                      }}
+                      style={{ backgroundColor: r.bg, color: r.color }}
                     >
                       {r.tag}
                     </span>
-
                     <span className="min-w-0 flex-1 leading-tight">
-                      <span className="block truncate text-[0.7em] font-semibold text-[#14365a]">
-                        {t(r.name)}
-                      </span>
-
-                      <span className="block text-[0.55em] text-[#14365a]/60">
-                        {t(r.meta)}
-                      </span>
+                      <span className="block truncate text-[0.7em] font-semibold text-[#14365a]">{t(r.name)}</span>
+                      <span className="block text-[0.55em] text-[#14365a]/60">{t(r.meta)}</span>
                     </span>
-
-                    <ChevronRight className="size-[1em] shrink-0 text-[#14365a]/50" />
+                    <ChevronRight className="size-[1em] shrink-0 text-[#14365a]/50 rtl:rotate-180" />
                   </button>
                 </li>
               ))}
@@ -1292,25 +743,20 @@ export default function LessonPage({
               <span className="grid size-[2.4em] shrink-0 place-items-center rounded-full bg-[#12606b] text-[0.7em] font-bold text-white">
                 AY
               </span>
-
               <span className="leading-tight">
-                <span className="block text-[0.8em] font-extrabold text-[#14365a]">
-                  Ahmed Yasser
-                </span>
-
+                <span className="block text-[0.8em] font-extrabold text-[#14365a]">Ahmed Yasser</span>
                 <span className="block text-[0.58em] text-[#14365a]/60">
                   {t(view.trackName)} · {t("{n}+ years", { n: 4 })}
                 </span>
               </span>
             </div>
 
-            <button
-              type="button"
-              onClick={() => setPanel("comments")}
-              className="mt-[0.5em] w-full rounded-[0.5em] bg-[#12606b] py-[0.45em] text-[0.7em] font-semibold text-white hover:bg-[#0f505a]"
+            <Link
+              href={"/learner/mentorship" as Route}
+              className="mt-[0.5em] block w-full rounded-[0.5em] bg-[#12606b] py-[0.45em] text-center text-[0.7em] font-semibold text-white hover:bg-[#0f505a]"
             >
               {t("Ask a question")}
-            </button>
+            </Link>
           </section>
         </aside>
       </div>
