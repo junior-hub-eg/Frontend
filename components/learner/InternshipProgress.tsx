@@ -35,6 +35,8 @@ import { mentorAvatar } from "@/lib/avatars";
 import { avatarFor, memberIndex, ROLE_TITLE, ROLE_TAG, useInterns } from "./interns-data";
 import { LinkChips, MyLinksEditor } from "./work-links";
 import { ProjectSubmitCard } from "./ProjectSubmitCard";
+import { useT } from "@/lib/i18n/client";
+import { currentLocale, tk } from "@/lib/i18n/translate";
 import RedirectToSquad, { SQUAD_PAGE } from "./RedirectToSquad";
 import { TeamChatButton, TeamChatPanel, useTeamChat, type ChatKey } from "./TeamChat";
 import { useT } from "@/lib/i18n/client";
@@ -43,17 +45,17 @@ const IMG = "/images/Intern";
 const BG = `${IMG}/bg-park.png`;
 
 const STATS = [
-  { key: "total", label: "Total Tasks", icon: ListChecks, color: "#4a9df8", bg: "#eaf4fe" },
-  { key: "done", label: "Completed", icon: CheckCircle2, color: "#2fb36b", bg: "#e6f6ee" },
-  { key: "left", label: "Remining", icon: Timer, color: "#ef5b5b", bg: "#fdecec" },
-  { key: "points", label: "Story Points", icon: Star, color: "#f5a623", bg: "#fff6dc" },
+  { key: "total", label: tk("Total Tasks"), icon: ListChecks, color: "#4a9df8", bg: "#eaf4fe" },
+  { key: "done", label: tk("Completed"), icon: CheckCircle2, color: "#2fb36b", bg: "#e6f6ee" },
+  { key: "left", label: tk("Remaining"), icon: Timer, color: "#ef5b5b", bg: "#fdecec" },
+  { key: "points", label: tk("Story Points"), icon: Star, color: "#f5a623", bg: "#fff6dc" },
 ] as const;
 
 const COLUMN_STYLE: Record<TaskStatus, { title: string; bg: string; dot: string; add: string }> = {
-  ToDo: { title: "To Do", bg: "#eceef3", dot: "#64748b", add: "#14365a" },
-  InProgress: { title: "In Progress", bg: "#dcecfb", dot: "#3b82f6", add: "#2f7fd6" },
-  Review: { title: "Review", bg: "#ffefd9", dot: "#ff9a1f", add: "#f08a00" },
-  Done: { title: "Done", bg: "#d8f0df", dot: "#2fb36b", add: "#2fb36b" },
+  ToDo: { title: tk("To Do"), bg: "#eceef3", dot: "#64748b", add: "#14365a" },
+  InProgress: { title: tk("In Progress"), bg: "#dcecfb", dot: "#3b82f6", add: "#2f7fd6" },
+  Review: { title: tk("Review"), bg: "#ffefd9", dot: "#ff9a1f", add: "#f08a00" },
+  Done: { title: tk("Done"), bg: "#d8f0df", dot: "#2fb36b", add: "#2fb36b" },
 };
 
 const ORDER: TaskStatus[] = ["ToDo", "InProgress", "Review", "Done"];
@@ -61,11 +63,13 @@ const ORDER: TaskStatus[] = ["ToDo", "InProgress", "Review", "Done"];
 const SQUAD_COLORS = ["#b07fd6", "#3b9cf5", "#52d6b0", "#7fe8d6", "#3b9cf5", "#a31818", "#f9a8b8"];
 
 const MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+const MONTHS_AR = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
 
-/** "sep 21 - sep 27, 2026", like the Figma. */
+/** "sep 21 - sep 27, 2026", like the Figma ("21 سبتمبر - 27 سبتمبر 2026" in Arabic). */
 function sprintDates(start: string, end: string) {
   const [, sm, sd] = start.split("-").map(Number);
   const [ey, em, ed] = end.split("-").map(Number);
+  if (currentLocale() === "ar") return `${sd} ${MONTHS_AR[sm - 1]} - ${ed} ${MONTHS_AR[em - 1]} ${ey}`;
   return `${MONTHS[sm - 1]} ${sd} - ${MONTHS[em - 1]} ${ed}, ${ey}`;
 }
 
@@ -76,7 +80,7 @@ const solid = "rounded-[1.6em] border border-white bg-white shadow-lg shadow-[#1
 function AvatarBadge({ count }: { count: number }) {
   if (count <= 0) return null;
   return (
-    <span className="absolute -right-[0.2em] -top-[0.2em] z-10 grid h-[1.6em] min-w-[1.6em] place-items-center rounded-full bg-[#ef5b5b] px-[0.35em] text-[0.7em] font-bold text-white ring-2 ring-white">
+    <span className="absolute -end-[0.2em] -top-[0.2em] z-10 grid h-[1.6em] min-w-[1.6em] place-items-center rounded-full bg-[#ef5b5b] px-[0.35em] text-[0.7em] font-bold text-white ring-2 ring-white">
       {count > 99 ? "99+" : count}
     </span>
   );
@@ -106,9 +110,9 @@ function TeamCard({
         </span>
         <div className="min-w-0">
           <h1 className="flex flex-wrap items-center gap-[0.5em] text-[2.1em] font-extrabold leading-tight text-[#14365a]">
-            {squad ? `${squad.name} Team` : "\u00a0"}
+            {squad ? t("{name} Team", { name: squad.name }) : "\u00a0"}
             <span className="flex items-center gap-[0.3em] rounded-full bg-[#d7f5e4] px-[0.6em] py-[0.15em] text-[0.38em] font-bold text-[#1f9d5b]">
-              <span className="h-[0.7em] w-[0.7em] rounded-full bg-[#2fb36b]" /> Active
+              <span className="h-[0.7em] w-[0.7em] rounded-full bg-[#2fb36b]" /> {t("Active")}
             </span>
           </h1>
           <p className="text-[1.25em] font-bold text-[#14365a]">{squad?.projectTitle}</p>
@@ -131,8 +135,8 @@ function TeamCard({
               <button
                 type="button"
                 onClick={() => onChat(squad.monitor!.id)}
-                aria-label={`Chat with ${squad.monitor.fullName}`}
-                title={`Chat with ${squad.monitor.fullName}`}
+                aria-label={t("Chat with {name}", { name: squad.monitor.fullName })}
+                title={t("Chat with {name}", { name: squad.monitor.fullName })}
                 className="relative rounded-full transition-transform hover:scale-105"
               >
                 <AvatarBadge count={unreadFor(squad.monitor.id)} />
@@ -163,8 +167,8 @@ function TeamCard({
                   <button
                     type="button"
                     onClick={() => onChat(m.studentId)}
-                    aria-label={`Chat with ${m.fullName}`}
-                    title={`Chat with ${m.fullName}`}
+                    aria-label={t("Chat with {name}", { name: m.fullName })}
+                    title={t("Chat with {name}", { name: m.fullName })}
                     className="relative rounded-full transition-transform hover:scale-105"
                   >
                     <AvatarBadge count={unreadFor(m.studentId)} />
@@ -184,12 +188,12 @@ function TeamCard({
           <li className="flex shrink-0 flex-col items-center">
             <button
               type="button"
-              aria-label="Add members"
+              aria-label={t("Add members")}
               className="grid h-[5.2em] w-[5.2em] place-items-center rounded-[1.2em] bg-[#e8f1fb] text-[#14365a] hover:bg-[#d9e8f8]"
             >
               <Plus className="h-[1.8em] w-[1.8em]" />
             </button>
-            <span className="mt-[0.5em] text-[0.7em] text-[#14365a]/60">Add Members</span>
+            <span className="mt-[0.5em] text-[0.7em] text-[#14365a]/60">{t("Add Members")}</span>
           </li>
         </ul>
       </div>
@@ -198,6 +202,7 @@ function TeamCard({
 }
 
 function SprintCard({ sprint }: { sprint: Sprint | null }) {
+  const t = useT();
   const percent = sprint?.progressPercent ?? 0;
   const values = {
     total: sprint?.tasksTotal,
@@ -215,13 +220,13 @@ function SprintCard({ sprint }: { sprint: Sprint | null }) {
           <h2 className="text-[1.7em] font-extrabold leading-tight text-[#14365a]">{sprint?.name ?? "\u00a0"}</h2>
           <p className="text-[0.8em] text-[#14365a]/60">{sprint ? sprintDates(sprint.startDate, sprint.endDate) : "\u00a0"}</p>
         </div>
-        <div className="ml-auto text-right">
+        <div className="ms-auto text-end">
           <span className="inline-flex items-center gap-[0.4em] rounded-[0.6em] bg-[#eef2f7] px-[0.7em] py-[0.25em] text-[0.75em] text-[#14365a]/70">
-            <Calendar className="h-[1em] w-[1em]" /> {sprint?.daysLeft ?? 0} {sprint?.daysLeft === 1 ? "day" : "days"} left
+            <Calendar className="h-[1em] w-[1em]" /> {sprint?.daysLeft === 1 ? t("1 day left") : t("{n} days left", { n: sprint?.daysLeft ?? 0 })}
           </span>
           <p className="mt-[0.2em] text-[2em] font-extrabold leading-none text-[#14365a]">{percent}%</p>
           <p className="mt-[0.2em] text-[0.75em] text-[#14365a]/70">
-            {sprint?.tasksDone ?? 0} of {sprint?.tasksTotal ?? 0} tasks done
+            {t("{n} of {total} tasks done", { n: sprint?.tasksDone ?? 0, total: sprint?.tasksTotal ?? 0 })}
           </p>
         </div>
       </div>
@@ -240,7 +245,7 @@ function SprintCard({ sprint }: { sprint: Sprint | null }) {
               <s.icon className="h-[1.2em] w-[1.2em]" />
             </span>
             <span className="leading-tight">
-              <span className="block text-[0.75em] text-[#14365a]/70">{s.label}</span>
+              <span className="block text-[0.75em] text-[#14365a]/70">{t(s.label)}</span>
               <span className="block text-[1.05em] font-bold text-[#14365a]">{values[s.key] ?? "–"}</span>
             </span>
           </li>
@@ -264,7 +269,7 @@ function TaskCard({ task, avatarIndex, onMove }: { task: SquadTask; avatarIndex:
         e.dataTransfer.effectAllowed = "move";
       }}
       className={`relative rounded-[0.9em] bg-white p-[0.7em] shadow-sm ${task.isMine ? "cursor-grab active:cursor-grabbing" : ""} ${
-        task.isMine && task.status === "Review" ? "border-l-[0.3em] border-l-[#ff9a1f]" : ""
+        task.isMine && task.status === "Review" ? "border-s-[0.3em] border-s-[#ff9a1f]" : ""
       }`}
     >
       <p className="text-[0.85em] font-semibold text-[#14365a]">{task.title}</p>
@@ -283,32 +288,32 @@ function TaskCard({ task, avatarIndex, onMove }: { task: SquadTask; avatarIndex:
             className="rounded-[0.4em] px-[0.6em] py-[0.15em] text-[0.65em] font-bold"
             style={{ backgroundColor: tag.bg, color: tag.text }}
           >
-            {tag.label}
+            {t(tag.label)}
           </span>
         )}
-        <span className="text-[0.65em] text-[#14365a]/60">{task.storyPoints} pts</span>
+        <span className="text-[0.65em] text-[#14365a]/60">{t("{n} pts", { n: task.storyPoints })}</span>
         {task.isMine && (
           <span className="rounded-[0.4em] bg-[#d7f5e4] px-[0.6em] py-[0.15em] text-[0.6em] font-semibold text-[#1f9d5b]">
-            Assigned to you
+            {t("Assigned to you")}
           </span>
         )}
         {task.isMine ? (
           <button
             type="button"
             onClick={() => setMenuOpen((o) => !o)}
-            aria-label={`Move ${task.title}`}
+            aria-label={t("Move {title}", { title: task.title })}
             aria-expanded={menuOpen}
-            className="ml-auto rounded-[0.4em] text-[#14365a]/50 hover:text-[#14365a]"
+            className="ms-auto rounded-[0.4em] text-[#14365a]/50 hover:text-[#14365a]"
           >
             <MoreHorizontal className="h-[1.1em] w-[1.1em]" />
           </button>
         ) : (
-          <MoreHorizontal className="ml-auto h-[1.1em] w-[1.1em] text-[#14365a]/30" aria-hidden="true" />
+          <MoreHorizontal className="ms-auto h-[1.1em] w-[1.1em] text-[#14365a]/30" aria-hidden="true" />
         )}
       </div>
 
       {menuOpen && (
-        <div className="absolute right-[0.5em] top-full z-20 mt-[0.2em] w-[11em] rounded-[0.7em] border border-[#14365a]/10 bg-white p-[0.3em] shadow-lg">
+        <div className="absolute end-[0.5em] top-full z-20 mt-[0.2em] w-[11em] rounded-[0.7em] border border-[#14365a]/10 bg-white p-[0.3em] shadow-lg">
           {moves.map((to) => (
             <button
               key={to}
@@ -317,9 +322,9 @@ function TaskCard({ task, avatarIndex, onMove }: { task: SquadTask; avatarIndex:
                 setMenuOpen(false);
                 onMove(task, to);
               }}
-              className="w-full rounded-[0.5em] px-[0.6em] py-[0.4em] text-left text-[0.75em] font-semibold text-[#14365a] hover:bg-[#eef2f7]"
+              className="w-full rounded-[0.5em] px-[0.6em] py-[0.4em] text-start text-[0.75em] font-semibold text-[#14365a] hover:bg-[#eef2f7]"
             >
-              Move to {COLUMN_STYLE[to].title}
+              {t("Move to {column}", { column: t(COLUMN_STYLE[to].title) })}
             </button>
           ))}
         </div>
@@ -332,6 +337,7 @@ function TaskCard({ task, avatarIndex, onMove }: { task: SquadTask; avatarIndex:
 const BOARD_COLUMNS: TaskStatus[] = ["ToDo", "Review", "Done"];
 
 function AddTaskForm({ onAdd }: { onAdd: (title: string) => Promise<boolean> }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [saving, setSaving] = useState(false);
@@ -342,7 +348,7 @@ function AddTaskForm({ onAdd }: { onAdd: (title: string) => Promise<boolean> }) 
         onClick={() => setOpen(true)}
         className="mt-[0.7em] flex w-full items-center justify-center gap-[0.3em] text-[0.85em] font-semibold text-[#14365a]"
       >
-        <Plus className="h-[1.1em] w-[1.1em]" /> Add Task
+        <Plus className="h-[1.1em] w-[1.1em]" /> {t("Add Task")}
       </button>
     );
   return (
@@ -364,16 +370,16 @@ function AddTaskForm({ onAdd }: { onAdd: (title: string) => Promise<boolean> }) 
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         maxLength={200}
-        placeholder="What will you do?"
-        aria-label="New task"
+        placeholder={t("What will you do?")}
+        aria-label={t("New task")}
         className="rounded-[0.7em] border border-[#14365a]/15 bg-white px-[0.7em] py-[0.5em] text-[0.85em] text-[#14365a] outline-none focus:ring-2 focus:ring-[#12939b]/30"
       />
       <div className="flex gap-[0.4em]">
         <button type="submit" disabled={saving || !title.trim()} className="rounded-[0.6em] bg-[#14365a] px-[0.9em] py-[0.35em] text-[0.8em] font-semibold text-white disabled:opacity-50">
-          {saving ? "Adding…" : "Add"}
+          {saving ? t("Adding…") : t("Add")}
         </button>
         <button type="button" onClick={() => setOpen(false)} className="text-[0.8em] font-semibold text-[#14365a]/70 hover:underline">
-          Cancel
+          {t("Cancel")}
         </button>
       </div>
     </form>
@@ -393,6 +399,7 @@ function TaskBoard({
   onAdd: (title: string) => Promise<boolean>;
   message: string | null;
 }) {
+  const t = useT();
   const [over, setOver] = useState<TaskStatus | null>(null);
   const columns = (board?.columns ?? ORDER.map((status) => ({ status, tasks: [] as SquadTask[] }))).filter(
     (c) => BOARD_COLUMNS.includes(c.status) || c.tasks.length > 0,
@@ -402,7 +409,7 @@ function TaskBoard({
   function drop(e: DragEvent, status: TaskStatus) {
     e.preventDefault();
     setOver(null);
-    const task = allTasks.find((t) => t.id === e.dataTransfer.getData("text/plain"));
+    const task = allTasks.find((x) => x.id === e.dataTransfer.getData("text/plain"));
     if (task && task.status !== status) onMove(task, status);
   }
 
@@ -416,9 +423,9 @@ function TaskBoard({
             <rect x="3" y="15" width="8" height="6" rx="2" />
             <rect x="13" y="11" width="8" height="10" rx="2" />
           </svg>
-          Task Board
+          {t("Task Board")}
         </h2>
-        <div className="ml-auto flex gap-[0.4em]">
+        <div className="ms-auto flex gap-[0.4em]">
           <span className="grid h-[1.6em] w-[1.6em] place-items-center rounded-[0.4em] bg-[#14365a] text-white">
             <ArrowLeft className="h-[1em] w-[1em]" />
           </span>
@@ -451,18 +458,18 @@ function TaskBoard({
             >
               <div className="mb-[0.7em] flex items-center gap-[0.5em] text-[0.95em] font-bold text-[#14365a]">
                 <span className="h-[0.7em] w-[0.7em] rounded-full" style={{ backgroundColor: style.dot }} />
-                {style.title}
+                {t(style.title)}
                 <span className="rounded-full bg-white/70 px-[0.5em] text-[0.75em] font-semibold text-[#14365a]/70">
                   {col.tasks.length}
                 </span>
               </div>
 
               <ul className="grid gap-[0.6em]">
-                {col.tasks.map((t) => (
+                {col.tasks.map((task) => (
                   <TaskCard
-                    key={t.id}
-                    task={t}
-                    avatarIndex={(t.assignee && members.get(t.assignee.studentId)) ?? 0}
+                    key={task.id}
+                    task={task}
+                    avatarIndex={(task.assignee && members.get(task.assignee.studentId)) ?? 0}
                     onMove={onMove}
                   />
                 ))}
@@ -470,7 +477,7 @@ function TaskBoard({
 
               {col.status === "ToDo" && <AddTaskForm onAdd={onAdd} />}
               {col.tasks.length === 0 && col.status !== "ToDo" && (
-                <p className="py-[1em] text-center text-[0.75em] text-[#14365a]/55">Drag your tasks here</p>
+                <p className="py-[1em] text-center text-[0.75em] text-[#14365a]/55">{t("Drag your tasks here")}</p>
               )}
             </div>
           );
@@ -481,17 +488,18 @@ function TaskBoard({
 }
 
 function Leaderboard({ data }: { data: LeaderboardData | null }) {
+  const t = useT();
   const rows = data ? [...data.top, ...(data.mine ? [data.mine] : [])] : [];
   return (
     <section className={`${solid} min-w-0 p-[1.1em]`}>
       <div className="flex items-center gap-[0.7em]">
         <Trophy className="h-[1.8em] w-[1.8em] shrink-0 text-[#f5a623]" />
         <div className="leading-tight">
-          <h2 className="text-[1.2em] font-extrabold text-[#14365a]">Squad Leaderboard</h2>
-          <p className="text-[0.75em] text-[#14365a]/60">Top 5 squads this Sprint</p>
+          <h2 className="text-[1.2em] font-extrabold text-[#14365a]">{t("Squad Leaderboard")}</h2>
+          <p className="text-[0.75em] text-[#14365a]/60">{t("Top 5 squads this Sprint")}</p>
         </div>
-        <span className="ml-auto flex items-center gap-[0.4em] rounded-full bg-[#d7f5e4] px-[0.8em] py-[0.2em] text-[0.7em] font-bold text-[#1f9d5b]">
-          <span className="h-[0.6em] w-[0.6em] rounded-full bg-[#2fb36b]" /> Live
+        <span className="ms-auto flex items-center gap-[0.4em] rounded-full bg-[#d7f5e4] px-[0.8em] py-[0.2em] text-[0.7em] font-bold text-[#1f9d5b]">
+          <span className="h-[0.6em] w-[0.6em] rounded-full bg-[#2fb36b]" /> {t("Live")}
         </span>
       </div>
 
@@ -525,7 +533,7 @@ function Leaderboard({ data }: { data: LeaderboardData | null }) {
                 <div className="h-full rounded-full bg-[#14365a]" style={{ width: `${s.progressPercent}%` }} />
               </div>
             </div>
-            <span className="text-[0.85em] font-bold text-[#14365a]">{s.xp} XP</span>
+            <span className="text-[0.85em] font-bold text-[#14365a]">{t("{n} XP", { n: s.xp })}</span>
           </li>
         ))}
       </ol>
@@ -535,6 +543,7 @@ function Leaderboard({ data }: { data: LeaderboardData | null }) {
 
 /** Every member's links to the project (Figma, GitHub, Vercel, the server, ...); the student edits their own. */
 function ProjectLinks() {
+  const t = useT();
   const [links, setLinks] = useState<SquadLinks | null>(null);
   const [editing, setEditing] = useState(false);
 
@@ -554,10 +563,10 @@ function ProjectLinks() {
   return (
     <section className={`${solid} min-w-0 p-[1.1em]`}>
       <div className="flex items-center gap-[0.6em]">
-        <h2 className="text-[1.3em] font-extrabold text-[#14365a]">Project Links</h2>
+        <h2 className="text-[1.3em] font-extrabold text-[#14365a]">{t("Project Links")}</h2>
         {me && !editing && (
-          <button type="button" onClick={() => setEditing(true)} className="ml-auto text-[0.85em] font-semibold text-[#12939b] hover:underline">
-            {me.links.length ? "Edit my links" : "+ Add my links"}
+          <button type="button" onClick={() => setEditing(true)} className="ms-auto text-[0.85em] font-semibold text-[#12939b] hover:underline">
+            {me.links.length ? t("Edit my links") : t("+ Add my links")}
           </button>
         )}
       </div>
@@ -577,12 +586,12 @@ function ProjectLinks() {
           <li key={m.studentId} className="rounded-[0.9em] border border-[#14365a]/10 p-[0.6em]">
             <p className="text-[0.9em] font-bold text-[#14365a]">
               {m.fullName}
-              {m.isMe && " (you)"} <span className="font-normal text-[#14365a]/60">· {ROLE_TITLE[m.role]}</span>
+              {m.isMe && ` ${t("(you)")}`} <span className="font-normal text-[#14365a]/60">· {t(ROLE_TITLE[m.role])}</span>
             </p>
             {m.links.length ? (
               <LinkChips member={m} className="mt-[0.4em]" />
             ) : (
-              <p className="mt-[0.3em] text-[0.75em] text-[#14365a]/55">No links yet</p>
+              <p className="mt-[0.3em] text-[0.75em] text-[#14365a]/55">{t("No links yet")}</p>
             )}
           </li>
         ))}
@@ -636,14 +645,14 @@ export default function InternshipProgress() {
 
       {/* Scrolls on desktop (content starts under the header, next to the sidebar) */}
       <div
-        className="relative min-w-0 pb-8 pl-[4.75rem] pr-3 pt-2 sm:pr-4 lg:absolute lg:inset-0 lg:overflow-y-auto lg:pb-[calc(var(--u)*2)] lg:pl-[var(--hl)] lg:pr-[calc(var(--u)*1.6)] lg:pt-[calc(var(--u)*8.5)]"
+        className="relative min-w-0 pb-8 ps-[4.75rem] pe-3 pt-2 sm:pe-4 lg:absolute lg:inset-0 lg:overflow-y-auto lg:pb-[calc(var(--u)*2)] lg:ps-[var(--hl)] lg:pe-[calc(var(--u)*1.6)] lg:pt-[calc(var(--u)*8.5)]"
         style={{ fontSize: "clamp(12px, calc(var(--u) * 1.05), 17px)" }}
       >
         <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-[1em] lg:grid-cols-[minmax(0,1fr)_calc(var(--u)*27)] lg:grid-rows-[auto_1fr]">
           {/* Internship pod: first on mobile, top-right on desktop */}
           <div className="order-1 min-w-0 lg:order-none lg:col-start-2 lg:row-start-1">
             {/* The squad page: the monitor, the team and the project the cube picked */}
-            <Link href={SQUAD_PAGE} aria-label="Your squad" className="block transition-transform hover:scale-[1.02]">
+            <Link href={SQUAD_PAGE} aria-label={t("Your squad")} className="block transition-transform hover:scale-[1.02]">
               <Image
                 src={`${IMG}/building-internship.png`}
                 alt={t("Internship")}

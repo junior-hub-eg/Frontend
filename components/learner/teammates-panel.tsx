@@ -2,18 +2,20 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useT } from "@/lib/i18n/client";
+import { tk } from "@/lib/i18n/translate";
 
 export type Teammate = { name: string; avatar: string; bg: string; role?: string; isMe?: boolean };
 
 const ROLE_TITLE: Record<string, string> = {
-  Frontend: "Frontend Developer",
-  Backend: "Backend Developer",
-  UIUX: "UI/UX Designer",
-  AI: "AI Engineer",
-  Testing: "QA Tester",
-  Data: "Data Analyst",
-  Mobile: "Mobile Developer",
-  Gaming: "Game Developer",
+  Frontend: tk("Frontend Developer"),
+  Backend: tk("Backend Developer"),
+  UIUX: tk("UI/UX Designer"),
+  AI: tk("AI Engineer"),
+  Testing: tk("QA Tester"),
+  Data: tk("Data Analyst"),
+  Mobile: tk("Mobile Developer"),
+  Gaming: tk("Game Developer"),
 };
 
 export function TeammatesPanel({
@@ -25,6 +27,7 @@ export function TeammatesPanel({
   className?: string;
   fluid?: boolean;
 }) {
+  const t = useT();
   const card =
     "rounded-[1.4em] border border-white/80 bg-white/55 p-[1em] shadow-lg shadow-[#14365a]/10 backdrop-blur-md";
 
@@ -49,18 +52,18 @@ export function TeammatesPanel({
             <circle cx="12" cy="19" r="3" />
           </svg>
           <Link href="/learner/interns/session" className="hover:underline">
-            Your Teammates
+            {t("Your Teammates")}
           </Link>
           <Link
             href="/learner/interns/session"
-            className="ml-auto rounded-full bg-[#14365a] px-[0.8em] py-[0.25em] text-[0.7em] font-bold text-white hover:bg-[#0f2a47]"
+            className="ms-auto rounded-full bg-[#14365a] px-[0.8em] py-[0.25em] text-[0.7em] font-bold text-white hover:bg-[#0f2a47]"
           >
-            Get ready
+            {t("Get ready")}
           </Link>
         </h2>
 
         {teammates.length === 0 && (
-          <p className="text-[0.85em] text-[#14365a]/70">You&apos;ll see your squad here once you join an internship team.</p>
+          <p className="text-[0.85em] text-[#14365a]/70">{t("You'll see your squad here once you join an internship team.")}</p>
         )}
         <ul className="grid gap-[0.6em]">
           {teammates.map((m, i) => {
@@ -76,9 +79,9 @@ export function TeammatesPanel({
                 <span className="min-w-0">
                   <span className="block truncate">
                     {m.name}
-                    {m.isMe && <span className="ml-[0.3em] text-[0.8em] font-medium text-[#14365a]/60">(you)</span>}
+                    {m.isMe && <span className="ms-[0.3em] text-[0.8em] font-medium text-[#14365a]/60">{t("(you)")}</span>}
                   </span>
-                  {m.role && <span className="block truncate text-[0.7em] font-medium text-[#14365a]/65">{ROLE_TITLE[m.role] ?? m.role}</span>}
+                  {m.role && <span className="block truncate text-[0.7em] font-medium text-[#14365a]/65">{t(ROLE_TITLE[m.role] ?? m.role)}</span>}
                 </span>
 
               </li>

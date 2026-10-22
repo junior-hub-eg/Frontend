@@ -10,6 +10,7 @@ import { ArrowLeft, ArrowRight, Award, CheckCircle2, LoaderCircle, XCircle } fro
 import { errorMessage } from "@/lib/api-client";
 import { getLesson, getTrackLessons, lessonPath, trackPath, submitLessonQuiz, type Badge, lessonAfter } from "@/lib/learning-api";
 import { LoadState } from "@/components/Courses/course-ui";
+import { useI18n } from "@/lib/i18n/client";
 import { offlineLessons, offlineQuiz, trackName } from "./offline-data";
 
 type Q = { id: string; prompt: string; options: string[] };
@@ -31,6 +32,7 @@ type State = { kind: "loading" } | { kind: "error"; error: unknown } | { kind: "
 const noScrollbar = "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden";
 
 export default function LessonQuizPage({ code, lessonId }: { code: string; lessonId: string }) {
+  const { t, locale } = useI18n();
   const [state, setState] = useState<State>({ kind: "loading" });
   const [index, setIndex] = useState(0);
   const [picked, setPicked] = useState<number | null>(null);
@@ -86,9 +88,9 @@ export default function LessonQuizPage({ code, lessonId }: { code: string; lesso
 
   /* Desktop: one screen, no page scroll. */
   const wrapper = (children: React.ReactNode) => (
-    <div className="relative -ml-[4rem] min-h-[calc(100svh-5rem)] min-w-0 flex-1 bg-[#fdfcff] lg:absolute lg:inset-0 lg:ml-0 lg:min-h-0">
+    <div className="relative -ms-[4rem] min-h-[calc(100svh-5rem)] min-w-0 flex-1 bg-[#fdfcff] lg:absolute lg:inset-0 lg:ms-0 lg:min-h-0">
       <div
-        className={`relative min-w-0 pb-8 pl-[4.75rem] pr-3 pt-2 sm:pr-4 lg:absolute lg:inset-0 lg:overflow-y-auto lg:pb-[calc(var(--u)*1.6)] lg:pl-[var(--hl)] lg:pr-[calc(var(--u)*1.6)] lg:pt-[calc(var(--u)*6.5)] ${noScrollbar}`}
+        className={`relative min-w-0 pb-8 ps-[4.75rem] pe-3 pt-2 sm:pe-4 lg:absolute lg:inset-0 lg:overflow-y-auto lg:pb-[calc(var(--u)*1.6)] lg:ps-[var(--hl)] lg:pe-[calc(var(--u)*1.6)] lg:pt-[calc(var(--u)*6.5)] ${noScrollbar}`}
         style={{ fontSize: "clamp(11px, calc(var(--u) * 1.05), 17px)" }}
       >
         {children}
@@ -99,7 +101,7 @@ export default function LessonQuizPage({ code, lessonId }: { code: string; lesso
   if (state.kind === "error") return wrapper(<LoadState error={state.error} backHref={lessonPath(code, lessonId)} />);
   if (state.kind === "loading") {
     return wrapper(
-      <div className="grid min-h-[50vh] place-items-center" role="status" aria-label="Loading">
+      <div className="grid min-h-[50vh] place-items-center" role="status" aria-label={t("Loading")}>
         <LoaderCircle className="size-8 animate-spin text-[#12939b]" />
       </div>,
     );
@@ -112,7 +114,7 @@ export default function LessonQuizPage({ code, lessonId }: { code: string; lesso
 
   const back = (
     <Link href={backHref} className="inline-flex items-center gap-[0.5em] text-[0.8em] font-semibold text-[#12606b] hover:underline">
-      <ArrowLeft className="size-[1.1em]" /> Back to Lesson
+      <ArrowLeft className="size-[1.1em]" /> {t("Back to Lesson")}
     </Link>
   );
 
@@ -177,18 +179,18 @@ export default function LessonQuizPage({ code, lessonId }: { code: string; lesso
       <>
         {back}
         <div className="mx-auto mt-[0.6em] max-w-[44em] text-center">
-          <p className="text-[0.65em] font-bold uppercase tracking-wide text-[#12939b]">{view.trackName} / Lesson quiz</p>
+          <p className="text-[0.65em] font-bold uppercase tracking-wide text-[#12939b]">{t("{track} / Lesson quiz", { track: t(view.trackName) })}</p>
           <h1 className="mt-[0.4em] text-[2.1em] font-extrabold leading-tight text-[#14365a]">
-            {outcome.lessonDone ? "Lesson complete" : "Almost there"}
+            {outcome.lessonDone ? t("Lesson complete") : t("Almost there")}
           </h1>
           <p className="mt-[0.5em] text-[0.85em] text-[#14365a]/65">
-            You answered {score} of {total} correctly.{" "}
-            {outcome.lessonDone ? "You finished this lesson." : "Read the help under each wrong answer, then try again."}
+            {t("You answered {score} of {total} correctly.", { score, total })}{" "}
+            {outcome.lessonDone ? t("You finished this lesson.") : t("Read the help under each wrong answer, then try again.")}
           </p>
           {(outcome.xpAwarded > 0 || outcome.badge) && (
             <div className="mt-[0.8em] flex flex-wrap justify-center gap-[0.5em]">
               {outcome.xpAwarded > 0 && (
-                <span className="rounded-full bg-[#e7f6f3] px-[0.9em] py-[0.25em] text-[0.75em] font-bold text-[#12939b]">+{outcome.xpAwarded} XP</span>
+                <span className="rounded-full bg-[#e7f6f3] px-[0.9em] py-[0.25em] text-[0.75em] font-bold text-[#12939b]">{t("+{xp} XP", { xp: outcome.xpAwarded })}</span>
               )}
               {outcome.badge && (
                 <span className="inline-flex items-center gap-[0.4em] rounded-full bg-[#fff4d6] px-[0.9em] py-[0.25em] text-[0.75em] font-bold text-[#a86b00]">
@@ -198,7 +200,7 @@ export default function LessonQuizPage({ code, lessonId }: { code: string; lesso
             </div>
           )}
 
-          <ul className="mt-[1.4em] space-y-[0.6em] text-left">
+          <ul className="mt-[1.4em] space-y-[0.6em] text-start">
             {view.questions.map((qq, i) => {
               const r = results[i];
               return (
@@ -225,15 +227,15 @@ export default function LessonQuizPage({ code, lessonId }: { code: string; lesso
               onClick={restart}
               className="rounded-[0.6em] border border-[#12939b]/60 bg-white px-[1.4em] py-[0.7em] text-[0.8em] font-semibold text-[#12606b] hover:bg-[#eef8f7]"
             >
-              Try again
+              {t("Try again")}
             </button>
             {outcome.lessonDone ? (
               <Link href={view.nextHref as Route} className="rounded-[0.6em] bg-[#12606b] px-[1.4em] py-[0.7em] text-[0.8em] font-semibold text-white hover:bg-[#0f505a]">
-                Continue
+                {t("Continue")}
               </Link>
             ) : (
               <Link href={backHref} className="rounded-[0.6em] bg-[#12606b] px-[1.4em] py-[0.7em] text-[0.8em] font-semibold text-white hover:bg-[#0f505a]">
-                Back to Lesson
+                {t("Back to Lesson")}
               </Link>
             )}
           </div>
@@ -248,15 +250,15 @@ export default function LessonQuizPage({ code, lessonId }: { code: string; lesso
       {back}
 
       <div className="mx-auto mt-[0.2em] max-w-[44em] text-center">
-        <p className="text-[0.62em] font-bold uppercase tracking-wide text-[#12939b]">{view.trackName} / Lesson quiz</p>
+        <p className="text-[0.62em] font-bold uppercase tracking-wide text-[#12939b]">{t("{track} / Lesson quiz", { track: t(view.trackName) })}</p>
         <h1 className="mt-[0.5em] text-[2.1em] font-extrabold leading-tight text-[#14365a]">{view.title}</h1>
-        <p className="mt-[0.7em] text-[0.8em] text-[#14365a]/60">Choose the best answer. Answer every question correctly to finish the lesson.</p>
+        <p className="mt-[0.7em] text-[0.8em] text-[#14365a]/60">{t("Choose the best answer. Answer every question correctly to finish the lesson.")}</p>
       </div>
 
       {/* Progress */}
       <div className="mx-auto mt-[1.4em] flex max-w-[44em] items-center gap-[1.2em]">
         <span className="shrink-0 text-[0.7em] text-[#14365a]/65">
-          Question {index + 1} of {total}
+          {t("Question {n} of {total}", { n: index + 1, total })}
         </span>
         <span className="h-[0.4em] flex-1 overflow-hidden rounded-full bg-[#dbe7e8]">
           <span className="block h-full rounded-full bg-[#12858f] transition-[width]" style={{ width: `${((index + 1) / total) * 100}%` }} />
@@ -267,7 +269,7 @@ export default function LessonQuizPage({ code, lessonId }: { code: string; lesso
       <section className="mx-auto mt-[1em] max-w-[44em] rounded-[1.4em] border border-[#e8eef5] bg-white p-[1.6em] shadow-[0_10px_34px_rgba(20,54,90,0.08)]">
         <h2 className="text-[1.2em] font-extrabold text-[#14365a]">{q?.prompt}</h2>
 
-        <div role="radiogroup" aria-label="Answers" className="mt-[1em] space-y-[0.6em]">
+        <div role="radiogroup" aria-label={t("Answers")} className="mt-[1em] space-y-[0.6em]">
           {q?.options.map((opt, i) => {
             const on = picked === i;
             return (
@@ -277,7 +279,7 @@ export default function LessonQuizPage({ code, lessonId }: { code: string; lesso
                 role="radio"
                 aria-checked={on}
                 onClick={() => setPicked(i)}
-                className={`flex w-full items-center gap-[0.9em] rounded-[0.8em] border px-[1em] py-[0.8em] text-left transition-colors ${
+                className={`flex w-full items-center gap-[0.9em] rounded-[0.8em] border px-[1em] py-[0.8em] text-start transition-colors ${
                   on ? "border-[#12939b] bg-[#eef8f7]" : "border-[#e3ebf3] bg-white hover:bg-[#f6fafd]"
                 }`}
               >
@@ -286,7 +288,7 @@ export default function LessonQuizPage({ code, lessonId }: { code: string; lesso
                     on ? "bg-[#12606b] text-white" : "bg-[#eef2f6] text-[#14365a]"
                   }`}
                 >
-                  {String.fromCharCode(65 + i)}
+                  {locale === "ar" ? "أبجدهـ"[i] : String.fromCharCode(65 + i)}
                 </span>
                 <span className="text-[0.8em] text-[#14365a]">{opt}</span>
               </button>
@@ -300,7 +302,7 @@ export default function LessonQuizPage({ code, lessonId }: { code: string; lesso
           disabled={picked === null || busy}
           className="mt-[1.2em] inline-flex items-center gap-[0.6em] rounded-[0.6em] bg-gradient-to-r from-[#12858f] to-[#14365a] px-[1.3em] py-[0.7em] text-[0.75em] font-semibold text-white shadow-[0_8px_18px_rgba(20,54,90,0.25)] disabled:opacity-50"
         >
-          {busy ? "Submitting..." : index < total - 1 ? "Submit Answer" : "Finish Quiz"} <ArrowRight className="size-[1.1em]" />
+          {busy ? t("Submitting...") : index < total - 1 ? t("Submit Answer") : t("Finish Quiz")} <ArrowRight className="size-[1.1em]" />
         </button>
 
         {error && (
