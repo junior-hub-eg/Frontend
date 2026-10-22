@@ -23,6 +23,14 @@ export function currentLocale(): Locale {
   return typeof document !== "undefined" && document.documentElement.lang === "ar" ? "ar" : "en";
 }
 
+/**
+ * The locale to format dates with: Arabic when the page is Arabic, otherwise the English
+ * format the caller asked for (for example "en-GB" for "24 Oct").
+ */
+export function dateLocale(english = "en-US"): string {
+  return currentLocale() === "ar" ? "ar-EG-u-nu-latn" : english;
+}
+
 /** `t()` for code outside React; see currentLocale(). */
 export function tNow(text: string, vars?: TVars): string {
   return translate(currentLocale(), text, vars);

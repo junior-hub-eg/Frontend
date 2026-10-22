@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { GraduationCap, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n/client";
 import { LEARNER_NAV_MAIN, LEARNER_NAV_SECONDARY, type LearnerNavItem } from "./learner-nav";
 
 interface LearnerSidebarProps {
@@ -34,7 +35,9 @@ function NavLink({
   onNavigate?: () => void;
   locked?: boolean;
 }) {
+  const t = useT();
   const Icon = item.icon;
+  const name = t(item.label);
 
   const align = collapsed
     ? rail
@@ -50,11 +53,11 @@ function NavLink({
     return (
       <span
         aria-disabled="true"
-        title={`${item.label}: choose your track first`}
+        title={t("{page}: choose your track first", { page: name })}
         className={cn("flex h-[2.8em] cursor-not-allowed items-center gap-[0.9em] rounded-[0.7em] text-[1.05em] font-medium text-[#14365a]/40", align)}
       >
         <Icon className="h-[1.3em] w-[1.3em] shrink-0" />
-        <span className={label}>{item.label}</span>
+        <span className={label}>{name}</span>
         <Lock className={cn("ms-auto h-[0.9em] w-[0.9em] shrink-0", label)} />
       </span>
     );
@@ -63,7 +66,7 @@ function NavLink({
   return (
     <Link
       href={item.href}
-      title={item.label}
+      title={name}
       onClick={onNavigate}
       className={cn(
         "flex h-[2.8em] items-center gap-[0.9em] rounded-[0.7em] text-[1.05em] transition-colors",
@@ -74,13 +77,14 @@ function NavLink({
       )}
     >
       <Icon className="h-[1.3em] w-[1.3em] shrink-0" />
-      <span className={label}>{item.label}</span>
+      <span className={label}>{name}</span>
     </Link>
   );
 }
 
 /** The parent (LearnerShell frame) must be `relative` and define `--sb` and `--u`. */
 export function LearnerSidebar({ activeHref, collapsed = false, mobileOpen = false, onNavigate, locked = false }: LearnerSidebarProps) {
+  const t = useT();
   const pathname = usePathname();
   const current = activeHref ?? pathname;
   const isActive = (item: LearnerNavItem) =>
@@ -122,13 +126,13 @@ export function LearnerSidebar({ activeHref, collapsed = false, mobileOpen = fal
       {/* logo: full logo when open, graduation cap on the rail / collapsed. Opens the landing page. */}
       <Link
         href="/"
-        aria-label="Junior Hub home"
+        aria-label={t("Junior Hub home")}
         onClick={onNavigate}
         className={cn("mb-[2.6em] flex h-[2.6em] items-center rounded-[0.7em]", logoBox)}
       >
         <Image
           src="/images/Auth/logo.png"
-          alt="Junior Hub"
+          alt={t("Junior Hub")}
           width={160}
           height={32}
           priority
@@ -171,12 +175,12 @@ export function LearnerSidebar({ activeHref, collapsed = false, mobileOpen = fal
       <div className={cn("mt-auto px-[0.6em] pt-[1.5em]", brand)}>
         <Image
           src="/images/Auth/logo.png"
-          alt="Junior Hub"
+          alt={t("Junior Hub")}
           width={130}
           height={26}
           style={{ height: "2em", width: "auto" }}
         />
-        <p className="mt-[0.5em] text-[1.1em] tracking-wide text-[#14365a]">BUILD YOUR DREAMS</p>
+        <p className="mt-[0.5em] text-[1.1em] tracking-wide text-[#14365a]">{t("BUILD YOUR DREAMS")}</p>
       </div>
     </aside>
   );

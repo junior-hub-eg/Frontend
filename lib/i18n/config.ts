@@ -15,5 +15,6 @@ export function dirOf(locale: Locale): "rtl" | "ltr" {
 
 /** The BCP 47 tag to format dates and numbers with. */
 export function intlLocale(locale: Locale): string {
-  return locale === "ar" ? "ar-EG" : "en-US";
+  // Arabic month and day names with the same 0-9 digits as the rest of the page.
+  return locale === "ar" ? "ar-EG-u-nu-latn" : "en-US";
 }

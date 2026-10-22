@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowRight, Award, CalendarCheck, Crown, Flame, Gift, LoaderCircle, X, CalendarClock } from "lucide-react";
 import { getAchievements, type Achievements } from "@/lib/learning-api";
 import { getMySessions, sessionTime, type MentorSession } from "@/lib/mentorship-api";
+import { useT } from "@/lib/i18n/client";
 
 /** XP per dashboard level. The backend keeps total XP only, so the level is worked out here. */
 export const XP_PER_LEVEL = 500;
@@ -26,6 +27,7 @@ export function LevelCard({
   progressPercent: number;
   className?: string;
 }) {
+  const t = useT();
   const percent = Math.min(100, Math.max(0, progressPercent));
   return (
     <div className={`${glass} flex items-center gap-[0.9em] px-[1em] py-[0.8em] ${className}`}>
@@ -35,16 +37,16 @@ export function LevelCard({
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-[0.8em] text-[#14365a]">
           <span className="flex min-w-0 items-center gap-[0.5em]">
-            <span className="truncate text-[1em] font-bold">{track}</span>
+            <span className="truncate text-[1em] font-bold">{t(track)}</span>
             <span className="shrink-0 rounded-full bg-[#2fa59b]/15 px-[0.6em] py-[0.1em] text-[0.75em] font-bold text-[#12797f]">
-              {level}
+              {t(level)}
             </span>
           </span>
           <span className="shrink-0 text-[0.9em] font-bold">{percent}%</span>
         </div>
         <div
           role="progressbar"
-          aria-label={`${track}: ${percent}% done`}
+          aria-label={t("{track}: {percent}% done", { track: t(track), percent })}
           aria-valuemin={0}
           aria-valuemax={100}
           aria-valuenow={percent}
@@ -59,6 +61,7 @@ export function LevelCard({
 
 /** Figma "Daily Challenge": move one of your tasks today. Opens the squad board. */
 export function DailyChallengeCard({ className = "" }: { className?: string }) {
+  const t = useT();
   return (
     <Link
       href="/learner/interns/internship"
@@ -68,13 +71,13 @@ export function DailyChallengeCard({ className = "" }: { className?: string }) {
         <CalendarCheck className="h-[1.8em] w-[1.8em]" />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-[1em] font-bold text-[#14365a]">Daily Challenge</span>
-        <span className="block text-[0.8em] text-[#14365a]/75">Complete 1 task today</span>
+        <span className="block text-[1em] font-bold text-[#14365a]">{t("Daily Challenge")}</span>
+        <span className="block text-[0.8em] text-[#14365a]/75">{t("Complete 1 task today")}</span>
         <span className="mt-[0.4em] inline-block rounded-full bg-[#ffd84d] px-[0.7em] py-[0.15em] text-[0.75em] font-bold text-[#7a5200]">
-          +{TASK_XP} XP
+          {t("+{xp} XP", { xp: TASK_XP })}
         </span>
       </span>
-      <span className="grid h-[2em] w-[2em] shrink-0 place-items-center rounded-[0.5em] bg-[#2fa59b] text-white transition-transform group-hover:translate-x-0.5">
+      <span className="grid h-[2em] w-[2em] shrink-0 place-items-center rounded-[0.5em] bg-[#2fa59b] text-white transition-transform group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5">
         <ArrowRight className="h-[1.1em] w-[1.1em]" />
       </span>
     </Link>
@@ -83,6 +86,7 @@ export function DailyChallengeCard({ className = "" }: { className?: string }) {
 
 /** The next session the student booked with a mentor (GET /student/sessions), linking to the mentor page. */
 export function NextSessionCard({ className = "" }: { className?: string }) {
+  const t = useT();
   const [next, setNext] = useState<MentorSession | null>(null);
 
   useEffect(() => {
@@ -104,7 +108,9 @@ export function NextSessionCard({ className = "" }: { className?: string }) {
       </span>
       <span className="min-w-0">
         <span className="block text-[0.95em] font-bold text-[#14365a]">
-          {next.type === "OneToOne" ? "1:1" : "Group"} session with {next.mentor.fullName}
+          {next.type === "OneToOne"
+            ? t("1:1 session with {name}", { name: next.mentor.fullName })
+            : t("Group session with {name}", { name: next.mentor.fullName })}
         </span>
         <span className="block text-[0.8em] text-[#14365a]/75">{sessionTime(next.startsUtc)}</span>
       </span>
@@ -114,6 +120,7 @@ export function NextSessionCard({ className = "" }: { className?: string }) {
 
 /** Figma "Rewards": total XP, the learning streak and the badges earned (GET /student/achievements). */
 export function RewardsButton({ className = "" }: { className?: string }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [data, setData] = useState<Achievements | null>(null);
   const [failed, setFailed] = useState(false);
@@ -142,40 +149,40 @@ export function RewardsButton({ className = "" }: { className?: string }) {
     <div ref={box} className={`relative ${className}`}>
       {open && (
         <section
-          aria-label="Your rewards"
+          aria-label={t("Your rewards")}
           className="absolute bottom-full end-0 mb-[0.6em] w-[17em] rounded-[1.2em] border border-white/80 bg-white/90 p-[1em] text-[#14365a] shadow-xl backdrop-blur-md"
         >
           <div className="flex items-center justify-between">
-            <h2 className="text-[1.05em] font-extrabold">Your rewards</h2>
-            <button type="button" onClick={() => setOpen(false)} aria-label="Close" className="text-[#14365a]/60 hover:text-[#14365a]">
+            <h2 className="text-[1.05em] font-extrabold">{t("Your rewards")}</h2>
+            <button type="button" onClick={() => setOpen(false)} aria-label={t("Close")} className="text-[#14365a]/60 hover:text-[#14365a]">
               <X className="h-[1.1em] w-[1.1em]" />
             </button>
           </div>
           {!data && !failed && <LoaderCircle className="mx-auto my-[1em] h-[1.6em] w-[1.6em] animate-spin text-[#12939b]" />}
-          {failed && <p className="mt-[0.6em] text-[0.85em] text-[#14365a]/70">We couldn&apos;t load your rewards. Please try again.</p>}
+          {failed && <p className="mt-[0.6em] text-[0.85em] text-[#14365a]/70">{t("We couldn't load your rewards. Please try again.")}</p>}
           {data && (
             <>
               <div className="mt-[0.8em] grid grid-cols-2 gap-[0.6em] text-center">
                 <p className="rounded-[0.8em] bg-[#e9f7f4] p-[0.6em]">
                   <span className="block text-[1.3em] font-extrabold">{data.totalXp}</span>
-                  <span className="text-[0.75em]">Total XP</span>
+                  <span className="text-[0.75em]">{t("Total XP")}</span>
                 </p>
                 <p className="rounded-[0.8em] bg-[#fff4e5] p-[0.6em]">
                   <span className="flex items-center justify-center gap-[0.2em] text-[1.3em] font-extrabold">
                     <Flame className="h-[0.9em] w-[0.9em] text-[#f97316]" /> {data.streakDays}
                   </span>
-                  <span className="text-[0.75em]">Day streak</span>
+                  <span className="text-[0.75em]">{t("Day streak")}</span>
                 </p>
               </div>
-              <h3 className="mt-[0.9em] text-[0.85em] font-bold">Badges</h3>
+              <h3 className="mt-[0.9em] text-[0.85em] font-bold">{t("Badges")}</h3>
               {data.badges.length === 0 ? (
-                <p className="mt-[0.3em] text-[0.8em] text-[#14365a]/65">Pass a lesson linked to school to earn your first badge.</p>
+                <p className="mt-[0.3em] text-[0.8em] text-[#14365a]/65">{t("Pass a lesson linked to school to earn your first badge.")}</p>
               ) : (
                 <ul className="mt-[0.4em] flex max-h-[10em] flex-col gap-[0.4em] overflow-y-auto">
                   {data.badges.map((b) => (
                     <li key={b.code} className="flex items-center gap-[0.5em] text-[0.8em]">
                       <Award className="h-[1.3em] w-[1.3em] shrink-0 text-[#d4a017]" />
-                      <span className="min-w-0 flex-1 truncate font-semibold">{b.name}</span>
+                      <span className="min-w-0 flex-1 truncate font-semibold">{t(b.name)}</span>
                     </li>
                   ))}
                 </ul>
@@ -191,7 +198,7 @@ export function RewardsButton({ className = "" }: { className?: string }) {
         className="flex h-[6.4em] w-[6.4em] flex-col items-center justify-center gap-[0.2em] rounded-[1.2em] border border-white/80 bg-white/45 text-[0.85em] font-bold text-[#14365a] shadow-lg shadow-[#14365a]/10 backdrop-blur-md hover:bg-white/60"
       >
         <Gift className="h-[2.6em] w-[2.6em] text-[#e11d48]" strokeWidth={1.8} />
-        Rewards
+        {t("Rewards")}
       </button>
     </div>
   );
