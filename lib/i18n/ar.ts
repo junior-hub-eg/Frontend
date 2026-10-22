@@ -9,6 +9,7 @@ import { interns } from "./ar/interns";
 import { landing } from "./ar/landing";
 import { math } from "./ar/math";
 import { learner } from "./ar/learner";
+import { lesson } from "./ar/lesson";
 import { mentors } from "./ar/mentors";
 import { recruitment } from "./ar/recruitment";
 
@@ -27,4 +28,5 @@ export const ar: Record<string, string> = {
   ...math,
   ...account,
   ...interns,
+  ...lesson,
 };

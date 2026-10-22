@@ -37,6 +37,8 @@ import {
   type TrackLevel,
 } from "@/lib/learning-api";
 import { offlineLessons, trackName } from "./offline-data";
+import { useT } from "@/lib/i18n/client";
+import { tk, tNow } from "@/lib/i18n/translate";
 
 type View = {
   id: string;
@@ -56,9 +58,9 @@ type State = { kind: "loading" } | { kind: "ready"; view: View };
 type Comment = { id: string; name: string; text: string; time: string };
 
 const OBJECTIVES = [
-  "Understand what UI/UX design really is",
-  "Learn the core vocabulary designers use",
-  "Spot the difference between good and poor usability",
+  tk("Understand what UI/UX design really is"),
+  tk("Learn the core vocabulary designers use"),
+  tk("Spot the difference between good and poor usability"),
 ];
 
 const RESOURCES = [
@@ -66,29 +68,29 @@ const RESOURCES = [
     tag: "PDF",
     color: "#c0392b",
     bg: "#fbe9e7",
-    name: "Lesson slides",
+    name: tk("Lesson slides"),
     meta: "2.4 MB · PDF",
   },
   {
     tag: "KIT",
     color: "#7a4fd6",
     bg: "#efe7fb",
-    name: "Wireframe starter kit",
+    name: tk("Wireframe starter kit"),
     meta: "8 KB · Figma",
   },
   {
     tag: "DOC",
     color: "#2f6fc4",
     bg: "#e4f0ff",
-    name: "Further reading list",
-    meta: "6 articles",
+    name: tk("Further reading list"),
+    meta: tk("6 articles"),
   },
 ];
 
 const DEMO_META = [
-  "8 min · Video lesson",
-  "12 min · Video + quiz",
-  "18 min · Hands-on project",
+  tk("8 min · Video lesson"),
+  tk("12 min · Video + quiz"),
+  tk("18 min · Hands-on project"),
 ];
 
 /** Demo comments + like count until the backend has them. */
@@ -96,19 +98,19 @@ const SEED_COMMENTS: Comment[] = [
   {
     id: "d1",
     name: "Sara Ahmed",
-    text: "This explained it so clearly, thank you!",
+    text: tk("This explained it so clearly, thank you!"),
     time: "2h",
   },
   {
     id: "d2",
     name: "Omar Hassan",
-    text: "Can we get the wireframe kit in Figma?",
+    text: tk("Can we get the wireframe kit in Figma?"),
     time: "5h",
   },
   {
     id: "d3",
     name: "Mariam Tarek",
-    text: "The vocabulary part helped me a lot.",
+    text: tk("The vocabulary part helped me a lot."),
     time: "1d",
   },
 ];
@@ -118,10 +120,10 @@ const BASE_LIKES = 128;
 /* ---------- Try-it-yourself challenge ---------- */
 
 const CHALLENGE = {
-  task: "Write a function named sum that takes two numbers and returns their total.",
+  task: tk("Write a function named sum that takes two numbers and returns their total."),
   starter: "function sum(a, b) {\n  // write your code here\n}",
   fn: "sum",
-  hint: "Use the return keyword to send the result back.",
+  hint: tk("Use the return keyword to send the result back."),
   tests: [
     { args: [2, 3], expected: 5 },
     { args: [10, -4], expected: 6 },
@@ -151,12 +153,12 @@ function runChallenge(source: string): CheckResult {
       return {
         ok: false,
         results: [],
-        error: `Define a function named ${CHALLENGE.fn}.`,
+        error: tNow("Define a function named {name}.", { name: CHALLENGE.fn }),
       };
     }
 
     const results = CHALLENGE.tests.map((t) => {
-      const label = `${CHALLENGE.fn}(${t.args.join(", ")}) should return ${t.expected}`;
+      const label = tNow("{call} should return {value}", { call: `${CHALLENGE.fn}(${t.args.join(", ")})`, value: t.expected });
 
       try {
         const got = fn(...t.args);
@@ -186,15 +188,15 @@ function runChallenge(source: string): CheckResult {
       error:
         e instanceof Error
           ? e.message
-          : "Your code has an error.",
+          : tNow("Your code has an error."),
     };
   }
 }
 
 const lessonMeta = (l: LessonSummary, i: number) =>
   l.durationSeconds > 0
-    ? `${Math.max(1, Math.round(l.durationSeconds / 60))} min · Video lesson`
-    : (DEMO_META[i] ?? DEMO_META[0]);
+    ? tNow("{n} min · Video lesson", { n: Math.max(1, Math.round(l.durationSeconds / 60)) })
+    : tNow(DEMO_META[i] ?? DEMO_META[0]);
 
 const readStore = <T,>(key: string, fallback: T): T => {
   try {
@@ -250,6 +252,7 @@ export default function LessonPage({
   code: string;
   lessonId: string;
 }) {
+  const t = useT();
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -389,12 +392,12 @@ export default function LessonPage({
   // Reels navigation with the arrow keys
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      const t = e.target as HTMLElement | null;
+      const el = e.target as HTMLElement | null;
 
       if (
-        t &&
-        (t.tagName === "INPUT" ||
-          t.tagName === "TEXTAREA")
+        el &&
+        (el.tagName === "INPUT" ||
+          el.tagName === "TEXTAREA")
       ) {
         return;
       }
@@ -416,9 +419,9 @@ export default function LessonPage({
 
   /* Desktop: one screen, no page scroll. */
   const wrapper = (children: React.ReactNode) => (
-    <div className="relative -ml-[4rem] min-h-[calc(100svh-5rem)] min-w-0 flex-1 bg-[#fbfdff] lg:absolute lg:inset-0 lg:ml-0 lg:min-h-0">
+    <div className="relative -ms-[4rem] min-h-[calc(100svh-5rem)] min-w-0 flex-1 bg-[#fbfdff] lg:absolute lg:inset-0 lg:ms-0 lg:min-h-0">
       <div
-        className="relative min-w-0 pb-8 pl-[4.75rem] pr-3 pt-2 sm:pr-4 lg:absolute lg:inset-0 lg:flex lg:flex-col lg:overflow-hidden lg:pb-[calc(var(--u)*1.2)] lg:pl-[var(--hl)] lg:pr-[calc(var(--u)*1.6)] lg:pt-[calc(var(--u)*6.5)]"
+        className="relative min-w-0 pb-8 ps-[4.75rem] pe-3 pt-2 sm:pe-4 lg:absolute lg:inset-0 lg:flex lg:flex-col lg:overflow-hidden lg:pb-[calc(var(--u)*1.2)] lg:ps-[var(--hl)] lg:pe-[calc(var(--u)*1.6)] lg:pt-[calc(var(--u)*6.5)]"
         style={{
           fontSize: "clamp(11px, calc(var(--u) * 1.05), 17px)",
         }}
@@ -433,7 +436,7 @@ export default function LessonPage({
       <div
         className="grid min-h-[50vh] flex-1 place-items-center"
         role="status"
-        aria-label="Loading"
+        aria-label={t("Loading")}
       >
         <LoaderCircle className="size-8 animate-spin text-[#12939b]" />
       </div>,
@@ -552,9 +555,9 @@ export default function LessonPage({
     const updated = [
       {
         id: String(Date.now()),
-        name: "You",
+        name: t("You"),
         text,
-        time: "Just now",
+        time: t("Just now"),
       },
       ...mine,
     ];
@@ -585,7 +588,7 @@ export default function LessonPage({
       setError(
         errorMessage(
           e,
-          "Could not save your progress.",
+          tk("We couldn't save your progress. Please try again."),
         ),
       );
     } finally {
@@ -600,7 +603,7 @@ export default function LessonPage({
         className="mb-[0.6em] inline-flex w-fit items-center gap-[0.5em] text-[0.8em] font-semibold text-[#12606b] hover:underline lg:shrink-0"
       >
         <ArrowLeft className="size-[1.1em]" />
-        Track Details
+        {t("Track Details")}
       </Link>
 
       <div className="grid gap-[1em] lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1fr)_27%]">
@@ -634,8 +637,8 @@ export default function LessonPage({
                     className="absolute inset-0 size-full object-cover"
                   />
                 ) : (
-                  <span className="absolute left-[1em] top-[1em] rounded-[0.4em] bg-black/40 px-[0.6em] py-[0.15em] text-[0.55em] font-bold text-white">
-                    Video preview
+                  <span className="absolute start-[1em] top-[1em] rounded-[0.4em] bg-black/40 px-[0.6em] py-[0.15em] text-[0.55em] font-bold text-white">
+                    {t("Video preview")}
                   </span>
                 )}
 
@@ -645,7 +648,7 @@ export default function LessonPage({
                   type="button"
                   onClick={togglePlay}
                   aria-label={
-                    playing ? "Pause video" : "Play video"
+                    playing ? t("Pause video") : t("Play video")
                   }
                   className="absolute inset-0 grid place-items-center"
                 >
@@ -661,8 +664,8 @@ export default function LessonPage({
                 <button
                   type="button"
                   onClick={() => setMuted((m) => !m)}
-                  aria-label={muted ? "Unmute" : "Mute"}
-                  className="absolute right-[0.8em] top-[0.8em] grid size-[2.2em] place-items-center rounded-full bg-black/40 text-white"
+                  aria-label={muted ? t("Unmute") : t("Mute")}
+                  className="absolute end-[0.8em] top-[0.8em] grid size-[2.2em] place-items-center rounded-full bg-black/40 text-white"
                 >
                   {muted ? (
                     <VolumeX className="size-[1.1em]" />
@@ -684,7 +687,7 @@ export default function LessonPage({
                     </span>
 
                     <span className="rounded-full border border-white/60 px-[0.7em] py-[0.05em] text-[0.55em] font-semibold">
-                      {view.trackName}
+                      {t(view.trackName)}
                     </span>
                   </div>
 
@@ -714,7 +717,7 @@ export default function LessonPage({
               {prev ? (
                 <Link
                   href={lessonPath(code, prev.id) as Route}
-                  aria-label="Previous lesson"
+                  aria-label={t("Previous lesson")}
                   className={circleBtn}
                 >
                   <ChevronUp className="size-[1.3em]" />
@@ -729,7 +732,7 @@ export default function LessonPage({
                 type="button"
                 onClick={toggleLike}
                 aria-pressed={liked}
-                aria-label="Like"
+                aria-label={t("Like")}
                 className="flex flex-col items-center gap-[0.15em]"
               >
                 <span className={circleBtn}>
@@ -750,7 +753,7 @@ export default function LessonPage({
               <button
                 type="button"
                 onClick={() => setPanel("comments")}
-                aria-label="Comments"
+                aria-label={t("Comments")}
                 className="flex flex-col items-center gap-[0.15em]"
               >
                 <span className={circleBtn}>
@@ -765,7 +768,7 @@ export default function LessonPage({
               <button
                 type="button"
                 onClick={share}
-                aria-label="Share"
+                aria-label={t("Share")}
                 className="flex flex-col items-center gap-[0.15em]"
               >
                 <span className={circleBtn}>
@@ -773,7 +776,7 @@ export default function LessonPage({
                 </span>
 
                 <span className="text-[0.6em] font-semibold text-[#14365a]">
-                  {copied ? "Copied" : "Share"}
+                  {copied ? t("Copied") : t("Share")}
                 </span>
               </button>
 
@@ -781,7 +784,7 @@ export default function LessonPage({
                 type="button"
                 onClick={toggleSave}
                 aria-pressed={saved}
-                aria-label="Save"
+                aria-label={t("Save")}
                 className="flex flex-col items-center gap-[0.15em]"
               >
                 <span className={circleBtn}>
@@ -795,14 +798,14 @@ export default function LessonPage({
                 </span>
 
                 <span className="text-[0.6em] font-semibold text-[#14365a]">
-                  {saved ? "Saved" : "Save"}
+                  {saved ? t("Saved") : t("Save")}
                 </span>
               </button>
 
               {next ? (
                 <Link
                   href={lessonPath(code, next.id) as Route}
-                  aria-label="Next lesson"
+                  aria-label={t("Next lesson")}
                   className={circleBtn}
                 >
                   <ChevronDown className="size-[1.3em]" />
@@ -822,13 +825,13 @@ export default function LessonPage({
           >
             <div
               role="tablist"
-              aria-label="Lesson panel"
+              aria-label={t("Lesson panel")}
               className="flex shrink-0 border-b border-[#e3ebf3] p-[0.3em]"
             >
               {(
                 [
-                  ["comments", `Comments (${comments.length})`],
-                  ["overview", "Overview"],
+                  ["comments", t("Comments ({n})", { n: comments.length })],
+                  ["overview", t("Overview")],
                 ] as const
               ).map(([id, text]) => (
                 <button
@@ -875,8 +878,8 @@ export default function LessonPage({
                           </span>
                         </span>
 
-                        <span className="mt-[0.1em] block break-words text-[0.75em] text-[#14365a]/85">
-                          {c.text}
+                        <span dir="auto" className="mt-[0.1em] block break-words text-[0.75em] text-[#14365a]/85">
+                          {t(c.text)}
                         </span>
                       </span>
                     </li>
@@ -890,7 +893,8 @@ export default function LessonPage({
                   <input
                     value={draft}
                     onChange={(e) => setDraft(e.target.value)}
-                    placeholder="Add a comment..."
+                    dir="auto"
+                    placeholder={t("Add a comment...")}
                     maxLength={300}
                     className="h-[2.6em] min-w-0 flex-1 rounded-full border border-[#e1e8f0] bg-[#f6fafd] px-[1.1em] text-[0.75em] text-[#14365a] outline-none placeholder:text-[#14365a]/45 focus:ring-2 focus:ring-[#12939b]/30"
                   />
@@ -898,7 +902,7 @@ export default function LessonPage({
                   <button
                     type="submit"
                     disabled={!draft.trim()}
-                    aria-label="Post comment"
+                    aria-label={t("Post comment")}
                     className="grid size-[2.6em] shrink-0 place-items-center rounded-full bg-[#12606b] text-white disabled:opacity-40"
                   >
                     <Send className="size-[1.1em]" />
@@ -911,7 +915,7 @@ export default function LessonPage({
               >
                 <div>
                   <h2 className="text-[0.85em] font-extrabold text-[#14365a]">
-                    What you will learn
+                    {t("What you will learn")}
                   </h2>
 
                   <ul className="mt-[0.5em] space-y-[0.4em]">
@@ -921,7 +925,7 @@ export default function LessonPage({
                         className="flex items-center gap-[0.5em] text-[0.72em] text-[#14365a]/85"
                       >
                         <CheckCircle2 className="size-[1.3em] shrink-0 text-[#12939b]" />
-                        {o}
+                        {t(o)}
                       </li>
                     ))}
                   </ul>
@@ -929,47 +933,47 @@ export default function LessonPage({
 
                 <div>
                   <h2 className="text-[0.85em] font-extrabold text-[#14365a]">
-                    Lesson summary
+                    {t("Lesson summary")}
                   </h2>
 
                   <dl className="mt-[0.3em] divide-y divide-[#eef2f6] text-[0.72em]">
                     <div className="flex items-center justify-between py-[0.4em]">
                       <dt className="text-[#14365a]/65">
-                        Estimated time
+                        {t("Estimated time")}
                       </dt>
 
                       <dd className="font-semibold text-[#14365a]">
-                        {view.minutes} minutes
+                        {t("{n} minutes", { n: view.minutes })}
                       </dd>
                     </div>
 
                     <div className="flex items-center justify-between py-[0.4em]">
                       <dt className="text-[#14365a]/65">
-                        Level
+                        {t("Level")}
                       </dt>
 
                       <dd className="rounded-full bg-[#dff5e8] px-[0.8em] py-[0.05em] text-[0.9em] font-semibold text-[#2a9a5f]">
-                        {view.level}
+                        {t(view.level)}
                       </dd>
                     </div>
 
                     <div className="flex items-center justify-between py-[0.4em]">
                       <dt className="text-[#14365a]/65">
-                        Format
+                        {t("Format")}
                       </dt>
 
                       <dd className="font-semibold text-[#14365a]">
-                        Video lesson
+                        {t("Video lesson")}
                       </dd>
                     </div>
 
                     <div className="flex items-center justify-between py-[0.4em]">
                       <dt className="text-[#14365a]/65">
-                        Lesson
+                        {t("Lesson")}
                       </dt>
 
                       <dd className="font-semibold text-[#14365a]">
-                        {idx + 1} of {list.length}
+                        {t("{n} of {total}", { n: idx + 1, total: list.length })}
                       </dd>
                     </div>
                   </dl>
@@ -979,7 +983,7 @@ export default function LessonPage({
                   href={`${base}/challenge` as Route}
                   className="inline-flex rounded-[0.5em] bg-[#12606b] px-[1.4em] py-[0.55em] text-[0.75em] font-semibold text-white hover:bg-[#0f505a]"
                 >
-                  Open Lesson
+                  {t("Open Lesson")}
                 </Link>
               </div>
             )}
@@ -1008,15 +1012,15 @@ export default function LessonPage({
 
               <span className="leading-tight">
                 <span className={`${label} block`}>
-                  Your progress
+                  {t("Your progress")}
                 </span>
 
                 <span className="mt-[0.2em] block text-[0.85em] font-extrabold text-[#14365a]">
-                  Lesson {idx + 1} of {list.length}
+                  {t("Lesson {n} of {total}", { n: idx + 1, total: list.length })}
                 </span>
 
                 <span className="mt-[0.25em] inline-block rounded-full bg-[#e7f6f3] px-[0.7em] py-[0.05em] text-[0.55em] font-semibold text-[#12939b]">
-                  {completed ? "Completed" : "In progress"}
+                  {completed ? t("Completed") : t("In progress")}
                 </span>
               </span>
             </div>
@@ -1028,10 +1032,10 @@ export default function LessonPage({
               className="mt-[0.6em] w-full rounded-[0.5em] border border-[#12939b]/60 bg-white py-[0.45em] text-[0.7em] font-semibold text-[#12606b] hover:bg-[#eef8f7] disabled:opacity-60"
             >
               {busy
-                ? "Saving..."
+                ? t("Saving...")
                 : completed
-                  ? "Completed"
-                  : "Mark as Complete"}
+                  ? t("Completed")
+                  : t("Mark as Complete")}
             </button>
 
             {error && (
@@ -1049,15 +1053,15 @@ export default function LessonPage({
           <section className={`${box} p-[0.8em]`}>
             <div className="flex items-start justify-between">
               <div>
-                <p className={label}>Track content</p>
+                <p className={label}>{t("Track content")}</p>
 
                 <h2 className="text-[0.9em] font-extrabold text-[#14365a]">
-                  Lessons
+                  {t("Lessons")}
                 </h2>
               </div>
 
               <span className="rounded-full bg-[#e7f6f3] px-[0.7em] py-[0.1em] text-[0.55em] font-semibold text-[#12939b]">
-                {list.length} lessons
+                {t("{n} lessons", { n: list.length })}
               </span>
             </div>
 
@@ -1096,7 +1100,7 @@ export default function LessonPage({
 
                       <span className="min-w-0 flex-1 leading-tight">
                         <span className="block truncate text-[0.72em] font-semibold text-[#14365a]">
-                          {l.title}
+                          {t(l.title)}
                         </span>
 
                         <span className="block text-[0.58em] text-[#14365a]/60">
@@ -1115,22 +1119,22 @@ export default function LessonPage({
           <section className={`${box} p-[0.8em]`}>
             <div className="flex items-start justify-between">
               <div>
-                <p className={label}>Practice</p>
+                <p className={label}>{t("Practice")}</p>
 
                 <h2 className="text-[0.9em] font-extrabold text-[#14365a]">
-                  Try it yourself
+                  {t("Try it yourself")}
                 </h2>
               </div>
 
               {solved && (
                 <span className="rounded-full bg-[#dff5e8] px-[0.7em] py-[0.1em] text-[0.55em] font-semibold text-[#2a9a5f]">
-                  Solved
+                  {t("Solved")}
                 </span>
               )}
             </div>
 
             <p className="mt-[0.3em] text-[0.65em] text-[#14365a]/75">
-              {CHALLENGE.task}
+              {t(CHALLENGE.task)}
             </p>
 
             <textarea
@@ -1138,7 +1142,7 @@ export default function LessonPage({
               onChange={(e) => setSnippet(e.target.value)}
               spellCheck={false}
               dir="ltr"
-              aria-label="Your code"
+              aria-label={t("Your code")}
               rows={5}
               className="mt-[0.5em] w-full resize-none rounded-[0.5em] border border-[#e1e8f0] bg-[#0f2a3d] p-[0.6em] font-mono text-[0.65em] leading-relaxed text-[#d6f5ef] outline-none focus:ring-2 focus:ring-[#12939b]/40"
             />
@@ -1149,7 +1153,7 @@ export default function LessonPage({
                 onClick={checkCode}
                 className="flex-1 rounded-[0.5em] bg-[#12606b] py-[0.45em] text-[0.7em] font-semibold text-white hover:bg-[#0f505a]"
               >
-                Run &amp; Check
+                {t("Run & Check")}
               </button>
 
               <button
@@ -1157,7 +1161,7 @@ export default function LessonPage({
                 onClick={resetCode}
                 className="rounded-[0.5em] border border-[#12939b]/60 bg-white px-[1em] py-[0.45em] text-[0.7em] font-semibold text-[#12606b] hover:bg-[#eef8f7]"
               >
-                Reset
+                {t("Reset")}
               </button>
             </div>
 
@@ -1174,8 +1178,8 @@ export default function LessonPage({
                   }`}
                 >
                   {check.ok
-                    ? "Correct! Nice work."
-                    : "Not quite yet. Check the details and try again."}
+                    ? t("Correct! Nice work.")
+                    : t("Not quite yet. Check the details and try again.")}
                 </p>
 
                 {check.error && (
@@ -1195,13 +1199,13 @@ export default function LessonPage({
                       <XCircle className="mt-[0.1em] size-[1.2em] shrink-0 text-[#c0392b]" />
                     )}
 
-                    <span>
+                    <span dir="auto">
                       {r.label}
 
                       {!r.pass && (
                         <span className="text-[#c0392b]">
                           {" "}
-                          (you got {r.got})
+                          {t("(you got {value})", { value: r.got })}
                         </span>
                       )}
                     </span>
@@ -1210,7 +1214,7 @@ export default function LessonPage({
 
                 {!check.ok && (
                   <p className="text-[0.6em] italic text-[#14365a]/60">
-                    Hint: {CHALLENGE.hint}
+                    {t("Hint: {hint}", { hint: t(CHALLENGE.hint) })}
                   </p>
                 )}
               </div>
@@ -1221,36 +1225,36 @@ export default function LessonPage({
 
           <section className="rounded-[0.9em] bg-gradient-to-br from-[#14586a] to-[#1d8a8f] p-[0.9em] text-white">
             <p className="text-[0.5em] font-bold uppercase tracking-wide text-white/70">
-              Lesson quiz
+              {t("Lesson quiz")}
             </p>
 
             <h2 className="mt-[0.2em] text-[1em] font-extrabold">
-              Check your understanding
+              {t("Check your understanding")}
             </h2>
 
             <p className="mt-[0.15em] text-[0.6em] text-white/80">
-              {view.questionCount} questions · about 5 minutes
+              {t("{n} questions · about 5 minutes", { n: view.questionCount })}
             </p>
 
             <Link
               href={`${base}/quiz` as Route}
               className="mt-[0.6em] inline-flex items-center rounded-[0.5em] bg-white px-[1.1em] py-[0.4em] text-[0.7em] font-semibold text-[#12606b] hover:bg-[#eef8f7]"
             >
-              Start quiz
+              {t("Start quiz")}
             </Link>
           </section>
 
           {/* Resources */}
 
           <section className={`${box} p-[0.8em]`}>
-            <p className={label}>Resources</p>
+            <p className={label}>{t("Resources")}</p>
 
             <ul className="mt-[0.3em] space-y-[0.1em]">
               {RESOURCES.map((r) => (
                 <li key={r.name}>
                   <button
                     type="button"
-                    className="flex w-full items-center gap-[0.6em] rounded-[0.6em] px-[0.3em] py-[0.3em] text-left hover:bg-[#f3f8fb]"
+                    className="flex w-full items-center gap-[0.6em] rounded-[0.6em] px-[0.3em] py-[0.3em] text-start hover:bg-[#f3f8fb]"
                   >
                     <span
                       className="grid size-[2em] shrink-0 place-items-center rounded-[0.5em] text-[0.5em] font-bold"
@@ -1264,11 +1268,11 @@ export default function LessonPage({
 
                     <span className="min-w-0 flex-1 leading-tight">
                       <span className="block truncate text-[0.7em] font-semibold text-[#14365a]">
-                        {r.name}
+                        {t(r.name)}
                       </span>
 
                       <span className="block text-[0.55em] text-[#14365a]/60">
-                        {r.meta}
+                        {t(r.meta)}
                       </span>
                     </span>
 
@@ -1282,7 +1286,7 @@ export default function LessonPage({
           {/* Mentor */}
 
           <section className={`${box} p-[0.8em]`}>
-            <p className={label}>Your mentor</p>
+            <p className={label}>{t("Your mentor")}</p>
 
             <div className="mt-[0.4em] flex items-center gap-[0.6em]">
               <span className="grid size-[2.4em] shrink-0 place-items-center rounded-full bg-[#12606b] text-[0.7em] font-bold text-white">
@@ -1295,7 +1299,7 @@ export default function LessonPage({
                 </span>
 
                 <span className="block text-[0.58em] text-[#14365a]/60">
-                  {view.trackName} · 4+ years
+                  {t(view.trackName)} · {t("{n}+ years", { n: 4 })}
                 </span>
               </span>
             </div>
@@ -1305,7 +1309,7 @@ export default function LessonPage({
               onClick={() => setPanel("comments")}
               className="mt-[0.5em] w-full rounded-[0.5em] bg-[#12606b] py-[0.45em] text-[0.7em] font-semibold text-white hover:bg-[#0f505a]"
             >
-              Ask a question
+              {t("Ask a question")}
             </button>
           </section>
         </aside>

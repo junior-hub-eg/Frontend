@@ -17,25 +17,28 @@ import {
 } from "@/lib/calendar-api";
 import type { TaskStatus } from "@/lib/interns-api";
 import { useLiveChannel } from "@/lib/live-channel";
+import { useI18n } from "@/lib/i18n/client";
+import { tk, tNow } from "@/lib/i18n/translate";
 
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const REMINDER_DAYS = [0, 1, 2, 3];
 
 const STATUS_STYLE: Record<TaskStatus, { label: string; color: string }> = {
-  ToDo: { label: "To do", color: "#8aa0b8" },
-  InProgress: { label: "In progress", color: "#2f6fc4" },
-  Review: { label: "In review", color: "#a86a00" },
-  Done: { label: "Done", color: "#1f7a43" },
+  ToDo: { label: tk("To Do"), color: "#8aa0b8" },
+  InProgress: { label: tk("In Progress"), color: "#2f6fc4" },
+  Review: { label: tk("In review"), color: "#a86a00" },
+  Done: { label: tk("Done"), color: "#1f7a43" },
 };
 
 /** The squad has no tasks for this student yet: the calendar waits for them instead of showing an error. */
 const EMPTY_CODES = ["NO_SQUAD", "PROJECT_NOT_READY"];
 
 function dueLabel(days: number) {
-  if (days < 0) return `Overdue by ${-days} ${days === -1 ? "day" : "days"}`;
-  if (days === 0) return "Due today";
-  if (days === 1) return "Due tomorrow";
-  return `Due in ${days} days`;
+  if (days === -1) return tNow("Overdue by 1 day");
+  if (days < 0) return tNow("Overdue by {n} days", { n: -days });
+  if (days === 0) return tNow("Due today");
+  if (days === 1) return tNow("Due tomorrow");
+  return tNow("Due in {n} days", { n: days });
 }
 
 function notify(title: string, body: string) {
@@ -47,6 +50,7 @@ function notify(title: string, body: string) {
  * Tells the student when a new task arrives (live, or within a minute when the live channel is not connected).
  */
 export default function TaskCalendar() {
+  const { t, intl } = useI18n();
   const [today] = useState(() => new Date());
   const [cursor, setCursor] = useState(() => ({ year: today.getFullYear(), month: today.getMonth() }));
   const [selected, setSelected] = useState<string>(() => toDateKey(today));
@@ -67,7 +71,7 @@ export default function TaskCalendar() {
       const fresh = seen ? list.filter((t) => !seen.has(t.id)) : [];
       if (fresh.length > 0) {
         setNewTasks((prev) => [...fresh, ...prev.filter((p) => !fresh.some((f) => f.id === p.id))]);
-        if (loadPrefs().remind) fresh.forEach((t) => notify("New task", `${t.title} · ${dueLabel(daysUntil(t.dueDate, new Date())).toLowerCase()}`));
+        if (loadPrefs().remind) fresh.forEach((t) => notify(tNow("New task"), `${t.title} · ${dueLabel(daysUntil(t.dueDate, new Date()))}`));
       }
       saveSeenIds(new Set([...(seen ?? []), ...list.map((t) => t.id)]));
     } catch (e) {
@@ -140,9 +144,9 @@ export default function TaskCalendar() {
         {error}
       </p>
     );
-  if (!tasks) return <LoaderCircle className="mx-auto my-[1.5em] h-[1.6em] w-[1.6em] animate-spin text-[#12939b]" aria-label="Loading calendar" />;
+  if (!tasks) return <LoaderCircle className="mx-auto my-[1.5em] h-[1.6em] w-[1.6em] animate-spin text-[#12939b]" aria-label={t("Loading calendar")} />;
   if (empty)
-    return <p className="text-[0.85em] text-[#14365a]/70">Your task calendar fills in when you join an internship squad and get tasks.</p>;
+    return <p className="text-[0.85em] text-[#14365a]/70">{t("Your task calendar fills in when you join an internship squad and get tasks.")}</p>;
 
   return (
     <div className="grid gap-[0.9em]">
@@ -151,16 +155,16 @@ export default function TaskCalendar() {
           <div className="flex items-center gap-[0.5em]">
             <BellRing className="h-[1.1em] w-[1.1em] shrink-0" />
             <span className="flex-1 font-bold">
-              {newTasks.length === 1 ? "You have a new task" : `You have ${newTasks.length} new tasks`}
+              {newTasks.length === 1 ? t("You have a new task") : t("You have {n} new tasks", { n: newTasks.length })}
             </span>
             <button type="button" onClick={() => setNewTasks([])} className="font-semibold underline">
-              Dismiss
+              {t("Dismiss")}
             </button>
           </div>
           <ul className="mt-[0.3em] grid gap-[0.2em]">
             {newTasks.map((t) => (
               <li key={t.id}>
-                {t.title} · {dueLabel(daysUntil(t.dueDate, today)).toLowerCase()}
+                {t.title} · {dueLabel(daysUntil(t.dueDate, today))}
               </li>
             ))}
           </ul>
@@ -189,29 +193,29 @@ export default function TaskCalendar() {
 
       <div className="rounded-[1em] bg-[#f6f9fc] p-[0.9em]">
         <div className="mb-[0.6em] flex items-center gap-[0.5em]">
-          <p className="flex-1 text-[0.95em] font-bold text-[#14365a]">{first.toLocaleDateString("en-US", { month: "long", year: "numeric" })}</p>
+          <p className="flex-1 text-[0.95em] font-bold text-[#14365a]">{first.toLocaleDateString(intl, { month: "long", year: "numeric" })}</p>
           <button
             type="button"
             onClick={() => shift(-1)}
-            aria-label="Previous month"
+            aria-label={t("Previous month")}
             className="grid h-[2em] w-[2em] place-items-center rounded-full bg-white text-[#14365a] shadow-sm hover:bg-[#e4f7f4]"
           >
-            <ChevronLeft className="h-[1em] w-[1em] rtl:rotate-180" />
+            <ChevronLeft className="h-[1em] w-[1em]" />
           </button>
           <button
             type="button"
             onClick={() => shift(1)}
-            aria-label="Next month"
+            aria-label={t("Next month")}
             className="grid h-[2em] w-[2em] place-items-center rounded-full bg-white text-[#14365a] shadow-sm hover:bg-[#e4f7f4]"
           >
-            <ChevronRight className="h-[1em] w-[1em] rtl:rotate-180" />
+            <ChevronRight className="h-[1em] w-[1em]" />
           </button>
         </div>
 
         <div dir="ltr" className="grid grid-cols-7 gap-[0.2em] text-center">
           {WEEKDAYS.map((d) => (
             <span key={d} className="py-[0.3em] text-[0.7em] font-semibold text-[#14365a]/55">
-              {d}
+              {t(d)}
             </span>
           ))}
           {cells.map((date, i) => {
@@ -224,7 +228,7 @@ export default function TaskCalendar() {
                 key={key}
                 type="button"
                 onClick={() => setSelected(key)}
-                aria-label={`${date.toLocaleDateString("en-US", { month: "long", day: "numeric" })}${list.length ? `, ${list.length} ${list.length === 1 ? "task" : "tasks"}` : ""}`}
+                aria-label={`${date.toLocaleDateString(intl, { month: "long", day: "numeric" })}${list.length ? `، ${list.length === 1 ? t("1 task") : t("{n} tasks", { n: list.length })}` : ""}`}
                 aria-pressed={isSelected}
                 className={`grid aspect-square place-items-center rounded-[0.7em] text-[0.8em] font-semibold transition ${
                   isSelected ? "bg-[#14365a] text-white" : "bg-white text-[#14365a] hover:bg-[#e4f7f4]"
@@ -246,19 +250,19 @@ export default function TaskCalendar() {
 
       <div>
         <p className="mb-[0.4em] text-[0.8em] font-bold text-[#14365a]">
-          {fromDateKey(selected).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
+          {fromDateKey(selected).toLocaleDateString(intl, { weekday: "long", month: "long", day: "numeric" })}
         </p>
         {dayTasks.length === 0 ? (
-          <p className="text-[0.8em] text-[#14365a]/60">No tasks due this day.</p>
+          <p className="text-[0.8em] text-[#14365a]/60">{t("No tasks due this day.")}</p>
         ) : (
           <ul className="grid gap-[0.4em]">
-            {dayTasks.map((t) => (
-              <li key={t.id} className="flex items-center gap-[0.6em] rounded-[0.8em] border border-[#e8eef5] px-[0.9em] py-[0.5em]">
-                <span className="h-[0.7em] w-[0.7em] shrink-0 rounded-full" style={{ backgroundColor: STATUS_STYLE[t.status].color }} />
-                <span className={`min-w-0 flex-1 truncate text-[0.85em] font-semibold text-[#14365a] ${t.status === "Done" ? "line-through opacity-60" : ""}`}>{t.title}</span>
+            {dayTasks.map((x) => (
+              <li key={x.id} className="flex items-center gap-[0.6em] rounded-[0.8em] border border-[#e8eef5] px-[0.9em] py-[0.5em]">
+                <span className="h-[0.7em] w-[0.7em] shrink-0 rounded-full" style={{ backgroundColor: STATUS_STYLE[x.status].color }} />
+                <span className={`min-w-0 flex-1 truncate text-[0.85em] font-semibold text-[#14365a] ${x.status === "Done" ? "line-through opacity-60" : ""}`}>{x.title}</span>
                 <span className="shrink-0 text-[0.75em] text-[#14365a]/65">
-                  {STATUS_STYLE[t.status].label}
-                  {t.dueFromSprint ? " · sprint end" : ""}
+                  {t(STATUS_STYLE[x.status].label)}
+                  {x.dueFromSprint ? ` · ${t("sprint end")}` : ""}
                 </span>
               </li>
             ))}
@@ -277,10 +281,10 @@ export default function TaskCalendar() {
           }`}
         >
           {prefs.remind ? <BellRing className="h-[1.1em] w-[1.1em]" /> : <Bell className="h-[1.1em] w-[1.1em]" />}
-          Reminders {prefs.remind ? "on" : "off"}
+          {prefs.remind ? t("Reminders on") : t("Reminders off")}
         </button>
         <label className="flex items-center gap-[0.4em]">
-          Remind me
+          {t("Remind me")}
           <select
             value={prefs.daysBefore}
             onChange={(e) => update({ ...prefs, daysBefore: Number(e.target.value) })}
@@ -289,7 +293,7 @@ export default function TaskCalendar() {
           >
             {REMINDER_DAYS.map((d) => (
               <option key={d} value={d}>
-                {d === 0 ? "on the day" : `${d} ${d === 1 ? "day" : "days"} before`}
+                {d === 0 ? t("on the day") : d === 1 ? t("1 day before") : t("{n} days before", { n: d })}
               </option>
             ))}
           </select>
