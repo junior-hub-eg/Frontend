@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type
 import { createPortal } from "react-dom";
 import { Poppins } from "next/font/google";
 import Image from "next/image";
-import { ArrowLeft, LoaderCircle, MessagesSquare, Send, Users, X } from "lucide-react";
+import { ArrowLeft, LoaderCircle, MessagesSquare, RotateCw, Send, Users, X } from "lucide-react";
 import { errorMessage } from "@/lib/api-client";
 import { mentorAvatar } from "@/lib/avatars";
 import {
@@ -40,13 +40,21 @@ type Listener = (message: ChatMessageEvent) => void;
  */
 export function useTeamChat(squad: Squad | null) {
   const [threads, setThreads] = useState<ChatThread[]>([]);
+  /** The chats were loaded at least once. */
+  const [loaded, setLoaded] = useState(false);
+  /** Why the last load failed (the API offline or restarting, the project not ready, ...); null when it worked. */
+  const [error, setError] = useState<string | null>(null);
   const listeners = useRef(new Set<Listener>());
 
   const reloadThreads = useCallback(
     () =>
       getChatThreads().then(
-        (r) => setThreads(r.threads),
-        () => {},
+        (r) => {
+          setThreads(r.threads);
+          setLoaded(true);
+          setError(null);
+        },
+        (e) => setError(errorMessage(e, "We couldn't load your team chat. Please try again.")),
       ),
     [],
   );
@@ -82,7 +90,7 @@ export function useTeamChat(squad: Squad | null) {
   const unreadTotal = threads.reduce((n, t) => n + t.unread, 0);
   const unreadFor = useCallback((key: ChatKey) => threads.find((t) => t.with === key)?.unread ?? 0, [threads]);
 
-  return { threads, unreadTotal, unreadFor, reloadThreads, subscribe, live, enabled };
+  return { threads, loaded, error, unreadTotal, unreadFor, reloadThreads, subscribe, live, enabled };
 }
 
 export type TeamChatState = ReturnType<typeof useTeamChat>;
@@ -123,6 +131,31 @@ function Badge({ count }: { count: number }) {
   );
 }
 
+/** A failed load: what went wrong and a Retry button, instead of a spinner that never ends. */
+function LoadError({ message, onRetry }: { message: string; onRetry: () => unknown }) {
+  const [retrying, setRetrying] = useState(false);
+  return (
+    <div role="alert" className="mx-[1em] mt-[2.5em] flex flex-col items-center gap-[0.7em] text-center">
+      <p className="text-[0.9em] font-semibold text-[#b83232]">{message}</p>
+      <button
+        type="button"
+        disabled={retrying}
+        onClick={async () => {
+          setRetrying(true);
+          try {
+            await onRetry();
+          } finally {
+            setRetrying(false);
+          }
+        }}
+        className="flex items-center gap-[0.4em] rounded-[0.8em] bg-[#14365a] px-[1em] py-[0.45em] text-[0.85em] font-bold text-white hover:bg-[#1d4a7a] disabled:opacity-60"
+      >
+        <RotateCw className={`h-[1em] w-[1em] ${retrying ? "animate-spin" : ""}`} aria-hidden /> {retrying ? "Retrying…" : "Retry"}
+      </button>
+    </div>
+  );
+}
+
 /** "14:05" today, else "Oct 21, 14:05". */
 function when(utc: string) {
   const d = new Date(utc);
@@ -148,7 +181,8 @@ function fromEvent(e: ChatMessageEvent, me: string): ChatMessage {
 }
 
 function ThreadList({ chat, avatars, onOpen }: { chat: TeamChatState; avatars: Map<string, { src: string; bg: string }>; onOpen: (key: ChatKey) => void }) {
-  if (chat.threads.length === 0)
+  if (!chat.loaded && chat.error) return <LoadError message={chat.error} onRetry={chat.reloadThreads} />;
+  if (!chat.loaded)
     return <LoaderCircle className="mx-auto mt-[3em] h-[2em] w-[2em] animate-spin text-[#14365a]" aria-label="Loading chats" />;
   return (
     <ul className="grid gap-[0.3em] overflow-y-auto p-[0.6em]">
@@ -199,6 +233,9 @@ function Conversation({
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** The first load failed: shown instead of the messages, with Retry. */
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
   const bottom = useRef<HTMLDivElement>(null);
   const stickToBottom = useRef(true);
   const { reloadThreads, subscribe, live } = chat;
@@ -221,16 +258,17 @@ function Conversation({
       (r) => {
         if (!active) return;
         stickToBottom.current = true;
+        setLoadError(null);
         setMessages(r.messages);
         setHasMore(r.hasMore);
         markRead();
       },
-      (e) => active && setError(errorMessage(e, "We couldn't load this chat. Please try again.")),
+      (e) => active && setLoadError(errorMessage(e, "We couldn't load this chat. Please try again.")),
     );
     return () => {
       active = false;
     };
-  }, [key, markRead]);
+  }, [key, markRead, attempt]);
 
   // New messages of this chat, live.
   useEffect(
@@ -324,7 +362,16 @@ function Conversation({
             {loadingOlder ? "Loading…" : "Load older messages"}
           </button>
         )}
-        {messages === null && !error && <LoaderCircle className="mx-auto mt-[2em] h-[1.8em] w-[1.8em] animate-spin text-[#14365a]" aria-label="Loading messages" />}
+        {messages === null && loadError && (
+          <LoadError
+            message={loadError}
+            onRetry={() => {
+              setLoadError(null);
+              setAttempt((n) => n + 1);
+            }}
+          />
+        )}
+        {messages === null && !loadError && <LoaderCircle className="mx-auto mt-[2em] h-[1.8em] w-[1.8em] animate-spin text-[#14365a]" aria-label="Loading messages" />}
         {messages?.length === 0 && (
           <p className="mt-[2em] text-center text-[0.85em] text-[#14365a]/60">
             {isGroup ? "Say hi to your squad and your monitor!" : `Start your private chat with ${thread.name.split(" ")[0]}.`}
@@ -349,6 +396,7 @@ function Conversation({
         <div ref={bottom} />
       </div>
 
+      {messages !== null && (
       <form onSubmit={send} className="border-t border-[#14365a]/10 p-[0.6em]">
         {error && (
           <p role="alert" className="mb-[0.4em] text-[0.75em] font-semibold text-[#b83232]">
@@ -384,6 +432,7 @@ function Conversation({
           </p>
         )}
       </form>
+      )}
     </>
   );
 }
@@ -449,6 +498,10 @@ export function TeamChatPanel({
 
         {thread ? (
           <Conversation key={thread.with ?? "group"} chat={chat} thread={thread} me={me} avatars={avatars} />
+        ) : open !== undefined && chat.error ? (
+          <LoadError message={chat.error} onRetry={chat.reloadThreads} />
+        ) : open !== undefined && chat.loaded ? (
+          <LoadError message="This chat isn't available. Open the list of chats." onRetry={() => onOpen(undefined)} />
         ) : open !== undefined ? (
           <LoaderCircle className="mx-auto mt-[3em] h-[2em] w-[2em] animate-spin text-[#14365a]" aria-label="Loading chat" />
         ) : (
