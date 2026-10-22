@@ -29,7 +29,7 @@ interface InternshipCardItem {
 
 const INTERNSHIPS: InternshipCardItem[] = [
   {
-    id: "ms-advanced",
+    id: "ml-advanced",
     title: "Machine Learning & Deep Learning: From Basics to Advanced",
     category: "Backend",
     instructor: {

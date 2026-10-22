@@ -213,8 +213,6 @@ export function QuizView({
 function QuizRun({ quiz, onRetry }: { quiz: Quiz; onRetry: () => void }) {
   const { t, locale } = useI18n();
   const letters = locale === "ar" ? LETTERS_AR : LETTERS;
-  const { t, locale } = useI18n();
-  const letters = locale === "ar" ? LETTERS_AR : LETTERS;
   const total = quiz.questions.length;
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<(number | null)[]>(() => quiz.questions.map(() => null));
