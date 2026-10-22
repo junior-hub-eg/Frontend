@@ -197,7 +197,7 @@ export function BookingFlow({ mentor }: { mentor: Mentor }) {
                     onClick={() => setSessionId(s.id)}
                     aria-pressed={active}
                     className={cn(
-                      "flex flex-col rounded-2xl border-2 p-4 text-left transition-colors",
+                      "flex flex-col rounded-2xl border-2 p-4 text-start transition-colors",
                       active ? "border-[#0f6b60] bg-white shadow-md" : "border-transparent bg-white hover:border-[#0f6b60]/30",
                     )}
                   >
@@ -205,7 +205,7 @@ export function BookingFlow({ mentor }: { mentor: Mentor }) {
                       <span className={cn("grid size-9 place-items-center rounded-lg", active ? "bg-[#7fdcb8] text-[#0f6b60]" : "bg-[#EEF0FB] text-[#2b3a8c]")}>
                         <Icon size={17} aria-hidden />
                       </span>
-                      <span className="text-right">
+                      <span className="text-end">
                         <span className={cn("block text-lg font-bold", s.price === 0 ? "text-[#0f6b60]" : "text-[#1b2a5c]")}>
                           {s.price === 0 ? "Free" : `$${s.price}`}
                         </span>
@@ -296,7 +296,7 @@ export function BookingFlow({ mentor }: { mentor: Mentor }) {
                               </span>
                               <span
                                 className={cn(
-                                  "ml-auto rounded-full px-2 py-0.5 text-[10px]",
+                                  "ms-auto rounded-full px-2 py-0.5 text-[10px]",
                                   selected ? "bg-white/20 font-semibold text-white" : slot.highlight ? "bg-[#DDF3E7] font-semibold text-[#1E9D5B]" : "text-[#1b2a5c]/55",
                                 )}
                               >
@@ -354,7 +354,7 @@ export function BookingFlow({ mentor }: { mentor: Mentor }) {
                         onClick={() => setInterest(label)}
                         aria-pressed={active}
                         className={cn(
-                          "flex items-center gap-2 rounded-xl border px-3 py-2.5 text-left text-[11px] font-medium transition-colors",
+                          "flex items-center gap-2 rounded-xl border px-3 py-2.5 text-start text-[11px] font-medium transition-colors",
                           active ? "border-[#0f6b60] bg-[#7fdcb8]/60 text-[#0f6b60]" : "border-[#eef2f5] bg-white text-[#1b2a5c] hover:border-[#0f6b60]/40",
                         )}
                       >
@@ -396,7 +396,7 @@ export function BookingFlow({ mentor }: { mentor: Mentor }) {
                   placeholder="I'm building a space shooter game in Python with Pygame, and I want help making the enemy spaceships bounce and shoot lasers!"
                   className="w-full resize-none rounded-xl bg-[#F3F7FA] p-4 text-xs leading-relaxed text-[#1b2a5c] outline-none placeholder:text-[#1b2a5c]/40 focus:ring-2 focus:ring-[#0f6b60]/25"
                 />
-                <p className="mt-1 text-right text-[10px] text-[#1b2a5c]/50">
+                <p className="mt-1 text-end text-[10px] text-[#1b2a5c]/50">
                   {idea.length}/{IDEA_MAX}
                 </p>
               </div>
@@ -521,7 +521,7 @@ export function BookingFlow({ mentor }: { mentor: Mentor }) {
                   <dt className="flex shrink-0 items-center gap-1.5 text-[#1b2a5c]/70">
                     <Icon size={13} aria-hidden /> {k}
                   </dt>
-                  <dd className="text-right font-semibold text-[#1b2a5c]">{v}</dd>
+                  <dd className="text-end font-semibold text-[#1b2a5c]">{v}</dd>
                 </div>
               ))}
             </dl>
@@ -611,7 +611,7 @@ export function BookingFlow({ mentor }: { mentor: Mentor }) {
                 {Array.from({ length: 5 }, (_, i) => (
                   <Star key={i} size={11} className="fill-[#0f6b60] text-[#0f6b60]" aria-hidden />
                 ))}
-                <span className="ml-1">Verified Mentee</span>
+                <span className="ms-1">Verified Mentee</span>
               </p>
               <blockquote className="mt-1.5 text-[10px] italic leading-relaxed text-[#1b2a5c]/70">
                 &quot;{firstName} untangled our team&apos;s distributed queue deadlocks in under 30 minutes and helped me prepare for my

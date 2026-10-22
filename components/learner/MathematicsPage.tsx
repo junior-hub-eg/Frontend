@@ -101,9 +101,9 @@ export default function MathematicsPage() {
   );
 
   return (
-    <div className="relative -ml-[4rem] min-h-[calc(100svh-5rem)] min-w-0 flex-1 bg-[#fbfdff] lg:absolute lg:inset-0 lg:ml-0 lg:min-h-0">
+    <div className="relative -ms-[4rem] min-h-[calc(100svh-5rem)] min-w-0 flex-1 bg-[#fbfdff] lg:absolute lg:inset-0 lg:ms-0 lg:min-h-0">
       <div
-        className="relative min-w-0 pb-8 pl-[4.75rem] pr-3 pt-2 sm:pr-4 lg:absolute lg:inset-0 lg:overflow-y-auto lg:pb-[calc(var(--u)*2)] lg:pl-[var(--hl)] lg:pr-[calc(var(--u)*1.6)] lg:pt-[calc(var(--u)*6.5)]"
+        className="relative min-w-0 pb-8 ps-[4.75rem] pe-3 pt-2 sm:pe-4 lg:absolute lg:inset-0 lg:overflow-y-auto lg:pb-[calc(var(--u)*2)] lg:ps-[var(--hl)] lg:pe-[calc(var(--u)*1.6)] lg:pt-[calc(var(--u)*6.5)]"
         style={{ fontSize: "clamp(11px, calc(var(--u) * 1.05), 17px)" }}
       >
         {/* Breadcrumb + title + banner */}
@@ -121,7 +121,7 @@ export default function MathematicsPage() {
               Choose a topic, then pick a problem to explore
             </p>
           </div>
-          <div className="relative aspect-[751/121] w-full min-w-0 lg:ml-auto lg:w-[54%]">
+          <div className="relative aspect-[751/121] w-full min-w-0 lg:ms-auto lg:w-[54%]">
             <Image src={`${IMG}/Group%20189.png`} alt="" fill priority sizes="(max-width: 1024px) 90vw, 50vw" className="object-cover object-right" />
           </div>
         </section>
@@ -143,13 +143,13 @@ export default function MathematicsPage() {
               value={level}
               onChange={(e) => setLevel(e.target.value as Level)}
               aria-label="Filter by level"
-              className="appearance-none rounded-[0.9em] border border-[#e3e9f0] bg-white py-[0.7em] pl-[1em] pr-[2.4em] text-[0.9em] text-[#14365a] outline-none focus:border-[#2bb8a6]"
+              className="appearance-none rounded-[0.9em] border border-[#e3e9f0] bg-white py-[0.7em] ps-[1em] pe-[2.4em] text-[0.9em] text-[#14365a] outline-none focus:border-[#2bb8a6]"
             >
               {LEVELS.map((l) => (
                 <option key={l}>{l}</option>
               ))}
             </select>
-            <ChevronDown className="pointer-events-none absolute right-[0.8em] top-1/2 h-[1.1em] w-[1.1em] -translate-y-1/2 text-[#14365a]" />
+            <ChevronDown className="pointer-events-none absolute end-[0.8em] top-1/2 h-[1.1em] w-[1.1em] -translate-y-1/2 text-[#14365a]" />
           </div>
         </div>
 
@@ -192,7 +192,7 @@ export default function MathematicsPage() {
                       type="button"
                       onClick={() => setAlgorithm(a)}
                       aria-current={active}
-                      className={`flex w-full items-start gap-[0.7em] rounded-[0.7em] px-[0.8em] py-[0.65em] text-left text-[0.8em] text-[#14365a] transition ${
+                      className={`flex w-full items-start gap-[0.7em] rounded-[0.7em] px-[0.8em] py-[0.65em] text-start text-[0.8em] text-[#14365a] transition ${
                         active ? "bg-[#e4f7f4] font-semibold" : "hover:bg-[#f3f6f9]"
                       }`}
                     >

@@ -74,7 +74,7 @@ export function FaqAccordion() {
                 <button
                   type="button"
                   onClick={() => toggle(idx)}
-                  className="flex w-full items-center justify-between p-4 text-left transition-colors hover:bg-slate-50/50 sm:p-5"
+                  className="flex w-full items-center justify-between p-4 text-start transition-colors hover:bg-slate-50/50 sm:p-5"
                 >
                   <span className="text-xs font-semibold text-[#1b2a5c] sm:text-sm">
                     {faq.question}

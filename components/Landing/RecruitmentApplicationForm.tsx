@@ -154,7 +154,7 @@ export function RecruitmentApplicationForm() {
                     aria-describedby="answer-count application-error"
                     className="h-[250px] w-full resize-none rounded-2xl border border-[#9aa3a8] bg-white px-10 pb-10 pt-10 text-base leading-relaxed text-[#1b2a5c] outline-none transition placeholder:text-[#64748b] focus:border-[#12939b] focus:ring-2 focus:ring-[#12939b]/20"
                   />
-                  <span id="answer-count" className="absolute bottom-3 right-6 text-sm text-[#64748b]">
+                  <span id="answer-count" className="absolute bottom-3 end-6 text-sm text-[#64748b]">
                     {answers[step - 1].length}/1000
                   </span>
                 </div>

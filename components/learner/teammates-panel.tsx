@@ -124,7 +124,7 @@ export function TeammatesPanel({
           </Link>
           <Link
             href="/learner/interns/session"
-            className="ml-auto rounded-full bg-[#14365a] px-[0.8em] py-[0.25em] text-[0.7em] font-bold text-white hover:bg-[#0f2a47]"
+            className="ms-auto rounded-full bg-[#14365a] px-[0.8em] py-[0.25em] text-[0.7em] font-bold text-white hover:bg-[#0f2a47]"
           >
             Get ready
           </Link>
@@ -148,14 +148,14 @@ export function TeammatesPanel({
                 <span className="min-w-0">
                   <span className="block truncate">
                     {m.name}
-                    {m.isMe && <span className="ml-[0.3em] text-[0.8em] font-medium text-[#14365a]/60">(you)</span>}
+                    {m.isMe && <span className="ms-[0.3em] text-[0.8em] font-medium text-[#14365a]/60">(you)</span>}
                   </span>
                   {m.role && <span className="block truncate text-[0.7em] font-medium text-[#14365a]/65">{ROLE_TITLE[m.role] ?? m.role}</span>}
                 </span>
 
                 <button
                   type="button"
-                  className="ml-auto flex shrink-0 items-center gap-[0.4em] whitespace-nowrap rounded-full bg-[#43a5ff]/90 px-[0.9em] py-[0.25em] text-[0.85em] font-extrabold text-white hover:bg-[#2f90ec]"
+                  className="ms-auto flex shrink-0 items-center gap-[0.4em] whitespace-nowrap rounded-full bg-[#43a5ff]/90 px-[0.9em] py-[0.25em] text-[0.85em] font-extrabold text-white hover:bg-[#2f90ec]"
                 >
                   Invite <span className="text-[1.2em] leading-none">+</span>
                 </button>

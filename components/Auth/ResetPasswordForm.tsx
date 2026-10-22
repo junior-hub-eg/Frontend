@@ -18,10 +18,12 @@ import { resetPassword } from "@/lib/auth/account-api";
 import { resetTokenState, useResetTicket } from "@/lib/auth/auth-flow-storage";
 import { passwordSchema } from "@/lib/auth/password-rules";
 import { ApiError, errorMessage } from "@/lib/api-client";
+import { useT } from "@/lib/i18n/client";
+import { tk } from "@/lib/i18n/translate";
 
 const schema = z
-  .object({ password: passwordSchema, confirmPassword: z.string().min(1, "Confirm your new password") })
-  .refine((v) => v.password === v.confirmPassword, { path: ["confirmPassword"], message: "Passwords don't match" });
+  .object({ password: passwordSchema, confirmPassword: z.string().min(1, tk("Confirm your new password")) })
+  .refine((v) => v.password === v.confirmPassword, { path: ["confirmPassword"], message: tk("Passwords don't match") });
 type FormValues = z.infer<typeof schema>;
 
 /**
@@ -29,6 +31,7 @@ type FormValues = z.infer<typeof schema>;
  * Not in the Figma designs yet: built from the same pieces as the other auth pages.
  */
 export function ResetPasswordForm() {
+  const t = useT();
   const router = useRouter();
   const ticket = useResetTicket();
   const [error, setError] = useState<string | null>(null);
@@ -65,11 +68,11 @@ export function ResetPasswordForm() {
     return (
       <>
         <BackButton href="/forgot-password" />
-        <AuthHeading title="Reset Your Password" />
+        <AuthHeading title={t("Reset Your Password")} />
         <Alert variant="warning" className="mt-4">
-          This reset has expired.{" "}
+          {t("This reset has expired.")}{" "}
           <Link href="/forgot-password" className={authStyles.link}>
-            Ask for a new code
+            {t("Ask for a new code")}
           </Link>
         </Alert>
       </>
@@ -79,19 +82,19 @@ export function ResetPasswordForm() {
   return (
     <>
       <BackButton href="/forgot-password" />
-      <AuthHeading title="Reset Your Password" subtitle={`Choose a new password for ${ticket.email}`} />
+      <AuthHeading title={t("Reset Your Password")} subtitle={t("Choose a new password for {email}", { email: ticket.email })} />
 
       <form onSubmit={handleSubmit(onSubmit)} noValidate className={authStyles.form}>
         {error && <Alert variant="danger">{error}</Alert>}
 
         <PasswordField
-          label="New Password"
+          label={t("New Password")}
           autoComplete="new-password"
           error={errors.password?.message}
           {...register("password")}
         />
         <PasswordField
-          label="Confirm New Password"
+          label={t("Confirm New Password")}
           autoComplete="new-password"
           error={errors.confirmPassword?.message}
           {...register("confirmPassword")}
@@ -99,7 +102,7 @@ export function ResetPasswordForm() {
         <PasswordRuleList password={password} />
 
         <AuthButton type="submit" disabled={isSubmitting}>
-          Save New Password
+          {t("Save New Password")}
         </AuthButton>
       </form>
     </>

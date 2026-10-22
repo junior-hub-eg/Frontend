@@ -307,12 +307,12 @@ function QuizRun({ quiz, onRetry }: { quiz: Quiz; onRetry: () => void }) {
                   )}
                   {q.prompt}
                 </p>
-                <p className="ml-6 mt-1 text-xs text-[#1b2a5c]/70">
+                <p className="ms-6 mt-1 text-xs text-[#1b2a5c]/70">
                   Your answer: {q.options[answers[i]!]}
                   {!g.correct && g.correctIndex !== undefined && <span className="block text-[#1E9D5B]">Right answer: {q.options[g.correctIndex]}</span>}
                 </p>
                 {g.note && (!g.correct || g.correctIndex !== undefined) && (
-                  <p className={cn("ml-6 mt-2 rounded-lg px-3 py-2 text-xs", g.correct ? "bg-[#E6F6EC] text-[#1b2a5c]" : "bg-[#E9F7F4] text-[#0f7a81]")}>{g.note}</p>
+                  <p className={cn("ms-6 mt-2 rounded-lg px-3 py-2 text-xs", g.correct ? "bg-[#E6F6EC] text-[#1b2a5c]" : "bg-[#E9F7F4] text-[#0f7a81]")}>{g.note}</p>
                 )}
               </li>
             );
@@ -362,7 +362,7 @@ function QuizRun({ quiz, onRetry }: { quiz: Quiz; onRetry: () => void }) {
                   setMissing(false);
                 }}
                 className={cn(
-                  "flex items-center gap-3 rounded-xl border px-4 py-3 text-left text-xs text-[#1b2a5c] transition-colors",
+                  "flex items-center gap-3 rounded-xl border px-4 py-3 text-start text-xs text-[#1b2a5c] transition-colors",
                   isSelected ? "border-[#12939b] bg-[#E9F7F4]" : "border-[#dfe7e5] hover:border-[#12939b]/60"
                 )}
               >

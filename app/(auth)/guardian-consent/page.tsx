@@ -12,11 +12,14 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { decideConsent, getPendingConsentsForGuardianEmail } from "@/lib/auth/mock-auth";
 import type { GuardianConsent, User } from "@/lib/types";
+import { useT } from "@/lib/i18n/client";
+import { tk } from "@/lib/i18n/translate";
 
-const schema = z.object({ guardianEmail: z.string().email("إيميل غير صحيح") });
+const schema = z.object({ guardianEmail: z.string().email(tk("Invalid email address")) });
 type FormValues = z.infer<typeof schema>;
 
 export default function GuardianConsentPage() {
+  const t = useT();
   const [pending, setPending] = useState<{ consent: GuardianConsent; learner?: User }[] | null>(null);
   const {
     register,
@@ -36,29 +39,29 @@ export default function GuardianConsentPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>موافقة ولي الأمر</CardTitle>
+        <CardTitle>{t("Guardian consent")}</CardTitle>
         <CardDescription>
-          الأمان جزء أساسي من المنصة — الحساب، جمع البيانات، والتواصل مع المونيتور كلهم محتاجين موافقتك (PRD §8)
+          {t("Safety is a core part of the platform — the account, data collection and contact with the monitor all need your consent (PRD §8)")}
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="guardianEmail">إيميلك (اللي اتسجل وقت تسجيل الطالب)</Label>
+            <Label htmlFor="guardianEmail">{t("Your email (the one given when the student registered)")}</Label>
             <Input id="guardianEmail" type="email" {...register("guardianEmail")} />
-            {errors.guardianEmail && <p className="text-xs text-danger">{errors.guardianEmail.message}</p>}
+            {errors.guardianEmail && <p className="text-xs text-danger">{t(errors.guardianEmail.message ?? "")}</p>}
           </div>
-          <Button type="submit">عرض الطلبات</Button>
+          <Button type="submit">{t("Show requests")}</Button>
         </form>
 
-        {pending && pending.length === 0 && <Alert>مفيش طلبات موافقة معلّقة على الإيميل ده.</Alert>}
+        {pending && pending.length === 0 && <Alert>{t("There are no pending consent requests for this email.")}</Alert>}
 
         {pending && pending.length > 0 && (
           <div className="flex flex-col gap-3">
             {pending.map(({ consent, learner }) => (
               <div key={consent.id} className="flex items-center justify-between rounded-lg border border-border p-3">
                 <div>
-                  <p className="font-medium">{learner?.firstName ?? "طالب"}</p>
+                  <p className="font-medium">{learner?.firstName ?? t("Student")}</p>
                   <p className="text-xs text-muted-foreground">{learner?.email}</p>
                   <Badge variant="warning" className="mt-1">
                     {consent.consentType}
@@ -66,10 +69,10 @@ export default function GuardianConsentPage() {
                 </div>
                 <div className="flex gap-2">
                   <Button size="sm" onClick={() => handleDecision(consent.id, "granted")}>
-                    موافق
+                    {t("Approve")}
                   </Button>
                   <Button size="sm" variant="outline" onClick={() => handleDecision(consent.id, "revoked")}>
-                    رفض
+                    {t("Decline")}
                   </Button>
                 </div>
               </div>

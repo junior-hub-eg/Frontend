@@ -17,17 +17,20 @@ import { authStyles } from "@/components/Auth/auth-styles";
 import { register as registerAccount } from "@/lib/auth/account-api";
 import { passwordSchema } from "@/lib/auth/password-rules";
 import { ApiError, errorMessage } from "@/lib/api-client";
+import { useT } from "@/lib/i18n/client";
+import { tk } from "@/lib/i18n/translate";
 
 const schema = z.object({
-  fullName: z.string().trim().min(2, "Full name is required"),
-  phone: z.string().regex(/^\+?[0-9\s-]{8,15}$/, "Enter a valid phone number"),
-  email: z.string().min(1, "Email is required").email("Invalid email address"),
+  fullName: z.string().trim().min(2, tk("Full name is required")),
+  phone: z.string().regex(/^\+?[0-9\s-]{8,15}$/, tk("Enter a valid phone number")),
+  email: z.string().min(1, tk("Email is required")).email(tk("Invalid email address")),
   password: passwordSchema,
-  gender: z.enum(["Male", "Female"], { message: "Choose boy or girl" }),
+  gender: z.enum(["Male", "Female"], { message: tk("Choose boy or girl") }),
 });
 type FormValues = z.infer<typeof schema>;
 
 export default function RegisterPage() {
+  const t = useT();
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const {
@@ -56,21 +59,21 @@ export default function RegisterPage() {
 
   return (
     <>
-      <AuthHeading title="Join Our Community" subtitle="Create your account to start Learning, Training" />
+      <AuthHeading title={t("Join Our Community")} subtitle={t("Create your account to start Learning, Training")} />
 
       <form onSubmit={handleSubmit(onSubmit)} noValidate className={authStyles.form}>
         {error && <Alert variant="danger">{error}</Alert>}
 
         <AuthField
-          label="Full Name"
+          label={t("Full Name")}
           icon={User}
           autoComplete="name"
-          placeholder="Your full name"
+          placeholder={t("Your full name")}
           error={errors.fullName?.message}
           {...register("fullName")}
         />
         <AuthField
-          label="Phone Number"
+          label={t("Phone Number")}
           icon={Phone}
           type="tel"
           autoComplete="tel"
@@ -79,7 +82,7 @@ export default function RegisterPage() {
           {...register("phone")}
         />
         <AuthField
-          label="Email"
+          label={t("Email")}
           icon={Mail}
           type="email"
           autoComplete="email"
@@ -88,7 +91,7 @@ export default function RegisterPage() {
           {...register("email")}
         />
         <PasswordField
-          label="Password"
+          label={t("Password")}
           autoComplete="new-password"
           placeholder="••••••••"
           error={errors.password?.message}
@@ -101,14 +104,14 @@ export default function RegisterPage() {
         />
 
         <p className={authStyles.smallText}>
-          Have an account?{" "}
+          {t("Have an account?")}{" "}
           <Link href="/login" className={authStyles.link}>
-            Login
+            {t("Login")}
           </Link>
         </p>
 
         <AuthButton type="submit" disabled={isSubmitting}>
-          Sign up
+          {t("Sign up")}
         </AuthButton>
       </form>
     </>

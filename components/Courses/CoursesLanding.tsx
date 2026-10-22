@@ -154,7 +154,7 @@ function FeatureStrip() {
     <section className="mx-auto w-full max-w-7xl px-6 lg:px-10">
       <ul className="grid grid-cols-2 gap-y-5 rounded-[22px] bg-[#EAF9F7] px-5 py-6 sm:grid-cols-4 sm:px-6 sm:py-7">
         {FEATURES.map(({ icon: Icon, title, text }, i) => (
-          <li key={title} className={`flex items-center justify-center gap-3 ${i > 0 ? "sm:border-l sm:border-[#C7DEDF]" : ""}`}>
+          <li key={title} className={`flex items-center justify-center gap-3 ${i > 0 ? "sm:border-s sm:border-[#C7DEDF]" : ""}`}>
             <Icon size={30} strokeWidth={1.6} className="shrink-0 text-[#128B91]" aria-hidden />
             <span className="leading-tight">
               <span className="block text-base font-semibold text-[#1B2A5C]">{title}</span>
@@ -170,7 +170,7 @@ function FeatureStrip() {
 function LearningTracks() {
   return (
     <section id="tracks" className="relative mx-auto w-full max-w-7xl scroll-mt-24 px-6 py-16 lg:px-10">
-      <Curl className="pointer-events-none absolute right-2 top-6 hidden h-12 w-7 -rotate-12 text-[#12939b] lg:block" />
+      <Curl className="pointer-events-none absolute end-2 top-6 hidden h-12 w-7 -rotate-12 text-[#12939b] lg:block" />
       <SectionHeading
         eyebrow="EXPLORE YOUR INTERESTS"
         title="Learning Tracks"
@@ -213,7 +213,7 @@ function LearningTracks() {
 function FeaturedCourses() {
   return (
     <section className="relative mx-auto w-full max-w-7xl px-6 pb-16 lg:px-10">
-      <Sparkle className="pointer-events-none absolute -left-1 top-3 hidden h-6 w-6 text-[#12939b] lg:block" />
+      <Sparkle className="pointer-events-none absolute -start-1 top-3 hidden h-6 w-6 text-[#12939b] lg:block" />
       <SectionHeading
         eyebrow="START WITH A LESSON"
         title="Featured Courses"
@@ -234,7 +234,7 @@ function FeaturedCourses() {
                   <ChartColumn className="absolute left-1/2 top-1/2 size-14 -translate-x-1/2 -translate-y-1/2 text-[#7C3AED]/70" aria-hidden />
                 )}
                 {!c.imageHasTag && (
-                  <span className="absolute bottom-3 left-3 rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-medium text-[#1b2a5c]">
+                  <span className="absolute bottom-3 start-3 rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-medium text-[#1b2a5c]">
                     {c.tag}
                   </span>
                 )}
@@ -258,15 +258,15 @@ function FeaturedCourses() {
 function HowLearningWorks() {
   return (
     <section className="relative mx-auto w-full max-w-7xl px-6 pb-16 lg:px-10">
-      <Curl className="pointer-events-none absolute -left-2 -top-6 hidden h-12 w-7 rotate-90 text-[#12939b] lg:block" />
-      <Sparkle className="pointer-events-none absolute right-0 top-0 hidden h-6 w-6 text-[#12939b] lg:block" />
+      <Curl className="pointer-events-none absolute -start-2 -top-6 hidden h-12 w-7 rotate-90 text-[#12939b] lg:block" />
+      <Sparkle className="pointer-events-none absolute end-0 top-0 hidden h-6 w-6 text-[#12939b] lg:block" />
       <div className="text-center">
         <p className="text-[11px] font-semibold tracking-wide text-[#12939b]">YOUR PATH, STEP BY STEP</p>
         <h2 className="mt-2 text-3xl font-bold text-[#1b2a5c]">How Learning Works</h2>
         <p className="mt-2 text-sm text-[#1b2a5c]/65">A clear, guided journey that helps every idea become a skill.</p>
       </div>
       <ol className="relative mt-8 grid grid-cols-2 gap-y-6 rounded-[22px] bg-[#EAF9F7] px-4 py-6 sm:grid-cols-3 lg:grid-cols-6">
-        <span aria-hidden className="absolute left-[8%] right-[8%] top-[42px] hidden h-px bg-[#12939b]/30 lg:block" />
+        <span aria-hidden className="absolute start-[8%] end-[8%] top-[42px] hidden h-px bg-[#12939b]/30 lg:block" />
         {STEPS.map(({ icon: Icon, title, text }, i) => (
           <li key={title} className="relative flex flex-col items-center px-2 text-center">
             <span className="grid size-9 place-items-center rounded-full bg-[#12939b] text-white ring-4 ring-[#EAF9F7]">
@@ -287,7 +287,7 @@ function LearnByDoing() {
   return (
     <section className="mx-auto w-full max-w-7xl px-6 pb-16 lg:px-10">
       <div className="relative grid items-center gap-8 overflow-hidden rounded-[28px] bg-gradient-to-br from-[#E4F6F3] to-[#F3FBFA] px-6 py-10 sm:px-10 lg:grid-cols-[1fr_1.1fr]">
-        <Sparkle className="pointer-events-none absolute -top-2 right-6 h-6 w-6 text-[#12939b]" />
+        <Sparkle className="pointer-events-none absolute -top-2 end-6 h-6 w-6 text-[#12939b]" />
         <div>
           <p className="text-[11px] font-semibold tracking-wide text-[#12939b]">TURN IDEAS INTO SKILLS</p>
           <h2 className="mt-2 text-3xl font-bold text-[#1b2a5c]">
@@ -318,7 +318,7 @@ function LearnByDoing() {
             <span className="size-2 rounded-full bg-[#ff6b6b]" />
             <span className="size-2 rounded-full bg-[#ffd166]" />
             <span className="size-2 rounded-full bg-[#06d6a0]" />
-            <span className="ml-auto text-[10px] font-semibold text-white/80">Try It</span>
+            <span className="ms-auto text-[10px] font-semibold text-white/80">Try It</span>
           </div>
           <div className="grid grid-cols-[1.15fr_1fr]">
             <pre className="min-h-[170px] px-4 pb-6 font-mono text-[10px] leading-6 text-[#9fe0d9]">

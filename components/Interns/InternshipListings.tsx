@@ -327,7 +327,7 @@ export function InternshipListings() {
                     className="object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                   {/* Badge Tag */}
-                  <div className="absolute top-3 left-3 rounded-full bg-[#1b2a5c]/85 px-3 py-1 text-[11px] font-medium text-white backdrop-blur-xs">
+                  <div className="absolute top-3 start-3 rounded-full bg-[#1b2a5c]/85 px-3 py-1 text-[11px] font-medium text-white backdrop-blur-xs">
                     {internship.tag}
                   </div>
                 </div>
@@ -399,7 +399,7 @@ export function InternshipListings() {
                           </div>
                         ))}
                       </div>
-                      <span className="ml-1.5 text-[10px] font-semibold text-[#1b2a5c]/60">
+                      <span className="ms-1.5 text-[10px] font-semibold text-[#1b2a5c]/60">
                         +{internship.enrolledExtra}
                       </span>
                     </div>
@@ -440,7 +440,7 @@ export function InternshipListings() {
                 setApplyingFor(null);
                 setSubmitted(false);
               }}
-              className="absolute top-5 right-5 text-gray-400 hover:text-gray-600"
+              className="absolute top-5 end-5 text-gray-400 hover:text-gray-600"
             >
               <X size={18} />
             </button>

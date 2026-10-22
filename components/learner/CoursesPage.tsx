@@ -104,10 +104,10 @@ export default function CoursesPage() {
   const listed = sorted(courses).sort((a, b) => Number(b.isLearning) - Number(a.isLearning));
 
   return (
-    <div className="relative -ml-[4rem] min-h-[calc(100svh-5rem)] min-w-0 flex-1 bg-[#fbfdff] lg:absolute lg:inset-0 lg:ml-0 lg:min-h-0">
+    <div className="relative -ms-[4rem] min-h-[calc(100svh-5rem)] min-w-0 flex-1 bg-[#fbfdff] lg:absolute lg:inset-0 lg:ms-0 lg:min-h-0">
       {/* Desktop: one screen, no page scroll. The lower sections shrink to fit the window height. */}
       <div
-        className="relative min-w-0 pb-8 pl-[4.75rem] pr-3 pt-2 sm:pr-4 lg:absolute lg:inset-0 lg:flex lg:flex-col lg:overflow-hidden lg:pb-[calc(var(--u)*1.6)] lg:pl-[var(--hl)] lg:pr-[calc(var(--u)*1.6)] lg:pt-[calc(var(--u)*6.5)]"
+        className="relative min-w-0 pb-8 ps-[4.75rem] pe-3 pt-2 sm:pe-4 lg:absolute lg:inset-0 lg:flex lg:flex-col lg:overflow-hidden lg:pb-[calc(var(--u)*1.6)] lg:ps-[var(--hl)] lg:pe-[calc(var(--u)*1.6)] lg:pt-[calc(var(--u)*6.5)]"
         style={{ fontSize: "clamp(11px, calc(var(--u) * 1.05), 17px)" }}
       >
         {/* ---------- Header (the cover also sits behind the top bar: search / EN / profile) ---------- */}
@@ -115,7 +115,7 @@ export default function CoursesPage() {
           <Image src={COVER_IMG} alt="" fill priority sizes="100vw" className="object-cover object-top" />
 
           {/* Courses building (right side) */}
-          <div className="pointer-events-none absolute bottom-0 right-[3%] hidden h-[82%] w-[26%] lg:block">
+          <div className="pointer-events-none absolute bottom-0 end-[3%] hidden h-[82%] w-[26%] lg:block">
             <Image src={BUILDING_IMG} alt="" fill priority sizes="30vw" className="object-contain object-right-bottom" />
           </div>
 
@@ -159,7 +159,7 @@ export default function CoursesPage() {
             <h2 className="text-[1.25em] font-extrabold text-[#14365a]">Change or add a track</h2>
             <p className="text-[0.75em] text-[#14365a]/70">Open a track to see its courses and start learning it.</p>
           </div>
-          <div className="relative ml-auto flex items-center gap-[0.6em] text-[0.9em] text-[#14365a]">
+          <div className="relative ms-auto flex items-center gap-[0.6em] text-[0.9em] text-[#14365a]">
             Sort by
             <button
               type="button"
@@ -171,7 +171,7 @@ export default function CoursesPage() {
               {sort} <ChevronDown className="size-[1em]" />
             </button>
             {sortOpen && (
-              <ul role="listbox" className="absolute right-0 top-full z-30 mt-1 min-w-full overflow-hidden rounded-[0.9em] border border-[#e1e8f0] bg-white shadow-lg">
+              <ul role="listbox" className="absolute end-0 top-full z-30 mt-1 min-w-full overflow-hidden rounded-[0.9em] border border-[#e1e8f0] bg-white shadow-lg">
                 {SORTS.map((s) => (
                   <li key={s}>
                     <button
@@ -182,7 +182,7 @@ export default function CoursesPage() {
                         setSort(s);
                         setSortOpen(false);
                       }}
-                      className="w-full whitespace-nowrap px-[1.1em] py-[0.6em] text-left hover:bg-[#eef4fa]"
+                      className="w-full whitespace-nowrap px-[1.1em] py-[0.6em] text-start hover:bg-[#eef4fa]"
                     >
                       {s}
                     </button>

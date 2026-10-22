@@ -263,7 +263,7 @@ export default function ProfilePage() {
                   type="button"
                   onClick={() => setPickingAvatar(true)}
                   aria-label="Change avatar"
-                  className="absolute -bottom-[0.2em] -right-[0.2em] grid h-[2.2em] w-[2.2em] place-items-center rounded-full bg-[#14365a] text-white ring-[0.2em] ring-white hover:bg-[#0f2a47]"
+                  className="absolute -bottom-[0.2em] -end-[0.2em] grid h-[2.2em] w-[2.2em] place-items-center rounded-full bg-[#14365a] text-white ring-[0.2em] ring-white hover:bg-[#0f2a47]"
                 >
                   <Pencil className="h-[1em] w-[1em]" />
                 </button>

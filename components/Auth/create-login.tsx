@@ -18,11 +18,13 @@ import { PASSWORD_RULES } from "@/lib/auth/password-rules";
 import { ApiError, errorMessage } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import type { Gender } from "@/lib/avatars";
+import { useT } from "@/lib/i18n/client";
 
 const NAVY = "text-[#1B2D54]";
 
 /** Step 3 of school activation: the email comes from the school, the student chooses a password. */
 export default function CreateLogin() {
+  const t = useT();
   const router = useRouter();
   const state = useActivationState();
   const [password, setPassword] = useState("");
@@ -79,31 +81,31 @@ export default function CreateLogin() {
       >
         <div className="text-center">
           <h1 className={cn("text-[length:clamp(20px,2.5cqw,28px)] font-semibold leading-tight", NAVY)}>
-            Create Your Login
+            {t("Create Your Login")}
           </h1>
           <p className={cn("mt-1 text-[length:clamp(11px,1.4cqw,16px)] font-normal leading-tight", NAVY)}>
-            Choose A Password And Tell Us Who You Are.
+            {t("Choose A Password And Tell Us Who You Are.")}
           </p>
         </div>
 
         {error && <Alert variant="danger">{error}</Alert>}
 
         <div className="flex flex-col gap-[clamp(8px,1.4cqw,14px)] [&>div>div:first-child]:py-[clamp(9px,1.4cqw,14px)] [&_label]:text-[#1B2D54] [&_svg]:text-[#1B2D54]">
-          <AuthField label="Email" icon={Mail} type="email" value={state?.details.email ?? ""} readOnly className="text-[#6b7280]" />
+          <AuthField label={t("Email")} icon={Mail} type="email" value={state?.details.email ?? ""} readOnly className="text-[#6b7280]" />
 
           <PasswordField
-            label="Password"
+            label={t("Password")}
             autoComplete="new-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
 
           <PasswordField
-            label="Confirm Password"
+            label={t("Confirm Password")}
             autoComplete="new-password"
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
-            error={mismatch ? "Passwords don't match" : undefined}
+            error={mismatch ? t("Passwords don't match") : undefined}
           />
         </div>
 
@@ -112,7 +114,7 @@ export default function CreateLogin() {
         <GenderField value={gender} onChange={setGender} />
 
         <AuthButton type="submit" disabled={!canContinue}>
-          {submitting ? "Saving..." : "Continue"}
+          {submitting ? t("Saving...") : t("Continue")}
         </AuthButton>
       </form>
     </AuthPanel>

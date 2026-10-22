@@ -49,13 +49,13 @@ export default function MyCourses({ learning, onExplore }: { learning: TrackSumm
             }`}
           >
             {t.name}
-            {t.isFocus && <span className="ml-[0.4em] text-[0.8em] opacity-80">· focus</span>}
+            {t.isFocus && <span className="ms-[0.4em] text-[0.8em] opacity-80">· focus</span>}
           </button>
         ))}
         <button
           type="button"
           onClick={onExplore}
-          className="ml-auto flex items-center gap-[0.4em] rounded-full border border-[#12939b]/60 bg-white px-[1em] py-[0.35em] text-[0.8em] font-semibold text-[#12606b] hover:bg-[#eef8f7]"
+          className="ms-auto flex items-center gap-[0.4em] rounded-full border border-[#12939b]/60 bg-white px-[1em] py-[0.35em] text-[0.8em] font-semibold text-[#12606b] hover:bg-[#eef8f7]"
         >
           <Plus className="size-[1.1em]" /> Change / Add track
         </button>

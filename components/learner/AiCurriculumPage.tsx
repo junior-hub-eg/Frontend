@@ -40,9 +40,9 @@ const ARROW_CLASS =
 /** The Figma "AI Curriculum" page, inside the learner shell (it places itself next to the sidebar, like Courses). */
 export default function AiCurriculumPage() {
   return (
-    <div className="relative -ml-[4rem] min-h-[calc(100svh-5rem)] min-w-0 flex-1 bg-[#fbfdff] lg:absolute lg:inset-0 lg:ml-0 lg:min-h-0">
+    <div className="relative -ms-[4rem] min-h-[calc(100svh-5rem)] min-w-0 flex-1 bg-[#fbfdff] lg:absolute lg:inset-0 lg:ms-0 lg:min-h-0">
       <div
-        className="relative min-w-0 pb-8 pl-[4.75rem] pr-3 pt-2 sm:pr-4 lg:absolute lg:inset-0 lg:overflow-y-auto lg:pb-[calc(var(--u)*2)] lg:pl-[var(--hl)] lg:pr-[calc(var(--u)*1.6)] lg:pt-[calc(var(--u)*6.5)]"
+        className="relative min-w-0 pb-8 ps-[4.75rem] pe-3 pt-2 sm:pe-4 lg:absolute lg:inset-0 lg:overflow-y-auto lg:pb-[calc(var(--u)*2)] lg:ps-[var(--hl)] lg:pe-[calc(var(--u)*1.6)] lg:pt-[calc(var(--u)*6.5)]"
         style={{ fontSize: "clamp(11px, calc(var(--u) * 1.05), 17px)" }}
       >
         {/* Title + banner */}
@@ -51,7 +51,7 @@ export default function AiCurriculumPage() {
             <h1 className="text-[2.3em] font-extrabold leading-tight text-[#14365a]">AI Curriculum</h1>
             <p className="max-w-[17em] text-[0.95em] leading-snug text-[#14365a]">Choose a Subject to start solving problems with ai.</p>
           </div>
-          <div className="relative aspect-[751/121] w-full min-w-0 lg:ml-auto lg:w-[54%]">
+          <div className="relative aspect-[751/121] w-full min-w-0 lg:ms-auto lg:w-[54%]">
             <Image src={`${IMG}/Group%20189.png`} alt="" fill priority sizes="(max-width: 1024px) 90vw, 50vw" className="object-cover object-right" />
           </div>
         </section>

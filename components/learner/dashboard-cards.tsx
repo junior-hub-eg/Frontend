@@ -62,7 +62,7 @@ export function DailyChallengeCard({ className = "" }: { className?: string }) {
   return (
     <Link
       href="/learner/interns/internship"
-      className={`${glass} group flex items-center gap-[0.9em] p-[0.7em] pr-[1em] ${className}`}
+      className={`${glass} group flex items-center gap-[0.9em] p-[0.7em] pe-[1em] ${className}`}
     >
       <span className="grid h-[3.6em] w-[3.6em] shrink-0 place-items-center rounded-[0.9em] bg-gradient-to-br from-[#3b82f6] to-[#14365a] text-white shadow-md">
         <CalendarCheck className="h-[1.8em] w-[1.8em]" />
@@ -98,7 +98,7 @@ export function NextSessionCard({ className = "" }: { className?: string }) {
 
   if (!next) return null;
   return (
-    <Link href="/learner/mentorship" className={`${glass} flex items-center gap-[0.8em] p-[0.7em] pr-[1em] ${className}`}>
+    <Link href="/learner/mentorship" className={`${glass} flex items-center gap-[0.8em] p-[0.7em] pe-[1em] ${className}`}>
       <span className="grid h-[3em] w-[3em] shrink-0 place-items-center rounded-[0.9em] bg-gradient-to-br from-[#2fa59b] to-[#14365a] text-white">
         <CalendarClock className="h-[1.5em] w-[1.5em]" />
       </span>
@@ -143,7 +143,7 @@ export function RewardsButton({ className = "" }: { className?: string }) {
       {open && (
         <section
           aria-label="Your rewards"
-          className="absolute bottom-full right-0 mb-[0.6em] w-[17em] rounded-[1.2em] border border-white/80 bg-white/90 p-[1em] text-[#14365a] shadow-xl backdrop-blur-md"
+          className="absolute bottom-full end-0 mb-[0.6em] w-[17em] rounded-[1.2em] border border-white/80 bg-white/90 p-[1em] text-[#14365a] shadow-xl backdrop-blur-md"
         >
           <div className="flex items-center justify-between">
             <h2 className="text-[1.05em] font-extrabold">Your rewards</h2>

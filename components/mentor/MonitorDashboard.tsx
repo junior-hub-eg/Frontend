@@ -86,7 +86,7 @@ export default function MonitorDashboard() {
                   type="button"
                   onClick={() => setSelected(s.squadId)}
                   aria-pressed={s.squadId === selected}
-                  className={`w-full rounded-2xl border bg-white p-4 text-left shadow-sm transition-colors ${
+                  className={`w-full rounded-2xl border bg-white p-4 text-start shadow-sm transition-colors ${
                     s.squadId === selected ? "border-[#14365a] ring-2 ring-[#14365a]/10" : "border-[#e3ecea] hover:border-[#12939b]"
                   }`}
                 >
@@ -98,7 +98,7 @@ export default function MonitorDashboard() {
                     {STATUS[s.status].label}
                   </span>
                   {s.status === "InProgress" && (
-                    <span className="ml-2 text-[11px] text-[#14365a]/60">
+                    <span className="ms-2 text-[11px] text-[#14365a]/60">
                       {s.submitted}/{s.members} submitted
                     </span>
                   )}

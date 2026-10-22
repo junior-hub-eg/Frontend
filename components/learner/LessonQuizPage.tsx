@@ -51,9 +51,9 @@ export default function LessonQuizPage({ code, lessonId }: { code: string; lesso
 
   /* Desktop: one screen, no page scroll. */
   const wrapper = (children: React.ReactNode) => (
-    <div className="relative -ml-[4rem] min-h-[calc(100svh-5rem)] min-w-0 flex-1 bg-[#fdfcff] lg:absolute lg:inset-0 lg:ml-0 lg:min-h-0">
+    <div className="relative -ms-[4rem] min-h-[calc(100svh-5rem)] min-w-0 flex-1 bg-[#fdfcff] lg:absolute lg:inset-0 lg:ms-0 lg:min-h-0">
       <div
-        className={`relative min-w-0 pb-8 pl-[4.75rem] pr-3 pt-2 sm:pr-4 lg:absolute lg:inset-0 lg:overflow-y-auto lg:pb-[calc(var(--u)*1.6)] lg:pl-[var(--hl)] lg:pr-[calc(var(--u)*1.6)] lg:pt-[calc(var(--u)*6.5)] ${noScrollbar}`}
+        className={`relative min-w-0 pb-8 ps-[4.75rem] pe-3 pt-2 sm:pe-4 lg:absolute lg:inset-0 lg:overflow-y-auto lg:pb-[calc(var(--u)*1.6)] lg:ps-[var(--hl)] lg:pe-[calc(var(--u)*1.6)] lg:pt-[calc(var(--u)*6.5)] ${noScrollbar}`}
         style={{ fontSize: "clamp(11px, calc(var(--u) * 1.05), 17px)" }}
       >
         {children}
@@ -150,7 +150,7 @@ export default function LessonQuizPage({ code, lessonId }: { code: string; lesso
             </div>
           )}
 
-          <ul className="mt-[1.4em] space-y-[0.6em] text-left">
+          <ul className="mt-[1.4em] space-y-[0.6em] text-start">
             {view.questions.map((qq, i) => {
               const r = results[i];
               return (
@@ -229,7 +229,7 @@ export default function LessonQuizPage({ code, lessonId }: { code: string; lesso
                 role="radio"
                 aria-checked={on}
                 onClick={() => setPicked(i)}
-                className={`flex w-full items-center gap-[0.9em] rounded-[0.8em] border px-[1em] py-[0.8em] text-left transition-colors ${
+                className={`flex w-full items-center gap-[0.9em] rounded-[0.8em] border px-[1em] py-[0.8em] text-start transition-colors ${
                   on ? "border-[#12939b] bg-[#eef8f7]" : "border-[#e3ebf3] bg-white hover:bg-[#f6fafd]"
                 }`}
               >

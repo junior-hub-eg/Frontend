@@ -201,7 +201,7 @@ export default function SquadSession() {
             <Link
               href="/learner/dashboard"
               aria-label="Back to the dashboard"
-              className="absolute left-0 grid h-[3em] w-[3em] place-items-center rounded-[0.8em] bg-[#6c86ad]/80 text-white shadow-md hover:bg-[#5a759d]"
+              className="absolute start-0 grid h-[3em] w-[3em] place-items-center rounded-[0.8em] bg-[#6c86ad]/80 text-white shadow-md hover:bg-[#5a759d]"
             >
               <ArrowLeft className="h-[1.6em] w-[1.6em]" />
             </Link>
@@ -219,7 +219,7 @@ export default function SquadSession() {
           {me && (
             <div className="mx-auto mt-[1.2em] grid max-w-[47em] gap-[1em] md:grid-cols-[15em_1fr]">
               {/* Monitor */}
-              <section className={`${glass} flex flex-col items-center p-[1em] text-center md:items-start md:text-left`}>
+              <section className={`${glass} flex flex-col items-center p-[1em] text-center md:items-start md:text-start`}>
                 <h2 className="text-[1.3em] font-bold text-[#14365a]">Your Monitor</h2>
                 {monitor ? (
                   <>

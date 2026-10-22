@@ -54,7 +54,7 @@ export default function SquadMatchmaking({ level = null }: { level?: LevelProgre
             <Link
               href="/learner/dashboard"
               aria-label="Back to the dashboard"
-              className="absolute left-0 grid h-[3em] w-[3em] place-items-center rounded-[0.8em] bg-[#6c86ad]/80 text-white shadow-md hover:bg-[#5a759d]"
+              className="absolute start-0 grid h-[3em] w-[3em] place-items-center rounded-[0.8em] bg-[#6c86ad]/80 text-white shadow-md hover:bg-[#5a759d]"
             >
               <ArrowLeft className="h-[1.6em] w-[1.6em]" />
             </Link>

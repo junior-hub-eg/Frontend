@@ -59,7 +59,7 @@ export function InternsHero() {
                 <Image src="/images/Landing%20Page/Interns/40174ca2683c92fc391daa5a1fa5a0ae695b3b14.jpg" alt="" fill sizes="200px" className="object-cover opacity-50" aria-hidden />
                 <span className="relative z-10 flex items-center gap-2">
                   <span className="grid size-7 shrink-0 place-items-center rounded-full bg-white">
-                    <Play size={13} className="ml-0.5 fill-[#B45B65] text-[#B45B65]" />
+                    <Play size={13} className="ms-0.5 fill-[#B45B65] text-[#B45B65]" />
                   </span>
                   How It Works
                 </span>

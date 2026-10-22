@@ -17,22 +17,25 @@ import { authStyles } from "./auth-styles";
 import { useAuth } from "@/lib/auth/auth-context";
 import { ROLE_HOME } from "@/lib/constants";
 import { ApiError, errorMessage } from "@/lib/api-client";
+import { useT } from "@/lib/i18n/client";
+import { tk } from "@/lib/i18n/translate";
 
 const schema = z.object({
-  email: z.string().min(1, "Email is required").email("Invalid email address"),
-  password: z.string().min(1, "Password is required"),
+  email: z.string().min(1, tk("Email is required")).email(tk("Invalid email address")),
+  password: z.string().min(1, tk("Password is required")),
   rememberMe: z.boolean(),
 });
 type FormValues = z.infer<typeof schema>;
 
 /** Shown after another auth page sends the student here with ?notice=… */
 const NOTICES: Record<string, string> = {
-  activated: "Your account is ready. Sign in with your new password.",
-  verified: "Your email is confirmed. Sign in to start learning.",
-  reset: "Your password has been changed. Sign in with your new password.",
+  activated: tk("Your account is ready. Sign in with your new password."),
+  verified: tk("Your email is confirmed. Sign in to start learning."),
+  reset: tk("Your password has been changed. Sign in with your new password."),
 };
 
 export function LoginForm() {
+  const t = useT();
   const { login } = useAuth();
   const router = useRouter();
   const params = useSearchParams();
@@ -67,10 +70,10 @@ export function LoginForm() {
 
   return (
     <>
-      <AuthHeading title="Welcome Back!" subtitle="Sign in to continue to your account" />
+      <AuthHeading title={t("Welcome Back!")} subtitle={t("Sign in to continue to your account")} />
 
       <form onSubmit={handleSubmit(onSubmit)} noValidate className={authStyles.form}>
-        {notice && !error && <Alert variant="success">{notice}</Alert>}
+        {notice && !error && <Alert variant="success">{t(notice)}</Alert>}
         {error && (
           <Alert variant="danger">
             {error.message}{" "}
@@ -79,14 +82,14 @@ export function LoginForm() {
                 href={`/verify-otp?email=${encodeURIComponent(error.unconfirmedEmail)}&from=signup` as Route}
                 className={authStyles.link}
               >
-                Enter the code
+                {t("Enter the code")}
               </Link>
             )}
           </Alert>
         )}
 
         <AuthField
-          label="Email"
+          label={t("Email")}
           icon={Mail}
           type="email"
           autoComplete="email"
@@ -95,7 +98,7 @@ export function LoginForm() {
           {...register("email")}
         />
         <PasswordField
-          label="Password"
+          label={t("Password")}
           autoComplete="current-password"
           placeholder="••••••••"
           error={errors.password?.message}
@@ -105,22 +108,22 @@ export function LoginForm() {
         <div className={`flex items-center justify-between ${authStyles.smallText}`}>
           <label className="flex cursor-pointer items-center gap-2">
             <input type="checkbox" className="size-3.5 accent-[#12939b]" {...register("rememberMe")} />
-            Remember me
+            {t("Remember me")}
           </label>
           <Link href="/forgot-password" className={authStyles.link}>
-            Forgot password?
+            {t("Forgot password?")}
           </Link>
         </div>
 
         <AuthButton type="submit" disabled={isSubmitting}>
-          Sign in
+          {t("Sign in")}
         </AuthButton>
       </form>
 
       <p className={`mt-4 text-center ${authStyles.smallText}`}>
-        Don&apos;t have an account?{" "}
+        {t("Don't have an account?")}{" "}
         <Link href="/register" className={authStyles.link}>
-          Sign up
+          {t("Sign up")}
         </Link>
       </p>
     </>

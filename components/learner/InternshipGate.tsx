@@ -33,7 +33,7 @@ function LockedInternship({ level, lastProject }: { level: LevelProgress | null;
             <Link
               href="/learner/dashboard"
               aria-label="Back to the dashboard"
-              className="absolute left-0 grid h-[3em] w-[3em] place-items-center rounded-[0.8em] bg-[#6c86ad]/80 text-white shadow-md hover:bg-[#5a759d]"
+              className="absolute start-0 grid h-[3em] w-[3em] place-items-center rounded-[0.8em] bg-[#6c86ad]/80 text-white shadow-md hover:bg-[#5a759d]"
             >
               <ArrowLeft className="h-[1.6em] w-[1.6em]" />
             </Link>
@@ -49,7 +49,7 @@ function LockedInternship({ level, lastProject }: { level: LevelProgress | null;
                 {level ? ` and you moved up to the ${level.level} level.` : "."}
               </p>
               {lastProject.feedback && (
-                <blockquote className="w-full rounded-[0.9em] bg-white/70 p-[0.9em] text-left text-[0.9em] leading-relaxed">
+                <blockquote className="w-full rounded-[0.9em] bg-white/70 p-[0.9em] text-start text-[0.9em] leading-relaxed">
                   “{lastProject.feedback}”
                   {lastProject.monitorName && <span className="mt-[0.3em] block text-[0.85em] font-semibold">— {lastProject.monitorName}, your monitor</span>}
                 </blockquote>

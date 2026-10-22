@@ -7,7 +7,7 @@ export function JobReadinessBanner() {
     <div className="relative overflow-hidden rounded-[28px] border border-[#12939b]/15 bg-gradient-to-r from-[#EAF7F4] via-[#E6F5F2] to-[#DEF3EE] p-6 shadow-xs lg:p-8">
       {/* Decorative background curve */}
       <div
-        className="pointer-events-none absolute -right-16 -top-16 h-72 w-72 rounded-full bg-[#12939b]/10 blur-3xl"
+        className="pointer-events-none absolute -end-16 -top-16 h-72 w-72 rounded-full bg-[#12939b]/10 blur-3xl"
         aria-hidden
       />
 
@@ -50,7 +50,7 @@ export function JobReadinessBanner() {
         </div>
 
         {/* Center: Improve Profile Information */}
-        <div className="flex-1 text-center lg:text-left">
+        <div className="flex-1 text-center lg:text-start">
           <h2 className="text-2xl font-extrabold text-[#1b2a5c] sm:text-3xl">
             Improve Profile
           </h2>

@@ -251,7 +251,7 @@ function Result({ result, onRetry }: { result: InterviewResult; onRetry: () => v
                 )}
                 {i + 1}. {r.prompt}
               </p>
-              <p className="mt-[0.3em] pl-[1.6em] text-[0.85em] text-[#14365a]">
+              <p className="mt-[0.3em] ps-[1.6em] text-[0.85em] text-[#14365a]">
                 Your answer: {r.options[r.chosen]}
                 {!r.correct && (
                   <>
@@ -260,7 +260,7 @@ function Result({ result, onRetry }: { result: InterviewResult; onRetry: () => v
                   </>
                 )}
               </p>
-              <p className="mt-[0.3em] pl-[1.6em] text-[0.8em] text-[#14365a]/75">{r.feedback}</p>
+              <p className="mt-[0.3em] ps-[1.6em] text-[0.8em] text-[#14365a]/75">{r.feedback}</p>
             </li>
           ))}
         </ol>

@@ -103,7 +103,7 @@ function VideoPlayer() {
       )}
 
       {/* Quality badge */}
-      <span className="absolute right-[1em] top-[1em] flex items-center gap-[0.5em] rounded-full bg-black/45 px-[0.9em] py-[0.35em] text-[0.7em] font-medium text-white">
+      <span className="absolute end-[1em] top-[1em] flex items-center gap-[0.5em] rounded-full bg-black/45 px-[0.9em] py-[0.35em] text-[0.7em] font-medium text-white">
         <span className="h-[0.6em] w-[0.6em] rounded-full bg-red-500" />
         HD 1080p
       </span>
@@ -117,7 +117,7 @@ function VideoPlayer() {
           aria-label="Play video"
           className="absolute left-1/2 top-1/2 grid h-[4.6em] w-[4.6em] -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-[#2bb8a6]/90 text-white ring-[0.35em] ring-white/40 transition hover:scale-105 disabled:cursor-not-allowed"
         >
-          <Play className="ml-[0.2em] h-[1.9em] w-[1.9em] fill-white" />
+          <Play className="ms-[0.2em] h-[1.9em] w-[1.9em] fill-white" />
         </button>
       )}
 
@@ -150,7 +150,7 @@ function VideoPlayer() {
             {playing ? (
               <Pause className="h-[1.2em] w-[1.2em] fill-current" />
             ) : (
-              <Play className="ml-[0.1em] h-[1.2em] w-[1.2em] fill-current" />
+              <Play className="ms-[0.1em] h-[1.2em] w-[1.2em] fill-current" />
             )}
           </button>
 
@@ -166,7 +166,7 @@ function VideoPlayer() {
             className="h-[0.35em] w-[6em] cursor-pointer accent-white"
           />
 
-          <div className="ml-auto flex items-center gap-[0.3em]">
+          <div className="ms-auto flex items-center gap-[0.3em]">
             <button
               type="button"
               onClick={cycleSpeed}
@@ -204,9 +204,9 @@ export default function ProblemDetailPage({ problem }: { problem: MathProblem })
   const crumb = "hover:underline";
 
   return (
-    <div className="relative -ml-[4rem] min-h-[calc(100svh-5rem)] min-w-0 flex-1 bg-[#fbfdff] lg:absolute lg:inset-0 lg:ml-0 lg:min-h-0">
+    <div className="relative -ms-[4rem] min-h-[calc(100svh-5rem)] min-w-0 flex-1 bg-[#fbfdff] lg:absolute lg:inset-0 lg:ms-0 lg:min-h-0">
       <div
-        className="relative min-w-0 pb-8 pl-[4.75rem] pr-3 pt-2 sm:pr-4 lg:absolute lg:inset-0 lg:overflow-y-auto lg:pb-[calc(var(--u)*2)] lg:pl-[var(--hl)] lg:pr-[calc(var(--u)*1.6)] lg:pt-[calc(var(--u)*6.5)]"
+        className="relative min-w-0 pb-8 ps-[4.75rem] pe-3 pt-2 sm:pe-4 lg:absolute lg:inset-0 lg:overflow-y-auto lg:pb-[calc(var(--u)*2)] lg:ps-[var(--hl)] lg:pe-[calc(var(--u)*1.6)] lg:pt-[calc(var(--u)*6.5)]"
         style={{ fontSize: "clamp(11px, calc(var(--u) * 1.05), 17px)" }}
       >
         {/* Breadcrumb */}
@@ -298,7 +298,7 @@ export default function ProblemDetailPage({ problem }: { problem: MathProblem })
                     >
                       <span>
                         {r.title}
-                        <span className="ml-[0.8em] font-serif font-normal text-[#5b7089]">{r.formula}</span>
+                        <span className="ms-[0.8em] font-serif font-normal text-[#5b7089]">{r.formula}</span>
                       </span>
                       <ChevronRight className="h-[1.2em] w-[1.2em]" />
                     </Link>

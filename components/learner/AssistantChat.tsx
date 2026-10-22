@@ -182,7 +182,7 @@ export function AssistantChat() {
         <section
           role="dialog"
           aria-label="Junior Hub assistant"
-          className="fixed inset-0 z-[60] flex flex-col bg-white sm:inset-auto sm:bottom-24 sm:right-6 sm:h-[min(620px,calc(100vh-8rem))] sm:w-[380px] sm:overflow-hidden sm:rounded-2xl sm:border sm:border-[#d7e6ea] sm:shadow-[0_20px_60px_-15px_rgba(20,54,90,0.35)]"
+          className="fixed inset-0 z-[60] flex flex-col bg-white sm:inset-auto sm:bottom-24 sm:end-6 sm:h-[min(620px,calc(100vh-8rem))] sm:w-[380px] sm:overflow-hidden sm:rounded-2xl sm:border sm:border-[#d7e6ea] sm:shadow-[0_20px_60px_-15px_rgba(20,54,90,0.35)]"
         >
           <header className="flex items-center gap-2 bg-[#14365a] px-4 py-3 text-white">
             <span className="grid size-9 place-items-center rounded-full bg-[#12939b]">
@@ -231,7 +231,7 @@ export function AssistantChat() {
                         type="button"
                         onClick={() => void openConversation(c.id)}
                         className={cn(
-                          "w-full rounded-xl px-3 py-2 text-right hover:bg-[#eef7f8]",
+                          "w-full rounded-xl px-3 py-2 text-end hover:bg-[#eef7f8]",
                           c.id === conversationId && "bg-[#eef7f8]"
                         )}
                       >
@@ -279,8 +279,8 @@ export function AssistantChat() {
                         className={cn(
                           "max-w-[85%] whitespace-pre-wrap break-words rounded-2xl px-3.5 py-2 text-sm leading-relaxed",
                           m.role === "Student"
-                            ? "rounded-br-sm bg-[#12939b] text-white"
-                            : "rounded-bl-sm border border-[#d7e6ea] bg-white text-[#14365a]",
+                            ? "rounded-ee-sm bg-[#12939b] text-white"
+                            : "rounded-es-sm border border-[#d7e6ea] bg-white text-[#14365a]",
                           latest?.replyId === m.id && latest.isFallback && "border-amber-200 bg-amber-50"
                         )}
                       >
@@ -308,7 +308,7 @@ export function AssistantChat() {
                   ))}
                   {sending && (
                     <li className="flex items-start" aria-label="The assistant is typing">
-                      <span className="flex gap-1 rounded-2xl rounded-bl-sm border border-[#d7e6ea] bg-white px-4 py-3">
+                      <span className="flex gap-1 rounded-2xl rounded-es-sm border border-[#d7e6ea] bg-white px-4 py-3">
                         {[0, 150, 300].map((delay) => (
                           <span
                             key={delay}
@@ -381,7 +381,7 @@ export function AssistantChat() {
         aria-label={open ? "Close assistant" : "Open assistant"}
         aria-expanded={open}
         className={cn(
-          "fixed bottom-5 right-5 z-[61] grid size-14 place-items-center rounded-full bg-[#12939b] text-white shadow-[0_10px_30px_-8px_rgba(18,147,155,0.7)] transition hover:scale-105 hover:bg-[#0f7a81] sm:bottom-6 sm:right-6",
+          "fixed bottom-5 end-5 z-[61] grid size-14 place-items-center rounded-full bg-[#12939b] text-white shadow-[0_10px_30px_-8px_rgba(18,147,155,0.7)] transition hover:scale-105 hover:bg-[#0f7a81] sm:bottom-6 sm:end-6",
           open && "max-sm:hidden"
         )}
       >

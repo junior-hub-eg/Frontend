@@ -81,7 +81,7 @@ export default function AllProjectsPage() {
 
   if (!list) {
     return (
-      <div className="grid flex-1 place-items-center p-10 pt-24 lg:pl-[calc(var(--sb)+1.5rem)]" role={error ? "alert" : "status"}>
+      <div className="grid flex-1 place-items-center p-10 pt-24 lg:ps-[calc(var(--sb)+1.5rem)]" role={error ? "alert" : "status"}>
         {error ? <p className="text-sm font-semibold text-[#b83232]">{error}</p> : <LoaderCircle className="size-8 animate-spin text-[#12939b]" aria-label="Loading" />}
       </div>
     );
@@ -105,7 +105,7 @@ export default function AllProjectsPage() {
   return (
     <div
       dir="ltr"
-      className="relative isolate flex min-h-0 min-w-0 w-full flex-1 flex-col gap-4 overflow-x-hidden overflow-y-auto bg-[#f6f9f8] px-4 pb-6 pt-24 font-[family-name:var(--font-poppins)] text-[#1B2D54] lg:pl-[calc(var(--sb)+1.5rem)] lg:pr-6"
+      className="relative isolate flex min-h-0 min-w-0 w-full flex-1 flex-col gap-4 overflow-x-hidden overflow-y-auto bg-[#f6f9f8] px-4 pb-6 pt-24 font-[family-name:var(--font-poppins)] text-[#1B2D54] lg:ps-[calc(var(--sb)+1.5rem)] lg:pe-6"
     >
       <div
         aria-hidden

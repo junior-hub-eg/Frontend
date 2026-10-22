@@ -1,6 +1,9 @@
+"use client";
+
 import { forwardRef, useId, type InputHTMLAttributes, type ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n/client";
 
 export interface AuthFieldProps extends InputHTMLAttributes<HTMLInputElement> {
   label: string;
@@ -11,6 +14,7 @@ export interface AuthFieldProps extends InputHTMLAttributes<HTMLInputElement> {
 
 export const AuthField = forwardRef<HTMLInputElement, AuthFieldProps>(
   ({ label, icon: Icon, error, trailing, id, className, ...props }, ref) => {
+    const t = useT();
     const generatedId = useId();
     const inputId = id ?? generatedId;
     const errorId = `${inputId}-error`;
@@ -45,7 +49,7 @@ export const AuthField = forwardRef<HTMLInputElement, AuthFieldProps>(
         </div>
         {error && (
           <p id={errorId} role="alert" className="mt-1 px-1 text-xs text-danger">
-            {error}
+            {t(error)}
           </p>
         )}
       </div>

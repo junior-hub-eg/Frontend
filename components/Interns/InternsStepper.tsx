@@ -35,7 +35,7 @@ export function InternsStepper() {
             width={318}
             height={196}
             aria-hidden
-            className="pointer-events-none absolute inset-y-0 left-0 h-full w-auto max-w-none"
+            className="pointer-events-none absolute inset-y-0 start-0 h-full w-auto max-w-none"
           />
           <div className="relative grid items-center gap-8 lg:grid-cols-12">
             {/* Left intro label */}
@@ -54,11 +54,11 @@ export function InternsStepper() {
               {/* Connecting line on desktop */}
               {/* Solid line from step 1 to 2, dotted after it (Figma) */}
               <div
-                className="pointer-events-none absolute left-[12.5%] right-[12.5%] top-[18px] -z-0 hidden border-t-2 border-dotted border-[#1b2a5c]/25 lg:block"
+                className="pointer-events-none absolute start-[12.5%] end-[12.5%] top-[18px] -z-0 hidden border-t-2 border-dotted border-[#1b2a5c]/25 lg:block"
                 aria-hidden
               />
               <div
-                className="pointer-events-none absolute left-[12.5%] top-[17px] -z-0 hidden h-[2px] w-[25%] bg-gradient-to-r from-[#1b2a5c] to-[#7D2331] lg:block"
+                className="pointer-events-none absolute start-[12.5%] top-[17px] -z-0 hidden h-[2px] w-[25%] bg-gradient-to-r from-[#1b2a5c] to-[#7D2331] lg:block"
                 aria-hidden
               />
 

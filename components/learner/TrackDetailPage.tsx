@@ -75,9 +75,9 @@ export default function TrackDetailPage({ slug }: { slug: string }) {
   }, [slug]);
 
   const wrapper = (children: React.ReactNode) => (
-    <div className="relative -ml-[4rem] min-h-[calc(100svh-5rem)] min-w-0 flex-1 bg-[#fbfdff] lg:absolute lg:inset-0 lg:ml-0 lg:min-h-0">
+    <div className="relative -ms-[4rem] min-h-[calc(100svh-5rem)] min-w-0 flex-1 bg-[#fbfdff] lg:absolute lg:inset-0 lg:ms-0 lg:min-h-0">
       <div
-        className={`relative min-w-0 pb-8 pl-[4.75rem] pr-3 pt-2 sm:pr-4 lg:absolute lg:inset-0 lg:overflow-y-auto lg:pb-[calc(var(--u)*1.6)] lg:pl-[var(--hl)] lg:pr-[calc(var(--u)*1.6)] lg:pt-[calc(var(--u)*6.5)] ${noScrollbar}`}
+        className={`relative min-w-0 pb-8 ps-[4.75rem] pe-3 pt-2 sm:pe-4 lg:absolute lg:inset-0 lg:overflow-y-auto lg:pb-[calc(var(--u)*1.6)] lg:ps-[var(--hl)] lg:pe-[calc(var(--u)*1.6)] lg:pt-[calc(var(--u)*6.5)] ${noScrollbar}`}
         style={{ fontSize: "clamp(11px, calc(var(--u) * 1.05), 17px)" }}
       >
         {children}
@@ -132,15 +132,15 @@ export default function TrackDetailPage({ slug }: { slug: string }) {
       {/* ---------- Hero ---------- */}
       <section className="relative overflow-hidden rounded-[1.4em] bg-gradient-to-br from-[#f1fbf8] via-[#e4f7f2] to-[#d4f1ec]">
         <div aria-hidden className="pointer-events-none absolute inset-0 hidden sm:block">
-          <span className="absolute -top-[4em] right-[24%] size-[12em] rounded-full border-[0.2em] border-[#bfe8df]/70" />
-          <span className="absolute -bottom-[5em] right-[2%] size-[14em] rounded-full bg-[#c9efe7]/70" />
-          <span className="absolute right-[10%] top-[35%] size-[9em] rounded-full bg-[#bdeae0]/60" />
-          <span className="absolute bottom-[18%] right-[30%] size-[1em] rounded-full bg-[#5fd6c4]/70" />
-          <span className="absolute bottom-[16%] right-[7%] size-[0.9em] rounded-full bg-[#5fd6c4]/70" />
-          <Plus className="absolute bottom-[10%] right-[14%] size-[3em] text-[#2cc5b2]" strokeWidth={3.2} />
-          <Plus className="absolute left-[52%] top-[30%] size-[2em] text-[#b6e6dd]" strokeWidth={3} />
-          <Sparkles className="absolute right-[4%] top-[8%] size-[2.2em] text-[#2cc5b2]" />
-          <span className="absolute right-[16%] top-1/2 grid size-[6.5em] -translate-y-1/2 place-items-center rounded-[1.5em] bg-white shadow-[0_10px_28px_rgba(18,147,155,0.15)]">
+          <span className="absolute -top-[4em] end-[24%] size-[12em] rounded-full border-[0.2em] border-[#bfe8df]/70" />
+          <span className="absolute -bottom-[5em] end-[2%] size-[14em] rounded-full bg-[#c9efe7]/70" />
+          <span className="absolute end-[10%] top-[35%] size-[9em] rounded-full bg-[#bdeae0]/60" />
+          <span className="absolute bottom-[18%] end-[30%] size-[1em] rounded-full bg-[#5fd6c4]/70" />
+          <span className="absolute bottom-[16%] end-[7%] size-[0.9em] rounded-full bg-[#5fd6c4]/70" />
+          <Plus className="absolute bottom-[10%] end-[14%] size-[3em] text-[#2cc5b2]" strokeWidth={3.2} />
+          <Plus className="absolute start-[52%] top-[30%] size-[2em] text-[#b6e6dd]" strokeWidth={3} />
+          <Sparkles className="absolute end-[4%] top-[8%] size-[2.2em] text-[#2cc5b2]" />
+          <span className="absolute end-[16%] top-1/2 grid size-[6.5em] -translate-y-1/2 place-items-center rounded-[1.5em] bg-white shadow-[0_10px_28px_rgba(18,147,155,0.15)]">
             <PenTool className="size-[2.6em] text-[#1d7f5f]" />
           </span>
         </div>

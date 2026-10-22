@@ -76,7 +76,7 @@ function OpportunityIllustration() {
         alt=""
         width={380}
         height={380}
-        className="absolute left-[19%] top-[10%] h-[88%] w-auto"
+        className="absolute start-[19%] top-[10%] h-[88%] w-auto"
         priority
       />
     </div>
@@ -138,7 +138,7 @@ export function RecruitmentListings() {
                     View Details
                     <SquareArrowOutUpRight size={12} aria-hidden />
                   </summary>
-                  <div className="absolute left-0 top-full z-20 mt-1 w-full rounded-lg border border-[#1b2a5c]/10 bg-white p-3 text-xs leading-relaxed text-[#1b2a5c] shadow-lg">
+                  <div className="absolute start-0 top-full z-20 mt-1 w-full rounded-lg border border-[#1b2a5c]/10 bg-white p-3 text-xs leading-relaxed text-[#1b2a5c] shadow-lg">
                     Practice {role.track.toLowerCase()} skills through a guided hiring scenario.{" "}
                     {role.title === "Junior UI/UX Designer" && (
                       <>
@@ -172,7 +172,7 @@ export function RecruitmentHero({ children }: { children?: ReactNode }) {
         alt=""
         width={359}
         height={261}
-        className="pointer-events-none absolute right-0 top-0 select-none"
+        className="pointer-events-none absolute end-0 top-0 select-none"
         priority
       />
       <div className="mx-auto grid max-w-[1440px] items-end gap-8 px-5 pt-8 sm:grid-cols-[1fr_0.75fr] sm:px-8 lg:px-16">

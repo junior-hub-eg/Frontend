@@ -112,7 +112,7 @@ export default function FindYourTrack({
               <button
                 type="button"
                 onClick={() => (c.path === "KnowsTrack" ? setPicking(true) : router.push(`/learner/ai-interview?path=${c.path}`))}
-                className={`group flex h-full w-full flex-col rounded-[28px] border border-white bg-gradient-to-br p-7 text-left shadow-[0_10px_30px_rgba(20,54,90,0.08)] transition-shadow hover:shadow-[0_14px_36px_rgba(20,54,90,0.16)] ${c.bg}`}
+                className={`group flex h-full w-full flex-col rounded-[28px] border border-white bg-gradient-to-br p-7 text-start shadow-[0_10px_30px_rgba(20,54,90,0.08)] transition-shadow hover:shadow-[0_14px_36px_rgba(20,54,90,0.16)] ${c.bg}`}
               >
                 <span className="text-5xl" aria-hidden>
                   {c.emoji}
@@ -144,7 +144,7 @@ export default function FindYourTrack({
                   type="button"
                   disabled={saving !== null}
                   onClick={() => choose(t.code)}
-                  className="flex h-full w-full flex-col rounded-2xl border border-[#e3ecea] bg-white p-5 text-left shadow-sm transition-colors hover:border-[#12939b] disabled:opacity-60"
+                  className="flex h-full w-full flex-col rounded-2xl border border-[#e3ecea] bg-white p-5 text-start shadow-sm transition-colors hover:border-[#12939b] disabled:opacity-60"
                 >
                   <span className="text-base font-bold text-[#14365a]">{t.name}</span>
                   <span className="mt-1 text-xs leading-relaxed text-[#14365a]/70">{t.shortDescription}</span>

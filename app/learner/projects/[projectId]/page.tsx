@@ -123,7 +123,7 @@ export default function ProjectDetailsPage() {
 
   if (!detail) {
     return (
-      <div className="grid flex-1 place-items-center p-10 pt-24 lg:pl-[calc(var(--sb)+1.5rem)]" role={error ? "alert" : "status"}>
+      <div className="grid flex-1 place-items-center p-10 pt-24 lg:ps-[calc(var(--sb)+1.5rem)]" role={error ? "alert" : "status"}>
         {error ? (
           <p className="text-sm font-semibold text-[#b83232]">
             {error}{" "}
@@ -182,7 +182,7 @@ function ProjectDetailsView({ detail }: { detail: ProjectDetail }) {
   return (
     <div
       dir="ltr"
-      className="relative isolate flex min-h-0 min-w-0 w-full flex-1 flex-col gap-4 overflow-x-hidden overflow-y-auto bg-[#f6f9f8] px-4 pb-6 pt-24 font-[family-name:var(--font-poppins)] text-[#1B2D54] lg:pl-[calc(var(--sb)+1.5rem)] lg:pr-6"
+      className="relative isolate flex min-h-0 min-w-0 w-full flex-1 flex-col gap-4 overflow-x-hidden overflow-y-auto bg-[#f6f9f8] px-4 pb-6 pt-24 font-[family-name:var(--font-poppins)] text-[#1B2D54] lg:ps-[calc(var(--sb)+1.5rem)] lg:pe-6"
     >
       <div
         aria-hidden
@@ -256,11 +256,11 @@ function ProjectDetailsView({ detail }: { detail: ProjectDetail }) {
                 <p className="text-xs font-semibold">{SPRINT.name}</p>
                 <p className="text-[10px] text-[#1B2D54]/60">{SPRINT.dates}</p>
               </div>
-              <span className="ml-1 hidden items-center gap-1 rounded-md bg-[#f1f5f7] px-2 py-1 text-[9px] font-medium sm:inline-flex">
+              <span className="ms-1 hidden items-center gap-1 rounded-md bg-[#f1f5f7] px-2 py-1 text-[9px] font-medium sm:inline-flex">
                 <Clock aria-hidden className="size-3 text-[#1B2D54]/60" />
                 {SPRINT.daysLeft} days left
               </span>
-              <div className="ml-auto shrink-0 text-right leading-tight">
+              <div className="ms-auto shrink-0 text-end leading-tight">
                 <p className="text-lg font-bold">{percent}%</p>
                 <p className="text-[10px] text-[#1B2D54]/60">
                   {SPRINT.done} of {SPRINT.total} tasks done
@@ -380,7 +380,7 @@ function ProjectDetailsView({ detail }: { detail: ProjectDetail }) {
                       <p className="text-xs font-semibold">{link.label}</p>
                       <p className="text-[10px] text-[#1B2D54]/60">{link.note}</p>
                     </div>
-                    <ArrowRight aria-hidden className="ml-auto size-3.5 shrink-0" />
+                    <ArrowRight aria-hidden className="ms-auto size-3.5 shrink-0" />
                   </a>
                 </li>
               ))}

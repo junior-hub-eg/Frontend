@@ -311,7 +311,7 @@ export default function InternDashboard() {
   return (
     <>
       {/* Mobile and tablet */}
-      <div className="pb-8 pl-3 pr-4 sm:pl-4 sm:pr-6 lg:hidden">
+      <div className="pb-8 ps-3 pe-4 sm:ps-4 sm:pe-6 lg:hidden">
         <Greeting firstName={firstName} />
         <div className="mt-4 grid gap-3 text-[14px] sm:grid-cols-2">
           {levelCard()}
@@ -416,7 +416,7 @@ export default function InternDashboard() {
         </div>
 
         <div
-          className="absolute bottom-[calc(var(--u)*1.6)] right-[calc(var(--u)*1.6)] z-40"
+          className="absolute bottom-[calc(var(--u)*1.6)] end-[calc(var(--u)*1.6)] z-40"
           style={{ fontSize: "clamp(9px, calc(var(--u) * 1.05), 16px)" }}
         >
           <RewardsButton />
@@ -425,7 +425,7 @@ export default function InternDashboard() {
         <TeammatesPanel
           fluid
           teammates={teammates}
-          className="absolute right-[calc(var(--u)*1.6)] top-[9.8%] z-40"
+          className="absolute end-[calc(var(--u)*1.6)] top-[9.8%] z-40"
         />
 
         {BUILDINGS.map((b) => (

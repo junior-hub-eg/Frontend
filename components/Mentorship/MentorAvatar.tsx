@@ -29,7 +29,7 @@ export function MentorAvatar({
     <span aria-hidden className={cn("relative grid shrink-0 place-items-center rounded-full text-sm font-semibold", !photo && color, className ?? "size-12")}>
       {photo ? <Image src={photo} alt="" fill sizes="64px" className="object-contain" /> : initials}
       {online && !(photo && photoHasDot) && (
-        <span className="absolute bottom-0 right-0 size-3 rounded-full bg-[#2fc39b] ring-2 ring-white" />
+        <span className="absolute bottom-0 end-0 size-3 rounded-full bg-[#2fc39b] ring-2 ring-white" />
       )}
     </span>
   );

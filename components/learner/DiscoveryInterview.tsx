@@ -358,7 +358,7 @@ export default function DiscoveryInterview({
                   type="button"
                   onClick={leave}
                   aria-label="Back to Find your track"
-                  className="absolute left-5 top-5 z-10 grid size-11 place-items-center sm:left-8 sm:top-8 lg:left-[2.5%] lg:top-[clamp(16px,4vh,40px)] rounded-[10px] bg-[rgba(41,45,50,0.47)] text-white shadow-md backdrop-blur-sm hover:bg-[rgba(41,45,50,0.6)]"
+                  className="absolute start-5 top-5 z-10 grid size-11 place-items-center sm:start-8 sm:top-8 lg:start-[2.5%] lg:top-[clamp(16px,4vh,40px)] rounded-[10px] bg-[rgba(41,45,50,0.47)] text-white shadow-md backdrop-blur-sm hover:bg-[rgba(41,45,50,0.6)]"
                 >
                   <ArrowLeft className="size-6" />
                 </button>
@@ -479,12 +479,12 @@ export default function DiscoveryInterview({
                     <Bubble message={{ id: -1, from: "me", text: caption, time: new Date(), sending: true }} photo={me.src} photoBg={me.bg} />
                   )}
                   {busy === "send" && (
-                    <p className="ml-14 flex items-center gap-1.5 text-xs font-semibold text-[#14365a]/70">
+                    <p className="ms-14 flex items-center gap-1.5 text-xs font-semibold text-[#14365a]/70">
                       <LoaderCircle className="size-3.5 animate-spin" /> {KARIMA.name} is thinking…
                     </p>
                   )}
                   {busy === "finish" && (
-                    <p className="ml-14 flex items-center gap-1.5 text-xs font-semibold text-[#14365a]/70">
+                    <p className="ms-14 flex items-center gap-1.5 text-xs font-semibold text-[#14365a]/70">
                       <LoaderCircle className="size-3.5 animate-spin" /> Finding your tracks…
                     </p>
                   )}
@@ -506,7 +506,7 @@ export default function DiscoveryInterview({
                 )}
 
                 <form
-                  className="mt-3 flex items-center gap-2 rounded-full border border-white/80 bg-white/30 py-2 pl-5 pr-2 shadow-sm focus-within:ring-2 focus-within:ring-[#12939b]/40"
+                  className="mt-3 flex items-center gap-2 rounded-full border border-white/80 bg-white/30 py-2 ps-5 pe-2 shadow-sm focus-within:ring-2 focus-within:ring-[#12939b]/40"
                   onSubmit={(e) => {
                     e.preventDefault();
                     if (answer.trim()) void send({ text: answer.trim() });
@@ -560,13 +560,13 @@ function Bubble({ message: m, photo, photoBg }: { message: Message; photo: strin
       </span>
       <div
         className={`max-w-[75%] rounded-[16px] px-3.5 py-2.5 shadow-sm ${
-          mine ? "rounded-br-[4px] border border-white/70 bg-white/45" : "rounded-bl-[4px] bg-white"
+          mine ? "rounded-ee-[4px] border border-white/70 bg-white/45" : "rounded-es-[4px] bg-white"
         } ${m.sending ? "opacity-70" : ""}`}
       >
         <p dir="auto" className="whitespace-pre-wrap break-words text-[14px] leading-relaxed text-[#14365a]">
           {m.text}
         </p>
-        <p className={`mt-1 text-[10px] text-[#14365a]/70 ${mine ? "text-right" : ""}`}>
+        <p className={`mt-1 text-[10px] text-[#14365a]/70 ${mine ? "text-end" : ""}`}>
           {clock(m.time)}
           {mine && (m.id === -1 ? " · Listening…" : m.sending ? " · Sending" : " · Read")}
         </p>

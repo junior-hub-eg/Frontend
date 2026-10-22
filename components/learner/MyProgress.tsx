@@ -130,7 +130,7 @@ export default function MyProgress() {
   ];
 
   return (
-    <div className="relative -ml-[4rem] min-h-[calc(100svh-5rem)] min-w-0 flex-1 lg:absolute lg:inset-0 lg:ml-0 lg:min-h-0">
+    <div className="relative -ms-[4rem] min-h-[calc(100svh-5rem)] min-w-0 flex-1 lg:absolute lg:inset-0 lg:ms-0 lg:min-h-0">
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-x-0 top-0 h-[75svh] [mask-image:linear-gradient(to_bottom,black_70%,transparent)] lg:h-full lg:[mask-image:none]"
@@ -139,7 +139,7 @@ export default function MyProgress() {
       </div>
 
       <div
-        className="relative min-w-0 pb-8 pl-[4.75rem] pr-3 pt-2 sm:pr-4 lg:absolute lg:inset-0 lg:overflow-y-auto lg:pb-[calc(var(--u)*2)] lg:pl-[var(--hl)] lg:pr-[calc(var(--u)*1.6)] lg:pt-[calc(var(--u)*8.5)]"
+        className="relative min-w-0 pb-8 ps-[4.75rem] pe-3 pt-2 sm:pe-4 lg:absolute lg:inset-0 lg:overflow-y-auto lg:pb-[calc(var(--u)*2)] lg:ps-[var(--hl)] lg:pe-[calc(var(--u)*1.6)] lg:pt-[calc(var(--u)*8.5)]"
         style={{ fontSize: "clamp(12px, calc(var(--u) * 1.05), 17px)" }}
       >
         <div className="mx-auto flex max-w-[78em] flex-col gap-[1em]">
@@ -180,7 +180,7 @@ export default function MyProgress() {
               width={559}
               height={376}
               sizes="(max-width: 1024px) 0px, 26vw"
-              className="pointer-events-none absolute -right-[1em] -top-[1em] hidden h-auto w-[24em] drop-shadow-[0_18px_22px_rgba(13,43,90,0.25)] lg:block"
+              className="pointer-events-none absolute -end-[1em] -top-[1em] hidden h-auto w-[24em] drop-shadow-[0_18px_22px_rgba(13,43,90,0.25)] lg:block"
             />
           </section>
 

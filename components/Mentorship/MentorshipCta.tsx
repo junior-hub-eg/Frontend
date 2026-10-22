@@ -7,10 +7,10 @@ export function MentorshipCta() {
   return (
     <section className="px-6 py-12 lg:px-10">
       <div className="relative mx-auto max-w-[1200px] overflow-hidden rounded-[28px] bg-[#1b2a5c] px-6 py-16 text-center">
-        <span aria-hidden className="pointer-events-none absolute -left-16 -top-16 size-64 rounded-full bg-[#12939b]/25 blur-3xl" />
-        <span aria-hidden className="pointer-events-none absolute -bottom-20 -right-10 size-72 rounded-full bg-[#12939b]/25 blur-3xl" />
-        <WaveLoop className="pointer-events-none absolute left-[6%] top-1/2 hidden h-10 w-14 text-[#12939b]/70 md:block" />
-        <WaveLoop className="pointer-events-none absolute right-[6%] top-1/2 hidden h-10 w-14 -scale-x-100 text-[#12939b]/70 md:block" />
+        <span aria-hidden className="pointer-events-none absolute -start-16 -top-16 size-64 rounded-full bg-[#12939b]/25 blur-3xl" />
+        <span aria-hidden className="pointer-events-none absolute -bottom-20 -end-10 size-72 rounded-full bg-[#12939b]/25 blur-3xl" />
+        <WaveLoop className="pointer-events-none absolute start-[6%] top-1/2 hidden h-10 w-14 text-[#12939b]/70 md:block" />
+        <WaveLoop className="pointer-events-none absolute end-[6%] top-1/2 hidden h-10 w-14 -scale-x-100 text-[#12939b]/70 md:block" />
 
         <div className="relative mx-auto max-w-2xl">
           <span className="rounded-full bg-[#12939b]/25 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-[#7fe8d6]">

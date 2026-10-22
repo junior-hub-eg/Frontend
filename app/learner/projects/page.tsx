@@ -128,7 +128,7 @@ export default function MyProjectsPage() {
 
   if (!data) {
     return (
-      <div className="grid flex-1 place-items-center p-10 pt-24 lg:pl-[calc(var(--sb)+1.5rem)]" role={error ? "alert" : "status"}>
+      <div className="grid flex-1 place-items-center p-10 pt-24 lg:ps-[calc(var(--sb)+1.5rem)]" role={error ? "alert" : "status"}>
         {error ? <p className="text-sm font-semibold text-[#b83232]">{error}</p> : <LoaderCircle className="size-8 animate-spin text-[#12939b]" aria-label="Loading" />}
       </div>
     );
@@ -169,7 +169,7 @@ function MyProjectsView({ list, detail }: { list: MyProjects; detail: ProjectDet
   return (
     <div
       dir="ltr"
-      className="relative isolate flex min-h-0 min-w-0 w-full flex-1 flex-col gap-4 overflow-x-hidden overflow-y-auto bg-[#f6f9f8] px-4 pb-6 pt-24 font-[family-name:var(--font-poppins)] text-[#1B2D54] lg:pl-[calc(var(--sb)+1.5rem)] lg:pr-6"
+      className="relative isolate flex min-h-0 min-w-0 w-full flex-1 flex-col gap-4 overflow-x-hidden overflow-y-auto bg-[#f6f9f8] px-4 pb-6 pt-24 font-[family-name:var(--font-poppins)] text-[#1B2D54] lg:ps-[calc(var(--sb)+1.5rem)] lg:pe-6"
     >
       <div
         aria-hidden
@@ -248,7 +248,7 @@ function MyProjectsView({ list, detail }: { list: MyProjects; detail: ProjectDet
                   <p className="text-xs font-semibold">{SPRINT.name}</p>
                   <p className="text-[10px] text-[#1B2D54]/60">{SPRINT.dates}</p>
                 </div>
-                <div className="ml-auto shrink-0 text-right leading-tight">
+                <div className="ms-auto shrink-0 text-end leading-tight">
                   <p className="text-lg font-bold">{percent}%</p>
                   <p className="text-[10px] text-[#1B2D54]/60">
                     {SPRINT.done} of {SPRINT.total} tasks done
@@ -307,7 +307,7 @@ function MyProjectsView({ list, detail }: { list: MyProjects; detail: ProjectDet
                         <p className="text-xs font-semibold">{link.label}</p>
                         <p className="text-[10px] text-[#1B2D54]/60">{link.note}</p>
                       </div>
-                      <ArrowRight aria-hidden className="ml-auto size-3.5 shrink-0" />
+                      <ArrowRight aria-hidden className="ms-auto size-3.5 shrink-0" />
                     </a>
                   </li>
                 ))}
@@ -352,7 +352,7 @@ function MyProjectsView({ list, detail }: { list: MyProjects; detail: ProjectDet
           <Link
             href="/learner/projects/all"
             aria-label="View all projects"
-            className="ml-auto flex size-9 shrink-0 items-center justify-center rounded-full bg-[#1B2D54] text-white transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#12939b]/40"
+            className="ms-auto flex size-9 shrink-0 items-center justify-center rounded-full bg-[#1B2D54] text-white transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#12939b]/40"
           >
             <ChevronRight aria-hidden className="size-4" />
           </Link>

@@ -15,13 +15,16 @@ import { BackButton } from "@/components/Auth/BackButton";
 import { authStyles } from "@/components/Auth/auth-styles";
 import { forgotPassword } from "@/lib/auth/account-api";
 import { errorMessage } from "@/lib/api-client";
+import { useT } from "@/lib/i18n/client";
+import { tk } from "@/lib/i18n/translate";
 
 const schema = z.object({
-  email: z.string().min(1, "Email is required").email("Invalid email address"),
+  email: z.string().min(1, tk("Email is required")).email(tk("Invalid email address")),
 });
 type FormValues = z.infer<typeof schema>;
 
 export default function ForgotPasswordPage() {
+  const t = useT();
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const {
@@ -44,13 +47,13 @@ export default function ForgotPasswordPage() {
   return (
     <>
       <BackButton href="/login" />
-      <AuthHeading title="Forgot Your Password?" subtitle="Enter your email and we'll send you a verification code" />
+      <AuthHeading title={t("Forgot Your Password?")} subtitle={t("Enter your email and we'll send you a verification code")} />
 
       <form onSubmit={handleSubmit(onSubmit)} noValidate className={authStyles.form}>
         {error && <Alert variant="danger">{error}</Alert>}
 
         <AuthField
-          label="Email"
+          label={t("Email")}
           icon={Mail}
           type="email"
           autoComplete="email"
@@ -60,7 +63,7 @@ export default function ForgotPasswordPage() {
         />
 
         <AuthButton type="submit" disabled={isSubmitting}>
-          Send Code
+          {t("Send Code")}
         </AuthButton>
       </form>
     </>

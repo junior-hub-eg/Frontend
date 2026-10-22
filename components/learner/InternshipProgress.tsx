@@ -93,7 +93,7 @@ function TeamCard({ squad }: { squad: Squad | null }) {
         <ul className="flex items-center gap-[1.2em] overflow-x-auto pb-[0.2em]">
           {/* The project's monitor (a mentor picked for the squad), then the members. */}
           {squad?.monitor && (
-            <li className="flex min-w-[9em] shrink-0 flex-col items-center border-r border-[#e3ebf3] pr-[1.2em] text-center">
+            <li className="flex min-w-[9em] shrink-0 flex-col items-center border-e border-[#e3ebf3] pe-[1.2em] text-center">
               <span
                 className="relative h-[5.2em] w-[5.2em] overflow-hidden rounded-full shadow-md ring-[0.25em] ring-[#12939b]"
                 style={{ backgroundColor: mentorAvatar(squad.monitor).bg }}
@@ -154,7 +154,7 @@ function SprintCard({ sprint }: { sprint: Sprint | null }) {
           <h2 className="text-[1.7em] font-extrabold leading-tight text-[#14365a]">{sprint?.name ?? "\u00a0"}</h2>
           <p className="text-[0.8em] text-[#14365a]/60">{sprint ? sprintDates(sprint.startDate, sprint.endDate) : "\u00a0"}</p>
         </div>
-        <div className="ml-auto text-right">
+        <div className="ms-auto text-end">
           <span className="inline-flex items-center gap-[0.4em] rounded-[0.6em] bg-[#eef2f7] px-[0.7em] py-[0.25em] text-[0.75em] text-[#14365a]/70">
             <Calendar className="h-[1em] w-[1em]" /> {sprint?.daysLeft ?? 0} {sprint?.daysLeft === 1 ? "day" : "days"} left
           </span>
@@ -204,7 +204,7 @@ function TaskCard({ task, avatarIndex, onMove }: { task: SquadTask; avatarIndex:
         e.dataTransfer.effectAllowed = "move";
       }}
       className={`relative rounded-[0.9em] bg-white p-[0.7em] shadow-sm ${task.isMine ? "cursor-grab active:cursor-grabbing" : ""} ${
-        task.isMine && task.status === "Review" ? "border-l-[0.3em] border-l-[#ff9a1f]" : ""
+        task.isMine && task.status === "Review" ? "border-s-[0.3em] border-s-[#ff9a1f]" : ""
       }`}
     >
       <p className="text-[0.85em] font-semibold text-[#14365a]">{task.title}</p>
@@ -238,17 +238,17 @@ function TaskCard({ task, avatarIndex, onMove }: { task: SquadTask; avatarIndex:
             onClick={() => setMenuOpen((o) => !o)}
             aria-label={`Move ${task.title}`}
             aria-expanded={menuOpen}
-            className="ml-auto rounded-[0.4em] text-[#14365a]/50 hover:text-[#14365a]"
+            className="ms-auto rounded-[0.4em] text-[#14365a]/50 hover:text-[#14365a]"
           >
             <MoreHorizontal className="h-[1.1em] w-[1.1em]" />
           </button>
         ) : (
-          <MoreHorizontal className="ml-auto h-[1.1em] w-[1.1em] text-[#14365a]/30" aria-hidden="true" />
+          <MoreHorizontal className="ms-auto h-[1.1em] w-[1.1em] text-[#14365a]/30" aria-hidden="true" />
         )}
       </div>
 
       {menuOpen && (
-        <div className="absolute right-[0.5em] top-full z-20 mt-[0.2em] w-[11em] rounded-[0.7em] border border-[#14365a]/10 bg-white p-[0.3em] shadow-lg">
+        <div className="absolute end-[0.5em] top-full z-20 mt-[0.2em] w-[11em] rounded-[0.7em] border border-[#14365a]/10 bg-white p-[0.3em] shadow-lg">
           {moves.map((to) => (
             <button
               key={to}
@@ -257,7 +257,7 @@ function TaskCard({ task, avatarIndex, onMove }: { task: SquadTask; avatarIndex:
                 setMenuOpen(false);
                 onMove(task, to);
               }}
-              className="w-full rounded-[0.5em] px-[0.6em] py-[0.4em] text-left text-[0.75em] font-semibold text-[#14365a] hover:bg-[#eef2f7]"
+              className="w-full rounded-[0.5em] px-[0.6em] py-[0.4em] text-start text-[0.75em] font-semibold text-[#14365a] hover:bg-[#eef2f7]"
             >
               Move to {COLUMN_STYLE[to].title}
             </button>
@@ -358,7 +358,7 @@ function TaskBoard({
           </svg>
           Task Board
         </h2>
-        <div className="ml-auto flex gap-[0.4em]">
+        <div className="ms-auto flex gap-[0.4em]">
           <span className="grid h-[1.6em] w-[1.6em] place-items-center rounded-[0.4em] bg-[#14365a] text-white">
             <ArrowLeft className="h-[1em] w-[1em]" />
           </span>
@@ -430,7 +430,7 @@ function Leaderboard({ data }: { data: LeaderboardData | null }) {
           <h2 className="text-[1.2em] font-extrabold text-[#14365a]">Squad Leaderboard</h2>
           <p className="text-[0.75em] text-[#14365a]/60">Top 5 squads this Sprint</p>
         </div>
-        <span className="ml-auto flex items-center gap-[0.4em] rounded-full bg-[#d7f5e4] px-[0.8em] py-[0.2em] text-[0.7em] font-bold text-[#1f9d5b]">
+        <span className="ms-auto flex items-center gap-[0.4em] rounded-full bg-[#d7f5e4] px-[0.8em] py-[0.2em] text-[0.7em] font-bold text-[#1f9d5b]">
           <span className="h-[0.6em] w-[0.6em] rounded-full bg-[#2fb36b]" /> Live
         </span>
       </div>
@@ -496,7 +496,7 @@ function ProjectLinks() {
       <div className="flex items-center gap-[0.6em]">
         <h2 className="text-[1.3em] font-extrabold text-[#14365a]">Project Links</h2>
         {me && !editing && (
-          <button type="button" onClick={() => setEditing(true)} className="ml-auto text-[0.85em] font-semibold text-[#12939b] hover:underline">
+          <button type="button" onClick={() => setEditing(true)} className="ms-auto text-[0.85em] font-semibold text-[#12939b] hover:underline">
             {me.links.length ? "Edit my links" : "+ Add my links"}
           </button>
         )}
@@ -558,7 +558,7 @@ export default function InternshipProgress() {
   }
 
   return (
-    <div className="relative -ml-[4rem] min-h-[calc(100svh-5rem)] min-w-0 flex-1 lg:absolute lg:inset-0 lg:ml-0 lg:min-h-0">
+    <div className="relative -ms-[4rem] min-h-[calc(100svh-5rem)] min-w-0 flex-1 lg:absolute lg:inset-0 lg:ms-0 lg:min-h-0">
       {/* Background: on mobile it only covers the top and fades out, on desktop it fills the frame */}
       <div
         aria-hidden="true"
@@ -569,7 +569,7 @@ export default function InternshipProgress() {
 
       {/* Scrolls on desktop (content starts under the header, next to the sidebar) */}
       <div
-        className="relative min-w-0 pb-8 pl-[4.75rem] pr-3 pt-2 sm:pr-4 lg:absolute lg:inset-0 lg:overflow-y-auto lg:pb-[calc(var(--u)*2)] lg:pl-[var(--hl)] lg:pr-[calc(var(--u)*1.6)] lg:pt-[calc(var(--u)*8.5)]"
+        className="relative min-w-0 pb-8 ps-[4.75rem] pe-3 pt-2 sm:pe-4 lg:absolute lg:inset-0 lg:overflow-y-auto lg:pb-[calc(var(--u)*2)] lg:ps-[var(--hl)] lg:pe-[calc(var(--u)*1.6)] lg:pt-[calc(var(--u)*8.5)]"
         style={{ fontSize: "clamp(12px, calc(var(--u) * 1.05), 17px)" }}
       >
         <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-[1em] lg:grid-cols-[minmax(0,1fr)_calc(var(--u)*27)] lg:grid-rows-[auto_1fr]">

@@ -93,7 +93,7 @@ export function LearnerShell({
         <LearnerSidebar activeHref={current} collapsed={collapsed} mobileOpen={mobileOpen} onNavigate={closeMobile} locked={navLocked} />
 
         {/* ---------- Top bar ---------- */}
-        <header className="relative z-40 flex items-center gap-3 py-4 pl-[4rem] pr-4 lg:absolute lg:left-[var(--hl)] lg:right-[calc(var(--u)*1.6)] lg:top-[3.8%] lg:gap-[1.2em] lg:p-0 lg:transition-[left] lg:duration-300 lg:[font-size:clamp(9px,var(--u),16px)]">
+        <header className="relative z-40 flex items-center gap-3 py-4 ps-[4rem] pe-4 lg:absolute lg:start-[var(--hl)] lg:end-[calc(var(--u)*1.6)] lg:top-[3.8%] lg:gap-[1.2em] lg:p-0 lg:transition-[left] lg:duration-300 lg:[font-size:clamp(9px,var(--u),16px)]">
           <button
             type="button"
             onClick={toggleSidebar}
@@ -107,13 +107,13 @@ export function LearnerShell({
           </button>
 
           <form role="search" onSubmit={(e) => e.preventDefault()} className="relative hidden max-w-[34em] flex-1 sm:block">
-            <Search className="pointer-events-none absolute left-[1em] top-1/2 h-[1.1em] w-[1.1em] -translate-y-1/2 text-[#14365a]/60" />
+            <Search className="pointer-events-none absolute start-[1em] top-1/2 h-[1.1em] w-[1.1em] -translate-y-1/2 text-[#14365a]/60" />
             <input
               type="search"
               placeholder="Search anything...."
-              className="h-[2.8em] w-full rounded-full border border-white/70 bg-white/55 pl-[3em] pr-[5em] text-[0.95em] text-[#14365a] outline-none backdrop-blur placeholder:text-[#14365a]/55 focus:ring-2 focus:ring-[#12939b]/40"
+              className="h-[2.8em] w-full rounded-full border border-white/70 bg-white/55 ps-[3em] pe-[5em] text-[0.95em] text-[#14365a] outline-none backdrop-blur placeholder:text-[#14365a]/55 focus:ring-2 focus:ring-[#12939b]/40"
             />
-            <kbd className="pointer-events-none absolute right-[0.7em] top-1/2 -translate-y-1/2 rounded-full bg-[#4a9df8]/25 px-[0.8em] py-[0.25em] font-sans text-[0.8em] font-semibold text-[#2f7fd6]">
+            <kbd className="pointer-events-none absolute end-[0.7em] top-1/2 -translate-y-1/2 rounded-full bg-[#4a9df8]/25 px-[0.8em] py-[0.25em] font-sans text-[0.8em] font-semibold text-[#2f7fd6]">
               ⌘K
             </kbd>
           </form>
@@ -125,7 +125,7 @@ export function LearnerShell({
             EN <ChevronDown className="h-[1em] w-[1em]" />
           </button>
 
-          <div className="ml-auto flex items-center gap-[1.2em]">
+          <div className="ms-auto flex items-center gap-[1.2em]">
             <button
               type="button"
               aria-label="Notifications"
@@ -140,7 +140,7 @@ export function LearnerShell({
               <div className="hidden h-[2.8em] items-center gap-[0.6em] rounded-full border border-white/70 bg-white/55 px-[1em] text-[0.95em] font-semibold text-[#14365a] backdrop-blur md:flex">
                 <Award className="h-[1.3em] w-[1.3em] text-[#14365a]" />
                 {levelLabel && <span>{levelLabel}</span>}
-                {trackLabel && <span className="ml-[0.6em] font-bold">{trackLabel}</span>}
+                {trackLabel && <span className="ms-[0.6em] font-bold">{trackLabel}</span>}
               </div>
             )}
 
@@ -149,7 +149,7 @@ export function LearnerShell({
                 type="button"
                 onClick={() => setMenuOpen((o) => !o)}
                 aria-expanded={menuOpen}
-                className="flex h-[2.8em] items-center gap-[0.7em] rounded-full border border-white/70 bg-white/55 pl-[0.3em] pr-[1em] text-[0.95em] font-medium text-[#14365a] backdrop-blur"
+                className="flex h-[2.8em] items-center gap-[0.7em] rounded-full border border-white/70 bg-white/55 ps-[0.3em] pe-[1em] text-[0.95em] font-medium text-[#14365a] backdrop-blur"
               >
                 <span
                   className="relative h-[2.2em] w-[2.2em] shrink-0 overflow-hidden rounded-full ring-2 ring-white"
@@ -162,7 +162,7 @@ export function LearnerShell({
               </button>
 
               {menuOpen && (
-                <div className="absolute right-0 top-full z-50 mt-2 w-48 rounded-xl border border-white/60 bg-white p-1 text-base shadow-lg">
+                <div className="absolute end-0 top-full z-50 mt-2 w-48 rounded-xl border border-white/60 bg-white p-1 text-base shadow-lg">
                   {userEmail && <p className="truncate px-3 py-2 text-[11px] text-slate-500">{userEmail}</p>}
                   {onChangeAvatar && (
                     <button
@@ -171,7 +171,7 @@ export function LearnerShell({
                         setMenuOpen(false);
                         setPickingAvatar(true);
                       }}
-                      className="w-full rounded-lg px-3 py-2 text-left text-xs text-[#14365a] hover:bg-slate-100"
+                      className="w-full rounded-lg px-3 py-2 text-start text-xs text-[#14365a] hover:bg-slate-100"
                     >
                       Change avatar
                     </button>
@@ -180,7 +180,7 @@ export function LearnerShell({
                     <button
                       type="button"
                       onClick={onLogout}
-                      className="w-full rounded-lg px-3 py-2 text-left text-xs text-[#14365a] hover:bg-slate-100"
+                      className="w-full rounded-lg px-3 py-2 text-start text-xs text-[#14365a] hover:bg-slate-100"
                     >
                       Log out
                     </button>
@@ -202,7 +202,7 @@ export function LearnerShell({
         )}
 
         {/* ---------- Content: fills the whole frame on desktop ---------- */}
-        <main className="relative flex flex-col pl-[4rem] lg:absolute lg:inset-0 lg:z-0 lg:pl-0">{children}</main>
+        <main className="relative flex flex-col ps-[4rem] lg:absolute lg:inset-0 lg:z-0 lg:ps-0">{children}</main>
       </div>
     </div>
   );
@@ -262,7 +262,7 @@ export function AvatarPicker({
       <div className="flex max-h-[calc(100dvh-2rem)] w-full max-w-xl flex-col rounded-[24px] border border-white bg-white p-6 shadow-2xl">
         <div className="flex items-center">
           <h2 className="text-xl font-bold text-[#14365a]">Choose your avatar</h2>
-          <button type="button" onClick={onClose} aria-label="Close" className="ml-auto grid size-9 place-items-center rounded-full hover:bg-slate-100">
+          <button type="button" onClick={onClose} aria-label="Close" className="ms-auto grid size-9 place-items-center rounded-full hover:bg-slate-100">
             <X className="size-5 text-[#14365a]" />
           </button>
         </div>
@@ -343,7 +343,7 @@ export function AvatarPicker({
                       >
                         <Image src={a.src} alt="" fill sizes="88px" className="object-cover" />
                         {(selected || saving === a.key) && (
-                          <span className="absolute bottom-1 right-1 grid size-6 place-items-center rounded-full bg-[#12939b] text-white">
+                          <span className="absolute bottom-1 end-1 grid size-6 place-items-center rounded-full bg-[#12939b] text-white">
                             {saving === a.key ? <LoaderCircle className="size-4 animate-spin" /> : <Check className="size-4" />}
                           </span>
                         )}

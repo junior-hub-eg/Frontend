@@ -209,7 +209,7 @@ function Workspace({ lesson, tryIt }: { lesson: Lesson; tryIt: { starterCode: st
           </div>
 
           <div className="flex min-h-[320px] flex-1 overflow-auto bg-[#1b2a5c] font-mono text-xs leading-6">
-            <div aria-hidden className="select-none px-3 py-3 text-right text-white/30">
+            <div aria-hidden className="select-none px-3 py-3 text-end text-white/30">
               {Array.from({ length: Math.max(lineCount, 14) }, (_, i) => (
                 <div key={i}>{i + 1}</div>
               ))}
@@ -220,7 +220,7 @@ function Workspace({ lesson, tryIt }: { lesson: Lesson; tryIt: { starterCode: st
               spellCheck={false}
               aria-label="Edit main.js"
               rows={Math.max(lineCount, 14)}
-              className="min-w-0 flex-1 resize-none overflow-hidden whitespace-pre bg-transparent py-3 pr-3 text-[#cfe9ff] outline-none"
+              className="min-w-0 flex-1 resize-none overflow-hidden whitespace-pre bg-transparent py-3 pe-3 text-[#cfe9ff] outline-none"
             />
           </div>
 
@@ -243,7 +243,7 @@ function Workspace({ lesson, tryIt }: { lesson: Lesson; tryIt: { starterCode: st
             <span className="size-2 rounded-full bg-[#ff6b6b]" />
             <span className="size-2 rounded-full bg-[#ffd166]" />
             <span className="size-2 rounded-full bg-[#06d6a0]" />
-            <span className="ml-2 text-[11px] font-semibold text-[#1b2a5c]/60">Console</span>
+            <span className="ms-2 text-[11px] font-semibold text-[#1b2a5c]/60">Console</span>
           </div>
           <div className="flex-1 overflow-auto p-4" aria-live="polite">
             {run ? (

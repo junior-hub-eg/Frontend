@@ -83,7 +83,7 @@ export function MyLinksEditor({ me, onSaved, submitLabel = "Save links" }: { me:
       }}
     >
       {rows.map((row, i) => (
-        <div key={i} className="flex min-w-0 items-center gap-[0.5em] rounded-full border border-white/80 bg-white/55 py-[0.3em] pl-[0.4em] pr-[0.3em]">
+        <div key={i} className="flex min-w-0 items-center gap-[0.5em] rounded-full border border-white/80 bg-white/55 py-[0.3em] ps-[0.4em] pe-[0.3em]">
           <select
             value={row.kind}
             onChange={(e) => update(i, { kind: e.target.value as WorkLinkKind })}
@@ -130,7 +130,7 @@ export function MyLinksEditor({ me, onSaved, submitLabel = "Save links" }: { me:
         <button
           type="submit"
           disabled={saving}
-          className={`ml-auto flex h-[2.5em] items-center gap-[0.4em] rounded-[0.8em] px-[1.2em] text-[0.9em] font-extrabold tracking-wide shadow-[0_6px_18px_rgba(47,127,214,0.35)] disabled:opacity-70 ${
+          className={`ms-auto flex h-[2.5em] items-center gap-[0.4em] rounded-[0.8em] px-[1.2em] text-[0.9em] font-extrabold tracking-wide shadow-[0_6px_18px_rgba(47,127,214,0.35)] disabled:opacity-70 ${
             saved && me.ready ? "bg-[#2fb36b] text-white" : "bg-[#4f9cf0] text-[#14365a] hover:bg-[#3d8ce6]"
           }`}
         >

@@ -65,7 +65,7 @@ const PARAMETERS = [
 
 function PanelHeading({ children }: { children: string }) {
   return (
-    <h2 className="border-l-4 border-[#12939b] pl-2.5 text-2xl font-semibold leading-tight text-[#0f8a90]">{children}</h2>
+    <h2 className="border-s-4 border-[#12939b] ps-2.5 text-2xl font-semibold leading-tight text-[#0f8a90]">{children}</h2>
   );
 }
 

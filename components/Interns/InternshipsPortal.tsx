@@ -299,7 +299,7 @@ export function InternshipsPortal({ initialTab = "available" }: InternshipsPorta
           <button
             type="button"
             onClick={() => setActiveTab("applications")}
-            className={`relative ml-8 pb-3 text-sm font-bold transition-colors sm:text-base ${
+            className={`relative ms-8 pb-3 text-sm font-bold transition-colors sm:text-base ${
               activeTab === "applications"
                 ? "text-[#12939b]"
                 : "text-[#1b2a5c]/60 hover:text-[#1b2a5c]"
@@ -351,7 +351,7 @@ export function InternshipsPortal({ initialTab = "available" }: InternshipsPorta
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 35vw"
                         className="object-cover transition-transform duration-500 group-hover:scale-105"
                       />
-                      <div className="absolute top-3 left-3 rounded-full bg-[#1b2a5c]/85 px-3 py-1 text-[11px] font-medium text-white backdrop-blur-xs">
+                      <div className="absolute top-3 start-3 rounded-full bg-[#1b2a5c]/85 px-3 py-1 text-[11px] font-medium text-white backdrop-blur-xs">
                         {internship.tag}
                       </div>
                     </div>
@@ -421,7 +421,7 @@ export function InternshipsPortal({ initialTab = "available" }: InternshipsPorta
                               </div>
                             ))}
                           </div>
-                          <span className="ml-1.5 text-[10px] font-semibold text-[#1b2a5c]/60">
+                          <span className="ms-1.5 text-[10px] font-semibold text-[#1b2a5c]/60">
                             +{internship.enrolledExtra}
                           </span>
                         </div>

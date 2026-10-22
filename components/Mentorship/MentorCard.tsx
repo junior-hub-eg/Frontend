@@ -13,7 +13,7 @@ export function MentorCard({ mentor }: { mentor: Mentor }) {
     <article className="flex flex-col rounded-2xl border border-[#e3ecea] bg-white p-5 shadow-[0_6px_20px_rgba(27,42,92,0.06)] transition-shadow hover:shadow-[0_10px_28px_rgba(27,42,92,0.12)]">
       <div className="flex items-start justify-between gap-3">
         <MentorAvatar name={mentor.name} photo={mentor.photo} photoHasDot={mentor.photoHasDot} online className="size-14 text-base" />
-        <div className="text-right">
+        <div className="text-end">
           <span className="inline-flex items-center gap-1 rounded-full bg-[#E9F7F4] px-2.5 py-1 text-[10px] font-semibold text-[#12939b]">
             <Building2 size={11} aria-hidden /> {mentor.company}
           </span>

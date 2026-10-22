@@ -109,7 +109,7 @@ function Select<T extends string>({ value, onChange, options, label }: { value: 
       <select
         value={value}
         onChange={(e) => onChange(e.target.value as T)}
-        className="h-[2.9em] appearance-none rounded-[0.9em] border border-[#e1e8f0] bg-white pl-[1.1em] pr-[2.6em] text-[0.9em] text-[#14365a] outline-none focus:ring-2 focus:ring-[#12939b]/30"
+        className="h-[2.9em] appearance-none rounded-[0.9em] border border-[#e1e8f0] bg-white ps-[1.1em] pe-[2.6em] text-[0.9em] text-[#14365a] outline-none focus:ring-2 focus:ring-[#12939b]/30"
       >
         {options.map((o) => (
           <option key={o.id} value={o.id}>
@@ -117,7 +117,7 @@ function Select<T extends string>({ value, onChange, options, label }: { value: 
           </option>
         ))}
       </select>
-      <ChevronDown className="pointer-events-none absolute right-[0.9em] top-1/2 h-[1em] w-[1em] -translate-y-1/2 text-[#14365a]" />
+      <ChevronDown className="pointer-events-none absolute end-[0.9em] top-1/2 h-[1em] w-[1em] -translate-y-1/2 text-[#14365a]" />
     </label>
   );
 }
@@ -206,7 +206,7 @@ export default function ChooseMentorPage() {
   }
 
   return (
-    <div className="relative min-w-0 flex-1 pb-8 pr-3 sm:pr-4 lg:absolute lg:inset-0 lg:overflow-y-auto lg:pb-[calc(var(--u)*2)] lg:pl-[var(--hl)] lg:pr-[calc(var(--u)*1.6)] lg:pt-[calc(var(--u)*6.5)]">
+    <div className="relative min-w-0 flex-1 pb-8 pe-3 sm:pe-4 lg:absolute lg:inset-0 lg:overflow-y-auto lg:pb-[calc(var(--u)*2)] lg:ps-[var(--hl)] lg:pe-[calc(var(--u)*1.6)] lg:pt-[calc(var(--u)*6.5)]">
       <div style={{ fontSize: "clamp(11px, calc(var(--u) * 1.05), 16px)" }}>
         {/* ---------- Title, features and your mentors ---------- */}
         <div className="grid gap-[1.2em] lg:grid-cols-[1fr_minmax(0,38em)]">
@@ -299,18 +299,18 @@ export default function ChooseMentorPage() {
         <section aria-label="Mentors" className="mt-[1.2em] rounded-[1.6em] bg-white p-[1.2em] shadow-[0_6px_22px_rgba(20,54,90,0.07)]">
           <div className="flex flex-wrap items-center gap-[0.8em]">
             <label className="relative min-w-[14em] flex-1">
-              <Search className="pointer-events-none absolute left-[1em] top-1/2 h-[1.1em] w-[1.1em] -translate-y-1/2 text-[#14365a]/55" />
+              <Search className="pointer-events-none absolute start-[1em] top-1/2 h-[1.1em] w-[1.1em] -translate-y-1/2 text-[#14365a]/55" />
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search a mentor..."
                 aria-label="Search a mentor"
-                className="h-[2.9em] w-full rounded-[0.9em] border border-[#e1e8f0] bg-white pl-[2.8em] pr-[1em] text-[0.9em] text-[#14365a] outline-none placeholder:text-[#14365a]/45 focus:ring-2 focus:ring-[#12939b]/30"
+                className="h-[2.9em] w-full rounded-[0.9em] border border-[#e1e8f0] bg-white ps-[2.8em] pe-[1em] text-[0.9em] text-[#14365a] outline-none placeholder:text-[#14365a]/45 focus:ring-2 focus:ring-[#12939b]/30"
               />
             </label>
             <Select label="Skill" value={skill} onChange={setSkill} options={options.skills} />
             <Select label="Track" value={track} onChange={setTrack} options={options.tracks} />
-            <span className="ml-auto flex items-center gap-[0.6em] text-[0.9em] text-[#14365a]">
+            <span className="ms-auto flex items-center gap-[0.6em] text-[0.9em] text-[#14365a]">
               Sort by <Select label="Sort by" value={sort} onChange={setSort} options={SORTS} />
             </span>
           </div>
@@ -548,7 +548,7 @@ function BookingPanel({ mentor, onMakeMine, onBooked }: { mentor: Mentor; onMake
               setType(o.id);
               setTime(null);
             }}
-            className={`flex items-center gap-[0.6em] rounded-[0.8em] border px-[0.8em] py-[0.7em] text-left ${
+            className={`flex items-center gap-[0.6em] rounded-[0.8em] border px-[0.8em] py-[0.7em] text-start ${
               type === o.id ? "border-[#12939b] bg-[#e3f6fb]" : "border-transparent bg-[#f2f5f8] hover:bg-[#e9eef3]"
             }`}
           >

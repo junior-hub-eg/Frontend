@@ -52,7 +52,7 @@ export function BookingCalendar({ selected, onSelect }: BookingCalendarProps) {
       <div className="mb-3 flex items-center gap-2">
         <p className="text-base font-semibold text-[#1b2a5c]">{first.toLocaleDateString("en-US", { month: "long", year: "numeric" })}</p>
         <span className="rounded-full bg-[#DDF3E7] px-2 py-0.5 text-[9px] font-semibold text-[#1E9D5B]">{open} youth slots open</span>
-        <div className="ml-auto flex gap-1">
+        <div className="ms-auto flex gap-1">
           <button
             type="button"
             onClick={() => shift(-1)}

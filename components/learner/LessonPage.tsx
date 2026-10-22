@@ -66,9 +66,9 @@ export default function LessonPage({ code, lessonId }: { code: string; lessonId:
 
   /* Desktop: one screen, no page scroll. The video takes whatever height is left. */
   const wrapper = (children: React.ReactNode) => (
-    <div className="relative -ml-[4rem] min-h-[calc(100svh-5rem)] min-w-0 flex-1 bg-[#fbfdff] lg:absolute lg:inset-0 lg:ml-0 lg:min-h-0">
+    <div className="relative -ms-[4rem] min-h-[calc(100svh-5rem)] min-w-0 flex-1 bg-[#fbfdff] lg:absolute lg:inset-0 lg:ms-0 lg:min-h-0">
       <div
-        className="relative min-w-0 pb-8 pl-[4.75rem] pr-3 pt-2 sm:pr-4 lg:absolute lg:inset-0 lg:flex lg:flex-col lg:overflow-hidden lg:pb-[calc(var(--u)*1.2)] lg:pl-[var(--hl)] lg:pr-[calc(var(--u)*1.6)] lg:pt-[calc(var(--u)*6.5)]"
+        className="relative min-w-0 pb-8 ps-[4.75rem] pe-3 pt-2 sm:pe-4 lg:absolute lg:inset-0 lg:flex lg:flex-col lg:overflow-hidden lg:pb-[calc(var(--u)*1.2)] lg:ps-[var(--hl)] lg:pe-[calc(var(--u)*1.6)] lg:pt-[calc(var(--u)*6.5)]"
         style={{ fontSize: "clamp(11px, calc(var(--u) * 1.05), 17px)" }}
       >
         {children}
@@ -206,7 +206,7 @@ export default function LessonPage({ code, lessonId }: { code: string; lessonId:
                         type="button"
                         disabled={progress.schoolLinkDone || saving !== null}
                         onClick={() => complete("SchoolLink")}
-                        className="ml-auto rounded-[0.5em] border border-[#12939b]/60 bg-white px-[1em] py-[0.3em] text-[0.65em] font-semibold text-[#12606b] hover:bg-[#eef8f7] disabled:opacity-60"
+                        className="ms-auto rounded-[0.5em] border border-[#12939b]/60 bg-white px-[1em] py-[0.3em] text-[0.65em] font-semibold text-[#12606b] hover:bg-[#eef8f7] disabled:opacity-60"
                       >
                         {progress.schoolLinkDone ? "Got it ✓" : saving === "SchoolLink" ? "Saving..." : "Got it"}
                       </button>

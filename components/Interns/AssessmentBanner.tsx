@@ -8,17 +8,17 @@ export function AssessmentBanner() {
         <div className="relative overflow-hidden rounded-[28px] border border-[#FDE8D0] bg-gradient-to-r from-[#FDEFD9] via-[#FFF9F3] to-[#FDE8D0] p-6 shadow-xs sm:p-8">
           {/* Abstract background decorative waves */}
           <div
-            className="pointer-events-none absolute -left-12 -top-12 h-44 w-44 rounded-full bg-[#FCD8B3]/40 blur-2xl"
+            className="pointer-events-none absolute -start-12 -top-12 h-44 w-44 rounded-full bg-[#FCD8B3]/40 blur-2xl"
             aria-hidden
           />
           <div
-            className="pointer-events-none absolute -right-12 -bottom-12 h-48 w-48 rounded-full bg-[#FCE3C8]/50 blur-2xl"
+            className="pointer-events-none absolute -end-12 -bottom-12 h-48 w-48 rounded-full bg-[#FCE3C8]/50 blur-2xl"
             aria-hidden
           />
 
           <div className="relative z-10 flex flex-col items-center justify-between gap-6 sm:flex-row">
             {/* Left: Icon and message */}
-            <div className="flex items-center gap-4 text-center sm:text-left">
+            <div className="flex items-center gap-4 text-center sm:text-start">
               <div className="grid size-13 shrink-0 place-items-center rounded-2xl bg-[#1b2a5c] text-white shadow-md">
                 <GraduationCap size={28} />
               </div>
