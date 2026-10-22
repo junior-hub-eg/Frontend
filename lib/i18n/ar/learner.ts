@@ -8,6 +8,14 @@ export const learner: Record<string, string> = {
   "Beginner": "مبتدئ",
   "Intermediate": "متوسط",
   "Advanced": "متقدم",
+  "Build apps people carry in their pocket.": "ابنِ تطبيقات يحملها الناس في جيوبهم.",
+  "Build the screens people see and click.": "ابنِ الشاشات التي يراها الناس ويضغطون عليها.",
+  "Build the engine behind apps: data, logic and servers.": "ابنِ المحرك خلف التطبيقات: البيانات والمنطق والخوادم.",
+  "Design apps that are clear, beautiful and easy to use.": "صمّم تطبيقات واضحة وجميلة وسهلة الاستخدام.",
+  "Teach computers to learn from examples.": "علّم الكمبيوتر أن يتعلّم من الأمثلة.",
+  "Find bugs before users do.": "اكتشف الأخطاء قبل أن يكتشفها المستخدمون.",
+  "Turn numbers into answers and charts.": "حوّل الأرقام إلى إجابات ورسوم بيانية.",
+  "Create the games you want to play.": "اصنع الألعاب التي تحب أن تلعبها.",
 
   // Shell and sidebar
   "Dashboard": "لوحة التحكم",

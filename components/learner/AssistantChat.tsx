@@ -15,11 +15,19 @@ import {
   type AssistantMessage,
 } from "@/lib/assistant-api";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n/client";
+import { tk } from "@/lib/i18n/translate";
+import type { Locale } from "@/lib/i18n/config";
 
 const MAX_LENGTH = 1000;
 /** The chat the student had open, so it reopens after a page change or reload (this browser only). */
 const STORAGE_KEY = "jh.assistant.conversation";
-const STARTERS = ["الدرس الجاي إيه؟", "عندي كام XP؟", "مين المنتور بتاعي؟", "اشرحلي الدرس اللي واقف عنده"];
+const STARTERS = [
+  tk("What's my next lesson?"),
+  tk("How much XP do I have?"),
+  tk("Who is my mentor?"),
+  tk("Explain the lesson I'm on"),
+];
 
 /** The links and suggestions of the latest reply; earlier replies show their text only. */
 interface LatestReply {
@@ -51,6 +59,7 @@ function store(id: string | null) {
  * journey (next lesson, XP, squad, mentor...) and the platform. Chats are stored by the backend.
  */
 export function AssistantChat() {
+  const { t, intl, dir, locale } = useI18n();
   const [open, setOpen] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<AssistantMessage[]>([]);
@@ -118,7 +127,7 @@ export function AssistantChat() {
     try {
       setHistory(await getAssistantConversations());
     } catch (e) {
-      setError(errorMessage(e, "مش قادرين نجيب المحادثات القديمة دلوقتي."));
+      setError(errorMessage(e, tk("We can't load your old chats right now.")));
       setShowHistory(false);
     }
   }
@@ -156,8 +165,8 @@ export function AssistantChat() {
       setText(value);
       setError(
         e instanceof ApiError && e.status === 429
-          ? "بعتّ أسئلة كتير ورا بعض. استنى دقيقة وجرّب تاني."
-          : errorMessage(e, "الرسالة ما اتبعتتش. جرّب تاني.")
+          ? t("You sent a lot of questions in a row. Wait a minute and try again.")
+          : errorMessage(e, tk("Your message wasn't sent. Try again."))
       );
     } finally {
       setSending(false);
@@ -181,33 +190,33 @@ export function AssistantChat() {
       {open && (
         <section
           role="dialog"
-          aria-label="Junior Hub assistant"
+          aria-label={t("Junior Hub assistant")}
           className="fixed inset-0 z-[60] flex flex-col bg-white sm:inset-auto sm:bottom-24 sm:end-6 sm:h-[min(620px,calc(100vh-8rem))] sm:w-[380px] sm:overflow-hidden sm:rounded-2xl sm:border sm:border-[#d7e6ea] sm:shadow-[0_20px_60px_-15px_rgba(20,54,90,0.35)]"
         >
           <header className="flex items-center gap-2 bg-[#14365a] px-4 py-3 text-white">
             <span className="grid size-9 place-items-center rounded-full bg-[#12939b]">
               <Sparkles className="size-5" aria-hidden />
             </span>
-            <div className="min-w-0 flex-1" dir="rtl">
-              <h2 className="text-sm font-bold">مساعد Junior Hub</h2>
-              <p className="truncate text-xs text-white/70">اسألني عن دروسك، الـ XP، فريقك أو المنتور</p>
+            <div className="min-w-0 flex-1" dir={dir}>
+              <h2 className="text-sm font-bold">{t("Junior Hub assistant")}</h2>
+              <p className="truncate text-xs text-white/70">{t("Ask me about your lessons, XP, your squad or your mentor")}</p>
             </div>
             <button
               type="button"
               onClick={() => void toggleHistory()}
-              aria-label="Previous chats"
+              aria-label={t("Previous chats")}
               aria-pressed={showHistory}
               className={cn("rounded-full p-2 hover:bg-white/10", showHistory && "bg-white/15")}
             >
               <History className="size-4" />
             </button>
-            <button type="button" onClick={newChat} aria-label="New chat" className="rounded-full p-2 hover:bg-white/10">
+            <button type="button" onClick={newChat} aria-label={t("New chat")} className="rounded-full p-2 hover:bg-white/10">
               <Plus className="size-4" />
             </button>
             <button
               type="button"
               onClick={() => setOpen(false)}
-              aria-label="Close assistant"
+              aria-label={t("Close assistant")}
               className="rounded-full p-2 hover:bg-white/10"
             >
               <X className="size-4" />
@@ -215,14 +224,14 @@ export function AssistantChat() {
           </header>
 
           {showHistory ? (
-            <div className="flex-1 overflow-y-auto p-3" dir="rtl">
-              <p className="px-1 pb-2 text-xs font-bold text-[#14365a]/70">محادثاتك</p>
+            <div className="flex-1 overflow-y-auto p-3" dir={dir}>
+              <p className="px-1 pb-2 text-xs font-bold text-[#14365a]/70">{t("Your chats")}</p>
               {history === null ? (
                 <div className="grid place-items-center p-8">
                   <LoaderCircle className="size-6 animate-spin text-[#12939b]" />
                 </div>
               ) : history.length === 0 ? (
-                <p className="p-4 text-center text-sm text-[#14365a]/60">لسه ما فيش محادثات.</p>
+                <p className="p-4 text-center text-sm text-[#14365a]/60">{t("No chats yet.")}</p>
               ) : (
                 <ul className="flex flex-col gap-1">
                   {history.map((c) => (
@@ -231,17 +240,17 @@ export function AssistantChat() {
                         type="button"
                         onClick={() => void openConversation(c.id)}
                         className={cn(
-                          "w-full rounded-xl px-3 py-2 text-end hover:bg-[#eef7f8]",
+                          "w-full rounded-xl px-3 py-2 text-start hover:bg-[#eef7f8]",
                           c.id === conversationId && "bg-[#eef7f8]"
                         )}
                       >
                         <span dir="auto" className="block truncate text-sm font-semibold text-[#14365a]">
-                          {c.title || "محادثة"}
+                          {c.title || t("Chat")}
                         </span>
                         <span className="text-xs text-[#14365a]/60">
-                          {new Date(c.lastMessageUtc).toLocaleDateString("ar-EG", { day: "numeric", month: "short" })}
+                          {new Date(c.lastMessageUtc).toLocaleDateString(intl, { day: "numeric", month: "short" })}
                           {" · "}
-                          {questionCount(Math.ceil(c.messageCount / 2))}
+                          {questionCount(Math.ceil(c.messageCount / 2), locale)}
                         </span>
                       </button>
                     </li>
@@ -256,17 +265,17 @@ export function AssistantChat() {
                   <LoaderCircle className="size-6 animate-spin text-[#12939b]" />
                 </div>
               ) : messages.length === 0 ? (
-                <div className="flex h-full flex-col items-center justify-center gap-4 text-center" dir="rtl">
+                <div className="flex h-full flex-col items-center justify-center gap-4 text-center" dir={dir}>
                   <span className="grid size-14 place-items-center rounded-full bg-[#e3f4f5]">
                     <MessageCircle className="size-7 text-[#12939b]" aria-hidden />
                   </span>
                   <div>
-                    <p className="font-bold text-[#14365a]">أهلاً! أنا مساعدك في Junior Hub 👋</p>
-                    <p className="mt-1 text-sm text-[#14365a]/70">جرّب تسألني:</p>
+                    <p className="font-bold text-[#14365a]">{t("Hi! I'm your Junior Hub assistant 👋")}</p>
+                    <p className="mt-1 text-sm text-[#14365a]/70">{t("Try asking me:")}</p>
                   </div>
                   <div className="flex flex-wrap justify-center gap-2">
                     {STARTERS.map((s) => (
-                      <SuggestionChip key={s} text={s} onPick={send} disabled={sending} />
+                      <SuggestionChip key={s} text={t(s)} onPick={send} disabled={sending} />
                     ))}
                   </div>
                 </div>
@@ -298,7 +307,7 @@ export function AssistantChat() {
                                 dir="auto"
                                 className="rounded-full bg-[#14365a] px-3 py-1 text-xs font-semibold text-white hover:bg-[#0f2a47]"
                               >
-                                {link.label || "افتح"} ←
+                                {link.label || t("Open")} <span aria-hidden className="inline-block ltr:-scale-x-100">←</span>
                               </Link>
                             ) : null;
                           })}
@@ -307,7 +316,7 @@ export function AssistantChat() {
                     </li>
                   ))}
                   {sending && (
-                    <li className="flex items-start" aria-label="The assistant is typing">
+                    <li className="flex items-start" aria-label={t("The assistant is typing")}>
                       <span className="flex gap-1 rounded-2xl rounded-es-sm border border-[#d7e6ea] bg-white px-4 py-3">
                         {[0, 150, 300].map((delay) => (
                           <span
@@ -328,7 +337,7 @@ export function AssistantChat() {
           {!showHistory && (
             <div className="border-t border-[#e3eef1] bg-white p-3">
               {latest && latest.suggestions.length > 0 && !sending && (
-                <div className="mb-2 flex gap-1.5 overflow-x-auto pb-1" dir="rtl">
+                <div className="mb-2 flex gap-1.5 overflow-x-auto pb-1" dir={dir}>
                   {latest.suggestions.map((s) => (
                     <SuggestionChip key={s} text={s} onPick={send} disabled={sending} />
                   ))}
@@ -348,14 +357,14 @@ export function AssistantChat() {
                     onKeyDown={onKeyDown}
                     rows={1}
                     dir="auto"
-                    placeholder="اكتب سؤالك..."
-                    aria-label="Your question"
+                    placeholder={t("Type your question...")}
+                    aria-label={t("Your question")}
                     className="max-h-28 min-h-10 flex-1 resize-none rounded-2xl border border-[#d7e6ea] bg-[#f7fbfc] px-3.5 py-2.5 text-sm text-[#14365a] outline-none placeholder:text-[#14365a]/40 focus:border-[#12939b]"
                   />
                   <button
                     type="submit"
                     disabled={!text.trim() || sending}
-                    aria-label="Send"
+                    aria-label={t("Send")}
                     className="grid size-10 shrink-0 place-items-center rounded-full bg-[#12939b] text-white hover:bg-[#0f7a81] disabled:opacity-40"
                   >
                     {sending ? <LoaderCircle className="size-4 animate-spin" /> : <ArrowUp className="size-5" />}
@@ -367,7 +376,7 @@ export function AssistantChat() {
                   onClick={newChat}
                   className="w-full rounded-full bg-[#12939b] py-2.5 text-sm font-bold text-white hover:bg-[#0f7a81]"
                 >
-                  المحادثة دي اتملت، ابدأ محادثة جديدة
+                  {t("This chat is full, start a new one")}
                 </button>
               )}
             </div>
@@ -378,7 +387,7 @@ export function AssistantChat() {
       <button
         type="button"
         onClick={toggleOpen}
-        aria-label={open ? "Close assistant" : "Open assistant"}
+        aria-label={open ? t("Close assistant") : t("Open assistant")}
         aria-expanded={open}
         className={cn(
           "fixed bottom-5 end-5 z-[61] grid size-14 place-items-center rounded-full bg-[#12939b] text-white shadow-[0_10px_30px_-8px_rgba(18,147,155,0.7)] transition hover:scale-105 hover:bg-[#0f7a81] sm:bottom-6 sm:end-6",
@@ -391,8 +400,9 @@ export function AssistantChat() {
   );
 }
 
-/** "سؤال واحد", "سؤالين", "3 أسئلة", "11 سؤال". */
-function questionCount(n: number): string {
+/** "1 question", "3 questions"; in Arabic "سؤال واحد", "سؤالين", "3 أسئلة", "11 سؤال". */
+function questionCount(n: number, locale: Locale): string {
+  if (locale === "en") return n === 1 ? "1 question" : `${n} questions`;
   if (n === 1) return "سؤال واحد";
   if (n === 2) return "سؤالين";
   return n >= 3 && n <= 10 ? `${n} أسئلة` : `${n} سؤال`;

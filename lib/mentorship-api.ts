@@ -1,3 +1,4 @@
+import { dateLocale } from "@/lib/i18n/translate";
 /** Mentorship (backend MentorsController). Errors are thrown as ApiError with the backend's code. */
 import { api } from "@/lib/api-client";
 
@@ -85,7 +86,7 @@ export const cancelSession = (id: string) => api.delete<MentorSession>(`/api/v1/
 
 /** "Tue 23 Oct, 7:00 PM" in school time (Cairo). */
 export function sessionTime(startsUtc: string) {
-  return new Date(startsUtc).toLocaleString("en-GB", {
+  return new Date(startsUtc).toLocaleString(dateLocale("en-GB"), {
     weekday: "short",
     day: "numeric",
     month: "short",

@@ -22,9 +22,11 @@ import {
   trackPath,
   type DiscoveryResult,
 } from "@/lib/learning-api";
+import { useT } from "@/lib/i18n/client";
+import { tk } from "@/lib/i18n/translate";
 
 /** The interviewer (Figma "Karima AI assistant"). */
-const KARIMA = { name: "Karima", photo: "/images/avatars/girl-1-smile.webp", video: "/images/Ai%20intervew/Video_1.mp4" };
+const KARIMA = { name: tk("Karima"), photo: "/images/avatars/girl-1-smile.webp", video: "/images/Ai%20intervew/Video_1.mp4" };
 
 /** Figma colours: the ring and the send button are the same stack of gradients over rgba(104,174,255). */
 const RING_FILL = [
@@ -41,9 +43,9 @@ const LEAVE_FILL =
 const MIC_FILL = "rgba(41,45,50,0.47)";
 
 const PATH_TITLE: Record<DiscoveryPath, string> = {
-  KnowsTrack: "Find your level",
-  Exploring: "Explore the world of tech",
-  Unsure: "Find the tracks that fit you",
+  KnowsTrack: tk("Find your level"),
+  Exploring: tk("Explore the world of tech"),
+  Unsure: tk("Find the tracks that fit you"),
 };
 
 type Interview = {
@@ -94,6 +96,8 @@ export default function DiscoveryInterview({
   /** KnowsTrack: the track the student chose; the interview finds their level in it. */
   trackCode?: string;
 }) {
+  const t = useT();
+  const karima = t(KARIMA.name);
   const router = useRouter();
   const { user } = useAuth();
   const me = avatarOrDefault(user?.photoUrl, 0, user?.gender);
@@ -156,7 +160,7 @@ export default function DiscoveryInterview({
         micOnRef.current = false;
         setMicOn(false);
         setPhase("paused");
-        setNotice("We couldn't use your microphone. Allow it in your browser, or type your answer.");
+        setNotice(t("We couldn't use your microphone. Allow it in your browser, or type your answer."));
         return;
       }
       return hear(q);
@@ -247,7 +251,7 @@ export default function DiscoveryInterview({
     setBusy("send");
     setError(null);
     setNotice(null);
-    const mine = message("me", "text" in input ? input.text : "Voice answer…", true);
+    const mine = message("me", "text" in input ? input.text : t("Voice answer…"), true);
     setMessages((m) => [...m, mine]);
     if ("text" in input) setAnswer("");
     try {
@@ -257,7 +261,7 @@ export default function DiscoveryInterview({
           : await answerVoice(current.id, current.question.orderIndex, input.audio);
       if (r.retryAsText) {
         setMessages((m) => m.filter((x) => x.id !== mine.id));
-        setNotice("Karima couldn't hear that clearly. Say it again, or type your answer.");
+        setNotice(t("Karima couldn't hear that clearly. Say it again, or type your answer."));
         setBusy(null);
         if (callOn.current) void hear(current.question);
         return;
@@ -326,10 +330,10 @@ export default function DiscoveryInterview({
   const questionNumber = interview ? Math.min(interview.answered + 1, interview.maxQuestions) : 0;
   const status: Record<Phase, string> = {
     off: "",
-    speaking: `${KARIMA.name} is talking…`,
-    listening: "Your turn: Karima is listening",
-    thinking: `${KARIMA.name} is thinking…`,
-    paused: "Microphone off: turn it on to answer by voice, or type below",
+    speaking: t("{name} is talking…", { name: karima }),
+    listening: t("Your turn: Karima is listening"),
+    thinking: t("{name} is thinking…", { name: karima }),
+    paused: t("Microphone off: turn it on to answer by voice, or type below"),
   };
 
   return (
@@ -341,7 +345,7 @@ export default function DiscoveryInterview({
           {result ? (
             <section className="flex min-w-0 flex-1 flex-col rounded-[32px] bg-white/85 p-6 md:p-10">
               <h1 className="text-[2em] font-extrabold leading-tight text-[#14365a]">
-                {path === "KnowsTrack" ? "Your level and 2 more tracks to explore" : "Your top 3 tracks"}
+                {path === "KnowsTrack" ? t("Your level and 2 more tracks to explore") : t("Your top 3 tracks")}
               </h1>
               {error && <ErrorBox text={error} />}
               {path === "KnowsTrack" && result.recommendations.length > 0 ? (
@@ -357,7 +361,7 @@ export default function DiscoveryInterview({
                 <button
                   type="button"
                   onClick={leave}
-                  aria-label="Back to Find your track"
+                  aria-label={t("Back to Find your track")}
                   className="absolute start-5 top-5 z-10 grid size-11 place-items-center sm:start-8 sm:top-8 lg:start-[2.5%] lg:top-[clamp(16px,4vh,40px)] rounded-[10px] bg-[rgba(41,45,50,0.47)] text-white shadow-md backdrop-blur-sm hover:bg-[rgba(41,45,50,0.6)]"
                 >
                   <ArrowLeft className="size-6" />
@@ -376,7 +380,7 @@ export default function DiscoveryInterview({
                       loop
                       muted
                       playsInline
-                      aria-label={`${KARIMA.name}, your AI interviewer`}
+                      aria-label={t("{name}, your AI interviewer", { name: karima })}
                       className="size-full object-cover"
                     />
                   </div>
@@ -400,12 +404,12 @@ export default function DiscoveryInterview({
                     style={{ background: "linear-gradient(90deg, #7c4dff 0%, #3b82f6 55%, #0ea5c6 100%)" }}
                   >
                     <Phone className="size-5 fill-current" />
-                    {interview?.answered ? "Continue talking with Karima" : "Start talking with Karima"}
+                    {interview?.answered ? t("Continue talking with Karima") : t("Start talking with Karima")}
                   </button>
                 ) : (
                   <div className="flex shrink-0 items-start gap-6 sm:gap-8">
                     <CallButton
-                      label={micOn ? "Microphone" : "Mic off"}
+                      label={micOn ? t("Microphone") : t("Mic off")}
                       onClick={toggleMic}
                       pressed={micOn}
                       className={micOn ? "text-white hover:brightness-110" : "bg-[#e11d74] text-white"}
@@ -414,7 +418,7 @@ export default function DiscoveryInterview({
                       {micOn ? <Mic className="size-7" /> : <MicOff className="size-7" />}
                     </CallButton>
                     <CallButton
-                      label="Leave"
+                      label={t("Leave")}
                       onClick={leave}
                       className="border border-[rgba(228,59,127,1)] text-white shadow-[0_8px_24px_rgba(229,0,92,0.4)] hover:brightness-110"
                       style={{ background: LEAVE_FILL }}
@@ -422,7 +426,7 @@ export default function DiscoveryInterview({
                       <Phone className="size-7 rotate-[135deg] fill-current" />
                     </CallButton>
                     <CallButton
-                      label={soundOn ? "Sound" : "Sound off"}
+                      label={soundOn ? t("Sound") : t("Sound off")}
                       onClick={toggleSound}
                       pressed={soundOn}
                       className="text-white hover:brightness-110"
@@ -446,8 +450,8 @@ export default function DiscoveryInterview({
                     <Image src={KARIMA.photo} alt="" fill sizes="44px" className="object-cover" />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[15px] font-bold text-[#14365a]">{KARIMA.name} AI assistant</span>
-                    <span className="block truncate text-[11px] text-[#14365a]/70">{PATH_TITLE[path]}</span>
+                    <span className="block truncate text-[15px] font-bold text-[#14365a]">{t("{name} AI assistant", { name: karima })}</span>
+                    <span className="block truncate text-[11px] text-[#14365a]/70">{t(PATH_TITLE[path])}</span>
                   </span>
                   {interview && (
                     <span className="shrink-0 rounded-full bg-white/60 px-3 py-1 text-[11px] font-bold text-[#14365a]">
@@ -458,20 +462,20 @@ export default function DiscoveryInterview({
 
                 {interview?.resumed && (
                   <div className="mt-3 flex flex-wrap items-center gap-2 rounded-2xl bg-white/50 px-4 py-2 text-xs text-[#14365a]">
-                    <span className="flex-1">You&apos;re continuing the interview you started before.</span>
+                    <span className="flex-1">{t("You're continuing the interview you started before.")}</span>
                     <button
                       type="button"
                       disabled={locked}
                       onClick={startAgain}
                       className="flex items-center gap-1 font-bold text-[#12797f] hover:underline disabled:opacity-60"
                     >
-                      <RotateCcw className="size-3.5" /> Start again
+                      <RotateCcw className="size-3.5" /> {t("Start again")}
                     </button>
                   </div>
                 )}
 
                 <div className="mt-3 flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-1 py-2" aria-live="polite">
-                  {busy === "start" && <LoaderCircle className="m-auto size-8 animate-spin text-[#12797f]" aria-label="Starting" />}
+                  {busy === "start" && <LoaderCircle className="m-auto size-8 animate-spin text-[#12797f]" aria-label={t("Starting")} />}
                   {messages.map((m) => (
                     <Bubble key={m.id} message={m} photo={m.from === "karima" ? KARIMA.photo : me.src} photoBg={m.from === "karima" ? "#fff" : me.bg} />
                   ))}
@@ -480,12 +484,12 @@ export default function DiscoveryInterview({
                   )}
                   {busy === "send" && (
                     <p className="ms-14 flex items-center gap-1.5 text-xs font-semibold text-[#14365a]/70">
-                      <LoaderCircle className="size-3.5 animate-spin" /> {KARIMA.name} is thinking…
+                      <LoaderCircle className="size-3.5 animate-spin" /> {t("{name} is thinking…", { name: karima })}
                     </p>
                   )}
                   {busy === "finish" && (
                     <p className="ms-14 flex items-center gap-1.5 text-xs font-semibold text-[#14365a]/70">
-                      <LoaderCircle className="size-3.5 animate-spin" /> Finding your tracks…
+                      <LoaderCircle className="size-3.5 animate-spin" /> {t("Finding your tracks…")}
                     </p>
                   )}
                   <div ref={chatEnd} />
@@ -501,7 +505,7 @@ export default function DiscoveryInterview({
                     onClick={() => finish(interview.id)}
                     className="mt-2 self-end text-xs font-bold text-[#12797f] hover:underline disabled:opacity-60"
                   >
-                    Finish and see my tracks
+                    {t("Finish and see my tracks")}
                   </button>
                 )}
 
@@ -518,14 +522,14 @@ export default function DiscoveryInterview({
                     maxLength={1000}
                     dir="auto"
                     disabled={!interview?.question}
-                    placeholder={phase === "off" ? "Type Here...." : "Or type your answer here...."}
-                    aria-label="Your answer"
+                    placeholder={phase === "off" ? t("Type Here....") : t("Or type your answer here....")}
+                    aria-label={t("Your answer")}
                     className="min-w-0 flex-1 bg-transparent py-2 text-[15px] text-[#14365a] outline-none placeholder:text-[#14365a]/70"
                   />
                   <button
                     type="submit"
                     disabled={locked || !answer.trim()}
-                    aria-label="Send"
+                    aria-label={t("Send")}
                     className="grid size-[46px] shrink-0 place-items-center rounded-full text-[#1b2d54] shadow-[inset_0_-2px_4px_rgba(0,0,0,0.15)] transition-opacity disabled:opacity-50"
                     style={{ background: RING_FILL }}
                   >
@@ -552,6 +556,7 @@ function ErrorBox({ text }: { text: string }) {
 
 /** A chat bubble with its time; the student's own show "Read" once the answer is saved. */
 function Bubble({ message: m, photo, photoBg }: { message: Message; photo: string; photoBg: string }) {
+  const t = useT();
   const mine = m.from === "me";
   return (
     <div className={`flex items-end gap-2.5 ${mine ? "flex-row-reverse" : ""}`}>
@@ -568,7 +573,7 @@ function Bubble({ message: m, photo, photoBg }: { message: Message; photo: strin
         </p>
         <p className={`mt-1 text-[10px] text-[#14365a]/70 ${mine ? "text-end" : ""}`}>
           {clock(m.time)}
-          {mine && (m.id === -1 ? " · Listening…" : m.sending ? " · Sending" : " · Read")}
+          {mine && (m.id === -1 ? t(" · Listening…") : m.sending ? t(" · Sending") : t(" · Read"))}
         </p>
       </div>
     </div>
@@ -641,6 +646,7 @@ function Wave({ mode }: { mode: "speaking" | "listening" | "still" }) {
 
 /** The top 3 tracks with a level each (Unsure and Exploring). */
 function TopTracks({ result, busy, onStart }: { result: DiscoveryResult; busy: boolean; onStart: (code: string) => void }) {
+  const t = useT();
   return (
     <>
       {result.summary && <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[#14365a]/80">{result.summary}</p>}
@@ -649,10 +655,10 @@ function TopTracks({ result, busy, onStart }: { result: DiscoveryResult; busy: b
           <li key={r.trackCode} className="flex flex-col rounded-[24px] border border-[#e3ecea] bg-white p-6 shadow-[0_10px_30px_rgba(20,54,90,0.08)]">
             <div className="flex items-center justify-between">
               <span className="grid size-9 place-items-center rounded-full bg-[#14365a] text-sm font-bold text-white">{r.rank}</span>
-              <span className="rounded-full bg-[#e9f7f4] px-3 py-1 text-xs font-bold text-[#12939b]">{r.matchPercent}% match</span>
+              <span className="rounded-full bg-[#e9f7f4] px-3 py-1 text-xs font-bold text-[#12939b]">{t("{n}% match", { n: r.matchPercent })}</span>
             </div>
-            <h2 className="mt-4 text-xl font-extrabold text-[#14365a]">{r.trackName}</h2>
-            <p className="mt-1 text-xs font-semibold text-[#7c3aed]">{r.level}</p>
+            <h2 className="mt-4 text-xl font-extrabold text-[#14365a]">{t(r.trackName)}</h2>
+            <p className="mt-1 text-xs font-semibold text-[#7c3aed]">{t(r.level)}</p>
             <p className="mt-3 text-sm leading-relaxed text-[#14365a]/75">{r.reason}</p>
             {r.levelReason && <p className="mt-2 text-xs text-[#14365a]/60">{r.levelReason}</p>}
             <button
@@ -662,7 +668,7 @@ function TopTracks({ result, busy, onStart }: { result: DiscoveryResult; busy: b
               className="mt-auto flex items-center justify-center gap-2 rounded-full bg-[#12939b] px-5 py-3 text-sm font-semibold text-white hover:bg-[#0f7a81] disabled:opacity-60"
               style={{ marginTop: "1.5rem" }}
             >
-              Start this track <ArrowRight className="size-4" />
+              {t("Start this track")} <ArrowRight className="size-4" />
             </button>
           </li>
         ))}
@@ -673,15 +679,16 @@ function TopTracks({ result, busy, onStart }: { result: DiscoveryResult; busy: b
 
 /** KnowsTrack: the chosen track with the level the interview found, and two more tracks worth exploring later. */
 function KnowsTrackResult({ result, busy, onStart }: { result: DiscoveryResult; busy: boolean; onStart: (code: string) => void }) {
+  const t = useT();
   const [chosen, ...others] = result.recommendations;
   return (
     <>
       {result.summary && <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[#14365a]/80">{result.summary}</p>}
       <section className="mt-6 flex flex-wrap items-center gap-6 rounded-[28px] bg-gradient-to-br from-[#e3f6ee] to-[#dcebfb] p-7">
         <div className="min-w-0 flex-1">
-          <p className="text-xs font-bold uppercase tracking-wide text-[#12939b]">Your track</p>
-          <h2 className="mt-1 text-2xl font-extrabold text-[#14365a]">{chosen.trackName}</h2>
-          <p className="mt-3 inline-flex rounded-full bg-white px-4 py-1.5 text-sm font-bold text-[#7c3aed]">Your level: {chosen.level}</p>
+          <p className="text-xs font-bold uppercase tracking-wide text-[#12939b]">{t("Your track")}</p>
+          <h2 className="mt-1 text-2xl font-extrabold text-[#14365a]">{t(chosen.trackName)}</h2>
+          <p className="mt-3 inline-flex rounded-full bg-white px-4 py-1.5 text-sm font-bold text-[#7c3aed]">{t("Your level: {level}", { level: t(chosen.level) })}</p>
           {chosen.levelReason && <p className="mt-3 max-w-xl text-sm leading-relaxed text-[#14365a]/75">{chosen.levelReason}</p>}
         </div>
         <button
@@ -690,20 +697,20 @@ function KnowsTrackResult({ result, busy, onStart }: { result: DiscoveryResult; 
           onClick={() => onStart(chosen.trackCode)}
           className="flex items-center gap-2 rounded-full bg-[#14365a] px-6 py-3 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
         >
-          Start learning {chosen.trackName} <ArrowRight className="size-4" />
+          {t("Start learning {track}", { track: t(chosen.trackName) })} <ArrowRight className="size-4" />
         </button>
       </section>
 
       {others.length > 0 && (
         <>
-          <h3 className="mt-8 text-lg font-extrabold text-[#14365a]">Also worth exploring</h3>
-          <p className="mt-1 text-sm text-[#14365a]/70">You can open these tracks from Courses once you start learning.</p>
+          <h3 className="mt-8 text-lg font-extrabold text-[#14365a]">{t("Also worth exploring")}</h3>
+          <p className="mt-1 text-sm text-[#14365a]/70">{t("You can open these tracks from Courses once you start learning.")}</p>
           <ul className="mt-4 grid gap-4 md:grid-cols-2">
             {others.map((r) => (
               <li key={r.trackCode} className="rounded-[24px] border border-[#e3ecea] bg-white p-5 shadow-sm">
                 <div className="flex items-center justify-between gap-3">
-                  <h4 className="text-base font-bold text-[#14365a]">{r.trackName}</h4>
-                  <span className="rounded-full bg-[#e9f7f4] px-3 py-1 text-xs font-bold text-[#12939b]">{r.matchPercent}% match</span>
+                  <h4 className="text-base font-bold text-[#14365a]">{t(r.trackName)}</h4>
+                  <span className="rounded-full bg-[#e9f7f4] px-3 py-1 text-xs font-bold text-[#12939b]">{t("{n}% match", { n: r.matchPercent })}</span>
                 </div>
                 <p className="mt-2 text-sm leading-relaxed text-[#14365a]/75">{r.reason}</p>
               </li>
