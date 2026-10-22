@@ -28,14 +28,31 @@ export interface SquadMonitor {
   photoUrl: string;
 }
 
+/** One role the project needs: how many seats and how many are taken. */
+export interface SquadSeat {
+  role: SquadRole;
+  needed: number;
+  filled: number;
+}
+
 export interface Squad {
   id: string;
   name: string;
-  projectTitle: string;
-  projectDescription: string;
+  /** Null until every seat is taken and the project is revealed (the cube). */
+  projectTitle: string | null;
+  projectDescription: string | null;
   members: SquadMember[];
   monitor: SquadMonitor | null;
+  level: "Beginner" | "Intermediate" | "Advanced";
+  projectRevealed: boolean;
+  projectRevealedUtc: string | null;
+  /** The seats the project needs by role; empty for squads formed before seats. */
+  seats: SquadSeat[];
+  seatsTotal: number;
 }
+
+/** The dashboard endpoints answer 409 with this code until the squad's project is revealed. */
+export const PROJECT_NOT_READY = "PROJECT_NOT_READY";
 
 export interface Sprint {
   id: string;
@@ -146,6 +163,8 @@ export interface InternshipAccess {
   inSquad: boolean;
   /** In a squad, or the level is finished. */
   open: boolean;
+  /** The squad's project is revealed, so the Internship dashboard is open. */
+  projectRevealed?: boolean;
   level: LevelProgress | null;
   /** The last project the monitor approved, with the review. */
   lastProject?: {
@@ -159,7 +178,7 @@ export interface InternshipAccess {
 }
 
 export const getInternshipAccess = () => api.get<InternshipAccess>("/api/v1/interns/access");
-/** Joins a squad of the same level from other tracks (or a new one with a random project). */
+/** Takes a free seat for the student's role in a squad of the same level (or starts a new squad with a hidden project). */
 export const joinSquad = () => api.post<Squad>("/api/v1/interns/squad/join");
 /** Writes a task for yourself; it starts in To Do. */
 export const createTask = (title: string, storyPoints = 1) => api.post<SquadTask>("/api/v1/interns/tasks", { title, storyPoints });
@@ -193,3 +212,64 @@ export const getProjectStatus = () => api.get<ProjectStatus>("/api/v1/interns/pr
 /** "I submitted my work": needs a link shared and every own task Done. */
 export const submitWork = () => api.post<ProjectStatus>("/api/v1/interns/project/submit");
 export const withdrawSubmission = () => api.delete<ProjectStatus>("/api/v1/interns/project/submit");
+
+/* ---------- Team chat: the squad group (with the monitor) and private chats ---------- */
+
+export interface ChatMessage {
+  id: string;
+  senderId: string;
+  senderName: string;
+  senderPhotoUrl: string | null;
+  /** The other person of a private chat (from my side); null for the group chat. */
+  with: string | null;
+  body: string;
+  sentUtc: string;
+  isMine: boolean;
+}
+
+export interface ChatThread {
+  /** Null for the group chat, else the monitor's or teammate's id. */
+  with: string | null;
+  kind: "Group" | "Monitor" | "Teammate";
+  name: string;
+  photoUrl: string | null;
+  /** The teammate's role, or the monitor's title. */
+  role: string | null;
+  unread: number;
+  lastMessage: ChatMessage | null;
+}
+
+/** Pushed on /hubs/live as "ChatMessage": group messages to the squad, private ones to the two people. */
+export interface ChatMessageEvent {
+  id: string;
+  squadId: string;
+  senderId: string;
+  senderName: string;
+  senderPhotoUrl: string | null;
+  /** Null for the group chat. */
+  recipientId: string | null;
+  body: string;
+  sentUtc: string;
+}
+
+export const CHAT_MAX_LENGTH = 1000;
+
+const withQuery = (w: string | null, before?: string) => {
+  const q = new URLSearchParams();
+  if (w) q.set("with", w);
+  if (before) q.set("before", before);
+  const s = q.toString();
+  return s ? `?${s}` : "";
+};
+
+/** A chat request that hangs (the API restarting, a slow network) fails after this long instead of loading forever. */
+export const CHAT_TIMEOUT_MS = 15000;
+const timeout = () => ({ signal: AbortSignal.timeout(CHAT_TIMEOUT_MS) });
+
+export const getChatThreads = () => api.get<{ threads: ChatThread[] }>("/api/v1/interns/chat/threads", timeout());
+/** The last 50 messages, oldest first; with before (the first message's sentUtc), the 50 before it. */
+export const getChatMessages = (w: string | null, before?: string) =>
+  api.get<{ messages: ChatMessage[]; hasMore: boolean }>(`/api/v1/interns/chat/messages${withQuery(w, before)}`, timeout());
+export const sendChatMessage = (w: string | null, body: string) =>
+  api.post<ChatMessage>("/api/v1/interns/chat/messages", { with: w, body }, timeout());
+export const markChatRead = (w: string | null) => api.post<void>("/api/v1/interns/chat/read", { with: w }, timeout());

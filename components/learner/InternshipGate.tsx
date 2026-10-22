@@ -9,6 +9,7 @@ import { ArrowLeft, LoaderCircle, Lock, PartyPopper } from "lucide-react";
 import { errorMessage } from "@/lib/api-client";
 import { getInternshipAccess, type InternshipAccess, type LevelProgress } from "@/lib/interns-api";
 import InternshipProgress from "./InternshipProgress";
+import RedirectToSquad from "./RedirectToSquad";
 import SquadMatchmaking from "./SquadMatchmaking";
 import { useI18n, useT } from "@/lib/i18n/client";
 
@@ -116,8 +117,9 @@ function LockedInternship({ level, lastProject }: { level: LevelProgress | null;
 }
 
 /**
- * Entry of the Internship (decision of 21 Oct 2026): locked until the student finishes their level; then a
- * congratulations screen to join a squad (matchmaking, then "Get Ready"); in a squad, the squad's Internship Progress.
+ * Entry of the Internship (decisions of 21 and 22 Oct 2026): locked until the student finishes their level; then a
+ * question to join a team; in a squad still waiting for members, the squad page with the cube; once the project is
+ * revealed, the squad's Internship dashboard.
  */
 export default function InternshipGate() {
   const t = useT();
@@ -141,6 +143,8 @@ export default function InternshipGate() {
 
   if (error) return <p className="mx-auto mt-[20vh] max-w-md text-center font-semibold text-[#14365a]">{error}</p>;
   if (!access) return <LoaderCircle className="mx-auto mt-[20vh] h-8 w-8 animate-spin text-[#14365a]" aria-label={t("Loading")} />;
+  // Older backends do not send projectRevealed: their squads always have a project.
+  if (access.inSquad && access.projectRevealed === false) return <RedirectToSquad />;
   if (access.inSquad) return <InternshipProgress />;
   if (!access.open) return <LockedInternship level={access.level} lastProject={access.lastProject} />;
   return <SquadMatchmaking level={access.level} />;

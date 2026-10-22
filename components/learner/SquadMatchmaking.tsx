@@ -8,9 +8,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Dices, LoaderCircle, PartyPopper, Users } from "lucide-react";
 import { ApiError, errorMessage } from "@/lib/api-client";
+import { useI18n } from "@/lib/i18n/client";
 import { DEFAULT_AVATARS } from "@/lib/avatars";
 import { joinSquad, type LevelProgress } from "@/lib/interns-api";
-import { useI18n } from "@/lib/i18n/client";
 
 const IMG = "/images/Intern";
 const poppins = Poppins({ subsets: ["latin"], weight: ["400", "500", "600", "700", "800"] });
@@ -20,8 +20,9 @@ const glass =
   "rounded-[20px] border border-white/70 bg-gradient-to-r from-[#c8eef8]/75 to-[#a6dfda]/60 shadow-[0_10px_30px_rgba(20,54,90,0.12)] backdrop-blur-md";
 
 /**
- * First thing a student without a squad sees when opening the Internship: join a squad (teammates from other roles)
- * and get a random project. After joining they go to "Paste Your Links To Get Ready" (/learner/interns/session).
+ * First thing a student without a squad sees when opening the Internship (decision of 22 Oct 2026): are you ready to
+ * join a team and work together? Yes takes a free seat in a squad of the student's level and opens the squad page,
+ * where the cube rolls the project once the team is complete.
  */
 export default function SquadMatchmaking({ level = null }: { level?: LevelProgress | null }) {
   const { t, dir } = useI18n();
@@ -74,10 +75,11 @@ export default function SquadMatchmaking({ level = null }: { level?: LevelProgre
 
             <PartyPopper className="h-[2.6em] w-[2.6em] text-[#f5a623]" aria-hidden />
             <h2 className="text-[1.6em] font-bold text-[#14365a]">
-              {level ? t("You finished the {level} level of {track}", { level: t(level.level), track: t(level.trackName) }) : t("You finished your level")}
+              {level ? t("You finished the {level} level of {track}", { level: level.level, track: level.trackName }) : t("You finished your level")}
             </h2>
+            <p className="text-[1.25em] font-bold text-[#14365a]">{t("Ready to join a team and build a project together?")}</p>
             <p className="max-w-[26em] text-[1em] leading-relaxed text-[#14365a]/85">
-              {t("Now join a squad and build a real project. We'll place you with students of your level from other tracks, with a monitor, and give your squad a random project that fits your level. Then you share your links, get ready, and start.")}
+              {t("We'll place you in a squad with students of your level from other tracks and a monitor. When every seat is taken, the cube rolls and picks your squad's project — then you start working together.")}
             </p>
 
             <div className="flex items-center gap-[1.4em] text-[0.9em] font-semibold text-[#14365a]">
@@ -100,9 +102,14 @@ export default function SquadMatchmaking({ level = null }: { level?: LevelProgre
                   <LoaderCircle className="h-[1.3em] w-[1.3em] animate-spin" aria-hidden /> {t("FINDING YOUR SQUAD…")}
                 </>
               ) : (
-                t("JOIN A SQUAD")
+                t("YES, JOIN A TEAM")
               )}
             </button>
+            {!joining && (
+              <Link href="/learner/dashboard" className="text-[0.85em] font-semibold text-[#14365a]/70 hover:underline">
+                {t("Not now")}
+              </Link>
+            )}
 
             {error && (
               <p role="alert" className="text-[0.85em] font-semibold text-[#b83232]">
