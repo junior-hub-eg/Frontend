@@ -1,5 +1,9 @@
+"use client";
+
 import Image from "next/image";
 import { Star } from "lucide-react";
+import { useT } from "@/lib/i18n/client";
+import { tk } from "@/lib/i18n/translate";
 
 interface TestimonialItem {
   name: string;
@@ -12,45 +16,42 @@ interface TestimonialItem {
 const TESTIMONIALS: TestimonialItem[] = [
   {
     name: "Alex P.",
-    role: "Frontend Intern",
+    role: tk("Frontend Intern"),
     avatar: "/images/Intern/char-boy-glasses.png",
-    quote:
-      "The internship changed my career path! The hands-on experience with real projects, which makes learning practical and engaging!",
+    quote: tk("The internship changed my career path! The hands-on experience with real projects, which makes learning practical and engaging!"),
     rotationClass: "lg:-rotate-3 hover:rotate-0",
   },
   {
     name: "Imani M.",
-    role: "Software Engineering Intern",
+    role: tk("Software Engineering Intern"),
     avatar: "/images/Intern/char-girl.png",
-    quote:
-      "I appreciated the mentorship from senior engineers. Their guidance helped our team grow both technically and professionally.",
+    quote: tk("I appreciated the mentorship from senior engineers. Their guidance helped our team grow both technically and professionally."),
     rotationClass: "lg:scale-105 hover:scale-110",
   },
   {
     name: "Priya R.",
-    role: "DevOps Intern",
+    role: tk("DevOps Intern"),
     avatar: "/images/Intern/char-boy-glasses-2.png",
-    quote:
-      "The team was welcoming and inclusive. The weekly syncs and code reviews were a great learning experience. Highly recommend taking this!",
+    quote: tk("The team was welcoming and inclusive. The weekly syncs and code reviews were a great learning experience. Highly recommend taking this!"),
     rotationClass: "lg:rotate-3 hover:rotate-0",
   },
 ];
 
 export function InternsTestimonials() {
+  const t = useT();
   return (
     <section className="overflow-hidden bg-white py-16 lg:py-24">
       <div className="mx-auto max-w-7xl px-6 lg:px-10">
         {/* Header */}
         <div className="text-center">
           <span className="text-xs font-bold uppercase tracking-widest text-[#12939b]">
-            TESTIMONIALS & REVIEWS
+            {t("TESTIMONIALS & REVIEWS")}
           </span>
           <h2 className="mt-2 text-3xl font-extrabold text-[#1b2a5c] sm:text-4xl">
-            What Our Interns Say
+            {t("What Our Interns Say")}
           </h2>
           <p className="mx-auto mt-3 max-w-2xl text-xs leading-relaxed text-[#1b2a5c]/65 sm:text-sm">
-            Real stories from learners who started their journey with us and achieved real results.
-            Read their experiences and start your own journey.
+            {t("Real stories from learners who started their journey with us and achieved real results. Read their experiences and start your own journey.")}
           </p>
         </div>
 
@@ -71,7 +72,7 @@ export function InternsTestimonials() {
 
                 {/* Quote */}
                 <p className="mt-4 text-xs leading-relaxed text-[#1b2a5c]/80 sm:text-sm">
-                  &ldquo;{quote}&rdquo;
+                  &ldquo;{t(quote)}&rdquo;
                 </p>
               </div>
 
@@ -82,7 +83,7 @@ export function InternsTestimonials() {
                 </div>
                 <div>
                   <h4 className="text-xs font-bold text-[#1b2a5c] sm:text-sm">{name}</h4>
-                  <p className="text-[11px] text-[#1b2a5c]/55">{role}</p>
+                  <p className="text-[11px] text-[#1b2a5c]/55">{t(role)}</p>
                 </div>
               </div>
             </div>

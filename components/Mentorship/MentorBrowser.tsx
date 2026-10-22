@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { ArrowRight, ChevronLeft, ChevronRight, CircleHelp, SlidersHorizontal } from "lucide-react";
 import { EXPERIENCE, FOCUS, MAX_RATE, MENTORS, SESSION_FORMATS, TECH_GROUPS, type Mentor } from "@/lib/data/mentors";
 import { MentorCard } from "./MentorCard";
+import { useT } from "@/lib/i18n/client";
 
 type SortKey = "best" | "rating" | "price";
 
@@ -26,10 +27,11 @@ function CheckRow({
   onChange: () => void;
   pill?: boolean;
 }) {
+  const t = useT();
   return (
     <label className="flex cursor-pointer items-center gap-2 text-[11px] text-[#1b2a5c]">
       <input type="checkbox" checked={checked} onChange={onChange} className="size-3.5 shrink-0 accent-[#12939b]" />
-      <span className="flex-1">{label}</span>
+      <span className="flex-1">{t(label)}</span>
       {count !== undefined && (
         <span
           className={
@@ -46,10 +48,11 @@ function CheckRow({
 }
 
 function Group({ title, aside, children }: { title: string; aside?: string; children: React.ReactNode }) {
+  const t = useT();
   return (
     <fieldset className="mt-5">
       <legend className="mb-2.5 flex w-full items-center justify-between text-[10px] font-semibold uppercase tracking-wide text-[#1b2a5c]">
-        {title}
+        {t(title)}
         {aside && <span className="font-normal normal-case text-[#1b2a5c]/50">{aside}</span>}
       </legend>
       <div className="flex flex-col gap-2.5">{children}</div>
@@ -60,6 +63,7 @@ function Group({ title, aside, children }: { title: string; aside?: string; chil
 const count = (match: (m: Mentor) => boolean) => MENTORS.filter(match).length;
 
 export function MentorBrowser() {
+  const t = useT();
   const [formats, setFormats] = useState<string[]>([]);
   const [tech, setTech] = useState<string[]>([]);
   const [focus, setFocus] = useState<string[]>([]);
@@ -73,7 +77,7 @@ export function MentorBrowser() {
     const filtered = MENTORS.filter(
       (m) =>
         (formats.length === 0 || formats.some((f) => m.formats.includes(f as Mentor["formats"][number]))) &&
-        (tech.length === 0 || tech.some((t) => m.techGroups.includes(t))) &&
+        (tech.length === 0 || tech.some((g) => m.techGroups.includes(g))) &&
         (focus.length === 0 || focus.some((f) => m.focus.includes(f))) &&
         (!band || (m.years >= band.min && m.years <= band.max)) &&
         m.price <= maxRate,
@@ -109,21 +113,21 @@ export function MentorBrowser() {
     <section id="mentors" className="mx-auto w-full max-w-[1200px] scroll-mt-24 px-6 py-12 lg:px-10">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-bold text-[#1b2a5c]">Browse Verified Mentors</h2>
+          <h2 className="text-2xl font-bold text-[#1b2a5c]">{t("Browse Verified Mentors")}</h2>
           <p className="mt-0.5 text-[11px] text-[#1b2a5c]/60">
-            Showing <span className="font-semibold text-[#1b2a5c]">{results.length} expert mentors</span> ready to book sessions
+            {t("Showing")} <span className="font-semibold text-[#1b2a5c]">{t("{n} expert mentors", { n: results.length })}</span> {t("ready to book sessions")}
           </p>
         </div>
         <label className="flex items-center gap-2 text-[11px] font-medium text-[#1b2a5c]">
-          Sort by:
+          {t("Sort by:")}
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value as SortKey)}
             className="rounded-full border border-[#e3ecea] bg-white px-4 py-1.5 text-[11px] font-semibold text-[#1b2a5c] outline-none focus:border-[#12939b]"
           >
-            <option value="best">Best Match (Recommended)</option>
-            <option value="rating">Top Rated</option>
-            <option value="price">Price: Low to High</option>
+            <option value="best">{t("Best Match (Recommended)")}</option>
+            <option value="rating">{t("Top Rated")}</option>
+            <option value="price">{t("Price: Low to High")}</option>
           </select>
         </label>
       </div>
@@ -133,10 +137,10 @@ export function MentorBrowser() {
           <aside className="h-fit rounded-2xl border border-[#e3ecea] bg-white p-4 shadow-[0_6px_20px_rgba(27,42,92,0.05)]">
             <div className="flex items-center justify-between">
               <h3 className="flex items-center gap-1.5 text-sm font-semibold text-[#1b2a5c]">
-                <SlidersHorizontal size={14} aria-hidden /> Refine Search
+                <SlidersHorizontal size={14} aria-hidden /> {t("Refine Search")}
               </h3>
               <button type="button" onClick={reset} className="text-[10px] font-semibold text-[#12939b] hover:underline">
-                Reset All
+                {t("Reset All")}
               </button>
             </div>
 
@@ -153,14 +157,14 @@ export function MentorBrowser() {
               ))}
             </Group>
 
-            <Group title="Technologies" aside={tech.length ? `${tech.length} Selected` : undefined}>
-              {TECH_GROUPS.map((t) => (
+            <Group title="Technologies" aside={tech.length ? t("{n} Selected", { n: tech.length }) : undefined}>
+              {TECH_GROUPS.map((g) => (
                 <CheckRow
-                  key={t}
-                  label={t}
-                  count={count((m) => m.techGroups.includes(t))}
-                  checked={tech.includes(t)}
-                  onChange={() => change(setTech)(toggle(tech, t))}
+                  key={g}
+                  label={g}
+                  count={count((m) => m.techGroups.includes(g))}
+                  checked={tech.includes(g)}
+                  onChange={() => change(setTech)(toggle(tech, g))}
                 />
               ))}
             </Group>
@@ -183,7 +187,7 @@ export function MentorBrowser() {
                       experience === e.id ? "bg-[#12939b] text-white" : "bg-[#F3F7FA] text-[#1b2a5c]/75 hover:bg-[#E9F7F4]"
                     }`}
                   >
-                    {e.label}
+                    {t(e.label)}
                   </button>
                 ))}
               </div>
@@ -191,7 +195,7 @@ export function MentorBrowser() {
 
             <div className="mt-5">
               <label htmlFor="max-rate" className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-wide text-[#1b2a5c]">
-                Max Hourly Rate <span className="normal-case text-[#12939b]">{maxRate === 0 ? "Free" : `$${maxRate}/hr`}</span>
+                {t("Max Hourly Rate")} <span className="normal-case text-[#12939b]">{maxRate === 0 ? t("Free") : t("${n}/hr", { n: maxRate })}</span>
               </label>
               <input
                 id="max-rate"
@@ -204,7 +208,7 @@ export function MentorBrowser() {
                 className="mt-2 w-full accent-[#12939b]"
               />
               <div className="flex justify-between text-[9px] text-[#1b2a5c]/50">
-                <span>Free Only</span>
+                <span>{t("Free Only")}</span>
                 <span>$75</span>
                 <span>$150+</span>
               </div>
@@ -213,13 +217,13 @@ export function MentorBrowser() {
 
           <div className="rounded-2xl bg-[#EEF0FB] p-4">
             <p className="flex items-center gap-1.5 text-sm font-semibold text-[#2b3a8c]">
-              <CircleHelp size={15} aria-hidden /> Unsure who to pick?
+              <CircleHelp size={15} aria-hidden /> {t("Unsure who to pick?")}
             </p>
             <p className="mt-1.5 text-[11px] leading-relaxed text-[#1b2a5c]/65">
-              Our career concierge matches you with the ideal mentor based on your project goals within 2 hours.
+              {t("Our career concierge matches you with the ideal mentor based on your project goals within 2 hours.")}
             </p>
             <a href="#mentors" className="mt-2 inline-flex items-center gap-1 text-[11px] font-semibold text-[#2b3a8c] hover:underline">
-              Request concierge match <ArrowRight size={12} aria-hidden />
+              {t("Request concierge match")} <ArrowRight size={12} aria-hidden />
             </a>
           </div>
         </div>
@@ -227,9 +231,9 @@ export function MentorBrowser() {
         <div className="flex flex-col gap-4">
           {shown.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-[#cfd5d4] bg-white p-10 text-center">
-              <p className="text-sm font-semibold text-[#1b2a5c]">No mentors match these filters</p>
+              <p className="text-sm font-semibold text-[#1b2a5c]">{t("No mentors match these filters")}</p>
               <button type="button" onClick={reset} className="mt-2 text-xs font-semibold text-[#12939b] hover:underline">
-                Reset all filters
+                {t("Reset all filters")}
               </button>
             </div>
           ) : (
@@ -241,16 +245,16 @@ export function MentorBrowser() {
           )}
 
           <nav
-            aria-label="Mentor pages"
+            aria-label={t("Mentor pages")}
             className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#e3ecea] bg-white px-5 py-3"
           >
             <p className="text-[11px] text-[#1b2a5c]/65">
-              Showing {from} - {from === 0 ? 0 : from + shown.length - 1} of <span className="font-semibold text-[#1b2a5c]">{results.length}</span> mentors
+              {t("Showing {from} - {to} of {total} mentors", { from, to: from === 0 ? 0 : from + shown.length - 1, total: results.length })}
             </p>
             <div className="flex items-center gap-1.5">
               <button
                 type="button"
-                aria-label="Previous page"
+                aria-label={t("Previous page")}
                 disabled={current === 1}
                 onClick={() => setPage(current - 1)}
                 className="grid size-7 place-items-center rounded-full bg-[#F3F7FA] text-[#1b2a5c] disabled:opacity-40"
@@ -272,7 +276,7 @@ export function MentorBrowser() {
               ))}
               <button
                 type="button"
-                aria-label="Next page"
+                aria-label={t("Next page")}
                 disabled={current === pages}
                 onClick={() => setPage(current + 1)}
                 className="grid size-7 place-items-center rounded-full bg-[#F3F7FA] text-[#1b2a5c] disabled:opacity-40"

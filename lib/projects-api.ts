@@ -1,3 +1,4 @@
+import { dateLocale, tk, tNow } from "@/lib/i18n/translate";
 /** My Projects (backend ProjectsController): the student's current and past squad projects. */
 import { api } from "@/lib/api-client";
 
@@ -75,37 +76,37 @@ export const getMyProject = (id: string) => api.get<ProjectDetail>(`/api/v1/stud
 
 /* ---------- Display helpers shared by the three pages ---------- */
 
-export const STATUS_LABEL: Record<ProjectStatus, string> = { InProgress: "Active", InReview: "In review", Completed: "Completed" };
+export const STATUS_LABEL: Record<ProjectStatus, string> = { InProgress: tk("Active"), InReview: tk("In review"), Completed: tk("Completed") };
 
 export const ROLE_LABEL: Record<string, string> = {
-  Frontend: "Front-end Developer",
-  Backend: "Back-end Developer",
-  UIUX: "UI/UX Designer",
-  AI: "AI Engineer",
-  Testing: "QA Tester",
-  Data: "Data Analyst",
-  Mobile: "Mobile Developer",
-  Gaming: "Game Developer",
+  Frontend: tk("Front-end Developer"),
+  Backend: tk("Back-end Developer"),
+  UIUX: tk("UI/UX Designer"),
+  AI: tk("AI Engineer"),
+  Testing: tk("QA Tester"),
+  Data: tk("Data Analyst"),
+  Mobile: tk("Mobile Developer"),
+  Gaming: tk("Game Developer"),
 };
 
 export const LINK_LABEL: Record<ProjectLinkKind, { label: string; note: string }> = {
-  Figma: { label: "Figma", note: "Design file" },
-  GitHub: { label: "GitHub", note: "Repository" },
-  LiveSite: { label: "Live site", note: "Live preview" },
-  Api: { label: "API", note: "Server" },
-  Demo: { label: "Demo", note: "Try it" },
-  TestReport: { label: "Test report", note: "Bugs and checks" },
-  Standup: { label: "Standup", note: "Daily meeting" },
-  Grooming: { label: "Grooming", note: "Backlog meeting" },
-  Other: { label: "Other", note: "More work" },
+  Figma: { label: tk("Figma"), note: tk("Design file") },
+  GitHub: { label: tk("GitHub"), note: tk("Repository") },
+  LiveSite: { label: tk("Live site"), note: tk("Live preview") },
+  Api: { label: tk("API"), note: tk("Server") },
+  Demo: { label: tk("Demo"), note: tk("Try it") },
+  TestReport: { label: tk("Test report"), note: tk("Bugs and checks") },
+  Standup: { label: tk("Standup"), note: tk("Daily meeting") },
+  Grooming: { label: tk("Grooming"), note: tk("Backlog meeting") },
+  Other: { label: tk("Other"), note: tk("More work") },
 };
 
 const date = (iso: string, withYear = true) =>
-  new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", ...(withYear ? { year: "numeric" } : {}) });
+  new Date(iso).toLocaleDateString(dateLocale("en-US"), { month: "short", day: "numeric", ...(withYear ? { year: "numeric" } : {}) });
 
 /** "Jul 6, 2026 - Present" or "Mar 2 - Jun 12, 2026". */
 export function projectDuration(p: Pick<ProjectSummary, "startedUtc" | "endedUtc">) {
-  if (!p.endedUtc) return `${date(p.startedUtc)} - Present`;
+  if (!p.endedUtc) return `${date(p.startedUtc)} - ${tNow("Present")}`;
   const sameYear = new Date(p.startedUtc).getFullYear() === new Date(p.endedUtc).getFullYear();
   return `${date(p.startedUtc, !sameYear)} - ${date(p.endedUtc)}`;
 }

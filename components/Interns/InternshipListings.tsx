@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Search, Star, Clock, Globe2, Briefcase, X, CheckCircle2, ArrowRight } from "lucide-react";
+import { useT } from "@/lib/i18n/client";
 
 type CategoryFilter = "All" | "Frontend" | "Backend" | "Mobile" | "Flutter" | "DevOps";
 
@@ -215,6 +216,7 @@ const CATEGORIES: CategoryFilter[] = [
 ];
 
 export function InternshipListings() {
+  const t = useT();
   const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [applyingFor, setApplyingFor] = useState<InternshipCardItem | null>(null);
@@ -225,6 +227,7 @@ export function InternshipListings() {
       selectedCategory === "All" || item.category === selectedCategory;
     const matchesSearch =
       item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      t(item.title).toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.instructor.name.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
   });
@@ -245,10 +248,10 @@ export function InternshipListings() {
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <h2 className="text-3xl font-bold text-[#1b2a5c] sm:text-4xl">
-              Find Your Internship
+              {t("Find Your Internship")}
             </h2>
             <p className="mt-2 text-sm text-[#1b2a5c]/65 sm:text-base">
-              Explore available internships and join a team that matches your interests and career goals.
+              {t("Explore available internships and join a team that matches your interests and career goals.")}
             </p>
           </div>
 
@@ -258,7 +261,7 @@ export function InternshipListings() {
               <Search size={16} />
               <input
                 type="text"
-                placeholder="Search anything..."
+                placeholder={t("Search anything...")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full bg-transparent text-xs text-[#1b2a5c] placeholder-[#1b2a5c]/40 outline-hidden sm:text-sm"
@@ -268,7 +271,7 @@ export function InternshipListings() {
               type="button"
               className="rounded-full bg-[#1b2a5c] px-5 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#12939b] sm:text-sm"
             >
-              Search
+              {t("Search")}
             </button>
           </div>
         </div>
@@ -288,7 +291,7 @@ export function InternshipListings() {
                     : "bg-[#F1F5F9] text-[#1b2a5c]/70 hover:bg-[#E2E8F0] hover:text-[#1b2a5c]"
                 }`}
               >
-                {category}
+                {t(category)}
               </button>
             );
           })}
@@ -298,7 +301,7 @@ export function InternshipListings() {
         {filteredInternships.length === 0 ? (
           <div className="mt-16 rounded-2xl border border-dashed border-black/10 py-16 text-center">
             <p className="text-sm font-medium text-[#1b2a5c]/60">
-              No internships match your filter or search query.
+              {t("No internships match your filter or search query.")}
             </p>
             <button
               onClick={() => {
@@ -307,7 +310,7 @@ export function InternshipListings() {
               }}
               className="mt-3 text-xs font-semibold text-[#12939b] hover:underline"
             >
-              Clear filters
+              {t("Clear filters")}
             </button>
           </div>
         ) : (
@@ -321,14 +324,14 @@ export function InternshipListings() {
                 <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100">
                   <Image
                     src={internship.image}
-                    alt={internship.title}
+                    alt={t(internship.title)}
                     fill
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                     className="object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                   {/* Badge Tag */}
-                  <div className="absolute top-3 left-3 rounded-full bg-[#1b2a5c]/85 px-3 py-1 text-[11px] font-medium text-white backdrop-blur-xs">
-                    {internship.tag}
+                  <div className="absolute top-3 start-3 rounded-full bg-[#1b2a5c]/85 px-3 py-1 text-[11px] font-medium text-white backdrop-blur-xs">
+                    {t(internship.tag)}
                   </div>
                 </div>
 
@@ -336,7 +339,7 @@ export function InternshipListings() {
                 <div className="flex flex-1 flex-col p-4">
                   {/* Title */}
                   <h3 className="line-clamp-2 text-sm font-bold text-[#1b2a5c] transition-colors group-hover:text-[#12939b]">
-                    {internship.title}
+                    {t(internship.title)}
                   </h3>
 
                   {/* Instructor */}
@@ -373,15 +376,15 @@ export function InternshipListings() {
                   <div className="mt-3 flex items-center justify-between border-t border-black/5 pt-2.5 text-[10px] text-[#1b2a5c]/60">
                     <div className="flex items-center gap-1">
                       <Clock size={11} className="text-[#12939b]" />
-                      <span>{internship.duration}</span>
+                      <span>{t(internship.duration)}</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <Globe2 size={11} className="text-[#12939b]" />
-                      <span>{internship.mode}</span>
+                      <span>{t(internship.mode)}</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <Briefcase size={11} className="text-[#12939b]" />
-                      <span>{internship.hours}</span>
+                      <span>{t(internship.hours)}</span>
                     </div>
                   </div>
 
@@ -399,7 +402,7 @@ export function InternshipListings() {
                           </div>
                         ))}
                       </div>
-                      <span className="ml-1.5 text-[10px] font-semibold text-[#1b2a5c]/60">
+                      <span className="ms-1.5 text-[10px] font-semibold text-[#1b2a5c]/60">
                         +{internship.enrolledExtra}
                       </span>
                     </div>
@@ -410,7 +413,7 @@ export function InternshipListings() {
                       onClick={() => setApplyingFor(internship)}
                       className="rounded-full bg-[#1b2a5c] px-4 py-1.5 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-[#12939b] active:scale-95"
                     >
-                      Apply Now
+                      {t("Apply Now")}
                     </button>
                   </div>
                 </div>
@@ -425,7 +428,7 @@ export function InternshipListings() {
             href="/interns/portal"
             className="inline-flex items-center gap-2 rounded-full border border-[#1b2a5c]/20 bg-[#F8FAFC] px-8 py-3.5 text-sm font-bold text-[#1b2a5c] shadow-xs transition-all hover:border-[#12939b] hover:bg-[#12939b] hover:text-white"
           >
-            <span>Explore All Internships in Portal with Filters</span>
+            <span>{t("Explore All Internships in Portal with Filters")}</span>
             <ArrowRight size={16} />
           </Link>
         </div>
@@ -440,7 +443,8 @@ export function InternshipListings() {
                 setApplyingFor(null);
                 setSubmitted(false);
               }}
-              className="absolute top-5 right-5 text-gray-400 hover:text-gray-600"
+              aria-label={t("Close")}
+              className="absolute top-5 end-5 text-gray-400 hover:text-gray-600"
             >
               <X size={18} />
             </button>
@@ -448,28 +452,28 @@ export function InternshipListings() {
             {submitted ? (
               <div className="py-8 text-center">
                 <CheckCircle2 size={48} className="mx-auto text-emerald-500" />
-                <h3 className="mt-3 text-lg font-bold text-[#1b2a5c]">Application Submitted!</h3>
+                <h3 className="mt-3 text-lg font-bold text-[#1b2a5c]">{t("Application Submitted!")}</h3>
                 <p className="mt-1 text-xs text-[#1b2a5c]/60">
-                  We received your application for {applyingFor.title}. Check your email for next steps.
+                  {t("We received your application for {title}. Check your email for next steps.", { title: t(applyingFor.title) })}
                 </p>
               </div>
             ) : (
               <div>
-                <h3 className="text-lg font-bold text-[#1b2a5c]">Apply for Internship</h3>
-                <p className="mt-1 text-xs text-[#1b2a5c]/60 line-clamp-1">{applyingFor.title}</p>
+                <h3 className="text-lg font-bold text-[#1b2a5c]">{t("Apply for Internship")}</h3>
+                <p className="mt-1 text-xs text-[#1b2a5c]/60 line-clamp-1">{t(applyingFor.title)}</p>
 
                 <form onSubmit={handleApply} className="mt-4 flex flex-col gap-3">
                   <div>
-                    <label className="text-[11px] font-semibold text-[#1b2a5c]">Full Name</label>
+                    <label className="text-[11px] font-semibold text-[#1b2a5c]">{t("Full Name")}</label>
                     <input
                       required
                       type="text"
-                      placeholder="e.g. John Doe"
+                      placeholder={t("e.g. John Doe")}
                       className="mt-1 w-full rounded-xl border border-black/10 px-3 py-2 text-xs outline-hidden focus:border-[#12939b]"
                     />
                   </div>
                   <div>
-                    <label className="text-[11px] font-semibold text-[#1b2a5c]">Email Address</label>
+                    <label className="text-[11px] font-semibold text-[#1b2a5c]">{t("Email Address")}</label>
                     <input
                       required
                       type="email"
@@ -478,9 +482,10 @@ export function InternshipListings() {
                     />
                   </div>
                   <div>
-                    <label className="text-[11px] font-semibold text-[#1b2a5c]">GitHub / Portfolio URL</label>
+                    <label className="text-[11px] font-semibold text-[#1b2a5c]">{t("GitHub / Portfolio URL")}</label>
                     <input
                       type="url"
+                      dir="ltr"
                       placeholder="https://github.com/yourhandle"
                       className="mt-1 w-full rounded-xl border border-black/10 px-3 py-2 text-xs outline-hidden focus:border-[#12939b]"
                     />
@@ -490,7 +495,7 @@ export function InternshipListings() {
                     type="submit"
                     className="mt-2 rounded-full bg-[#12939b] py-2.5 text-xs font-semibold text-white shadow-md transition-colors hover:bg-[#0f7a81]"
                   >
-                    Submit Application
+                    {t("Submit Application")}
                   </button>
                 </form>
               </div>

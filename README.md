@@ -37,3 +37,12 @@ In Development the backend's email code is always `123456`.
 - This Next.js version has real breaking changes vs. older docs/training data (e.g. `middleware` → `proxy`). Check `node_modules/next/dist/docs/` before assuming an API — see `AGENTS.md`.
 - `typedRoutes` is on — `next/link` and `router.push`/`replace` are statically checked against real routes.
 - RTL Arabic (`lang="ar" dir="rtl"`) is the default locale; layout uses logical properties (`border-e`, etc.) rather than left/right.
+
+## Arabic / English
+
+The site switches between English and Arabic (right-to-left) from the **EN / AR** menu; the choice is kept in the `jh_lang` cookie.
+
+- Write every visible text in English through `t()`: `const t = useT()` in a component (`@/lib/i18n/client`), `await getT()` in a Server Component (`@/lib/i18n/server`). Text defined outside a component (a constant, a nav label) is marked with `tk("...")` and shown with `t(label)`.
+- Add the Arabic in `lib/i18n/ar/*.ts`, keyed by the same English text. A missing entry simply shows the English.
+- `node scripts/i18n-check.mjs` lists the texts that have no Arabic yet.
+- Use logical Tailwind classes (`ms-`, `me-`, `ps-`, `pe-`, `start-`, `end-`, `text-start`) instead of `ml-`, `mr-`, `left-`, `right-`, so the layout flips in Arabic.

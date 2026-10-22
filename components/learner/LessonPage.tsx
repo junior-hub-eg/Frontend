@@ -21,6 +21,8 @@ import {
 } from "@/lib/learning-api";
 import { getMyMentor, type Mentor } from "@/lib/mentorship-api";
 import { LinearGraph, LoadState, VideoPlayer, minutes } from "@/components/Courses/course-ui";
+import { useT } from "@/lib/i18n/client";
+import { tk } from "@/lib/i18n/translate";
 
 type Data = { lesson: Lesson; trackName: string; list: LessonSummary[]; track: TrackLessons | null; mentor: Mentor | null };
 
@@ -33,7 +35,7 @@ async function load(code: string, lessonId: string): Promise<Data> {
   return { lesson, trackName: track?.trackName ?? lesson.trackCode, list: track?.modules.flatMap((m) => m.lessons) ?? [], track, mentor };
 }
 
-const TABS = ["Overview", "Steps"] as const;
+const TABS = [tk("Overview"), tk("Steps")] as const;
 
 const noScrollbar = "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden";
 const box = "rounded-[0.9em] border border-[#e3ebf3] bg-white";
@@ -42,6 +44,7 @@ const navBtn =
   "inline-flex items-center gap-[0.5em] rounded-full border px-[1.2em] py-[0.45em] text-[0.75em] font-semibold";
 
 export default function LessonPage({ code, lessonId }: { code: string; lessonId: string }) {
+  const t = useT();
   const [data, setData] = useState<Data | null>(null);
   const [loadError, setLoadError] = useState<unknown>(null);
   const [tab, setTab] = useState<(typeof TABS)[number]>("Overview");
@@ -66,9 +69,9 @@ export default function LessonPage({ code, lessonId }: { code: string; lessonId:
 
   /* Desktop: one screen, no page scroll. The video takes whatever height is left. */
   const wrapper = (children: React.ReactNode) => (
-    <div className="relative -ml-[4rem] min-h-[calc(100svh-5rem)] min-w-0 flex-1 bg-[#fbfdff] lg:absolute lg:inset-0 lg:ml-0 lg:min-h-0">
+    <div className="relative -ms-[4rem] min-h-[calc(100svh-5rem)] min-w-0 flex-1 bg-[#fbfdff] lg:absolute lg:inset-0 lg:ms-0 lg:min-h-0">
       <div
-        className="relative min-w-0 pb-8 pl-[4.75rem] pr-3 pt-2 sm:pr-4 lg:absolute lg:inset-0 lg:flex lg:flex-col lg:overflow-hidden lg:pb-[calc(var(--u)*1.2)] lg:pl-[var(--hl)] lg:pr-[calc(var(--u)*1.6)] lg:pt-[calc(var(--u)*6.5)]"
+        className="relative min-w-0 pb-8 ps-[4.75rem] pe-3 pt-2 sm:pe-4 lg:absolute lg:inset-0 lg:flex lg:flex-col lg:overflow-hidden lg:pb-[calc(var(--u)*1.2)] lg:ps-[var(--hl)] lg:pe-[calc(var(--u)*1.6)] lg:pt-[calc(var(--u)*6.5)]"
         style={{ fontSize: "clamp(11px, calc(var(--u) * 1.05), 17px)" }}
       >
         {children}
@@ -81,7 +84,7 @@ export default function LessonPage({ code, lessonId }: { code: string; lessonId:
       loadError ? (
         <LoadState error={loadError} onRetry={reload} backHref={trackPath(code)} />
       ) : (
-        <div className="grid min-h-[50vh] flex-1 place-items-center" role="status" aria-label="Loading">
+        <div className="grid min-h-[50vh] flex-1 place-items-center" role="status" aria-label={t("Loading")}>
           <LoaderCircle className="size-8 animate-spin text-[#12939b]" />
         </div>
       ),
@@ -112,10 +115,10 @@ export default function LessonPage({ code, lessonId }: { code: string; lessonId:
   }
 
   const steps: { label: string; done: boolean; href?: string; action?: () => void }[] = [
-    ...(link ? [{ label: "Read the school link", done: progress.schoolLinkDone, action: () => complete("SchoolLink") }] : []),
-    { label: "Watch the lesson video", done: progress.videoDone },
-    ...(lesson.tryIt ? [{ label: "Try it: run the code", done: progress.tryItDone, href: `${base}/challenge` }] : []),
-    { label: "Pass the lesson quiz", done: progress.done, href: `${base}/quiz` },
+    ...(link ? [{ label: t("Read the school link"), done: progress.schoolLinkDone, action: () => complete("SchoolLink") }] : []),
+    { label: t("Watch the lesson video"), done: progress.videoDone },
+    ...(lesson.tryIt ? [{ label: t("Try it: run the code"), done: progress.tryItDone, href: `${base}/challenge` }] : []),
+    { label: t("Pass the lesson quiz"), done: progress.done, href: `${base}/quiz` },
   ];
   const nextStep = steps.find((st) => !st.done);
 
@@ -125,7 +128,7 @@ export default function LessonPage({ code, lessonId }: { code: string; lessonId:
         href={trackPath(code) as Route}
         className="mb-[0.6em] inline-flex w-fit items-center gap-[0.5em] text-[0.8em] font-semibold text-[#12606b] hover:underline lg:shrink-0"
       >
-        <ArrowLeft className="size-[1.1em]" /> Track Details
+        <ArrowLeft className="size-[1.1em]" /> {t("Track Details")}
       </Link>
 
       <div className="grid gap-[1em] lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1fr)_27%]">
@@ -144,31 +147,31 @@ export default function LessonPage({ code, lessonId }: { code: string; lessonId:
 
           {/* Title */}
           <div className="mt-[0.7em] lg:shrink-0">
-            <p className={label}>Current lesson</p>
+            <p className={label}>{t("Current lesson")}</p>
             <h1 className="mt-[0.15em] text-[1.7em] font-extrabold leading-tight text-[#14365a]">{lesson.title}</h1>
             <p className="mt-[0.2em] text-[0.75em] text-[#14365a]/70">
-              {lesson.moduleTitle} · {lesson.level} · {minutes(lesson.durationSeconds)} · {lesson.xpReward} XP
+              {lesson.moduleTitle} · {t(lesson.level)} · {minutes(lesson.durationSeconds)} · {t("{n} XP", { n: lesson.xpReward })}
             </p>
           </div>
 
           {/* Tabs */}
           <div
             role="tablist"
-            aria-label="Lesson sections"
+            aria-label={t("Lesson sections")}
             className={`mt-[0.7em] flex overflow-x-auto rounded-[0.7em] border border-[#e3ebf3] bg-[#f6fafd] p-[0.2em] lg:shrink-0 ${noScrollbar}`}
           >
-            {TABS.map((t) => (
+            {TABS.map((tb) => (
               <button
-                key={t}
+                key={tb}
                 type="button"
                 role="tab"
-                aria-selected={tab === t}
-                onClick={() => setTab(t)}
+                aria-selected={tab === tb}
+                onClick={() => setTab(tb)}
                 className={`flex-1 whitespace-nowrap rounded-[0.55em] px-[1em] py-[0.4em] text-[0.7em] font-semibold transition-colors ${
-                  tab === t ? "border border-[#cfe6e1] bg-white text-[#12606b]" : "text-[#14365a]/70 hover:bg-white/70"
+                  tab === tb ? "border border-[#cfe6e1] bg-white text-[#12606b]" : "text-[#14365a]/70 hover:bg-white/70"
                 }`}
               >
-                {t}
+                {t(tb)}
               </button>
             ))}
           </div>
@@ -189,7 +192,7 @@ export default function LessonPage({ code, lessonId }: { code: string; lessonId:
                       <School className="size-[1.2em] text-[#12939b]" /> {link.cardHeadline}
                     </h2>
                     <p className="mt-[0.2em] text-[0.62em] font-semibold uppercase tracking-wide text-[#12939b]">
-                      {link.subject} · Grade {link.grade} · {link.unit} · {link.schoolLessonTitle}
+                      {link.subject} · {t("Grade {n}", { n: link.grade })} · {link.unit} · {link.schoolLessonTitle}
                     </p>
                     <p className="mt-[0.5em] rounded-[0.5em] bg-[#f3f8fb] px-[0.7em] py-[0.5em] font-mono text-[0.7em] text-[#14365a]">{link.schoolExample}</p>
                     <p className="mt-[0.5em] text-[0.68em] leading-relaxed text-[#14365a]/85">{link.bridgeText}</p>
@@ -200,21 +203,21 @@ export default function LessonPage({ code, lessonId }: { code: string; lessonId:
                     )}
                     <div className="mt-[0.6em] flex flex-wrap items-center gap-[0.6em]">
                       <span className="flex items-center gap-[0.3em] text-[0.6em] text-[#14365a]/70">
-                        <Award className="size-[1.2em] text-[#d4a017]" /> Pass the quiz to earn “{link.badge.name}”
+                        <Award className="size-[1.2em] text-[#d4a017]" /> {t("Pass the quiz to earn “{badge}”", { badge: link.badge.name })}
                       </span>
                       <button
                         type="button"
                         disabled={progress.schoolLinkDone || saving !== null}
                         onClick={() => complete("SchoolLink")}
-                        className="ml-auto rounded-[0.5em] border border-[#12939b]/60 bg-white px-[1em] py-[0.3em] text-[0.65em] font-semibold text-[#12606b] hover:bg-[#eef8f7] disabled:opacity-60"
+                        className="ms-auto rounded-[0.5em] border border-[#12939b]/60 bg-white px-[1em] py-[0.3em] text-[0.65em] font-semibold text-[#12606b] hover:bg-[#eef8f7] disabled:opacity-60"
                       >
-                        {progress.schoolLinkDone ? "Got it ✓" : saving === "SchoolLink" ? "Saving..." : "Got it"}
+                        {progress.schoolLinkDone ? t("Got it ✓") : saving === "SchoolLink" ? t("Saving...") : t("Got it")}
                       </button>
                     </div>
                   </>
                 ) : (
                   <>
-                    <h2 className="text-[0.8em] font-extrabold text-[#14365a]">What you will learn</h2>
+                    <h2 className="text-[0.8em] font-extrabold text-[#14365a]">{t("What you will learn")}</h2>
                     <p className="mt-[0.5em] flex items-center gap-[0.5em] text-[0.68em] text-[#14365a]/85">
                       <CheckCircle2 className="size-[1.3em] shrink-0 text-[#12939b]" />
                       {lesson.title}: {lesson.concept}
@@ -224,23 +227,23 @@ export default function LessonPage({ code, lessonId }: { code: string; lessonId:
               </section>
 
               <section className={`${box} p-[0.9em]`}>
-                <h2 className="text-[0.8em] font-extrabold text-[#14365a]">Lesson summary</h2>
+                <h2 className="text-[0.8em] font-extrabold text-[#14365a]">{t("Lesson summary")}</h2>
                 <dl className="mt-[0.4em] divide-y divide-[#eef2f6] text-[0.68em]">
                   <div className="flex items-center justify-between py-[0.35em]">
-                    <dt className="text-[#14365a]/65">Estimated time</dt>
+                    <dt className="text-[#14365a]/65">{t("Estimated time")}</dt>
                     <dd className="font-semibold text-[#14365a]">{minutes(lesson.durationSeconds)}</dd>
                   </div>
                   <div className="flex items-center justify-between py-[0.35em]">
-                    <dt className="text-[#14365a]/65">Level</dt>
-                    <dd className="rounded-full bg-[#dff5e8] px-[0.8em] py-[0.05em] text-[0.9em] font-semibold text-[#2a9a5f]">{lesson.level}</dd>
+                    <dt className="text-[#14365a]/65">{t("Level")}</dt>
+                    <dd className="rounded-full bg-[#dff5e8] px-[0.8em] py-[0.05em] text-[0.9em] font-semibold text-[#2a9a5f]">{t(lesson.level)}</dd>
                   </div>
                   <div className="flex items-center justify-between py-[0.35em]">
-                    <dt className="text-[#14365a]/65">Format</dt>
-                    <dd className="font-semibold text-[#14365a]">{lesson.tryIt ? "Video · Try it · Quiz" : "Video · Quiz"}</dd>
+                    <dt className="text-[#14365a]/65">{t("Format")}</dt>
+                    <dd className="font-semibold text-[#14365a]">{lesson.tryIt ? t("Video · Try it · Quiz") : t("Video · Quiz")}</dd>
                   </div>
                   <div className="flex items-center justify-between py-[0.35em]">
-                    <dt className="text-[#14365a]/65">Lesson</dt>
-                    <dd className="font-semibold text-[#14365a]">{list.length ? `${idx + 1} of ${list.length}` : lesson.moduleTitle}</dd>
+                    <dt className="text-[#14365a]/65">{t("Lesson")}</dt>
+                    <dd className="font-semibold text-[#14365a]">{list.length ? t("{n} of {total}", { n: idx + 1, total: list.length }) : lesson.moduleTitle}</dd>
                   </div>
                 </dl>
               </section>
@@ -251,14 +254,14 @@ export default function LessonPage({ code, lessonId }: { code: string; lessonId:
                 {steps.map((st, i) => (
                   <li key={st.label} className="flex items-center gap-[0.6em] text-[0.72em] text-[#14365a]">
                     {st.done ? (
-                      <CheckCircle2 aria-label="Done" className="size-[1.5em] shrink-0 text-[#12939b]" />
+                      <CheckCircle2 aria-label={t("Done")} className="size-[1.5em] shrink-0 text-[#12939b]" />
                     ) : (
                       <span className="grid size-[1.5em] shrink-0 place-items-center rounded-full bg-[#e7f6f3] text-[0.85em] font-bold text-[#12939b]">{i + 1}</span>
                     )}
                     <span className={`flex-1 ${st.done ? "text-[#14365a]/55" : ""}`}>{st.label}</span>
                     {st.href && (
                       <Link href={st.href as Route} className="font-semibold text-[#12606b] hover:underline">
-                        {st.done ? "Open again" : "Open"}
+                        {st.done ? t("Open again") : t("Open")}
                       </Link>
                     )}
                   </li>
@@ -271,11 +274,11 @@ export default function LessonPage({ code, lessonId }: { code: string; lessonId:
           <div className="mt-[0.7em] flex items-center justify-between gap-[0.8em] lg:shrink-0">
             {prev ? (
               <Link href={lessonPath(code, prev.id) as Route} className={`${navBtn} border-[#e1e8f0] bg-white text-[#14365a] hover:bg-[#eef4fa]`}>
-                <ArrowLeft className="size-[1.1em]" /> Previous
+                <ArrowLeft className="size-[1.1em]" /> {t("Previous")}
               </Link>
             ) : (
               <span className={`${navBtn} border-[#e1e8f0] text-[#14365a]/35`}>
-                <ArrowLeft className="size-[1.1em]" /> Previous
+                <ArrowLeft className="size-[1.1em]" /> {t("Previous")}
               </span>
             )}
 
@@ -283,12 +286,12 @@ export default function LessonPage({ code, lessonId }: { code: string; lessonId:
               href={`${base}/${lesson.tryIt ? "challenge" : "quiz"}` as Route}
               className="inline-flex items-center gap-[0.4em] rounded-[0.5em] bg-[#12606b] px-[1.4em] py-[0.5em] text-[0.7em] font-semibold text-white hover:bg-[#0f505a]"
             >
-              <Code2 className="size-[1.1em]" /> {lesson.tryIt ? (progress.tryItDone ? "Open Try it again" : "Open Try it") : "Take the quiz"}
+              <Code2 className="size-[1.1em]" /> {lesson.tryIt ? (progress.tryItDone ? t("Open Try it again") : t("Open Try it")) : t("Take the quiz")}
             </Link>
 
             {/* Next stays inside the course and level: a locked level opens from its course page (level exam). */}
             <Link href={after.href as Route} className={`${navBtn} border-[#14365a]/40 bg-white text-[#14365a] hover:bg-[#eef4fa]`}>
-              {after.label === "Next Lesson" ? "Next" : after.label} <ArrowRight className="size-[1.1em]" />
+              {after.label === "Next Lesson" ? t("Next") : t(after.label)} <ArrowRight className="size-[1.1em]" />
             </Link>
           </div>
         </div>
@@ -302,17 +305,17 @@ export default function LessonPage({ code, lessonId }: { code: string; lessonId:
                 className="grid size-[3.6em] shrink-0 place-items-center rounded-full text-[0.75em] font-extrabold text-[#14365a]"
                 style={{ background: `conic-gradient(#12939b ${percent * 3.6}deg, #e3ebf3 0)` }}
                 role="img"
-                aria-label={`${percent}% of the track complete`}
+                aria-label={t("{percent}% of the track complete", { percent })}
               >
                 <span className="grid size-[78%] place-items-center rounded-full bg-white">{percent}%</span>
               </span>
               <span className="leading-tight">
-                <span className={`${label} block`}>Your progress</span>
+                <span className={`${label} block`}>{t("Your progress")}</span>
                 <span className="mt-[0.2em] block text-[0.85em] font-extrabold text-[#14365a]">
-                  {list.length ? `Lesson ${idx + 1} of ${list.length}` : lesson.moduleTitle}
+                  {list.length ? t("Lesson {n} of {total}", { n: idx + 1, total: list.length }) : lesson.moduleTitle}
                 </span>
                 <span className="mt-[0.25em] inline-block rounded-full bg-[#e7f6f3] px-[0.7em] py-[0.05em] text-[0.55em] font-semibold text-[#12939b]">
-                  {progress.done ? "Completed" : "In progress"}
+                  {progress.done ? t("Completed") : t("In progress")}
                 </span>
               </span>
             </div>
@@ -322,7 +325,7 @@ export default function LessonPage({ code, lessonId }: { code: string; lessonId:
                   href={nextStep.href as Route}
                   className="mt-[0.6em] block w-full rounded-[0.5em] border border-[#12939b]/60 bg-white py-[0.45em] text-center text-[0.7em] font-semibold text-[#12606b] hover:bg-[#eef8f7]"
                 >
-                  Next step: {nextStep.label}
+                  {t("Next step: {step}", { step: nextStep.label })}
                 </Link>
               ) : (
                 <button
@@ -331,11 +334,11 @@ export default function LessonPage({ code, lessonId }: { code: string; lessonId:
                   onClick={nextStep.action}
                   className="mt-[0.6em] w-full rounded-[0.5em] border border-[#12939b]/60 bg-white py-[0.45em] text-[0.7em] font-semibold text-[#12606b] hover:bg-[#eef8f7] disabled:cursor-default disabled:opacity-70"
                 >
-                  Next step: {nextStep.label}
+                  {t("Next step: {step}", { step: nextStep.label })}
                 </button>
               )
             ) : (
-              <p className="mt-[0.6em] rounded-[0.5em] bg-[#e7f6f3] py-[0.45em] text-center text-[0.7em] font-semibold text-[#12606b]">Lesson completed ✓</p>
+              <p className="mt-[0.6em] rounded-[0.5em] bg-[#e7f6f3] py-[0.45em] text-center text-[0.7em] font-semibold text-[#12606b]">{t("Lesson completed ✓")}</p>
             )}
           </section>
 
@@ -344,10 +347,10 @@ export default function LessonPage({ code, lessonId }: { code: string; lessonId:
             <section className={`${box} p-[0.8em]`}>
               <div className="flex items-start justify-between">
                 <div>
-                  <p className={label}>Track content</p>
-                  <h2 className="text-[0.9em] font-extrabold text-[#14365a]">{trackName} lessons</h2>
+                  <p className={label}>{t("Track content")}</p>
+                  <h2 className="text-[0.9em] font-extrabold text-[#14365a]">{t("{track} lessons", { track: t(trackName) })}</h2>
                 </div>
-                <span className="rounded-full bg-[#e7f6f3] px-[0.7em] py-[0.1em] text-[0.55em] font-semibold text-[#12939b]">{list.length} lessons</span>
+                <span className="rounded-full bg-[#e7f6f3] px-[0.7em] py-[0.1em] text-[0.55em] font-semibold text-[#12939b]">{t("{n} lessons", { n: list.length })}</span>
               </div>
               <ol className="mt-[0.4em] space-y-[0.2em]">
                 {list.map((l, i) => {
@@ -376,7 +379,7 @@ export default function LessonPage({ code, lessonId }: { code: string; lessonId:
                         <span className="min-w-0 flex-1 leading-tight">
                           <span className="block truncate text-[0.72em] font-semibold text-[#14365a]">{l.title}</span>
                           <span className="block text-[0.58em] text-[#14365a]/60">
-                            {minutes(l.durationSeconds)} · {l.level}
+                            {minutes(l.durationSeconds)} · {t(l.level)}
                           </span>
                         </span>
                       </Link>
@@ -389,22 +392,22 @@ export default function LessonPage({ code, lessonId }: { code: string; lessonId:
 
           {/* Quiz */}
           <section className="rounded-[0.9em] bg-gradient-to-br from-[#14586a] to-[#1d8a8f] p-[0.9em] text-white">
-            <p className="text-[0.5em] font-bold uppercase tracking-wide text-white/70">Lesson quiz</p>
-            <h2 className="mt-[0.2em] text-[1em] font-extrabold">{progress.done ? "You passed this lesson" : "Check your understanding"}</h2>
+            <p className="text-[0.5em] font-bold uppercase tracking-wide text-white/70">{t("Lesson quiz")}</p>
+            <h2 className="mt-[0.2em] text-[1em] font-extrabold">{progress.done ? t("You passed this lesson") : t("Check your understanding")}</h2>
             <p className="mt-[0.15em] text-[0.6em] text-white/80">
-              {lesson.questions.length} questions · all correct finishes the lesson (+{lesson.xpReward} XP)
+              {t("{n} questions · all correct finishes the lesson (+{xp} XP)", { n: lesson.questions.length, xp: lesson.xpReward })}
             </p>
             <Link
               href={`${base}/quiz` as Route}
               className="mt-[0.6em] inline-flex items-center rounded-[0.5em] bg-white px-[1.1em] py-[0.4em] text-[0.7em] font-semibold text-[#12606b] hover:bg-[#eef8f7]"
             >
-              {progress.done ? "Take it again" : "Start quiz"}
+              {progress.done ? t("Take it again") : t("Start quiz")}
             </Link>
           </section>
 
           {/* Mentor of this track */}
           <section className={`${box} p-[0.8em]`}>
-            <p className={label}>Your mentor</p>
+            <p className={label}>{t("Your mentor")}</p>
             {mentor ? (
               <div className="mt-[0.4em] flex items-center gap-[0.6em]">
                 <span className="relative size-[2.4em] shrink-0 overflow-hidden rounded-full" style={{ backgroundColor: mentorAvatar(mentor).bg }}>
@@ -413,18 +416,18 @@ export default function LessonPage({ code, lessonId }: { code: string; lessonId:
                 <span className="leading-tight">
                   <span className="block text-[0.8em] font-extrabold text-[#14365a]">{mentor.fullName}</span>
                   <span className="block text-[0.58em] text-[#14365a]/60">
-                    {mentor.title} · {mentor.yearsOfExperience}+ years
+                    {t(mentor.title)} · {t("{n}+ years", { n: mentor.yearsOfExperience })}
                   </span>
                 </span>
               </div>
             ) : (
-              <p className="mt-[0.4em] text-[0.68em] text-[#14365a]/65">You don&apos;t have a mentor in {trackName} yet.</p>
+              <p className="mt-[0.4em] text-[0.68em] text-[#14365a]/65">{t("You don't have a mentor in {track} yet.", { track: t(trackName) })}</p>
             )}
             <Link
               href="/learner/mentorship"
               className="mt-[0.5em] block w-full rounded-[0.5em] bg-[#12606b] py-[0.45em] text-center text-[0.7em] font-semibold text-white hover:bg-[#0f505a]"
             >
-              {mentor ? "Book a session" : "Choose a mentor"}
+              {mentor ? t("Book a session") : t("Choose a mentor")}
             </Link>
           </section>
         </aside>

@@ -8,6 +8,7 @@ import { JobReadinessBanner } from "./JobReadinessBanner";
 import { InternshipFilterSidebar, type FilterState } from "./InternshipFilterSidebar";
 import { ApplicationsStats } from "./ApplicationsStats";
 import { CtaBand } from "@/components/Landing/CtaBand";
+import { useT } from "@/lib/i18n/client";
 
 export interface PortalInternship {
   id: string;
@@ -248,6 +249,7 @@ interface InternshipsPortalProps {
 }
 
 export function InternshipsPortal({ initialTab = "available" }: InternshipsPortalProps) {
+  const t = useT();
   const [activeTab, setActiveTab] = useState<"available" | "applications">(initialTab);
   const [filters, setFilters] = useState<FilterState>({
     categories: [],
@@ -290,7 +292,7 @@ export function InternshipsPortal({ initialTab = "available" }: InternshipsPorta
                 : "text-[#1b2a5c]/60 hover:text-[#1b2a5c]"
             }`}
           >
-            Available Internships
+            {t("Available Internships")}
             {activeTab === "available" && (
               <span className="absolute inset-x-0 bottom-0 h-0.5 bg-[#12939b]" />
             )}
@@ -299,13 +301,13 @@ export function InternshipsPortal({ initialTab = "available" }: InternshipsPorta
           <button
             type="button"
             onClick={() => setActiveTab("applications")}
-            className={`relative ml-8 pb-3 text-sm font-bold transition-colors sm:text-base ${
+            className={`relative ms-8 pb-3 text-sm font-bold transition-colors sm:text-base ${
               activeTab === "applications"
                 ? "text-[#12939b]"
                 : "text-[#1b2a5c]/60 hover:text-[#1b2a5c]"
             }`}
           >
-            My Applications (3)
+            {t("My Applications ({n})", { n: 3 })}
             {activeTab === "applications" && (
               <span className="absolute inset-x-0 bottom-0 h-0.5 bg-[#12939b]" />
             )}
@@ -315,7 +317,7 @@ export function InternshipsPortal({ initialTab = "available" }: InternshipsPorta
         {/* Section Heading */}
         <div className="mt-8">
           <h2 className="text-2xl font-bold text-[#1b2a5c]">
-            {activeTab === "available" ? "Available Internships" : "My Applications"}
+            {activeTab === "available" ? t("Available Internships") : t("My Applications")}
           </h2>
         </div>
 
@@ -326,13 +328,13 @@ export function InternshipsPortal({ initialTab = "available" }: InternshipsPorta
             {filteredInternships.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-black/10 py-16 text-center">
                 <p className="text-sm font-medium text-[#1b2a5c]/60">
-                  No internships match the selected filters.
+                  {t("No internships match the selected filters.")}
                 </p>
                 <button
                   onClick={() => setFilters({ categories: [], types: [], locations: [] })}
                   className="mt-3 text-xs font-semibold text-[#12939b] hover:underline"
                 >
-                  Clear all filters
+                  {t("Clear all filters")}
                 </button>
               </div>
             ) : (
@@ -346,20 +348,20 @@ export function InternshipsPortal({ initialTab = "available" }: InternshipsPorta
                     <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100">
                       <Image
                         src={internship.image}
-                        alt={internship.title}
+                        alt={t(internship.title)}
                         fill
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 35vw"
                         className="object-cover transition-transform duration-500 group-hover:scale-105"
                       />
-                      <div className="absolute top-3 left-3 rounded-full bg-[#1b2a5c]/85 px-3 py-1 text-[11px] font-medium text-white backdrop-blur-xs">
-                        {internship.tag}
+                      <div className="absolute top-3 start-3 rounded-full bg-[#1b2a5c]/85 px-3 py-1 text-[11px] font-medium text-white backdrop-blur-xs">
+                        {t(internship.tag)}
                       </div>
                     </div>
 
                     {/* Card Body */}
                     <div className="flex flex-1 flex-col p-4">
                       <h3 className="line-clamp-2 text-sm font-bold text-[#1b2a5c] transition-colors group-hover:text-[#12939b]">
-                        {internship.title}
+                        {t(internship.title)}
                       </h3>
 
                       {/* Instructor */}
@@ -396,15 +398,15 @@ export function InternshipsPortal({ initialTab = "available" }: InternshipsPorta
                       <div className="mt-3 flex items-center justify-between border-t border-black/5 pt-2.5 text-[10px] text-[#1b2a5c]/60">
                         <div className="flex items-center gap-1">
                           <Clock size={11} className="text-[#12939b]" />
-                          <span>{internship.duration}</span>
+                          <span>{t(internship.duration)}</span>
                         </div>
                         <div className="flex items-center gap-1">
                           <Globe2 size={11} className="text-[#12939b]" />
-                          <span>{internship.location}</span>
+                          <span>{t(internship.location)}</span>
                         </div>
                         <div className="flex items-center gap-1">
                           <Briefcase size={11} className="text-[#12939b]" />
-                          <span>{internship.hours}</span>
+                          <span>{t(internship.hours)}</span>
                         </div>
                       </div>
 
@@ -421,7 +423,7 @@ export function InternshipsPortal({ initialTab = "available" }: InternshipsPorta
                               </div>
                             ))}
                           </div>
-                          <span className="ml-1.5 text-[10px] font-semibold text-[#1b2a5c]/60">
+                          <span className="ms-1.5 text-[10px] font-semibold text-[#1b2a5c]/60">
                             +{internship.enrolledExtra}
                           </span>
                         </div>
@@ -431,7 +433,7 @@ export function InternshipsPortal({ initialTab = "available" }: InternshipsPorta
                           href={`/interns/${internship.id}`}
                           className="rounded-full bg-[#1b2a5c] px-4 py-1.5 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-[#12939b] active:scale-95"
                         >
-                          Read More
+                          {t("Read More")}
                         </Link>
                       </div>
                     </div>

@@ -3,8 +3,8 @@ import { PlaceholderPage } from "@/components/shared/placeholder-page";
 export default function AdminDashboardPage() {
   return (
     <PlaceholderPage
-      title="لوحة الأدمن"
-      description="تحليلات على مستوى المنصة كلها"
+      title="Admin dashboard"
+      description="Analytics for the whole platform"
       waitingOn="Admin Analytics Dashboard (Sprint 6 - Data team)"
       prdSection="§9"
     />

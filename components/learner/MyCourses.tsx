@@ -7,6 +7,7 @@ import { ArrowRight, LoaderCircle, Lock, Plus } from "lucide-react";
 import { errorMessage } from "@/lib/api-client";
 import { coursePath, getTrackCourses, type TrackCourses, type TrackSummary } from "@/lib/learning-api";
 import { COURSE_STYLE, CourseIcon, LevelChips, levelsDone } from "./course-levels";
+import { useT } from "@/lib/i18n/client";
 
 const card = "rounded-[1.2em] border border-[#e8eef5] bg-white shadow-[0_6px_22px_rgba(20,54,90,0.07)]";
 
@@ -15,6 +16,7 @@ const card = "rounded-[1.2em] border border-[#e8eef5] bg-white shadow-[0_6px_22p
  * open. Tracks the student learns are tabs; Change / Add track opens every track.
  */
 export default function MyCourses({ learning, onExplore }: { learning: TrackSummary[]; onExplore: () => void }) {
+  const t = useT();
   const tracks = [...learning].sort((a, b) => Number(b.isFocus) - Number(a.isFocus));
   const [code, setCode] = useState(tracks[0]?.code ?? null);
   const [loaded, setLoaded] = useState<{ code: string; data: TrackCourses } | null>(null);
@@ -38,26 +40,26 @@ export default function MyCourses({ learning, onExplore }: { learning: TrackSumm
   return (
     <section className="mt-[0.9em] lg:flex lg:min-h-0 lg:flex-1 lg:flex-col">
       <div className="mb-[0.7em] flex flex-wrap items-center gap-[0.5em] lg:shrink-0">
-        {tracks.map((t) => (
+        {tracks.map((tr) => (
           <button
-            key={t.code}
+            key={tr.code}
             type="button"
-            onClick={() => setCode(t.code)}
-            aria-pressed={t.code === code}
+            onClick={() => setCode(tr.code)}
+            aria-pressed={tr.code === code}
             className={`rounded-full border px-[1em] py-[0.35em] text-[0.8em] font-semibold transition-colors ${
-              t.code === code ? "border-[#1d7f85] bg-[#1d7f85] text-white" : "border-[#e1e8f0] bg-white text-[#14365a] hover:bg-[#eef4fa]"
+              tr.code === code ? "border-[#1d7f85] bg-[#1d7f85] text-white" : "border-[#e1e8f0] bg-white text-[#14365a] hover:bg-[#eef4fa]"
             }`}
           >
-            {t.name}
-            {t.isFocus && <span className="ml-[0.4em] text-[0.8em] opacity-80">· focus</span>}
+            {t(tr.name)}
+            {tr.isFocus && <span className="ms-[0.4em] text-[0.8em] opacity-80">{t("· focus")}</span>}
           </button>
         ))}
         <button
           type="button"
           onClick={onExplore}
-          className="ml-auto flex items-center gap-[0.4em] rounded-full border border-[#12939b]/60 bg-white px-[1em] py-[0.35em] text-[0.8em] font-semibold text-[#12606b] hover:bg-[#eef8f7]"
+          className="ms-auto flex items-center gap-[0.4em] rounded-full border border-[#12939b]/60 bg-white px-[1em] py-[0.35em] text-[0.8em] font-semibold text-[#12606b] hover:bg-[#eef8f7]"
         >
-          <Plus className="size-[1.1em]" /> Change / Add track
+          <Plus className="size-[1.1em]" /> {t("Change / Add track")}
         </button>
       </div>
 
@@ -67,7 +69,7 @@ export default function MyCourses({ learning, onExplore }: { learning: TrackSumm
         </p>
       )}
       {!data && !failed && (
-        <div className="grid place-items-center py-[3em]" role="status" aria-label="Loading">
+        <div className="grid place-items-center py-[3em]" role="status" aria-label={t("Loading")}>
           <LoaderCircle className="size-8 animate-spin text-[#12939b]" />
         </div>
       )}
@@ -75,7 +77,7 @@ export default function MyCourses({ learning, onExplore }: { learning: TrackSumm
       {data && (
         <>
           <p className="mb-[0.6em] text-[0.8em] text-[#14365a]/70 lg:shrink-0">
-            {data.trackName} · you start at {data.level} · finish each level&apos;s lessons and pass its exam to open the next one.
+            {t("{track} · you start at {level} · finish each level's lessons and pass its exam to open the next one.", { track: t(data.trackName), level: t(data.level) })}
           </p>
           <ol className="grid content-start gap-[0.7em] md:grid-cols-2 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pb-[0.4em] xl:grid-cols-3">
             {data.courses.map((c, i) => {
@@ -100,7 +102,7 @@ export default function MyCourses({ learning, onExplore }: { learning: TrackSumm
                       className="shrink-0 rounded-full px-[0.7em] py-[0.15em] text-[0.62em] font-semibold"
                       style={{ backgroundColor: style.bg, color: style.text }}
                     >
-                      {style.label}
+                      {t(style.label)}
                     </span>
                   </div>
                   <div className="mt-[0.8em] flex items-center justify-between gap-[0.6em]">
@@ -110,7 +112,7 @@ export default function MyCourses({ learning, onExplore }: { learning: TrackSumm
                     </span>
                   </div>
                   {locked && i > 0 && (
-                    <p className="mt-[0.5em] text-[0.65em] text-[#14365a]/55">Finish {data.courses[i - 1].title} to open this course.</p>
+                    <p className="mt-[0.5em] text-[0.65em] text-[#14365a]/55">{t("Finish {course} to open this course.", { course: data.courses[i - 1].title })}</p>
                   )}
                 </>
               );

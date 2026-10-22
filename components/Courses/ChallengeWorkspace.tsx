@@ -8,6 +8,8 @@ import { errorMessage } from "@/lib/api-client";
 import { completeLessonStep, getLesson, lessonPath, trackPath, type Lesson } from "@/lib/learning-api";
 import { cn } from "@/lib/utils";
 import { LoadState } from "./course-ui";
+import { useT } from "@/lib/i18n/client";
+import { tNow } from "@/lib/i18n/translate";
 
 type Run = { output: string[]; error: string | null };
 
@@ -35,11 +37,11 @@ function runCode(code: string): Promise<Run> {
       URL.revokeObjectURL(url);
       resolve(run);
     };
-    const timer = setTimeout(() => done({ output: [], error: "Your code took too long to finish. Check for a loop that never ends." }), TIME_LIMIT_MS);
+    const timer = setTimeout(() => done({ output: [], error: tNow("Your code took too long to finish. Check for a loop that never ends.") }), TIME_LIMIT_MS);
     worker.onmessage = (e: MessageEvent<Run>) => done(e.data);
     worker.onerror = (e) => {
       e.preventDefault();
-      done({ output: [], error: e.message || "Your code has an error." });
+      done({ output: [], error: e.message || tNow("Your code has an error.") });
     };
     worker.postMessage(code);
   });
@@ -49,6 +51,7 @@ const same = (output: string[], expected: string) => output.join("\n").trim() ==
 
 /** Try it: edit the lesson's starter code and run it until it prints the expected output. */
 export function ChallengeWorkspace({ code, lessonId }: { code: string; lessonId: string }) {
+  const t = useT();
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [loadError, setLoadError] = useState<unknown>(null);
 
@@ -67,10 +70,10 @@ export function ChallengeWorkspace({ code, lessonId }: { code: string; lessonId:
   if (!lesson.tryIt) {
     return (
       <div className="mx-auto flex max-w-md flex-col items-center gap-3 py-20 text-center">
-        <p className="text-lg font-bold text-[#1b2a5c]">This lesson has no Try it</p>
-        <p className="text-sm text-[#1b2a5c]/65">There is no code to run here. Watch the video, then take the lesson quiz.</p>
+        <p className="text-lg font-bold text-[#1b2a5c]">{t("This lesson has no Try it")}</p>
+        <p className="text-sm text-[#1b2a5c]/65">{t("There is no code to run here. Watch the video, then take the lesson quiz.")}</p>
         <Link href={lessonPath(lesson.trackCode, lesson.id) as Route} className="rounded-lg bg-[#12939b] px-4 py-2 text-xs font-semibold text-white">
-          Back to Lesson
+          {t("Back to Lesson")}
         </Link>
       </div>
     );
@@ -79,6 +82,7 @@ export function ChallengeWorkspace({ code, lessonId }: { code: string; lessonId:
 }
 
 function Workspace({ lesson, tryIt }: { lesson: Lesson; tryIt: { starterCode: string; expectedOutput: string } }) {
+  const t = useT();
   const lessonHref = lessonPath(lesson.trackCode, lesson.id) as Route;
   const { starterCode, expectedOutput } = tryIt;
 
@@ -92,8 +96,8 @@ function Workspace({ lesson, tryIt }: { lesson: Lesson; tryIt: { starterCode: st
   const ranOk = !!run && !run.error;
   const printedRight = !!run && !run.error && same(run.output, expectedOutput);
   const requirements = [
-    { title: "Run the code", outcome: "Press Run Code. Your code runs here in the browser.", done: ranOk || saved },
-    { title: `Print ${expectedOutput}`, outcome: `The output should be exactly: ${expectedOutput}`, done: printedRight || saved },
+    { title: t("Run the code"), outcome: t("Press Run Code. Your code runs here in the browser."), done: ranOk || saved },
+    { title: t("Print {output}", { output: expectedOutput }), outcome: t("The output should be exactly: {output}", { output: expectedOutput }), done: printedRight || saved },
   ];
   const doneCount = requirements.filter((r) => r.done).length;
   const lineCount = source.split("\n").length;
@@ -123,14 +127,14 @@ function Workspace({ lesson, tryIt }: { lesson: Lesson; tryIt: { starterCode: st
         </div>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2 text-[11px] font-semibold text-[#1b2a5c]">
-            Challenge progress
+            {t("Challenge progress")}
             <span className="h-1.5 w-24 rounded-full bg-[#e8eeed]">
               <span className="block h-full rounded-full bg-[#12939b] transition-all" style={{ width: `${(doneCount / requirements.length) * 100}%` }} />
             </span>
             {doneCount}/{requirements.length}
           </div>
           <Link href={lessonHref} className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#12939b] hover:underline">
-            <ArrowLeft aria-hidden size={14} /> Back to Lesson
+            <ArrowLeft aria-hidden size={14} /> {t("Back to Lesson")}
           </Link>
         </div>
       </div>
@@ -138,29 +142,29 @@ function Workspace({ lesson, tryIt }: { lesson: Lesson; tryIt: { starterCode: st
       <div className="grid min-h-[560px] gap-4 lg:grid-cols-[300px_1fr_1fr]">
         {/* Requirements */}
         <section className="flex flex-col rounded-2xl border border-[#dfe7e5] bg-white p-4" aria-labelledby="challenge-title">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-[#12939b]">Try it</p>
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-[#12939b]">{t("Try it")}</p>
           <h1 id="challenge-title" className="mt-1 text-xl font-bold leading-tight text-[#1b2a5c]">
-            Run the {lesson.title.toLowerCase()} code
+            {t("Run the {lesson} code", { lesson: lesson.title.toLowerCase() })}
           </h1>
           <p className="mt-2 text-xs leading-relaxed text-[#1b2a5c]/65">
-            Read the code, guess what it prints, then run it. Change it and run it again to see what happens.
+            {t("Read the code, guess what it prints, then run it. Change it and run it again to see what happens.")}
           </p>
           <p className="mt-3 rounded-lg bg-[#E9F7F4] px-3 py-1.5 text-[11px] font-semibold text-[#12939b]">
-            {saved ? "Try it completed ✓" : `${doneCount}/${requirements.length} requirements completed`}
+            {saved ? t("Try it completed ✓") : t("{n}/{total} requirements completed", { n: doneCount, total: requirements.length })}
           </p>
 
-          <h2 className="mt-4 text-sm font-bold text-[#1b2a5c]">Challenge requirements</h2>
+          <h2 className="mt-4 text-sm font-bold text-[#1b2a5c]">{t("Challenge requirements")}</h2>
           <ul className="mt-2 flex flex-col gap-2">
             {requirements.map((r, i) => (
               <li key={r.title} className="rounded-xl border border-[#dfe7e5] p-3">
                 <div className="flex items-start gap-2">
                   {r.done ? (
-                    <CheckCircle2 aria-label="Done" size={16} className="mt-0.5 shrink-0 text-[#12939b]" />
+                    <CheckCircle2 aria-label={t("Done")} size={16} className="mt-0.5 shrink-0 text-[#12939b]" />
                   ) : (
-                    <Circle aria-label="Not done yet" size={16} className="mt-0.5 shrink-0 text-[#1b2a5c]/30" />
+                    <Circle aria-label={t("Not done yet")} size={16} className="mt-0.5 shrink-0 text-[#1b2a5c]/30" />
                   )}
                   <div className="min-w-0">
-                    <p className="text-[10px] font-semibold uppercase text-[#1b2a5c]/50">Step {i + 1}</p>
+                    <p className="text-[10px] font-semibold uppercase text-[#1b2a5c]/50">{t("Step {n}", { n: i + 1 })}</p>
                     <p className="text-xs font-semibold text-[#1b2a5c]">{r.title}</p>
                     <p className="mt-1 text-[11px] text-[#1b2a5c]/60">{r.outcome}</p>
                   </div>
@@ -174,11 +178,11 @@ function Workspace({ lesson, tryIt }: { lesson: Lesson; tryIt: { starterCode: st
             aria-expanded={hint}
             className="mt-3 inline-flex w-fit items-center gap-1 text-[11px] font-semibold text-[#12939b] hover:underline"
           >
-            <Lightbulb aria-hidden size={11} /> Need a hint?
+            <Lightbulb aria-hidden size={11} /> {t("Need a hint?")}
           </button>
           {hint && (
             <p className="mt-1 rounded-md bg-[#E9F7F4] px-2 py-1 text-[11px] text-[#1b2a5c]/80">
-              The starter code already prints the right answer. If you changed it, press Reset to start again.
+              {t("The starter code already prints the right answer. If you changed it, press Reset to start again.")}
             </p>
           )}
           {saved && (
@@ -187,13 +191,13 @@ function Workspace({ lesson, tryIt }: { lesson: Lesson; tryIt: { starterCode: st
               className="mt-auto inline-flex justify-center rounded-lg bg-linear-to-r from-[#14757d] to-[#1b2a5c] px-4 py-2 text-xs font-semibold text-white hover:opacity-90"
               style={{ marginTop: "1.25rem" }}
             >
-              Next: the lesson quiz
+              {t("Next: the lesson quiz")}
             </Link>
           )}
         </section>
 
         {/* Editor */}
-        <section className="flex min-w-0 flex-col overflow-hidden rounded-2xl bg-[#14213f] text-white" aria-label="Code editor">
+        <section dir="ltr" className="flex min-w-0 flex-col overflow-hidden rounded-2xl bg-[#14213f] text-white" aria-label={t("Code editor")}>
           <div className="flex items-center justify-between border-b border-white/10 px-3 pt-2">
             <span className="rounded-t-lg bg-[#1b2a5c] px-3 py-2 text-[11px] font-medium text-white">main.js</span>
             <button
@@ -204,12 +208,12 @@ function Workspace({ lesson, tryIt }: { lesson: Lesson; tryIt: { starterCode: st
               }}
               className="mb-1 inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] text-white/70 hover:bg-white/10"
             >
-              <RotateCcw aria-hidden size={11} /> Reset
+              <RotateCcw aria-hidden size={11} /> {t("Reset")}
             </button>
           </div>
 
           <div className="flex min-h-[320px] flex-1 overflow-auto bg-[#1b2a5c] font-mono text-xs leading-6">
-            <div aria-hidden className="select-none px-3 py-3 text-right text-white/30">
+            <div aria-hidden className="select-none px-3 py-3 text-end text-white/30">
               {Array.from({ length: Math.max(lineCount, 14) }, (_, i) => (
                 <div key={i}>{i + 1}</div>
               ))}
@@ -218,42 +222,42 @@ function Workspace({ lesson, tryIt }: { lesson: Lesson; tryIt: { starterCode: st
               value={source}
               onChange={(e) => setSource(e.target.value)}
               spellCheck={false}
-              aria-label="Edit main.js"
+              aria-label={t("Edit main.js")}
               rows={Math.max(lineCount, 14)}
-              className="min-w-0 flex-1 resize-none overflow-hidden whitespace-pre bg-transparent py-3 pr-3 text-[#cfe9ff] outline-none"
+              className="min-w-0 flex-1 resize-none overflow-hidden whitespace-pre bg-transparent py-3 pe-3 text-[#cfe9ff] outline-none"
             />
           </div>
 
           <div className="flex items-center justify-between gap-3 border-t border-white/10 px-4 py-3">
-            <p className="text-[11px] text-white/60">Edit the code, then run it to check the requirements.</p>
+            <p dir="auto" className="text-[11px] text-white/60">{t("Edit the code, then run it to check the requirements.")}</p>
             <button
               type="button"
               disabled={running}
               onClick={onRun}
               className="inline-flex items-center gap-1.5 rounded-lg bg-[#12939b] px-4 py-2 text-xs font-semibold text-white hover:bg-[#0f7a81] disabled:opacity-60"
             >
-              {running ? <LoaderCircle aria-hidden size={12} className="animate-spin" /> : <Play aria-hidden size={12} className="fill-white" />} Run Code
+              {running ? <LoaderCircle aria-hidden size={12} className="animate-spin" /> : <Play aria-hidden size={12} className="fill-white" />} {t("Run Code")}
             </button>
           </div>
         </section>
 
         {/* Output */}
-        <section className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-[#dfe7e5] bg-white" aria-label="Output">
+        <section className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-[#dfe7e5] bg-white" aria-label={t("Output")}>
           <div className="flex items-center gap-1.5 border-b border-[#e8eeed] px-3 py-2">
             <span className="size-2 rounded-full bg-[#ff6b6b]" />
             <span className="size-2 rounded-full bg-[#ffd166]" />
             <span className="size-2 rounded-full bg-[#06d6a0]" />
-            <span className="ml-2 text-[11px] font-semibold text-[#1b2a5c]/60">Console</span>
+            <span className="ms-2 text-[11px] font-semibold text-[#1b2a5c]/60">{t("Console")}</span>
           </div>
           <div className="flex-1 overflow-auto p-4" aria-live="polite">
             {run ? (
               <pre className="whitespace-pre-wrap font-mono text-xs leading-6 text-[#1b2a5c]">
-                {run.output.length ? run.output.join("\n") : !run.error && <span className="text-[#1b2a5c]/50">Your code printed nothing.</span>}
+                {run.output.length ? run.output.join("\n") : !run.error && <span className="text-[#1b2a5c]/50">{t("Your code printed nothing.")}</span>}
                 {run.error && <span className="block text-[#D1365A]">{run.error}</span>}
               </pre>
             ) : (
               <div className="grid h-full min-h-[320px] place-items-center p-6 text-center text-xs text-[#1b2a5c]/55">
-                What your code prints will appear here after you run it.
+                {t("What your code prints will appear here after you run it.")}
               </div>
             )}
           </div>
@@ -266,12 +270,12 @@ function Workspace({ lesson, tryIt }: { lesson: Lesson; tryIt: { starterCode: st
             <Lightbulb aria-hidden size={12} className="text-[#12939b]" />
             {saveError ??
               (!run
-                ? `Expected output: ${expectedOutput}`
+                ? t("Expected output: {output}", { output: expectedOutput })
                 : printedRight
-                  ? "Correct! Your code printed the right answer."
+                  ? t("Correct! Your code printed the right answer.")
                   : run.error
-                    ? "Fix the error, then run your code again."
-                    : `Not yet: it should print ${expectedOutput}.`)}
+                    ? t("Fix the error, then run your code again.")
+                    : t("Not yet: it should print {output}.", { output: expectedOutput }))}
           </p>
         </section>
       </div>

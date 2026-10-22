@@ -38,6 +38,7 @@ import {
   type ProjectLinkKind,
 } from "@/lib/projects-api";
 import { cn } from "@/lib/utils";
+import { useI18n, useT } from "@/lib/i18n/client";
 
 
 type TaskStatus = "Done" | "In Review" | "In Progress" | "To Do";
@@ -91,6 +92,8 @@ function StatTile({
   value: string | number;
   className?: string;
 }) {
+  const t = useT();
+  label = t(label);
   return (
     <div className={cn("flex min-w-0 items-center gap-2.5 rounded-xl px-3 py-2.5", className)}>
       <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-white/80 text-[#1B2D54]">
@@ -106,6 +109,7 @@ function StatTile({
 
 /** One of the student's projects (GET /student/projects/{id}): sprint, the student's tasks, monitor and links. */
 export default function ProjectDetailsPage() {
+  const t = useT();
   const { projectId } = useParams<{ projectId: string }>();
   const [detail, setDetail] = useState<ProjectDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -123,16 +127,16 @@ export default function ProjectDetailsPage() {
 
   if (!detail) {
     return (
-      <div className="grid flex-1 place-items-center p-10 pt-24 lg:pl-[calc(var(--sb)+1.5rem)]" role={error ? "alert" : "status"}>
+      <div className="grid flex-1 place-items-center p-10 pt-24 lg:ps-[calc(var(--sb)+1.5rem)]" role={error ? "alert" : "status"}>
         {error ? (
           <p className="text-sm font-semibold text-[#b83232]">
             {error}{" "}
             <Link href="/learner/projects/all" className="underline">
-              All my projects
+              {t("All my projects")}
             </Link>
           </p>
         ) : (
-          <LoaderCircle className="size-8 animate-spin text-[#12939b]" aria-label="Loading" />
+          <LoaderCircle className="size-8 animate-spin text-[#12939b]" aria-label={t("Loading")} />
         )}
       </div>
     );
@@ -141,48 +145,49 @@ export default function ProjectDetailsPage() {
 }
 
 function ProjectDetailsView({ detail }: { detail: ProjectDetail }) {
+  const { t, dir } = useI18n();
   const p = detail.project;
   const PROJECT = {
     name: p.title,
-    status: STATUS_LABEL[p.status],
+    status: t(STATUS_LABEL[p.status]),
     description: p.description,
     squad: p.squadName,
-    role: ROLE_LABEL[p.role] ?? p.role,
+    role: t(ROLE_LABEL[p.role] ?? p.role),
     startDate: projectDuration(p),
   };
   const SPRINT = {
-    name: detail.sprint?.name ?? "No sprint yet",
+    name: detail.sprint?.name ?? t("No sprint yet"),
     dates: detail.sprint ? sprintDates(detail.sprint) : "",
     daysLeft: detail.sprint?.daysLeft ?? 0,
     done: detail.sprint?.tasksDone ?? 0,
     total: detail.sprint?.tasksTotal ?? 0,
     storyPoints: detail.sprint?.storyPointsTotal ?? 0,
   };
-  const TASKS = detail.myTasks.map((t) => ({
-    id: t.id,
-    title: t.title,
-    tag: t.sprintName,
-    points: t.storyPoints,
-    status: TASK_STATUS[t.status] ?? "To Do",
+  const TASKS = detail.myTasks.map((task) => ({
+    id: task.id,
+    title: task.title,
+    tag: task.sprintName,
+    points: task.storyPoints,
+    status: TASK_STATUS[task.status] ?? "To Do",
   }));
   const avatar = p.monitor ? mentorAvatar(p.monitor) : null;
-  const MENTOR = { name: p.monitor?.fullName ?? "No monitor yet", title: p.monitor?.title ?? "", skills: p.monitor?.skills.slice(0, 3) ?? [] };
+  const MENTOR = { name: p.monitor?.fullName ?? t("No monitor yet"), title: t(p.monitor?.title ?? ""), skills: p.monitor?.skills.slice(0, 3) ?? [] };
   const WORK_LINKS = p.links.map((l, i) => ({
     key: `${l.kind}-${i}`,
-    label: LINK_LABEL[l.kind].label,
-    note: LINK_LABEL[l.kind].note,
+    label: t(LINK_LABEL[l.kind].label),
+    note: t(LINK_LABEL[l.kind].note),
     href: l.url,
     icon: LINK_ICONS[l.kind],
   }));
 
   const percent = SPRINT.total ? Math.round((SPRINT.done / SPRINT.total) * 1000) / 10 : 0;
   const remaining = SPRINT.total - SPRINT.done;
-  const completedByYou = TASKS.filter((t) => t.status === "Done").length;
+  const completedByYou = TASKS.filter((task) => task.status === "Done").length;
 
   return (
     <div
-      dir="ltr"
-      className="relative isolate flex min-h-0 min-w-0 w-full flex-1 flex-col gap-4 overflow-x-hidden overflow-y-auto bg-[#f6f9f8] px-4 pb-6 pt-24 font-[family-name:var(--font-poppins)] text-[#1B2D54] lg:pl-[calc(var(--sb)+1.5rem)] lg:pr-6"
+      dir={dir}
+      className="relative isolate flex min-h-0 min-w-0 w-full flex-1 flex-col gap-4 overflow-x-hidden overflow-y-auto bg-[#f6f9f8] px-4 pb-6 pt-24 font-[family-name:var(--font-poppins)] text-[#1B2D54] lg:ps-[calc(var(--sb)+1.5rem)] lg:pe-6"
     >
       <div
         aria-hidden
@@ -201,13 +206,13 @@ function ProjectDetailsView({ detail }: { detail: ProjectDetail }) {
       <header className="flex min-w-0 items-center gap-3">
         <Link
           href="/learner/projects/all"
-          aria-label="Back to all projects"
+          aria-label={t("Back to all projects")}
           className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#1B2D54]/70 text-white transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#12939b]/40"
         >
           <ArrowLeft aria-hidden className="size-4" />
         </Link>
         <div className="min-w-0">
-          <h1 className="text-xl font-bold">Project Details</h1>
+          <h1 className="text-xl font-bold">{t("Project Details")}</h1>
           <p className="truncate text-[11px] text-[#1B2D54]/70">{PROJECT.name}</p>
         </div>
       </header>
@@ -226,8 +231,8 @@ function ProjectDetailsView({ detail }: { detail: ProjectDetail }) {
           </div>
           <p className="mt-1 text-[11px] leading-snug text-[#1B2D54]/70">{PROJECT.description}</p>
           <div className="mt-2 flex flex-wrap gap-2">
-            <Chip icon={<Users aria-hidden className="size-3" />}>Squad: {PROJECT.squad}</Chip>
-            <Chip icon={<User aria-hidden className="size-3" />}>Your role: {PROJECT.role}</Chip>
+            <Chip icon={<Users aria-hidden className="size-3" />}>{t("Squad: {name}", { name: PROJECT.squad })}</Chip>
+            <Chip icon={<User aria-hidden className="size-3" />}>{t("Your role: {role}", { role: PROJECT.role })}</Chip>
             <Chip icon={<CalendarDays aria-hidden className="size-3" />}>{PROJECT.startDate}</Chip>
           </div>
         </div>
@@ -237,7 +242,7 @@ function ProjectDetailsView({ detail }: { detail: ProjectDetail }) {
           href="/learner/interns/internship"
           className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-[#14757d] to-[#1B2D54] px-4 py-2 text-[11px] font-semibold text-white shadow-sm transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#12939b]/40"
         >
-          Continue Working
+          {t("Continue Working")}
           <ArrowRight aria-hidden className="size-3.5" />
         </Link>
         )}
@@ -256,14 +261,14 @@ function ProjectDetailsView({ detail }: { detail: ProjectDetail }) {
                 <p className="text-xs font-semibold">{SPRINT.name}</p>
                 <p className="text-[10px] text-[#1B2D54]/60">{SPRINT.dates}</p>
               </div>
-              <span className="ml-1 hidden items-center gap-1 rounded-md bg-[#f1f5f7] px-2 py-1 text-[9px] font-medium sm:inline-flex">
+              <span className="ms-1 hidden items-center gap-1 rounded-md bg-[#f1f5f7] px-2 py-1 text-[9px] font-medium sm:inline-flex">
                 <Clock aria-hidden className="size-3 text-[#1B2D54]/60" />
-                {SPRINT.daysLeft} days left
+                {t("{n} days left", { n: SPRINT.daysLeft })}
               </span>
-              <div className="ml-auto shrink-0 text-right leading-tight">
+              <div className="ms-auto shrink-0 text-end leading-tight">
                 <p className="text-lg font-bold">{percent}%</p>
                 <p className="text-[10px] text-[#1B2D54]/60">
-                  {SPRINT.done} of {SPRINT.total} tasks done
+                  {t("{n} of {total} tasks done", { n: SPRINT.done, total: SPRINT.total })}
                 </p>
               </div>
             </div>
@@ -307,14 +312,14 @@ function ProjectDetailsView({ detail }: { detail: ProjectDetail }) {
           </Card>
           <Card>
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold">Your Tasks</h2>
+              <h2 className="text-sm font-semibold">{t("Your Tasks")}</h2>
               <span className="text-[10px] font-semibold text-[#14757d]">
-                {completedByYou} completed by you
+                {t("{n} completed by you", { n: completedByYou })}
               </span>
             </div>
 
             <ul className="mt-3 flex flex-col gap-2">
-              {TASKS.length === 0 && <li className="text-[11px] text-[#1B2D54]/60">No tasks assigned to you in this project yet.</li>}
+              {TASKS.length === 0 && <li className="text-[11px] text-[#1B2D54]/60">{t("No tasks assigned to you in this project yet.")}</li>}
               {TASKS.map((task) => (
                 <li
                   key={task.id}
@@ -324,14 +329,14 @@ function ProjectDetailsView({ detail }: { detail: ProjectDetail }) {
                   <span className="shrink-0 rounded bg-[#e4f1fb] px-1.5 py-0.5 text-[9px] font-medium text-[#14757d]">
                     {task.tag}
                   </span>
-                  <span className="w-9 shrink-0 text-[9px] text-[#1B2D54]/60">{task.points} pts</span>
+                  <span className="w-9 shrink-0 text-[9px] text-[#1B2D54]/60">{t("{n} pts", { n: task.points })}</span>
                   <span
                     className={cn(
                       "w-16 shrink-0 rounded-md py-0.5 text-center text-[9px] font-semibold",
                       STATUS_STYLES[task.status]
                     )}
                   >
-                    {task.status}
+                    {t(task.status)}
                   </span>
                 </li>
               ))}
@@ -340,7 +345,7 @@ function ProjectDetailsView({ detail }: { detail: ProjectDetail }) {
         </div>
         <div className="flex min-w-0 flex-col gap-4">
           <Card>
-            <h2 className="text-sm font-semibold">Project Monitor</h2>
+            <h2 className="text-sm font-semibold">{t("Project Monitor")}</h2>
             <div className="mt-3 flex items-center gap-3">
               {avatar && (
                 <span className="relative size-14 shrink-0 overflow-hidden rounded-full" style={{ backgroundColor: avatar.bg }}>
@@ -362,9 +367,9 @@ function ProjectDetailsView({ detail }: { detail: ProjectDetail }) {
           </Card>
 
           <Card>
-            <h2 className="text-sm font-semibold">Work Links</h2>
+            <h2 className="text-sm font-semibold">{t("Work Links")}</h2>
             <ul className="mt-3 flex flex-col gap-2">
-              {WORK_LINKS.length === 0 && <li className="text-[11px] text-[#1B2D54]/60">No links shared in this project.</li>}
+              {WORK_LINKS.length === 0 && <li className="text-[11px] text-[#1B2D54]/60">{t("No links shared in this project.")}</li>}
               {WORK_LINKS.map((link) => (
                 <li key={link.key}>
                 <a
@@ -380,7 +385,7 @@ function ProjectDetailsView({ detail }: { detail: ProjectDetail }) {
                       <p className="text-xs font-semibold">{link.label}</p>
                       <p className="text-[10px] text-[#1B2D54]/60">{link.note}</p>
                     </div>
-                    <ArrowRight aria-hidden className="ml-auto size-3.5 shrink-0" />
+                    <ArrowRight aria-hidden className="ms-auto size-3.5 shrink-0" />
                   </a>
                 </li>
               ))}

@@ -9,23 +9,26 @@ import { AuthButton } from "@/components/Auth/AuthButton";
 import { AuthHeading } from "@/components/Auth/AuthHeading";
 import { AuthPanel } from "@/components/shared/auth-panel";
 import { AuthStepper } from "@/components/shared/auth-stepper";
+import { useT } from "@/lib/i18n/client";
+import { tk } from "@/lib/i18n/translate";
 
 const policies = [
   {
     href: "/terms" as Route,
-    title: "Terms of Service",
-    description: "Read the Terms of Using Junior Hub",
+    title: tk("Terms of Service"),
+    description: tk("Read the Terms of Using Junior Hub"),
     icon: FileText,
   },
   {
     href: "/privacy" as Route,
-    title: "Privacy Policy",
-    description: "Learn How We Protect Your Data",
+    title: tk("Privacy Policy"),
+    description: tk("Learn How We Protect Your Data"),
     icon: ShieldCheck,
   },
 ];
 
 export default function ActivationTermsPage() {
+  const t = useT();
   const [agreed, setAgreed] = useState(false);
   const router = useRouter();
 
@@ -41,8 +44,8 @@ export default function ActivationTermsPage() {
 
         <div className="text-center">
           <AuthHeading
-            title="Confirm Your Details"
-            subtitle="Type The Code Provided By School."
+            title={t("Confirm Your Details")}
+            subtitle={t("Type The Code Provided By School.")}
           />
         </div>
 
@@ -57,8 +60,8 @@ export default function ActivationTermsPage() {
                 <Icon aria-hidden="true" className="size-[18px]" strokeWidth={2.4} />
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block text-xs font-semibold text-[#1b2a5c]">{title}</span>
-                <span className="mt-0.5 block text-[10px] leading-4 text-[#53647a]">{description}</span>
+                <span className="block text-xs font-semibold text-[#1b2a5c]">{t(title)}</span>
+                <span className="mt-0.5 block text-[10px] leading-4 text-[#53647a]">{t(description)}</span>
               </span>
               <ChevronRight aria-hidden="true" className="size-4 shrink-0 text-[#1b2a5c]" />
             </Link>
@@ -74,12 +77,12 @@ export default function ActivationTermsPage() {
               className="mt-0.5 size-4 shrink-0 accent-[#12939b] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#12939b]"
             />
             <span>
-              I have read and agree to the Terms of Service and Privacy Policy.
+              {t("I have read and agree to the Terms of Service and Privacy Policy.")}
             </span>
           </label>
 
           <AuthButton type="submit" disabled={!agreed}>
-            Continue
+            {t("Continue")}
           </AuthButton>
         </form>
       </div>

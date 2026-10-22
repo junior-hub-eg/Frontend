@@ -1,7 +1,11 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
 import { ArrowRight } from "lucide-react";
+import { useT } from "@/lib/i18n/client";
+import { tk } from "@/lib/i18n/translate";
 
 const IMG = "/images/Intern/AI%20Curriculum";
 
@@ -16,8 +20,8 @@ const SUBJECTS: {
   href?: Route;
 }[] = [
   {
-    title: "Mathematics",
-    desc: "Solve problems step by step with AI videos, interactive simulations, and live coding.",
+    title: tk("Mathematics"),
+    desc: tk("Solve problems step by step with AI videos, interactive simulations, and live coding."),
     img: `${IMG}/image%2038.png`,
     w: 523,
     h: 396,
@@ -25,8 +29,8 @@ const SUBJECTS: {
     href: "/learner/ai-curriculum/mathematics" as Route,
   },
   {
-    title: "Physics",
-    desc: "Explore physics concepts with AI-guided videos, interactive experiments, and real-time coding.",
+    title: tk("Physics"),
+    desc: tk("Explore physics concepts with AI-guided videos, interactive experiments, and real-time coding."),
     img: `${IMG}/image%2039.png`,
     w: 451,
     h: 301,
@@ -39,19 +43,20 @@ const ARROW_CLASS =
 
 /** The Figma "AI Curriculum" page, inside the learner shell (it places itself next to the sidebar, like Courses). */
 export default function AiCurriculumPage() {
+  const t = useT();
   return (
-    <div className="relative -ml-[4rem] min-h-[calc(100svh-5rem)] min-w-0 flex-1 bg-[#fbfdff] lg:absolute lg:inset-0 lg:ml-0 lg:min-h-0">
+    <div className="relative -ms-[4rem] min-h-[calc(100svh-5rem)] min-w-0 flex-1 bg-[#fbfdff] lg:absolute lg:inset-0 lg:ms-0 lg:min-h-0">
       <div
-        className="relative min-w-0 pb-8 pl-[4.75rem] pr-3 pt-2 sm:pr-4 lg:absolute lg:inset-0 lg:overflow-y-auto lg:pb-[calc(var(--u)*2)] lg:pl-[var(--hl)] lg:pr-[calc(var(--u)*1.6)] lg:pt-[calc(var(--u)*6.5)]"
+        className="relative min-w-0 pb-8 ps-[4.75rem] pe-3 pt-2 sm:pe-4 lg:absolute lg:inset-0 lg:overflow-y-auto lg:pb-[calc(var(--u)*2)] lg:ps-[var(--hl)] lg:pe-[calc(var(--u)*1.6)] lg:pt-[calc(var(--u)*6.5)]"
         style={{ fontSize: "clamp(11px, calc(var(--u) * 1.05), 17px)" }}
       >
         {/* Title + banner */}
         <section className="flex flex-col gap-[0.8em] lg:flex-row lg:items-center">
           <div className="shrink-0">
-            <h1 className="text-[2.3em] font-extrabold leading-tight text-[#14365a]">AI Curriculum</h1>
-            <p className="max-w-[17em] text-[0.95em] leading-snug text-[#14365a]">Choose a Subject to start solving problems with ai.</p>
+            <h1 className="text-[2.3em] font-extrabold leading-tight text-[#14365a]">{t("AI Curriculum")}</h1>
+            <p className="max-w-[17em] text-[0.95em] leading-snug text-[#14365a]">{t("Choose a Subject to start solving problems with ai.")}</p>
           </div>
-          <div className="relative aspect-[751/121] w-full min-w-0 lg:ml-auto lg:w-[54%]">
+          <div className="relative aspect-[751/121] w-full min-w-0 lg:ms-auto lg:w-[54%]">
             <Image src={`${IMG}/Group%20189.png`} alt="" fill priority sizes="(max-width: 1024px) 90vw, 50vw" className="object-cover object-right" />
           </div>
         </section>
@@ -69,14 +74,14 @@ export default function AiCurriculumPage() {
               </div>
               <div className="flex items-end gap-[1em] px-[1.5em] pb-[2.4em] pt-[1em]">
                 <div className="min-w-0 flex-1">
-                  <h2 className="text-[2.1em] font-extrabold leading-tight text-[#14365a]">{s.title}</h2>
-                  <p className="mt-[0.6em] text-[0.95em] leading-snug text-[#14365a]">{s.desc}</p>
+                  <h2 className="text-[2.1em] font-extrabold leading-tight text-[#14365a]">{t(s.title)}</h2>
+                  <p className="mt-[0.6em] text-[0.95em] leading-snug text-[#14365a]">{t(s.desc)}</p>
                 </div>
                 {s.href ? (
                   // The ::after layer stretches this link over the whole card, so clicking anywhere opens the page.
                   <Link
                     href={s.href}
-                    aria-label={`Open ${s.title}`}
+                    aria-label={t("Open {name}", { name: t(s.title) })}
                     className={`${ARROW_CLASS} transition hover:brightness-125 after:absolute after:inset-0 after:content-['']`}
                   >
                     <ArrowRight className="h-[1.8em] w-[1.8em]" />
@@ -85,8 +90,8 @@ export default function AiCurriculumPage() {
                   <button
                     type="button"
                     disabled
-                    title="Coming soon"
-                    aria-label={`Open ${s.title} (coming soon)`}
+                    title={t("Coming soon")}
+                    aria-label={t("Open {name} (coming soon)", { name: t(s.title) })}
                     className={`${ARROW_CLASS} disabled:cursor-not-allowed`}
                   >
                     <ArrowRight className="h-[1.8em] w-[1.8em]" />

@@ -1,26 +1,31 @@
+"use client";
+
 import Image from "next/image";
+import { useT } from "@/lib/i18n/client";
+import { tk } from "@/lib/i18n/translate";
 
 export function InternsStepper() {
+  const t = useT();
   const steps = [
     {
       num: 1,
-      title: "Apply & Assessment",
-      desc: "Submit your application and complete the technical assessment.",
+      title: tk("Apply & Assessment"),
+      desc: tk("Submit your application and complete the technical assessment."),
     },
     {
       num: 2,
-      title: "Team Matching",
-      desc: "Get matched with the right squad and Senior Team Leader.",
+      title: tk("Team Matching"),
+      desc: tk("Get matched with the right squad and Senior Team Leader."),
     },
     {
       num: 3,
-      title: "Work & Learn",
-      desc: "Complete weekly sprints, work on tasks, and submit GitHub PRs.",
+      title: tk("Work & Learn"),
+      desc: tk("Complete weekly sprints, work on tasks, and submit GitHub PRs."),
     },
     {
       num: 4,
-      title: "Get Certified",
-      desc: "Complete your internship and receive your certificate.",
+      title: tk("Get Certified"),
+      desc: tk("Complete your internship and receive your certificate."),
     },
   ];
 
@@ -35,18 +40,18 @@ export function InternsStepper() {
             width={318}
             height={196}
             aria-hidden
-            className="pointer-events-none absolute inset-y-0 left-0 h-full w-auto max-w-none"
+            className="pointer-events-none absolute inset-y-0 start-0 h-full w-auto max-w-none"
           />
           <div className="relative grid items-center gap-8 lg:grid-cols-12">
             {/* Left intro label */}
             <div className="lg:col-span-3">
               <span className="text-xs font-bold uppercase tracking-wider text-[#12939b]">
-                WHY CHOOSE US
+                {t("WHY CHOOSE US")}
               </span>
               <h3 className="mt-1 text-base font-bold text-[#1b2a5c] sm:text-lg">
-                Weekly Sprints Real tasks &amp; PRs
+                {t("Weekly Sprints Real tasks & PRs")}
               </h3>
-              <p className="mt-1 text-xs text-[#1b2a5c]/60">Follow a clear path</p>
+              <p className="mt-1 text-xs text-[#1b2a5c]/60">{t("Follow a clear path")}</p>
             </div>
 
             {/* Stepper items */}
@@ -54,11 +59,11 @@ export function InternsStepper() {
               {/* Connecting line on desktop */}
               {/* Solid line from step 1 to 2, dotted after it (Figma) */}
               <div
-                className="pointer-events-none absolute left-[12.5%] right-[12.5%] top-[18px] -z-0 hidden border-t-2 border-dotted border-[#1b2a5c]/25 lg:block"
+                className="pointer-events-none absolute start-[12.5%] end-[12.5%] top-[18px] -z-0 hidden border-t-2 border-dotted border-[#1b2a5c]/25 lg:block"
                 aria-hidden
               />
               <div
-                className="pointer-events-none absolute left-[12.5%] top-[17px] -z-0 hidden h-[2px] w-[25%] bg-gradient-to-r from-[#1b2a5c] to-[#7D2331] lg:block"
+                className="pointer-events-none absolute start-[12.5%] top-[17px] -z-0 hidden h-[2px] w-[25%] bg-gradient-to-r from-[#1b2a5c] to-[#7D2331] lg:block"
                 aria-hidden
               />
 
@@ -70,9 +75,9 @@ export function InternsStepper() {
                       {num}
                     </div>
 
-                    <h4 className="mt-3 text-xs font-bold text-[#1b2a5c] sm:text-sm">{title}</h4>
+                    <h4 className="mt-3 text-xs font-bold text-[#1b2a5c] sm:text-sm">{t(title)}</h4>
                     <p className="mt-1 max-w-[190px] text-[11px] leading-relaxed text-[#1b2a5c]/65">
-                      {desc}
+                      {t(desc)}
                     </p>
                   </div>
                 ))}

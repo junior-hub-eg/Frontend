@@ -9,11 +9,14 @@ import { AuthPanel } from "@/components/shared/auth-panel";
 import { AuthStepper } from "@/components/shared/auth-stepper";
 import { HelpCard } from "@/components/shared/help-card";
 import { useActivationCheck } from "@/lib/auth/use-activation-check";
+import { useT } from "@/lib/i18n/client";
+import { tk } from "@/lib/i18n/translate";
 
 const CODE_LENGTH = 6;
-const codeSchema = z.string().length(CODE_LENGTH, `Enter the full ${CODE_LENGTH}-character code`);
+const codeSchema = z.string().length(CODE_LENGTH, tk("Enter the full 6-character code"));
 
 export default function CodeActivationPage() {
+  const t = useT();
   const [values, setValues] = useState<string[]>(Array(CODE_LENGTH).fill(""));
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -42,7 +45,7 @@ export default function CodeActivationPage() {
     e.preventDefault();
     const parsed = codeSchema.safeParse(values.join(""));
     if (!parsed.success) {
-      setError(parsed.error.issues[0].message);
+      setError(t(parsed.error.issues[0].message));
       return;
     }
     setError(null);
@@ -60,8 +63,8 @@ export default function CodeActivationPage() {
         <AuthStepper current={1} />
 
         <div className="text-center">
-          <h1 className="text-xl font-bold tracking-tight">Enter Activation Code</h1>
-          <p className="mt-1 text-xs text-muted-foreground">Type The Code Provided By School.</p>
+          <h1 className="text-xl font-bold tracking-tight">{t("Enter Activation Code")}</h1>
+          <p className="mt-1 text-xs text-muted-foreground">{t("Type The Code Provided By School.")}</p>
         </div>
 
         {error && <Alert variant="danger">{error}</Alert>}
@@ -77,7 +80,7 @@ export default function CodeActivationPage() {
                 maxLength={1}
                 inputMode="text"
                 autoComplete="one-time-code"
-                aria-label={`Code character ${i + 1}`}
+                aria-label={t("Code character {n}", { n: i + 1 })}
                 aria-invalid={!!error}
                 onChange={(e) => handleChange(i, e.target.value)}
                 onKeyDown={(e) => handleKeyDown(i, e)}
@@ -94,7 +97,7 @@ export default function CodeActivationPage() {
           disabled={loading || values.join("").length < CODE_LENGTH}
           className="w-full bg-gradient-to-r from-primary to-[#14365a] hover:opacity-90"
         >
-          {loading ? "Checking..." : "Continue"}
+          {loading ? t("Checking...") : t("Continue")}
         </Button>
 
         <HelpCard />

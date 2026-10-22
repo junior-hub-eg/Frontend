@@ -2,16 +2,19 @@
 
 import type { ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ChevronDown } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import { useT } from "@/lib/i18n/client";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 
 /**
- * Wrapper for the right-hand panel of the activation pages:
+ * Wrapper for the end-hand panel of the activation pages:
  * back button + language switch, Poppins font, and the Figma teal brand colour.
  * The colour override is scoped here on purpose (global --color-primary is still
  * the placeholder purple). Delete the three [--color-*] classes once the real
  * theme lands.
  */
 export function AuthPanel({ children }: { children: ReactNode }) {
+  const t = useT();
   const router = useRouter();
 
   return (
@@ -20,15 +23,13 @@ export function AuthPanel({ children }: { children: ReactNode }) {
         <button
           type="button"
           onClick={() => router.back()}
-          aria-label="Back"
+          aria-label={t("Back")}
           className="flex h-7 w-7 items-center justify-center rounded-md bg-muted text-muted-foreground transition-colors hover:bg-border"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
         </button>
 
-        <button type="button" className="flex items-center gap-1 text-xs font-medium">
-          EN <ChevronDown className="h-3 w-3" />
-        </button>
+        <LanguageSwitcher className="text-xs font-medium" />
       </div>
 
       {children}

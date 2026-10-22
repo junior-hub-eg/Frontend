@@ -9,6 +9,7 @@ import { AuthButton } from "./AuthButton";
 import { AuthField } from "./AuthField";
 import { useActivationState } from "@/lib/auth/auth-flow-storage";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n/client";
 
 // TODO: replace with the real school contact (email, phone, or support URL)
 const CONTACT_HREF = "mailto:support@juniorhub.com";
@@ -18,6 +19,7 @@ const VALUE_GREY = "text-[#6b7280]";
 
 /** Step 2 of school activation: the details the school registered, from the activation check. */
 export default function DetailsCheck() {
+  const t = useT();
   const router = useRouter();
   const state = useActivationState();
 
@@ -40,23 +42,23 @@ export default function DetailsCheck() {
       <div className="flex flex-col gap-[clamp(10px,1.8cqw,18px)]">
         <div className="text-center">
           <h1 className={cn("text-[length:clamp(20px,2.5cqw,28px)] font-semibold leading-tight", NAVY)}>
-            Confirm Your Details
+            {t("Confirm Your Details")}
           </h1>
           <p className={cn("mt-1 text-[length:clamp(11px,1.4cqw,16px)] font-normal leading-tight", NAVY)}>
-            Check The Details Your School Registered.
+            {t("Check The Details Your School Registered.")}
           </p>
         </div>
 
         <div className="flex flex-col gap-[clamp(8px,1.4cqw,14px)] [&>div>div:first-child]:py-[clamp(9px,1.4cqw,14px)] [&_label]:text-[#1B2D54] [&_svg]:text-[#1B2D54]">
-          <AuthField label="Full Name" icon={User} value={details.fullName} readOnly className={VALUE_GREY} />
-          <AuthField label="School" icon={School} value={details.school} readOnly className={VALUE_GREY} />
-          <AuthField label="Grade" icon={ClipboardList} value={`Grade ${details.grade}`} readOnly className={VALUE_GREY} />
-          <AuthField label="Class" icon={Presentation} value={details.className} readOnly className={VALUE_GREY} />
+          <AuthField label={t("Full Name")} icon={User} value={details.fullName} readOnly className={VALUE_GREY} />
+          <AuthField label={t("School")} icon={School} value={details.school} readOnly className={VALUE_GREY} />
+          <AuthField label={t("Grade")} icon={ClipboardList} value={t("Grade {n}", { n: details.grade })} readOnly className={VALUE_GREY} />
+          <AuthField label={t("Class")} icon={Presentation} value={details.className} readOnly className={VALUE_GREY} />
         </div>
 
         <div className="flex flex-col gap-[clamp(8px,1.2cqw,12px)]">
           <AuthButton type="button" onClick={() => router.push("/create-login")}>
-            Looks Correct
+            {t("Looks Correct")}
           </AuthButton>
 
           {/* Only the school can correct these details. */}
@@ -69,7 +71,7 @@ export default function DetailsCheck() {
               NAVY
             )}
           >
-            Something is incorrect?
+            {t("Something is incorrect?")}
           </a>
         </div>
       </div>
