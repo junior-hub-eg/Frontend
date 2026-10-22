@@ -28,6 +28,7 @@ export const lesson: Record<string, string> = {
   "Key idea": "الفكرة الأساسية",
   "Short video + code practice": "فيديو قصير + تمرين كود",
   "Short video": "فيديو قصير",
+  "Watch on YouTube": "شاهد على يوتيوب",
   "Start practising": "ابدأ التمرين",
   "Read the code, guess what it prints, then run it. It should print {output}.": "اقرأ الكود وخمّن ماذا سيطبع، ثم شغّله. يجب أن يطبع {output}.",
   "Press Run to see what your code prints.": "اضغط تشغيل لترى ما يطبعه الكود.",

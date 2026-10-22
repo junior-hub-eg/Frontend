@@ -4,14 +4,21 @@ export function youTubeId(url: string): string | null {
   return m ? m[1] : null;
 }
 
-/** Embed URL that plays muted and loops, like a reel; the student unmutes in the player. */
-export const youTubeEmbed = (id: string, autoplay = true) =>
-  `https://www.youtube-nocookie.com/embed/${id}?${new URLSearchParams({
-    autoplay: autoplay ? "1" : "0",
-    mute: "1",
+/**
+ * Embed URL started by the student's click, so it plays with sound in every browser (Safari blocks autoplay
+ * and some blockers stop youtube-nocookie.com, so the normal youtube.com player is used).
+ */
+export const youTubeEmbed = (id: string) =>
+  `https://www.youtube.com/embed/${id}?${new URLSearchParams({
+    autoplay: "1",
     loop: "1",
     playlist: id,
     playsinline: "1",
     rel: "0",
-    modestbranding: "1",
   })}`;
+
+/** The vertical cover picture of a Short. */
+export const youTubeCover = (id: string) => `https://i.ytimg.com/vi/${id}/oar2.jpg`;
+
+/** The Short on YouTube itself, for when the player cannot load. */
+export const youTubeWatch = (id: string) => `https://www.youtube.com/shorts/${id}`;

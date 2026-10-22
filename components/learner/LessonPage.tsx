@@ -39,7 +39,8 @@ import LessonPractice, { type Practice } from "./LessonPractice";
 import { webPractice } from "./web-practice";
 import { useT } from "@/lib/i18n/client";
 import { tk, tNow } from "@/lib/i18n/translate";
-import { youTubeId, youTubeEmbed } from "@/lib/youtube";
+import { youTubeId } from "@/lib/youtube";
+import ShortPlayer from "./ShortPlayer";
 
 type View = {
   id: string;
@@ -365,15 +366,7 @@ export default function LessonPage({
             <div className="relative mx-auto w-full max-w-[20em] lg:max-w-none lg:min-h-0 lg:flex-1">
               <div className="relative aspect-[9/16] w-full overflow-hidden rounded-[1.2em] bg-gradient-to-b from-[#14586a] via-[#1d7a85] to-[#0f4252] shadow-[0_14px_34px_rgba(20,54,90,0.22)] lg:absolute lg:inset-y-0 lg:left-1/2 lg:w-auto lg:max-w-full lg:-translate-x-1/2">
                 {ytId ? (
-                  <iframe
-                    key={ytId}
-                    src={youTubeEmbed(ytId)}
-                    title={view.title}
-                    allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-                    allowFullScreen
-                    referrerPolicy="strict-origin-when-cross-origin"
-                    className="absolute inset-0 size-full border-0 bg-black"
-                  />
+                  <ShortPlayer key={ytId} id={ytId} title={view.title} />
                 ) : view.videoUrl ? (
                   <>
                     <video
