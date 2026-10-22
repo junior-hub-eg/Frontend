@@ -1,5 +1,8 @@
 "use client";
 
+/* The lesson identity is external state; reset the reel state when its route changes. */
+/* eslint-disable react-hooks/set-state-in-effect */
+
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";

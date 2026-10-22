@@ -1,5 +1,8 @@
 "use client";
 
+/* The quiz identity is external state; initialize the view when its route changes. */
+/* eslint-disable react-hooks/set-state-in-effect */
+
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { Route } from "next";

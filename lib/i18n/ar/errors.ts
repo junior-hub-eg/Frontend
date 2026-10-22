@@ -46,4 +46,5 @@ export const errors: Record<string, string> = {
   "We couldn't load your squads. Please try again.": "لم نتمكن من تحميل فرقك. حاول مرة أخرى.",
   "We couldn't load this squad.": "لم نتمكن من تحميل هذا الفريق.",
   "We couldn't save your review. Please try again.": "لم نتمكن من حفظ تقييمك. حاول مرة أخرى.",
+  "Could not save your progress.": "لم نتمكن من حفظ تقدمك.",
 };
