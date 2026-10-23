@@ -23,6 +23,8 @@ import {
   UserCheck,
   Users,
   UsersRound,
+  Shield,
+  Megaphone,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth/auth-context";
 import { landingFont } from "@/components/Landing/font";
@@ -45,13 +47,14 @@ const NAV_GROUPS = [
     { href: "/admin/squads", label: tk("Squads Management"), icon: UsersRound },
     { href: "/admin/mentors", label: tk("Mentors Management"), icon: UserCheck },
     { href: "/admin/approvals", label: tk("Approvals"), icon: UserPlus },
+    { href: "/admin/notifications", label: tk("Notifications"), icon: Megaphone },
   ],
   [
     { href: "/admin/tracks", label: tk("Tracks"), icon: Layers },
     { href: "/admin/assignments", label: tk("Assignments & Submissions"), icon: ClipboardList },
+    { href: "/admin/roles", label: tk("Roles & Permissions"), icon: Shield },
     { href: "/admin/reports", label: tk("Reports & Analytics"), icon: TrendingUp },
-        { href: "/admin/settings", label: tk("System Settings"), icon: Settings },
-
+    { href: "/admin/settings", label: tk("System Settings"), icon: Settings },
   ],
 ];
 
@@ -296,14 +299,14 @@ export function AdminShell({ children }: { children: ReactNode }) {
           </button>
 
           <div className="ml-auto flex items-center gap-[0.7em]">
-            <button
-              type="button"
+            <Link
+              href={"/admin/notifications" as Route}
               aria-label={t("Notifications")}
               className="pointer-events-auto relative grid size-[2.4em] place-items-center rounded-full border border-white/70 bg-white/55 text-[#14365a] shadow-[0_6px_18px_rgba(60,160,230,0.2)] backdrop-blur hover:bg-white/80"
             >
               <Bell className="size-[1.1em]" />
               <span className="absolute right-[0.55em] top-[0.55em] size-[0.55em] rounded-full bg-[#e0245e]" />
-            </button>
+            </Link>
 
             <div className="pointer-events-auto relative">
               <button
