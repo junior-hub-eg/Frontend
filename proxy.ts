@@ -30,10 +30,17 @@ export function proxy(request: NextRequest) {
     ([, prefix]) => pathname === prefix || pathname.startsWith(`${prefix}/`)
   );
 
+  // The admin has its own login page (23 Oct 2026). It is open to everyone; a signed-in admin goes to the dashboard.
+  if (pathname === ADMIN_LOGIN) {
+    return session?.role === "admin"
+      ? NextResponse.redirect(new URL(ROLE_HOME.admin, request.url))
+      : NextResponse.next();
+  }
+
   if (roleEntry) {
     const [requiredRole] = roleEntry;
     if (!session) {
-      return NextResponse.redirect(new URL("/login", request.url));
+      return NextResponse.redirect(new URL(requiredRole === "admin" ? ADMIN_LOGIN : "/login", request.url));
     }
     if (session.role !== requiredRole) {
       return NextResponse.redirect(new URL(ROLE_HOME[session.role], request.url));
@@ -47,8 +54,10 @@ export function proxy(request: NextRequest) {
   return NextResponse.next();
 }
 
-/** Backend role claim → frontend role: students, and mentors who monitor squads (21 Oct 2026). */
-const BACKEND_ROLE: Record<string, UserRole> = { Student: "learner", Mentor: "mentor" };
+const ADMIN_LOGIN = "/admin/login";
+
+/** Backend role claim → frontend role: students, mentors who monitor squads (21 Oct 2026), and the admin (23 Oct 2026). */
+const BACKEND_ROLE: Record<string, UserRole> = { Student: "learner", Mentor: "mentor", Admin: "admin" };
 
 function readSessionCookie(request: NextRequest): { id: string; role: UserRole } | null {
   const token = request.cookies.get(TOKEN_COOKIE)?.value;
