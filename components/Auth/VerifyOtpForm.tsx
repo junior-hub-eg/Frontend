@@ -36,6 +36,8 @@ export function VerifyOtpForm() {
   const params = useSearchParams();
   const email = params.get("email") ?? "";
   const fromSignup = params.get("from") === "signup";
+  /** A monitor or teacher sign-up, which waits for the admin after the code (23 Oct 2026). */
+  const needsApproval = params.get("approval") === "1";
 
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
@@ -59,7 +61,8 @@ export function VerifyOtpForm() {
       setError(null);
       if (fromSignup) {
         await confirmEmail(email, values.code);
-        router.push(`/login?notice=verified&email=${encodeURIComponent(email)}` as Route);
+        const notice = needsApproval ? "pending" : "verified";
+        router.push(`/login?notice=${notice}&email=${encodeURIComponent(email)}` as Route);
       } else {
         const { resetToken } = await verifyResetCode(email, values.code);
         resetTokenState.set(resetToken, email);

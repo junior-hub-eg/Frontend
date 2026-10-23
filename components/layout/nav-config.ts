@@ -16,6 +16,7 @@ export const NAV_BY_ROLE: Record<UserRole, NavItem[]> = {
     { label: tk("Profile"), href: "/learner/profile" },
   ],
   guardian: [{ label: tk("Guardian dashboard"), href: "/guardian/dashboard" }],
+  teacher: [{ label: tk("Home"), href: "/teacher/dashboard" }],
   mentor: [{ label: tk("Monitored students"), href: "/mentor/dashboard" }],
   admin: [
     { label: tk("Home"), href: "/admin/dashboard" },

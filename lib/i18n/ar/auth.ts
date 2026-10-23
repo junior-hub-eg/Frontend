@@ -128,4 +128,39 @@ export const auth: Record<string, string> = {
   "This screen is still waiting": "هذه الصفحة لم تكتمل بعد",
   "Routing and permissions already work — this part will be replaced with the real design and data once they arrive.":
     "التنقل والصلاحيات تعمل بالفعل — سيُستبدل هذا الجزء بالتصميم والبيانات الحقيقية عند وصولها.",
+
+  // Sign-up as a student, monitor or teacher (23 Oct 2026)
+  "I am signing up as": "أسجّل بصفتي",
+  "Teacher": "مدرس",
+  "Squad monitor": "مونيتور",
+  "Learn, build projects and get ready for work": "تعلّم، وابنِ مشاريع، واستعد لسوق العمل",
+  "Supervise squads and review their projects": "أشرف على الفرق وراجع مشاريعها",
+  "Teach your school subject and follow your classes": "درّس مادتك المدرسية وتابع فصولك",
+  "Gender": "النوع",
+  "Years of experience": "سنوات الخبرة",
+  "Years of experience is 0 to 60.": "سنوات الخبرة من 0 إلى 60.",
+  "Years of experience is required.": "سنوات الخبرة مطلوبة.",
+  "Choose your school": "اختر مدرستك",
+  "Choose your school.": "اختر مدرستك.",
+  "Subjects you teach": "المواد التي تدرّسها",
+  "Grades you teach": "الصفوف التي تدرّسها",
+  "Choose at least one subject.": "اختر مادة واحدة على الأقل.",
+  "Choose at least one grade.": "اختر صفًا واحدًا على الأقل.",
+  "Science": "العلوم",
+  "After you confirm your email, the Junior Hub admin reviews your account. We will email you when you can sign in.":
+    "بعد تأكيد بريدك الإلكتروني، يراجع أدمن Junior Hub حسابك. سنرسل لك رسالة عندما تستطيع تسجيل الدخول.",
+  "Your email is confirmed. The admin will review your account; we will email you when you can sign in.":
+    "تم تأكيد بريدك الإلكتروني. سيراجع الأدمن حسابك، وسنرسل لك رسالة عندما تستطيع تسجيل الدخول.",
+  "Teacher dashboard": "لوحة المدرس",
+  "Your classes, curriculum, assignments and your students' progress": "فصولك ومنهجك وواجباتك وتقدّم طلابك",
+  "Teacher dashboard (Teacher UI spec, T1-T10)": "لوحة المدرس (مواصفات واجهة المدرس، T1-T10)",
+  // Backend messages
+  "Your account is waiting for the admin's approval. We will email you when it is ready.": "حسابك بانتظار موافقة الأدمن. سنرسل لك رسالة عندما يصبح جاهزًا.",
+  "This sign-up was not approved. Please contact Junior Hub.": "لم تتم الموافقة على هذا التسجيل. تواصل مع Junior Hub.",
+  "Choose student, monitor or teacher.": "اختر طالب أو مونيتور أو مدرس.",
+  "Choose one of the subjects.": "اختر إحدى المواد.",
+  "Grades are 1 to 12.": "الصفوف من 1 إلى 12.",
+  "We could not find this school.": "لم نجد هذه المدرسة.",
+  "Title is too long.": "المسمّى الوظيفي طويل جدًا.",
+  "We could not find your teacher profile.": "لم نجد ملفك كمدرس.",
 };

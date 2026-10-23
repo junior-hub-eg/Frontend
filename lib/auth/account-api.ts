@@ -22,13 +22,36 @@ export const checkActivation = (key: ActivationKey) =>
 export const completeActivation = (key: ActivationKey, password: string, confirmPassword: string, gender: Gender) =>
   api.post<{ email: string }>("/api/v1/auth/activation/complete", { ...key, password, confirmPassword, gender });
 
+/** Who is signing up (23 Oct 2026). Mentor is the monitor; mentors and teachers wait for the admin's approval. */
+export type SignupRole = "Student" | "Mentor" | "Teacher";
+export type SchoolSubject = "Math" | "Science" | "Physics" | "Language";
+
 export interface RegisterInput {
   fullName: string;
   phone: string;
   email: string;
   password: string;
   gender: Gender;
+  role?: SignupRole;
+  /** Mentor only. */
+  trackCode?: string;
+  title?: string;
+  yearsOfExperience?: number;
+  /** Teacher only. */
+  schoolId?: string;
+  subjects?: SchoolSubject[];
+  grades?: number[];
 }
+
+export interface SignupOptions {
+  tracks: { code: string; name: string }[];
+  schools: { id: string; name: string; city: string | null }[];
+  subjects: SchoolSubject[];
+  grades: number[];
+}
+
+/** Tracks for monitors; schools, subjects and grades for teachers. No sign-in needed. */
+export const getSignupOptions = () => api.get<SignupOptions>("/api/v1/auth/signup-options");
 
 export const register = (input: RegisterInput) => api.post<{ email: string }>("/api/v1/auth/register", input);
 

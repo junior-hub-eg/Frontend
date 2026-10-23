@@ -148,4 +148,22 @@ export const admin: Record<string, string> = {
   "Choose a mentor.": "اختر مرشدًا.",
   "Choose one of the mentor pictures.": "اختر إحدى صور المرشدين.",
   "Say whether the mentor is active.": "حدّد إن كان المرشد نشطًا.",
+
+  // Approvals (sign-ups of monitors and teachers, 23 Oct 2026)
+  "Approvals": "الموافقات",
+  "We couldn't load the sign-ups. Please try again.": "تعذّر تحميل طلبات التسجيل. حاول مرة أخرى.",
+  "Monitors and teachers who signed up and confirmed their email. They can sign in once you approve them.":
+    "المونيتورز والمدرسون الذين سجّلوا وأكّدوا بريدهم. يستطيعون الدخول بعد موافقتك.",
+  "No one is waiting for approval.": "لا أحد بانتظار الموافقة.",
+  "{name} is approved and can sign in now.": "تمت الموافقة على {name} ويستطيع الدخول الآن.",
+  "{name} was rejected.": "تم رفض {name}.",
+  "Signed up {date}": "سجّل في {date}",
+  "Subjects": "المواد",
+  "Grades": "الصفوف",
+  "Reason (optional, sent by email)": "السبب (اختياري، يُرسل بالبريد)",
+  "Reject": "رفض",
+  "{count} waiting": "{count} بالانتظار",
+  "This account is not waiting for approval.": "هذا الحساب ليس بانتظار الموافقة.",
+  "We could not find this account.": "لم نجد هذا الحساب.",
+  "The reason is too long.": "السبب طويل جدًا.",
 };

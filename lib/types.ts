@@ -4,7 +4,7 @@
  * the real backend contracts once the .NET API ships (Sprint 1+).
  */
 
-export type UserRole = "learner" | "guardian" | "mentor" | "admin";
+export type UserRole = "learner" | "guardian" | "mentor" | "admin" | "teacher";
 
 export interface User {
   id: string;

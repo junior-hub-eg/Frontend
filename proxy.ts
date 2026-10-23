@@ -56,8 +56,8 @@ export function proxy(request: NextRequest) {
 
 const ADMIN_LOGIN = "/admin/login";
 
-/** Backend role claim → frontend role: students, mentors who monitor squads (21 Oct 2026), and the admin (23 Oct 2026). */
-const BACKEND_ROLE: Record<string, UserRole> = { Student: "learner", Mentor: "mentor", Admin: "admin" };
+/** Backend role claim → frontend role: students, mentors who monitor squads (21 Oct 2026), the admin and teachers (23 Oct 2026). */
+const BACKEND_ROLE: Record<string, UserRole> = { Student: "learner", Mentor: "mentor", Admin: "admin", Teacher: "teacher" };
 
 function readSessionCookie(request: NextRequest): { id: string; role: UserRole } | null {
   const token = request.cookies.get(TOKEN_COOKIE)?.value;
