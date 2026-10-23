@@ -2,6 +2,8 @@
 
 import { useState, type ReactNode } from "react";
 import { Globe, Mail, Tag } from "lucide-react";
+import { useT } from "@/lib/i18n/client";
+import { tk } from "@/lib/i18n/translate";
 import { AdminPage, PageHero } from "./AdminPage";
 
 type Settings = {
@@ -22,7 +24,14 @@ const DEFAULTS: Settings = {
   notifications: true,
 };
 
-const TIMEZONES = ["(UTC+02:00) Cairo", "(UTC+00:00) London", "(UTC+03:00) Riyadh", "(UTC+04:00) Dubai", "(UTC-05:00) New York"];
+/** The value is what is saved; the label is translated when shown. */
+const TIMEZONES = [
+  tk("(UTC+02:00) Cairo"),
+  tk("(UTC+00:00) London"),
+  tk("(UTC+03:00) Riyadh"),
+  tk("(UTC+04:00) Dubai"),
+  tk("(UTC-05:00) New York"),
+];
 
 const glass = "rounded-[1.1em] border border-white/60 bg-white/75 p-[1.3em] shadow-[0_6px_22px_rgba(20,54,90,0.1)] backdrop-blur-[6px]";
 const field =
@@ -69,7 +78,7 @@ function Toggle({
       >
         <span
           className={`absolute top-[0.2em] size-[1.1em] rounded-full bg-white shadow transition-all ${
-            checked ? "left-[1.4em]" : "left-[0.2em]"
+            checked ? "start-[1.4em]" : "start-[0.2em]"
           }`}
         />
       </button>
@@ -78,6 +87,7 @@ function Toggle({
 }
 
 export default function AdminSettings() {
+  const t = useT();
   const [saved, setSaved] = useState<Settings>(DEFAULTS);
   const [form, setForm] = useState<Settings>(DEFAULTS);
   const [justSaved, setJustSaved] = useState(false);
@@ -102,34 +112,35 @@ export default function AdminSettings() {
   return (
     <AdminPage>
       {/* The hero is taller at the bottom so the cards can sit on top of it */}
-      <PageHero title="System Settings" contentClassName="pb-[10em] lg:pb-[11em]" />
+      <PageHero title={t("System Settings")} contentClassName="pb-[10em] lg:pb-[11em]" />
 
       <div className="relative z-10 mx-auto -mt-[7.5em] w-full lg:-mt-[8.5em] lg:w-[72%]">
         <div className="grid gap-[1.2em] lg:grid-cols-2">
           {/* Platform profile */}
           <section className={glass}>
-            <h2 className="text-[1.2em] font-semibold text-[#0b1b2b]">Platform Profile</h2>
+            <h2 className="text-[1.2em] font-semibold text-[#0b1b2b]">{t("Platform Profile")}</h2>
             <div className="mt-[0.8em] space-y-[0.9em]">
-              <Field label="Platform Name" icon={<Tag className="size-[1em]" />}>
+              <Field label={t("Platform Name")} icon={<Tag className="size-[1em]" />}>
                 <input
                   value={form.platformName}
                   onChange={(e) => set("platformName", e.target.value)}
-                  placeholder="Platform Name"
+                  placeholder={t("Platform Name")}
                   className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-[#14365a]/50"
                 />
               </Field>
 
-              <Field label="Support Email" icon={<Mail className="size-[1em]" />}>
+              <Field label={t("Support Email")} icon={<Mail className="size-[1em]" />}>
                 <input
                   type="email"
+                  dir="ltr"
                   value={form.supportEmail}
                   onChange={(e) => set("supportEmail", e.target.value)}
                   placeholder="support@example.com"
-                  className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-[#14365a]/50"
+                  className="min-w-0 flex-1 bg-transparent text-start outline-none placeholder:text-[#14365a]/50"
                 />
               </Field>
 
-              <Field label="Timezone" icon={<Globe className="size-[1em]" />}>
+              <Field label={t("Timezone")} icon={<Globe className="size-[1em]" />}>
                 <select
                   value={form.timezone}
                   onChange={(e) => set("timezone", e.target.value)}
@@ -137,7 +148,7 @@ export default function AdminSettings() {
                 >
                   {TIMEZONES.map((tz) => (
                     <option key={tz} value={tz}>
-                      {tz}
+                      {t(tz)}
                     </option>
                   ))}
                 </select>
@@ -147,23 +158,23 @@ export default function AdminSettings() {
 
           {/* System controls */}
           <section className={glass}>
-            <h2 className="text-[1.2em] font-semibold text-[#0b1b2b]">System Controls</h2>
+            <h2 className="text-[1.2em] font-semibold text-[#0b1b2b]">{t("System Controls")}</h2>
             <div className="mt-[0.5em] divide-y divide-[#14365a]/10">
               <Toggle
-                label="Maintenance Mode"
-                hint="Disable public access during updates"
+                label={t("Maintenance Mode")}
+                hint={t("Disable public access during updates")}
                 checked={form.maintenance}
                 onChange={(v) => set("maintenance", v)}
               />
               <Toggle
-                label="Allow Student Registration"
-                hint="New users can create accounts"
+                label={t("Allow Student Registration")}
+                hint={t("New users can create accounts")}
                 checked={form.registration}
                 onChange={(v) => set("registration", v)}
               />
               <Toggle
-                label="Email notifications"
-                hint="Send automated activity reports"
+                label={t("Email notifications")}
+                hint={t("Send automated activity reports")}
                 checked={form.notifications}
                 onChange={(v) => set("notifications", v)}
               />
@@ -179,18 +190,18 @@ export default function AdminSettings() {
             disabled={!dirty}
             className="rounded-full bg-[#3d4f7c] px-[1.6em] py-[0.55em] text-[0.95em] font-medium text-white shadow-sm transition hover:bg-[#2f3f66] disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Save Changes
+            {t("Save Changes")}
           </button>
           <button
             type="button"
             onClick={reset}
             className="rounded-full border border-[#14365a]/40 bg-white/60 px-[1.4em] py-[0.55em] text-[0.95em] font-medium text-[#14365a] hover:bg-white"
           >
-            Reset defaults
+            {t("Reset defaults")}
           </button>
           {justSaved && (
             <span role="status" className="text-[0.8em] font-medium text-[#1a7f55]">
-              Saved
+              {t("Saved")}
             </span>
           )}
         </div>
