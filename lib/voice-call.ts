@@ -1,5 +1,5 @@
 /**
- * The voice of the AI interview: Karima reads each question aloud and the student answers by talking.
+ * The voice of the AI interview: Alice reads each question aloud and the student answers by talking.
  *
  * - Speaking: the AI service's audio when it sends some, otherwise the browser's speech synthesis.
  * - Listening: the browser's speech recognition, so the answer appears as the student talks and is sent as text
@@ -41,7 +41,7 @@ function pickVoice(voices: SpeechSynthesisVoice[], lang: string): SpeechSynthesi
 
 let currentAudio: HTMLAudioElement | null = null;
 
-/** Stops whatever Karima is saying. */
+/** Stops whatever Alice is saying. */
 export function stopSpeaking() {
   if (typeof window === "undefined") return;
   window.speechSynthesis?.cancel();
@@ -49,7 +49,7 @@ export function stopSpeaking() {
   currentAudio = null;
 }
 
-/** Says the question and resolves when Karima has finished (or was stopped). */
+/** Says the question and resolves when Alice has finished (or was stopped). */
 export async function speak(text: string, audio?: { base64: string; mimeType: string | null }): Promise<void> {
   stopSpeaking();
   if (audio) {

@@ -25,8 +25,8 @@ import {
 import { useT } from "@/lib/i18n/client";
 import { tk } from "@/lib/i18n/translate";
 
-/** The interviewer (Figma "Karima AI assistant"). */
-const KARIMA = { name: tk("Karima"), photo: "/images/avatars/girl-1-smile.webp", video: "/images/Ai%20intervew/Video_1.mp4" };
+/** The interviewer (Figma "Alice AI assistant"). */
+const ALICE = { name: tk("Alice"), photo: "/images/avatars/girl-1-smile.webp", video: "/images/Ai%20intervew/Video_1.mp4" };
 
 /** Figma colours: the ring and the send button are the same stack of gradients over rgba(104,174,255). */
 const RING_FILL = [
@@ -61,8 +61,8 @@ type Interview = {
 /** off: the call has not started; paused: the microphone is off (or could not be used). */
 type Phase = "off" | "speaking" | "listening" | "thinking" | "paused";
 
-/** One chat bubble: Karima's questions on the left, the student's answers on the right. */
-type Message = { id: number; from: "karima" | "me"; text: string; time: Date; sending?: boolean };
+/** One chat bubble: Alice's questions on the left, the student's answers on the right. */
+type Message = { id: number; from: "alice" | "me"; text: string; time: Date; sending?: boolean };
 
 const toInterview = (s: InterviewState): Interview => ({
   id: s.interviewId,
@@ -85,7 +85,7 @@ const message = (from: Message["from"], text: string, sending = false): Message 
   sending,
 });
 
-/** Track Discovery (US-07 to US-14): the AI interview with Karima, then the top 3 tracks with a level each. */
+/** Track Discovery (US-07 to US-14): the AI interview with Alice, then the top 3 tracks with a level each. */
 export default function DiscoveryInterview({
   path,
   fresh = false,
@@ -97,7 +97,7 @@ export default function DiscoveryInterview({
   trackCode?: string;
 }) {
   const t = useT();
-  const karima = t(KARIMA.name);
+  const alice = t(ALICE.name);
   const router = useRouter();
   const { user } = useAuth();
   const me = avatarOrDefault(user?.photoUrl, 0, user?.gender);
@@ -125,7 +125,7 @@ export default function DiscoveryInterview({
     setInterview(next);
   }
 
-  /** Stops Karima and the microphone. */
+  /** Stops Alice and the microphone. */
   function stopVoice() {
     listening.current?.cancel();
     listening.current = null;
@@ -133,7 +133,7 @@ export default function DiscoveryInterview({
     setCaption("");
   }
 
-  /** Karima asks the question aloud, then listens for the answer. */
+  /** Alice asks the question aloud, then listens for the answer. */
   async function ask(q: DiscoveryQuestion | null) {
     if (!callOn.current || !q) return;
     setPhase("speaking");
@@ -172,7 +172,7 @@ export default function DiscoveryInterview({
   /** Shows a new interview (or the one continued) with its current question. */
   function begin(s: InterviewState, resumed: boolean) {
     showInterview({ ...toInterview(s), resumed });
-    setMessages(s.question ? [message("karima", s.question.text)] : []);
+    setMessages(s.question ? [message("alice", s.question.text)] : []);
     void ask(s.question);
   }
 
@@ -198,7 +198,7 @@ export default function DiscoveryInterview({
     chatEnd.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages, busy, caption]);
 
-  /** The student starts talking with Karima: she reads the current question. */
+  /** The student starts talking with Alice: she reads the current question. */
   function startCall() {
     callOn.current = true;
     setNotice(null);
@@ -261,7 +261,7 @@ export default function DiscoveryInterview({
           : await answerVoice(current.id, current.question.orderIndex, input.audio);
       if (r.retryAsText) {
         setMessages((m) => m.filter((x) => x.id !== mine.id));
-        setNotice(t("Karima couldn't hear that clearly. Say it again, or type your answer."));
+        setNotice(t("Alice couldn't hear that clearly. Say it again, or type your answer."));
         setBusy(null);
         if (callOn.current) void hear(current.question);
         return;
@@ -269,7 +269,7 @@ export default function DiscoveryInterview({
       // A voice answer shows what the AI heard.
       setMessages((m) => [
         ...m.map((x) => (x.id === mine.id ? { ...x, text: r.answered?.transcript || x.text, sending: false } : x)),
-        ...(r.nextQuestion ? [message("karima", r.nextQuestion.text)] : []),
+        ...(r.nextQuestion ? [message("alice", r.nextQuestion.text)] : []),
       ]);
       showInterview({ ...current, answered: current.answered + 1, canFinish: r.canFinishNow, question: r.nextQuestion });
       setBusy(null);
@@ -284,7 +284,7 @@ export default function DiscoveryInterview({
     }
   }
 
-  /** Microphone off: Karima stops listening until it is on again. */
+  /** Microphone off: Alice stops listening until it is on again. */
   function toggleMic() {
     const next = !micOn;
     micOnRef.current = next;
@@ -300,7 +300,7 @@ export default function DiscoveryInterview({
     }
   }
 
-  /** Sound off: Karima's questions are only written; one being read stops and she listens. */
+  /** Sound off: Alice's questions are only written; one being read stops and she listens. */
   function toggleSound() {
     const next = !soundOn;
     soundOnRef.current = next;
@@ -330,9 +330,9 @@ export default function DiscoveryInterview({
   const questionNumber = interview ? Math.min(interview.answered + 1, interview.maxQuestions) : 0;
   const status: Record<Phase, string> = {
     off: "",
-    speaking: t("{name} is talking…", { name: karima }),
-    listening: t("Your turn: Karima is listening"),
-    thinking: t("{name} is thinking…", { name: karima }),
+    speaking: t("{name} is talking…", { name: alice }),
+    listening: t("Your turn: Alice is listening"),
+    thinking: t("{name} is thinking…", { name: alice }),
     paused: t("Microphone off: turn it on to answer by voice, or type below"),
   };
 
@@ -356,7 +356,7 @@ export default function DiscoveryInterview({
             </section>
           ) : (
             <>
-              {/* Karima: the avatar, her voice and the call buttons */}
+              {/* Alice: the avatar, her voice and the call buttons */}
               <section className="flex shrink-0 flex-col items-center justify-center gap-[clamp(10px,2.4vh,24px)] lg:min-h-0 lg:w-[40%]">
                 <button
                   type="button"
@@ -367,20 +367,20 @@ export default function DiscoveryInterview({
                   <ArrowLeft className="size-6" />
                 </button>
 
-                {/* Figma "Animation-Character": the 400 × 400 ring with Karima's video inside */}
+                {/* Figma "Animation-Character": the 400 × 400 ring with Alice's video inside */}
                 <div
                   className="mt-12 grid aspect-square w-[min(70vw,400px)] shrink-0 place-items-center rounded-full p-[12.5%] shadow-[inset_0_-2px_5px_rgba(0,0,0,0.12),0_12px_40px_rgba(56,130,246,0.3)] lg:mt-0 lg:w-[min(80%,400px,calc(100vh-490px))] lg:min-w-[180px]"
                   style={{ background: RING_FILL }}
                 >
                   <div className="relative size-full overflow-hidden rounded-full bg-white">
                     <video
-                      src={KARIMA.video}
-                      poster={KARIMA.photo}
+                      src={ALICE.video}
+                      poster={ALICE.photo}
                       autoPlay
                       loop
                       muted
                       playsInline
-                      aria-label={t("{name}, your AI interviewer", { name: karima })}
+                      aria-label={t("{name}, your AI interviewer", { name: alice })}
                       className="size-full object-cover"
                     />
                   </div>
@@ -404,7 +404,7 @@ export default function DiscoveryInterview({
                     style={{ background: "linear-gradient(90deg, #7c4dff 0%, #3b82f6 55%, #0ea5c6 100%)" }}
                   >
                     <Phone className="size-5 fill-current" />
-                    {interview?.answered ? t("Continue talking with Karima") : t("Start talking with Karima")}
+                    {interview?.answered ? t("Continue talking with Alice") : t("Start talking with Alice")}
                   </button>
                 ) : (
                   <div className="flex shrink-0 items-start gap-6 sm:gap-8">
@@ -447,10 +447,10 @@ export default function DiscoveryInterview({
               <section className="flex min-h-0 min-w-0 flex-1 flex-col rounded-[33px] p-4 backdrop-blur-md sm:p-6" style={{ background: CHAT_FILL }}>
                 <header className="flex items-center gap-3 rounded-full border border-white/80 bg-white/30 px-4 py-2.5 shadow-sm">
                   <span className="relative size-11 shrink-0 overflow-hidden rounded-full bg-white">
-                    <Image src={KARIMA.photo} alt="" fill sizes="44px" className="object-cover" />
+                    <Image src={ALICE.photo} alt="" fill sizes="44px" className="object-cover" />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[15px] font-bold text-[#14365a]">{t("{name} AI assistant", { name: karima })}</span>
+                    <span className="block truncate text-[15px] font-bold text-[#14365a]">{t("{name} AI assistant", { name: alice })}</span>
                     <span className="block truncate text-[11px] text-[#14365a]/70">{t(PATH_TITLE[path])}</span>
                   </span>
                   {interview && (
@@ -477,14 +477,14 @@ export default function DiscoveryInterview({
                 <div className="mt-3 flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-1 py-2" aria-live="polite">
                   {busy === "start" && <LoaderCircle className="m-auto size-8 animate-spin text-[#12797f]" aria-label={t("Starting")} />}
                   {messages.map((m) => (
-                    <Bubble key={m.id} message={m} photo={m.from === "karima" ? KARIMA.photo : me.src} photoBg={m.from === "karima" ? "#fff" : me.bg} />
+                    <Bubble key={m.id} message={m} photo={m.from === "alice" ? ALICE.photo : me.src} photoBg={m.from === "alice" ? "#fff" : me.bg} />
                   ))}
                   {phase === "listening" && caption && (
                     <Bubble message={{ id: -1, from: "me", text: caption, time: new Date(), sending: true }} photo={me.src} photoBg={me.bg} />
                   )}
                   {busy === "send" && (
                     <p className="ms-14 flex items-center gap-1.5 text-xs font-semibold text-[#14365a]/70">
-                      <LoaderCircle className="size-3.5 animate-spin" /> {t("{name} is thinking…", { name: karima })}
+                      <LoaderCircle className="size-3.5 animate-spin" /> {t("{name} is thinking…", { name: alice })}
                     </p>
                   )}
                   {busy === "finish" && (
@@ -617,7 +617,7 @@ function CallButton({
   );
 }
 
-/** The voice line under Karima: navy and moving while she talks, teal and moving while she listens. */
+/** The voice line under Alice: navy and moving while she talks, teal and moving while she listens. */
 function Wave({ mode }: { mode: "speaking" | "listening" | "still" }) {
   return (
     <svg

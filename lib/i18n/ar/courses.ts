@@ -233,7 +233,7 @@ export const courses: Record<string, string> = {
   "I know my track": "أعرف مساري",
   "Pick your track and answer 6 quick technical questions. We'll find your level and start you there.": "اختر مسارك وأجب عن 6 أسئلة تقنية سريعة. سنعرف مستواك ونبدأ منه.",
   "I have no idea": "ليست لديّ فكرة",
-  "Talk with Karima, our AI assistant. She asks about what you enjoy and suggests your top 3 tracks.": "تحدّث مع كريمة، مساعدتنا بالذكاء الاصطناعي. ستسألك عمّا تحب وتقترح أفضل 3 مسارات لك.",
+  "Talk with Alice, our AI assistant. She asks about what you enjoy and suggests your top 3 tracks.": "تحدّث مع أليس، مساعدتنا بالذكاء الاصطناعي. ستسألك عمّا تحب وتقترح أفضل 3 مسارات لك.",
   "Find your track": "اعثر على مسارك",
   "Choose the track you want to learn. 6 quick technical questions then find your level in it.": "اختر المسار الذي تريد تعلّمه. 6 أسئلة تقنية سريعة ثم نعرف مستواك فيه.",
   "How do you want to start? Pick the way that feels right.": "كيف تريد أن تبدأ؟ اختر الطريقة التي تناسبك.",

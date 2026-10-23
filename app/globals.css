@@ -88,7 +88,7 @@ html[lang="ar"] body * { letter-spacing: 0 !important; }
 /* Navigation icons follow the reading direction. */
 [dir="rtl"] :is(.lucide-arrow-right, .lucide-arrow-left, .lucide-chevron-right, .lucide-chevron-left, .lucide-chevrons-right, .lucide-chevrons-left, .lucide-move-right, .lucide-move-left, .lucide-arrow-up-right, .lucide-log-out, .lucide-send, .lucide-send-horizontal, .lucide-align-left, .lucide-corner-down-left, .lucide-undo-2, .lucide-redo-2) { transform: scaleX(-1); }
 
-/* The AI interview: Karima's voice line moves while she speaks or the student records. */
+/* The AI interview: Alice's voice line moves while she speaks or the student records. */
 @keyframes jh-wave {
   0%,
   100% {
