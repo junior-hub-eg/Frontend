@@ -9,7 +9,8 @@ import { cn } from "@/lib/utils";
 
 const ROLES: { id: SignupRole; label: string; hint: string; icon: LucideIcon }[] = [
   { id: "Student", label: tk("Student"), hint: tk("Learn, build projects and get ready for work"), icon: GraduationCap },
-  { id: "Mentor", label: tk("Squad monitor"), hint: tk("Supervise squads and review their projects"), icon: UsersRound },
+  // The monitor (Mentor role) guides students of their track one to one, and can also supervise an internship squad.
+  { id: "Mentor", label: tk("Monitor / Mentor"), hint: tk("Guide students in your track one to one, or supervise an internship squad"), icon: UsersRound },
   { id: "Teacher", label: tk("Teacher"), hint: tk("Teach your school subject and follow your classes"), icon: School },
 ];
 
