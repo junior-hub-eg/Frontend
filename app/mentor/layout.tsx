@@ -1,5 +1,5 @@
-import { RoleLayout } from "@/components/layout/role-layout";
+import { MentorShell } from "@/components/mentor/MentorShell";
 
 export default function MentorLayout({ children }: { children: React.ReactNode }) {
-  return <RoleLayout role="mentor">{children}</RoleLayout>;
+  return <MentorShell>{children}</MentorShell>;
 }
