@@ -14,6 +14,7 @@ import { learner } from "./ar/learner";
 import { lesson } from "./ar/lesson";
 import { mentors } from "./ar/mentors";
 import { recruitment } from "./ar/recruitment";
+import { teacher } from "./ar/teacher";
 
 /** Arabic translations, keyed by the English text. `node scripts/i18n-check.mjs` lists missing ones. */
 export const ar: Record<string, string> = {
@@ -33,4 +34,5 @@ export const ar: Record<string, string> = {
   ...lesson,
   ...calendar,
   ...admin,
+  ...teacher,
 };
