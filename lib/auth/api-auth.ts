@@ -1,6 +1,6 @@
 /**
  * Real auth — the .NET backend's /api/v1/auth and /api/v1/me (JH-SRS §5.2).
- * Backend roles: Student → "learner", Mentor → "mentor", Admin → "admin" (23 Oct 2026). The admin signs in on its own
+ * Backend roles: Student → "learner", Mentor → "mentor", Admin → "admin", Teacher → "teacher" (23 Oct 2026). The admin signs in on its own
  * page (/admin/login → POST /api/v1/auth/admin/login); an admin who uses the main login is sent to the admin pages.
  */
 import { api, refreshAccessToken } from "@/lib/api-client";
@@ -35,6 +35,19 @@ interface LoginResponse {
   student: { id: string; firstName: string; grade: number | null; className: string | null } | null;
   mentor?: { id: string; firstName: string; fullName: string; title: string; trackCode: string } | null;
   admin?: { id: string; firstName: string; fullName: string; isOwner: boolean } | null;
+  teacher?: { id: string; firstName: string; fullName: string; schoolName: string } | null;
+}
+
+/** GET /api/v1/teacher/me for a teacher's account (23 Oct 2026). */
+interface TeacherMeResponse {
+  id: string;
+  fullName: string;
+  email: string;
+}
+
+function teacherUser(t: { id: string; fullName: string }, email: string): User {
+  const [firstName, ...rest] = t.fullName.split(/\s+/);
+  return { id: t.id, role: "teacher", firstName, lastName: rest.join(" ") || undefined, email, createdAt: new Date().toISOString() };
 }
 
 /** GET /api/v1/monitor/me for a mentor's account. */
@@ -98,6 +111,12 @@ function storeUser(user: User) {
 }
 
 async function loadProfile(): Promise<User> {
+  if (sessionRole() === "Teacher") {
+    const me = await api.get<TeacherMeResponse>("/api/v1/teacher/me");
+    const user = teacherUser(me, me.email);
+    storeUser(user);
+    return user;
+  }
   if (sessionRole() === "Admin") {
     // The admin has no profile endpoint: keep what the login stored, or rebuild it from the token.
     const cached = getCurrentUserSnapshot();
@@ -158,6 +177,11 @@ async function startSession(res: LoginResponse, email: string): Promise<User> {
   setToken(res.accessToken);
   if (res.role === "Admin" && res.admin) {
     const user = adminUser(res.admin, email.trim().toLowerCase());
+    storeUser(user);
+    return user;
+  }
+  if (res.role === "Teacher" && res.teacher) {
+    const user = teacherUser(res.teacher, email.trim().toLowerCase());
     storeUser(user);
     return user;
   }

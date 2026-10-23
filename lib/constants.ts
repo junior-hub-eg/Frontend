@@ -8,6 +8,7 @@ export const ROLE_HOME: Record<UserRole, string> = {
   guardian: "/guardian/dashboard",
   mentor: "/mentor/dashboard",
   admin: "/admin/dashboard",
+  teacher: "/teacher/dashboard",
 };
 
 /** Path prefix each role is allowed under — used by proxy.ts for route guarding. */
@@ -16,6 +17,7 @@ export const ROLE_PATH_PREFIX: Record<UserRole, string> = {
   guardian: "/guardian",
   mentor: "/mentor",
   admin: "/admin",
+  teacher: "/teacher",
 };
 
 export const TRACKS = [

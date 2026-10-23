@@ -17,6 +17,8 @@ export interface AdminOverview {
   /** The last 7 days, oldest first. */
   activity: { date: string; lessonsPassed: number; tasksDone: number }[];
   levels: { beginner: number; intermediate: number; advanced: number };
+  /** Monitors and teachers who signed up and wait for approval. */
+  pendingApprovals: number;
 }
 
 export interface AdminPerson {
@@ -146,3 +148,30 @@ export interface AdminAccount {
 export const getAdmins = () => api.get<AdminAccount[]>("/api/v1/admin/admins");
 export const createAdmin = (admin: { fullName: string; email: string; password: string }) =>
   api.post<AdminAccount>("/api/v1/admin/admins", admin);
+
+/** A monitor (Mentor role) or teacher who signed up and waits for approval (23 Oct 2026). */
+export interface AdminApproval {
+  id: string;
+  role: "Mentor" | "Teacher";
+  fullName: string;
+  email: string;
+  phone: string | null;
+  createdUtc: string;
+  trackCode: string | null;
+  trackName: string | null;
+  title: string | null;
+  yearsOfExperience: number | null;
+  schoolId: string | null;
+  schoolName: string | null;
+  subjects: ("Math" | "Science" | "Physics" | "Language")[];
+  grades: number[];
+}
+
+export const getApprovals = () => api.get<AdminApproval[]>("/api/v1/admin/approvals");
+/** The account becomes active (a monitor is shown to students); the person is emailed. */
+export const approveSignup = (id: string) => api.post<void>(`/api/v1/admin/approvals/${id}/approve`);
+/** The account cannot sign in; the person is emailed with the reason. */
+export const rejectSignup = (id: string, reason: string) => api.post<void>(`/api/v1/admin/approvals/${id}/reject`, { reason });
+
+/** Window event: the waiting sign-ups changed, so the admin sidebar counts them again. */
+export const APPROVALS_CHANGED = "jh:approvals-changed";

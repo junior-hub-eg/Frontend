@@ -10,6 +10,7 @@ import {
   ChevronDown,
   ClipboardList,
   ShieldCheck,
+  UserPlus,
   Layers,
   LayoutGrid,
   LoaderCircle,
@@ -22,6 +23,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/lib/auth/auth-context";
 import { landingFont } from "@/components/Landing/font";
+import { APPROVALS_CHANGED, getApprovals } from "@/lib/admin-api";
 import { useT } from "@/lib/i18n/client";
 import { tk } from "@/lib/i18n/translate";
 import { QuickManagement } from "./QuickManagement";
@@ -42,6 +44,7 @@ const NAV_GROUPS = [
     { href: "/admin/students", label: tk("Student Management"), icon: Users },
     { href: "/admin/squads", label: tk("Squads Management"), icon: UsersRound },
     { href: "/admin/mentors", label: tk("Mentors Management"), icon: UserCheck },
+    { href: "/admin/approvals", label: tk("Approvals"), icon: UserPlus },
   ],
   [
     { href: "/admin/tracks", label: tk("Tracks"), icon: Layers },
@@ -72,6 +75,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false); // mobile: drawer open or closed
   const [isDesktop, setIsDesktop] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [waiting, setWaiting] = useState(0); // sign-ups waiting for approval, shown on the Approvals item
   const searchRef = useRef<HTMLInputElement>(null);
 
   // Track the lg breakpoint (1024px)
@@ -87,6 +91,23 @@ export function AdminShell({ children }: { children: ReactNode }) {
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname, isDesktop]);
+
+  // Count the sign-ups waiting for approval again on every page change (approving one updates it).
+  useEffect(() => {
+    if (user?.role !== "admin") return;
+    let active = true;
+    const count = () =>
+      getApprovals().then(
+        (list) => active && setWaiting(list.length),
+        () => {},
+      );
+    void count();
+    window.addEventListener(APPROVALS_CHANGED, count);
+    return () => {
+      active = false;
+      window.removeEventListener(APPROVALS_CHANGED, count);
+    };
+  }, [pathname, user?.role]);
 
   // Esc closes the drawer
   useEffect(() => {
@@ -202,6 +223,14 @@ export function AdminShell({ children }: { children: ReactNode }) {
                       >
                         <item.icon className="size-[1.15rem] shrink-0" strokeWidth={1.8} />
                         {showLabels && <span className="truncate">{t(item.label)}</span>}
+                        {item.href === "/admin/approvals" && waiting > 0 && (
+                          <span
+                            aria-label={t("{count} waiting", { count: waiting })}
+                            className={`grid min-w-[1.3rem] place-items-center rounded-full bg-[#e0245e] px-1 text-[0.65rem] font-bold text-white ${showLabels ? "ms-auto" : "absolute ms-6 -mt-5"}`}
+                          >
+                            {waiting}
+                          </span>
+                        )}
                       </Link>
                     </li>
                   );

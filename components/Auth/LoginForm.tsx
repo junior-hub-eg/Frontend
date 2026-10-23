@@ -32,6 +32,7 @@ const NOTICES: Record<string, string> = {
   activated: tk("Your account is ready. Sign in with your new password."),
   verified: tk("Your email is confirmed. Sign in to start learning."),
   reset: tk("Your password has been changed. Sign in with your new password."),
+  pending: tk("Your email is confirmed. The admin will review your account; we will email you when you can sign in."),
 };
 
 export function LoginForm() {
