@@ -92,7 +92,7 @@ function ApprovalCard({ approval: a, onDone }: { approval: AdminApproval; onDone
           <h2 className="font-bold text-[#0b1b2b]">
             {a.fullName}{" "}
             <span className="ms-[0.3em] rounded-full bg-[#e6f4f1] px-[0.7em] py-[0.1em] text-[0.75em] font-semibold text-[#0f7378]">
-              {isMentor ? t("Squad monitor") : t("Teacher")}
+              {isMentor ? t("Monitor / Mentor") : t("Teacher")}
             </span>
           </h2>
           <p dir="ltr" className="truncate text-[0.85em] text-[#5b6b7c] rtl:text-end">

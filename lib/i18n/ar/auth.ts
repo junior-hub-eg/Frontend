@@ -132,9 +132,9 @@ export const auth: Record<string, string> = {
   // Sign-up as a student, monitor or teacher (23 Oct 2026)
   "I am signing up as": "أسجّل بصفتي",
   "Teacher": "مدرس",
-  "Squad monitor": "مونيتور",
+  "Monitor / Mentor": "مونيتور",
   "Learn, build projects and get ready for work": "تعلّم، وابنِ مشاريع، واستعد لسوق العمل",
-  "Supervise squads and review their projects": "أشرف على الفرق وراجع مشاريعها",
+  "Guide students in your track one to one, or supervise an internship squad": "تابع طلاب مسارك بشكل شخصي، أو أشرف على فريق في الإنترن",
   "Teach your school subject and follow your classes": "درّس مادتك المدرسية وتابع فصولك",
   "Gender": "النوع",
   "Years of experience": "سنوات الخبرة",

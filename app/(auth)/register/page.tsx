@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
@@ -75,6 +75,11 @@ export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null);
   const [options, setOptions] = useState<SignupOptions | null>(null);
   const [optionsError, setOptionsError] = useState<string | null>(null);
+  // The form scrolls inside the card; bring a server error at the top into view.
+  const errorRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (error) errorRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, [error]);
   const {
     register,
     control,
@@ -130,7 +135,11 @@ export default function RegisterPage() {
       <AuthHeading title={t("Join Our Community")} subtitle={t("Create your account to start Learning, Training")} />
 
       <form onSubmit={handleSubmit(onSubmit)} noValidate className={authStyles.form}>
-        {error && <Alert variant="danger">{error}</Alert>}
+        {error && (
+          <div ref={errorRef}>
+            <Alert variant="danger">{error}</Alert>
+          </div>
+        )}
 
         <Controller
           control={control}
