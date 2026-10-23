@@ -70,9 +70,9 @@ export const learner: Record<string, string> = {
   "Crying": "يبكي",
 
   // Dashboard
-  "My Progress": "تقدّمي",
+  "My Progress": "مستوى التقدّم",
   "Internship": "التدريب",
-  "My Mentor": "مرشدي",
+  "My Mentor": "موجه اكاديمي",
   "Finish your level to unlock": "أنهِ مستواك لتفتحه",
   "Good morning": "صباح الخير",
   ", {name}": "، {name}",

@@ -1,5 +1,6 @@
-import { RoleLayout } from "@/components/layout/role-layout";
+import type { ReactNode } from "react";
+import { AdminShell } from "@/components/admin/AdminShell";
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  return <RoleLayout role="admin">{children}</RoleLayout>;
+export default function Layout({ children }: { children: ReactNode }) {
+  return <AdminShell>{children}</AdminShell>;
 }
