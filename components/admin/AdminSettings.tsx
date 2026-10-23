@@ -19,7 +19,14 @@ const DEFAULTS: PlatformSettings = {
   emailNotifications: true,
 };
 
-const TIMEZONES = ["(UTC+02:00) Cairo", "(UTC+00:00) London", "(UTC+03:00) Riyadh", "(UTC+04:00) Dubai", "(UTC-05:00) New York"];
+/** The value is what is saved; the label is translated when shown. */
+const TIMEZONES = [
+  tk("(UTC+02:00) Cairo"),
+  tk("(UTC+00:00) London"),
+  tk("(UTC+03:00) Riyadh"),
+  tk("(UTC+04:00) Dubai"),
+  tk("(UTC-05:00) New York"),
+];
 
 /** Only the fields the form edits, to compare with what is saved. */
 const editable = (s: PlatformSettings) =>
@@ -187,7 +194,7 @@ function SettingsForm({ initial }: { initial: PlatformSettings }) {
                 >
                   {(TIMEZONES.includes(form.timeZone) ? TIMEZONES : [form.timeZone, ...TIMEZONES]).map((tz) => (
                     <option key={tz} value={tz}>
-                      {tz}
+                      {t(tz)}
                     </option>
                   ))}
                 </select>
