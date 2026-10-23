@@ -92,7 +92,6 @@ function SkillDonut({ size, levels, label }: { size: number; levels: AdminOvervi
   const SKILLS = LEVELS.map((l) => ({ value: levels[l.key], color: l.color }));
   const total = SKILLS.reduce((a, s) => a + s.value, 0);
   if (total === 0) return null;
-  let offset = 0;
 
   return (
     <svg
@@ -106,7 +105,9 @@ function SkillDonut({ size, levels, label }: { size: number; levels: AdminOvervi
       <g transform="rotate(-90 60 60)">
         {SKILLS.map((s, i) => {
           const len = (s.value / total) * c;
-          const el = (
+          // Each segment starts where the ones before it end.
+          const start = (SKILLS.slice(0, i).reduce((a, p) => a + p.value, 0) / total) * c;
+          return (
             <circle
               key={i}
               cx="60"
@@ -116,11 +117,9 @@ function SkillDonut({ size, levels, label }: { size: number; levels: AdminOvervi
               stroke={s.color}
               strokeWidth="22"
               strokeDasharray={`${len} ${c - len}`}
-              strokeDashoffset={-offset}
+              strokeDashoffset={-start}
             />
           );
-          offset += len;
-          return el;
         })}
       </g>
     </svg>
