@@ -20,7 +20,7 @@ const CHOICES: { path: DiscoveryPath; emoji: string; title: string; text: string
     path: "Exploring",
     emoji: "🧭",
     title: tk("I have no idea"),
-    text: tk("Talk with Karima, our AI assistant. She asks about what you enjoy and suggests your top 3 tracks."),
+    text: tk("Talk with Alice, our AI assistant. She asks about what you enjoy and suggests your top 3 tracks."),
     bg: "from-[#dcebfb] to-[#f1f7fe]",
   },
 ];
