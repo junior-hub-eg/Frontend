@@ -17,6 +17,8 @@ export interface User {
   /** Boy or girl ("Male" / "Female"); null for a student from before the question, who is asked once. */
   gender?: "Male" | "Female" | null;
   phone?: string;
+  /** Admin accounts only: the main admin (junorhub@gmail.com), who adds the other admins. */
+  isOwner?: boolean;
   age?: number;
   guardianId?: string;
   createdAt: string;

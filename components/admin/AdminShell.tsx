@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -9,6 +9,7 @@ import {
   Bell,
   ChevronDown,
   ClipboardList,
+  ShieldCheck,
   Layers,
   LayoutGrid,
   LoaderCircle,
@@ -21,6 +22,8 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/lib/auth/auth-context";
 import { landingFont } from "@/components/Landing/font";
+import { useT } from "@/lib/i18n/client";
+import { tk } from "@/lib/i18n/translate";
 import { QuickManagement } from "./QuickManagement";
 
 /** LOCAL ONLY: same switch as proxy.ts. Ignored in production builds. */
@@ -35,16 +38,19 @@ const AVATAR = "/images/Intern/char-boy-glasses.png";
 /** Two groups, separated by a thin line like the learner sidebar. */
 const NAV_GROUPS = [
   [
-    { href: "/admin/dashboard", label: "Admin Dashboard", icon: LayoutGrid },
-    { href: "/admin/students", label: "Student Management", icon: Users },
-    { href: "/admin/squads", label: "Squads Management", icon: UsersRound },
-    { href: "/admin/mentors", label: "Mentors Management", icon: UserCheck },
+    { href: "/admin/dashboard", label: tk("Admin Dashboard"), icon: LayoutGrid },
+    { href: "/admin/students", label: tk("Student Management"), icon: Users },
+    { href: "/admin/squads", label: tk("Squads Management"), icon: UsersRound },
+    { href: "/admin/mentors", label: tk("Mentors Management"), icon: UserCheck },
   ],
   [
-    { href: "/admin/tracks", label: "Tracks", icon: Layers },
-    { href: "/admin/assignments", label: "Assignments & Submissions", icon: ClipboardList },
+    { href: "/admin/tracks", label: tk("Tracks"), icon: Layers },
+    { href: "/admin/assignments", label: tk("Assignments & Submissions"), icon: ClipboardList },
   ],
 ];
+
+/** Only the main admin manages admins (23 Oct 2026). */
+const OWNER_NAV = { href: "/admin/admins", label: tk("Admins"), icon: ShieldCheck };
 
 /** Defines the CSS variables the admin pages size themselves with. */
 const vars = {
@@ -54,10 +60,13 @@ const vars = {
 
 const baseFont = { fontSize: "clamp(11px, calc(var(--u) * 1.05), 17px)" } as CSSProperties;
 
+const noopSubscribe = () => () => {};
+
 export function AdminShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuth();
+  const t = useT();
 
   const [expanded, setExpanded] = useState(true); // desktop: full sidebar or narrow rail
   const [mobileOpen, setMobileOpen] = useState(false); // mobile: drawer open or closed
@@ -100,21 +109,23 @@ export function AdminShell({ children }: { children: ReactNode }) {
   }, []);
 
   const allowed = SKIP_AUTH || (!!user && String(user.role) === "admin");
+  // The signed-in user is only known after hydration (the server render has none), so redirect only then.
+  const hydrated = useSyncExternalStore(noopSubscribe, () => true, () => false);
 
   useEffect(() => {
-    if (!allowed) router.replace("/login");
-  }, [allowed, router]);
+    if (hydrated && !allowed) router.replace("/admin/login");
+  }, [hydrated, allowed, router]);
 
   if (!allowed) {
     return (
-      <div className="grid min-h-svh place-items-center" role="status" aria-label="Loading">
+      <div className="grid min-h-svh place-items-center" role="status" aria-label={t("Loading")}>
         <LoaderCircle className="size-8 animate-spin text-[#12939b]" />
       </div>
     );
   }
 
-  const displayName =
-    (user as { name?: string } | null)?.name ?? (user as { fullName?: string } | null)?.fullName ?? "Admin";
+  const displayName = user ? [user.firstName, user.lastName].filter(Boolean).join(" ") : t("Admin");
+  const navGroups = user?.isOwner ? [NAV_GROUPS[0], [...NAV_GROUPS[1], OWNER_NAV]] : NAV_GROUPS;
 
   // The drawer on mobile always shows labels; on desktop it depends on `expanded`
   const showLabels = isDesktop ? expanded : true;
@@ -129,7 +140,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
       {mobileOpen && (
         <button
           type="button"
-          aria-label="Close sidebar"
+          aria-label={t("Close sidebar")}
           onClick={() => setMobileOpen(false)}
           className="fixed inset-0 z-40 cursor-default bg-[#14365a]/35 backdrop-blur-[1px] lg:hidden"
         />
@@ -138,7 +149,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
       {/* ================= Sidebar ================= */}
       {/* Mobile: off-canvas drawer (outside the screen until opened). Desktop: part of the layout. */}
       <aside
-        aria-label="Sidebar"
+        aria-label={t("Sidebar")}
         className={`fixed bottom-2 left-2 top-2 z-50 flex w-[15rem] max-w-[calc(100vw-1rem)] shrink-0 flex-col overflow-hidden rounded-[1.6rem] border border-white/60 shadow-[0_10px_30px_rgba(20,90,140,0.18)] transition-[transform,width] duration-200 lg:relative lg:z-auto lg:max-w-none lg:translate-x-0 ${
           mobileOpen ? "translate-x-0" : "-translate-x-[calc(100%+1rem)]"
         } ${expanded ? "lg:w-[15rem]" : "lg:w-[4.5rem]"}`}
@@ -166,10 +177,10 @@ export function AdminShell({ children }: { children: ReactNode }) {
 
         {/* Nav */}
         <nav
-          aria-label="Admin"
+          aria-label={t("Admin")}
           className="relative z-10 flex-1 overflow-y-auto px-2.5 py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
-          {NAV_GROUPS.map((group, gi) => (
+          {navGroups.map((group, gi) => (
             <div key={gi}>
               {gi > 0 && <hr className="mx-2 my-3 border-0 border-t border-[#14365a]/15" />}
               <ul className="space-y-1">
@@ -179,7 +190,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
                     <li key={item.href}>
                       <Link
                         href={item.href as Route}
-                        title={item.label}
+                        title={t(item.label)}
                         aria-current={active ? "page" : undefined}
                         className={`flex items-center gap-3 rounded-[0.7rem] py-2.5 text-[0.78rem] transition-colors ${
                           showLabels ? "px-3.5" : "justify-center px-0"
@@ -190,7 +201,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
                         }`}
                       >
                         <item.icon className="size-[1.15rem] shrink-0" strokeWidth={1.8} />
-                        {showLabels && <span className="truncate">{item.label}</span>}
+                        {showLabels && <span className="truncate">{t(item.label)}</span>}
                       </Link>
                     </li>
                   );
@@ -225,7 +236,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
           <button
             type="button"
             onClick={toggleSidebar}
-            aria-label={isDesktop ? (expanded ? "Collapse sidebar" : "Expand sidebar") : mobileOpen ? "Close sidebar" : "Open sidebar"}
+            aria-label={t(isDesktop ? (expanded ? "Collapse sidebar" : "Expand sidebar") : mobileOpen ? "Close sidebar" : "Open sidebar")}
             aria-expanded={isDesktop ? expanded : mobileOpen}
             className="pointer-events-auto grid size-[2.5em] shrink-0 place-items-center rounded-full bg-[#14365a] text-white shadow-md hover:bg-[#0f2a47]"
           >
@@ -237,7 +248,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
             <input
               ref={searchRef}
               type="search"
-              placeholder="Search anything...."
+              placeholder={t("Search anything....")}
               className="h-[2.6em] w-full rounded-full border border-white/70 bg-white/55 pl-[2.8em] pr-[1em] text-[0.8em] text-[#14365a] shadow-[0_6px_18px_rgba(60,160,230,0.25)] outline-none backdrop-blur placeholder:text-[#14365a]/70 focus:ring-2 focus:ring-[#12939b]/40 sm:pr-[4em]"
             />
             <kbd className="pointer-events-none absolute right-[0.9em] top-1/2 hidden -translate-y-1/2 rounded-full bg-[#3aa6f2]/85 px-[0.7em] py-[0.15em] text-[0.65em] font-bold text-white sm:block">
@@ -255,7 +266,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
           <div className="ml-auto flex items-center gap-[0.7em]">
             <button
               type="button"
-              aria-label="Notifications"
+              aria-label={t("Notifications")}
               className="pointer-events-auto relative grid size-[2.4em] place-items-center rounded-full border border-white/70 bg-white/55 text-[#14365a] shadow-[0_6px_18px_rgba(60,160,230,0.2)] backdrop-blur hover:bg-white/80"
             >
               <Bell className="size-[1.1em]" />
@@ -279,7 +290,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
 
               {menuOpen && (
                 <>
-                  <button type="button" aria-label="Close menu" className="fixed inset-0 z-40 cursor-default" onClick={() => setMenuOpen(false)} />
+                  <button type="button" aria-label={t("Close menu")} className="fixed inset-0 z-40 cursor-default" onClick={() => setMenuOpen(false)} />
                   <div role="menu" className="absolute right-0 top-full z-50 mt-2 min-w-[11em] overflow-hidden rounded-[0.9em] border border-[#e1e8f0] bg-white shadow-lg">
                     <button
                       type="button"
@@ -290,7 +301,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
                       }}
                       className="flex w-full items-center gap-[0.6em] px-[1.1em] py-[0.7em] text-left text-[0.85em] font-semibold text-[#14365a] hover:bg-[#eef4fa]"
                     >
-                      <LogOut className="size-[1.1em]" /> Log out
+                      <LogOut className="size-[1.1em]" /> {t("Log out")}
                     </button>
                   </div>
                 </>

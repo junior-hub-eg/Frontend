@@ -1,48 +1,40 @@
-import Link from "next/link";
-import type { Route } from "next";
-import { CirclePlus } from "lucide-react";
+"use client";
+
+import { getAdminTracks } from "@/lib/admin-api";
+import { useT } from "@/lib/i18n/client";
+import { tk } from "@/lib/i18n/translate";
 import { AdminPage, PageHero } from "./AdminPage";
 import { TrackStats } from "./TrackStats";
-import { TrackCard, type Track } from "./TrackCard";
-
-const TRACKS: Track[] = [
-  { id: 1, name: "UI\\UX Design Track", students: 120, squads: 12, progress: 95 },
-  { id: 2, name: "Marketing", students: 120, squads: 12, progress: 95 },
-  { id: 3, name: "Python Data Science", students: 120, squads: 12, progress: 95 },
-  { id: 4, name: "Cyber Security", students: 120, squads: 12, progress: 95 },
-  { id: 5, name: "AI", students: 120, squads: 12, progress: 95 },
-  { id: 6, name: "Machine Learning", students: 120, squads: 12, progress: 95 },
-];
+import { TrackCard } from "./TrackCard";
+import { LoadState, useAdminData } from "./admin-data";
 
 export default function AdminTracks() {
-  const firstRow = TRACKS.slice(0, 3); // sit on the hero
-  const secondRow = TRACKS.slice(3); // narrower, below
+  const t = useT();
+  const page = useAdminData(getAdminTracks, tk("We couldn't load the tracks. Please try again."));
+  const tracks = page.data?.tracks ?? [];
+  const firstRow = tracks.slice(0, 3); // sit on the hero
+  const rest = tracks.slice(3); // below
 
   return (
     <AdminPage>
-      <PageHero title="Track Management" contentClassName="pb-0">
-        <TrackStats className="mt-[1.6em] lg:w-[85%]" />
+      <PageHero title={t("Track Management")} contentClassName="pb-0">
+        <TrackStats stats={page.data?.stats ?? null} className="mt-[1.6em] lg:w-[85%]" />
 
-        <div className="mt-[1.2em] flex justify-end">
-          <Link
-            href={"/admin/tracks/new" as Route}
-            className="inline-flex items-center gap-[0.6em] rounded-[0.6em] bg-[#00c9b1] px-[1.2em] py-[0.6em] text-[0.9em] font-semibold text-white shadow-sm hover:bg-[#00b39d]"
-          >
-            <CirclePlus className="size-[1.05em] text-[#1d4ed8]" /> Add new track
-          </Link>
-        </div>
-
-        <div className="relative -mb-[3.2em] mt-[0.8em] grid gap-[1.4em] sm:grid-cols-2 lg:grid-cols-3">
-          {firstRow.map((t) => (
-            <TrackCard key={t.id} track={t} />
-          ))}
-        </div>
+        {page.data ? (
+          <div className="relative -mb-[3.2em] mt-[1.6em] grid gap-[1.4em] sm:grid-cols-2 lg:grid-cols-3">
+            {firstRow.map((tr) => (
+              <TrackCard key={tr.id} track={tr} />
+            ))}
+          </div>
+        ) : (
+          <LoadState error={page.error} onRetry={page.reload} className="pb-[1.5em]" />
+        )}
       </PageHero>
 
-      <div className="mx-auto mt-[5em] w-full lg:w-[76%]">
+      <div className="mx-auto mt-[5em] w-full lg:w-[90%]">
         <div className="grid gap-[1.4em] sm:grid-cols-2 lg:grid-cols-3">
-          {secondRow.map((t) => (
-            <TrackCard key={t.id} track={t} />
+          {rest.map((tr) => (
+            <TrackCard key={tr.id} track={tr} />
           ))}
         </div>
       </div>
