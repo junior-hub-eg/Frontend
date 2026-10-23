@@ -358,14 +358,20 @@ export default function ProfilePage() {
                   {data.mentors.currents.map(({ mentor }) => {
                     const a = mentorAvatar(mentor);
                     return (
-                      <li key={mentor.id} className="flex items-center gap-[0.8em] rounded-[1em] border border-[#e8eef5] p-[0.8em]">
-                        <span className="relative h-[3em] w-[3em] shrink-0 overflow-hidden rounded-full" style={{ backgroundColor: a.bg }}>
-                          <Image src={a.src} alt="" fill sizes="60px" className="object-cover" />
-                        </span>
-                        <span className="min-w-0">
-                          <span className="block truncate text-[0.9em] font-bold text-[#14365a]">{mentor.fullName}</span>
-                          <span className="block truncate text-[0.75em] text-[#14365a]/65">{t(mentor.title)}</span>
-                        </span>
+                      <li key={mentor.id}>
+                        {/* Change this href if your mentor page lives at a different path */}
+                       <Link
+  href={"/learner/mentorship" as Route}
+  className="flex items-center gap-[0.8em] rounded-[1em] border border-[#e8eef5] p-[0.8em] transition hover:border-[#12939b] hover:bg-[#f6f9fc]"
+>
+                          <span className="relative h-[3em] w-[3em] shrink-0 overflow-hidden rounded-full" style={{ backgroundColor: a.bg }}>
+                            <Image src={a.src} alt="" fill sizes="60px" className="object-cover" />
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block truncate text-[0.9em] font-bold text-[#14365a]">{mentor.fullName}</span>
+                            <span className="block truncate text-[0.75em] text-[#14365a]/65">{t(mentor.title)}</span>
+                          </span>
+                        </Link>
                       </li>
                     );
                   })}
