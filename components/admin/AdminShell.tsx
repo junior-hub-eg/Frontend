@@ -5,15 +5,18 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import type { Route } from "next";
+
 import {
   Bell,
   ChevronDown,
   ClipboardList,
   ShieldCheck,
+  Settings,
   UserPlus,
   Layers,
   LayoutGrid,
   LoaderCircle,
+  TrendingUp,
   LogOut,
   Menu,
   Search,
@@ -28,16 +31,13 @@ import { useT } from "@/lib/i18n/client";
 import { tk } from "@/lib/i18n/translate";
 import { QuickManagement } from "./QuickManagement";
 
-/** LOCAL ONLY: same switch as proxy.ts. Ignored in production builds. */
 const SKIP_AUTH = process.env.NEXT_PUBLIC_SKIP_AUTH === "true" && process.env.NODE_ENV !== "production";
 
-/** Logos: put the two images in public/images/admin/ (change the names here if yours differ). */
 const CAP_IMG = "/images/admin/reicon_grad-cap-filled.png";
 const GROUP_IMG = "/images/admin/group.png";
 const PARK_IMG = "/images/Intern/bg-park.png";
 const AVATAR = "/images/Intern/char-boy-glasses.png";
 
-/** Two groups, separated by a thin line like the learner sidebar. */
 const NAV_GROUPS = [
   [
     { href: "/admin/dashboard", label: tk("Admin Dashboard"), icon: LayoutGrid },
@@ -49,13 +49,14 @@ const NAV_GROUPS = [
   [
     { href: "/admin/tracks", label: tk("Tracks"), icon: Layers },
     { href: "/admin/assignments", label: tk("Assignments & Submissions"), icon: ClipboardList },
+    { href: "/admin/reports", label: tk("Reports & Analytics"), icon: TrendingUp },
+        { href: "/admin/settings", label: tk("System Settings"), icon: Settings },
+
   ],
 ];
 
-/** Only the main admin manages admins (23 Oct 2026). */
 const OWNER_NAV = { href: "/admin/admins", label: tk("Admins"), icon: ShieldCheck };
 
-/** Defines the CSS variables the admin pages size themselves with. */
 const vars = {
   "--u": "clamp(10px, 0.9vw, 16px)",
   "--hl": "calc(var(--u) * 1.6)",
@@ -75,7 +76,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false); // mobile: drawer open or closed
   const [isDesktop, setIsDesktop] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [waiting, setWaiting] = useState(0); // sign-ups waiting for approval, shown on the Approvals item
+  const [waiting, setWaiting] = useState(0);
   const searchRef = useRef<HTMLInputElement>(null);
 
   // Track the lg breakpoint (1024px)
@@ -213,7 +214,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
                         href={item.href as Route}
                         title={t(item.label)}
                         aria-current={active ? "page" : undefined}
-                        className={`flex items-center gap-3 rounded-[0.7rem] py-2.5 text-[0.78rem] transition-colors ${
+                        className={`relative flex items-center gap-3 rounded-[0.7rem] py-2.5 text-[0.78rem] transition-colors ${
                           showLabels ? "px-3.5" : "justify-center px-0"
                         } ${
                           active
@@ -226,7 +227,9 @@ export function AdminShell({ children }: { children: ReactNode }) {
                         {item.href === "/admin/approvals" && waiting > 0 && (
                           <span
                             aria-label={t("{count} waiting", { count: waiting })}
-                            className={`grid min-w-[1.3rem] place-items-center rounded-full bg-[#e0245e] px-1 text-[0.65rem] font-bold text-white ${showLabels ? "ms-auto" : "absolute ms-6 -mt-5"}`}
+                            className={`grid min-w-[1.3rem] place-items-center rounded-full bg-[#e0245e] px-1 text-[0.65rem] font-bold text-white ${
+                              showLabels ? "ms-auto" : "absolute right-1 top-1"
+                            }`}
                           >
                             {waiting}
                           </span>
