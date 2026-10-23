@@ -175,3 +175,32 @@ export const rejectSignup = (id: string, reason: string) => api.post<void>(`/api
 
 /** Window event: the waiting sign-ups changed, so the admin sidebar counts them again. */
 export const APPROVALS_CHANGED = "jh:approvals-changed";
+
+export type ReportPeriod = "week" | "month" | "year";
+
+/** Reports & Analytics (23 Oct 2026). Percentages are 0-100. */
+export interface AdminReport {
+  period: "Week" | "Month" | "Year";
+  from: string;
+  to: string;
+  stats: { completionRate: number; activeEngagement: number; averageScore: number; certificatesIssued: number };
+  /** 7 equal parts of the period, oldest first. */
+  performance: { from: string; to: string; lessonsPassed: number; tasksDone: number }[];
+  levels: { beginner: number; intermediate: number; advanced: number };
+}
+
+export const getAdminReport = (period: ReportPeriod) => api.get<AdminReport>(`/api/v1/admin/reports?period=${period}`);
+
+/** System Settings; maintenance mode, registration and notifications take effect at once. */
+export interface PlatformSettings {
+  platformName: string;
+  supportEmail: string;
+  timeZone: string;
+  maintenanceMode: boolean;
+  allowStudentRegistration: boolean;
+  emailNotifications: boolean;
+  updatedUtc?: string;
+}
+
+export const getPlatformSettings = () => api.get<PlatformSettings>("/api/v1/admin/settings");
+export const savePlatformSettings = (settings: PlatformSettings) => api.put<PlatformSettings>("/api/v1/admin/settings", settings);
