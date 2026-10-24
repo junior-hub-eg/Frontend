@@ -16,12 +16,27 @@ import {
   Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n/client";
+
+function useTr() {
+  const { t } = useI18n();
+  return (s: string) => (/[A-Za-z]/.test(s) ? t(s) : s);
+}
+
+function Ltr({ children, className }: { children: ReactNode; className?: string }) {
+  return (
+    <span dir="ltr" className={cn("inline-block", className)}>
+      {children}
+    </span>
+  );
+}
+
 const TEACHER = { firstName: "Mona", title: "Ms." };
 
-const CLASSES = [
-  { label: "All Classes", count: 84 },
-  { label: "Grade 9A" },
-  { label: "Grade 9B" },
+const CLASSES: { id: string; label: string; count?: number }[] = [
+  { id: "all", label: "All Classes", count: 84 },
+  { id: "9a", label: "Grade 9A" },
+  { id: "9b", label: "Grade 9B" },
 ];
 
 type Stat = {
@@ -46,19 +61,22 @@ const STATS: Stat[] = [
 
 type Group = "blockers" | "admin";
 
+/** A sentence with bold / code pieces. Each plain piece is translated on its own. */
+type RichPart = string | { b: string; quote?: boolean } | { code: string };
+
 type StudentAlert = {
   id: string;
   group: Group;
   kind: string;
-  kindTone: string; // text colour of the label
+  kindTone: string;
   dot: string;
   time: string;
   name: string;
   meta: string;
   initials: string;
-  avatar: string; 
-  photo?: string; 
-  note: ReactNode;
+  avatar: string;
+  photo?: string;
+  note: string | RichPart[];
   actions: { label: string; variant: "primary" | "secondary" | "dark" }[];
 };
 
@@ -75,11 +93,7 @@ const ALERTS: StudentAlert[] = [
     initials: "KT",
     avatar: "bg-[#f5a524]",
     photo: "/images/teacher/students/karim.png",
-    note: (
-      <>
-        Failed <strong>&quot;Figma Auto-layout Constraints&quot;</strong> 3 times in a row.
-      </>
-    ),
+    note: ["Failed", { b: "Figma Auto-layout Constraints", quote: true }, "3 times in a row."],
     actions: [
       { label: "Review Attempt", variant: "primary" },
       { label: "Send Hint", variant: "secondary" },
@@ -97,12 +111,7 @@ const ALERTS: StudentAlert[] = [
     initials: "SM",
     avatar: "bg-[#12939b]",
     photo: "/images/teacher/students/sarah.png",
-
-    note: (
-      <>
-        Did not submit <strong>Sprint 03 Design System Quiz</strong>. No activity recorded.
-      </>
-    ),
+    note: ["Did not submit", { b: "Sprint 03 Design System Quiz" }, ". No activity recorded."],
     actions: [
       { label: "Extend (+24h)", variant: "primary" },
       { label: "Send Reminder", variant: "secondary" },
@@ -131,6 +140,7 @@ const FILTERS: { key: "all" | Group; label: string; count: number }[] = [
   { key: "admin", label: "Admin", count: 3 },
 ];
 
+// Messages written by students: shown as they are, never translated
 const QUERIES = [
   { name: "Laila K.", text: "Is flex-wrap permitted in Q4?" },
   { name: "Tarek H.", text: "Auto-layout resizing clip issue" },
@@ -173,7 +183,18 @@ const CLASS_PROGRESS = [
   },
 ];
 
-const MISTAKES = [
+const MISTAKES: {
+  id: string;
+  title: string;
+  tag: string;
+  tagTone: string;
+  rate: number;
+  count: string;
+  barTone: string;
+  rateTone: string;
+  danger: boolean;
+  pitfall: string | RichPart[];
+}[] = [
   {
     id: "Problem #4.2",
     title: "Calculating Auto-layout Padding & Resizing",
@@ -184,12 +205,7 @@ const MISTAKES = [
     barTone: "bg-[#c81e1e]",
     rateTone: "text-[#c81e1e]",
     danger: true,
-    pitfall: (
-      <>
-        Confusing <code className="rounded bg-white px-1 text-[9px]">Hug contents</code> with{" "}
-        <code className="rounded bg-white px-1 text-[9px]">Fill container</code> on nested vertical cards.
-      </>
-    ),
+    pitfall: ["Confusing", { code: "Hug contents" }, "with", { code: "Fill container" }, "on nested vertical cards."],
   },
   {
     id: "Problem #3.5",
@@ -250,7 +266,47 @@ function Card({ className, children }: { className?: string; children: ReactNode
   );
 }
 
+function RichText({ value }: { value: string | RichPart[] }) {
+  const tr = useTr();
+  if (typeof value === "string") return <>{tr(value)}</>;
+
+  return (
+    <>
+      {value.map((part, i) => {
+        const plain = typeof part === "string";
+        const space = i > 0 && !(plain && /^[.,;:!?]/.test(part)) ? " " : "";
+
+        if (plain) {
+          return (
+            <span key={i}>
+              {space}
+              {tr(part)}
+            </span>
+          );
+        }
+        if ("code" in part) {
+          return (
+            <span key={i}>
+              {space}
+              <code dir="ltr" className="inline-block rounded bg-[#eef2f1] px-1 text-[9px]">
+                {part.code}
+              </code>
+            </span>
+          );
+        }
+        return (
+          <span key={i}>
+            {space}
+            <strong>{part.quote ? `“${tr(part.b)}”` : tr(part.b)}</strong>
+          </span>
+        );
+      })}
+    </>
+  );
+}
+
 function ActionButton({ label, variant }: { label: string; variant: "primary" | "secondary" | "dark" }) {
+  const tr = useTr();
   return (
     <button
       type="button"
@@ -261,30 +317,31 @@ function ActionButton({ label, variant }: { label: string; variant: "primary" | 
         variant === "dark" && "bg-[#1B2D54] text-white"
       )}
     >
-      {label}
+      {tr(label)}
     </button>
   );
 }
 
 function StatCard({ stat }: { stat: Stat }) {
+  const tr = useTr();
   const danger = stat.tone === "danger";
   return (
     <div className="flex w-[200px] shrink-0 snap-start flex-col justify-between rounded-2xl border border-[#e3ece9] bg-white p-3 shadow-sm">
       <div className="flex items-start justify-between gap-2">
-        <p className="text-[10px] font-semibold uppercase leading-tight text-[#1B2D54]/60">{stat.label}</p>
+        <p className="text-[10px] font-semibold uppercase leading-tight text-[#1B2D54]/60 rtl:normal-case">{tr(stat.label)}</p>
         <span className="shrink-0 text-[#14757d]">{stat.icon}</span>
       </div>
 
       <p className="mt-2 flex items-baseline gap-1">
-        <span className={cn("text-2xl font-bold leading-none", danger && "text-[#e5484d]")}>{stat.value}</span>
-        <span className="text-[10px] text-[#1B2D54]/60">{stat.unit}</span>
+        <Ltr className={cn("text-2xl font-bold leading-none", danger && "text-[#e5484d]")}>{stat.value}</Ltr>
+        <span className="text-[10px] text-[#1B2D54]/60">{stat.unit.startsWith("/") ? <Ltr>{stat.unit}</Ltr> : tr(stat.unit)}</span>
       </p>
 
       <div className="mt-3 flex items-center justify-between gap-2 text-[10px]">
         {danger ? (
-          <span className="rounded bg-[#fde8e8] px-1.5 py-0.5 font-semibold text-[#e5484d]">{stat.left}</span>
+          <span className="rounded bg-[#fde8e8] px-1.5 py-0.5 font-semibold text-[#e5484d]">{tr(stat.left)}</span>
         ) : (
-          <span className="truncate text-[#1B2D54]/60">{stat.left}</span>
+          <span className="truncate text-[#1B2D54]/60">{/[A-Za-z]{3}/.test(stat.left) ? tr(stat.left) : <Ltr>{stat.left}</Ltr>}</span>
         )}
         {stat.right && (
           <span
@@ -295,7 +352,7 @@ function StatCard({ stat }: { stat: Stat }) {
               stat.rightTone === "muted" && "text-[#1B2D54]/60"
             )}
           >
-            {stat.right}
+            {tr(stat.right)}
           </span>
         )}
       </div>
@@ -305,19 +362,17 @@ function StatCard({ stat }: { stat: Stat }) {
 
 function DragRow({ children, className }: { children: ReactNode; className?: string }) {
   const ref = useRef<HTMLDivElement>(null);
-  const drag = useRef({ active: false, startX: 0, startLeft: 0, moved: false });
+  const drag = useRef({ active: false, startX: 0, startLeft: 0 });
 
   function onPointerDown(e: ReactPointerEvent<HTMLDivElement>) {
-    if (e.pointerType !== "mouse" || !ref.current) return; // touch already scrolls natively
-    drag.current = { active: true, startX: e.clientX, startLeft: ref.current.scrollLeft, moved: false };
+    if (e.pointerType !== "mouse" || !ref.current) return;
+    drag.current = { active: true, startX: e.clientX, startLeft: ref.current.scrollLeft };
   }
 
   function onPointerMove(e: ReactPointerEvent<HTMLDivElement>) {
     const d = drag.current;
     if (!d.active || !ref.current) return;
-    const dx = e.clientX - d.startX;
-    if (Math.abs(dx) > 4) d.moved = true;
-    ref.current.scrollLeft = d.startLeft - dx;
+    ref.current.scrollLeft = d.startLeft - (e.clientX - d.startX);
   }
 
   function end() {
@@ -344,25 +399,20 @@ function DragRow({ children, className }: { children: ReactNode; className?: str
 }
 
 function AlertCard({ alert }: { alert: StudentAlert }) {
+  const tr = useTr();
   return (
     <div className="flex min-w-0 flex-col gap-3 rounded-xl border border-[#e3ece9] bg-white p-3">
       <div className="flex items-center justify-between text-[10px]">
         <span className={cn("flex items-center gap-1.5 font-semibold", alert.kindTone)}>
           <span aria-hidden className={cn("size-1.5 rounded-full", alert.dot)} />
-          {alert.kind}
+          {tr(alert.kind)}
         </span>
-        <span className="text-[#1B2D54]/50">{alert.time}</span>
+        <span className="text-[#1B2D54]/50">{tr(alert.time)}</span>
       </div>
 
       <div className="flex items-center gap-2.5">
         {alert.photo ? (
-          <Image
-            src={alert.photo}
-            alt={alert.name}
-            width={36}
-            height={36}
-            className="size-9 shrink-0 rounded-full object-cover"
-          />
+          <Image src={alert.photo} alt={tr(alert.name)} width={36} height={36} className="size-9 shrink-0 rounded-full object-cover" />
         ) : (
           <span
             className={cn(
@@ -374,13 +424,13 @@ function AlertCard({ alert }: { alert: StudentAlert }) {
           </span>
         )}
         <div className="min-w-0 leading-tight">
-          <p className="truncate text-sm font-semibold">{alert.name}</p>
-          <p className="truncate text-[10px] text-[#1B2D54]/60">{alert.meta}</p>
+          <p className="truncate text-sm font-semibold">{tr(alert.name)}</p>
+          <p className="truncate text-[10px] text-[#1B2D54]/60">{tr(alert.meta)}</p>
         </div>
       </div>
 
       <p className="rounded-lg border border-[#e3ece9] bg-white px-3 py-2.5 text-[11px] leading-snug text-[#1B2D54]/80">
-        {alert.note}
+        <RichText value={alert.note} />
       </p>
 
       <div className="mt-auto flex gap-2">
@@ -393,7 +443,8 @@ function AlertCard({ alert }: { alert: StudentAlert }) {
 }
 
 export default function TeacherDashboardPage() {
-  const [activeClass, setActiveClass] = useState(CLASSES[0].label);
+  const tr = useTr();
+  const [activeClass, setActiveClass] = useState(CLASSES[0].id);
   const [filter, setFilter] = useState<"all" | Group>("all");
 
   const visibleAlerts = ALERTS.filter((a) => filter === "all" || a.group === filter);
@@ -401,38 +452,56 @@ export default function TeacherDashboardPage() {
   const showQueries = filter === "all" || filter === "admin";
 
   return (
-    <div dir="ltr" className="flex min-w-0 flex-1 flex-col gap-4 pb-6 pt-4 font-[family-name:var(--font-poppins)] text-[#1B2D54]">
+    <div className="flex min-w-0 flex-1 flex-col gap-4 pb-6 pt-4 font-[family-name:var(--font-poppins)] text-[#1B2D54]">
+    
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[453px] [mask-image:linear-gradient(to_bottom,black_60%,transparent)]"
+      >
+        <Image
+          src="/images/learner/projects/background.png"
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover object-top"
+        />
+      </div>
+
       <header className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="flex items-center gap-2 text-[9px] font-semibold uppercase tracking-wide">
+          <p className="flex items-center gap-2 text-[9px] font-semibold uppercase tracking-wide rtl:normal-case rtl:tracking-normal">
             <span className="flex items-center gap-1.5 rounded-full bg-white/80 px-2 py-0.5 text-[#14757d]">
               <span aria-hidden className="size-1.5 shrink-0 rounded-full bg-[#14757d]" />
-              <span className="relative top-[1px]">Term 1 • Academic Workspace</span>
+              <span className="relative top-[1px]">{tr("Term 1 • Academic Workspace")}</span>
             </span>
-            <span className="text-[#1B2D54]/70">3 Active Cohorts</span>
+            <span className="text-[#1B2D54]/70">{tr("3 Active Cohorts")}</span>
           </p>
-        
+
+          {/* TODO: greeting by time of day (morning / afternoon / evening) */}
           <h1 className="mt-1 text-2xl font-bold">
-            Good morning, {TEACHER.title} {TEACHER.firstName} <span aria-hidden>👋</span>
+            {tr("Good morning,")} {tr(TEACHER.title)} {tr(TEACHER.firstName)} <span aria-hidden>👋</span>
           </h1>
-          <p className="mt-0.5 text-[11px] text-[#1B2D54]/70">Here is what is happening across your assigned classes this week</p>
+          <p className="mt-0.5 text-[11px] text-[#1B2D54]/70">
+            {tr("Here is what is happening across your assigned classes this week")}
+          </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center gap-1 rounded-full bg-white/80 p-1 shadow-sm ring-1 ring-[#e3ece9]">
             {CLASSES.map((c) => (
               <button
-                key={c.label}
+                key={c.id}
                 type="button"
-                onClick={() => setActiveClass(c.label)}
-                aria-pressed={activeClass === c.label}
+                onClick={() => setActiveClass(c.id)}
+                aria-pressed={activeClass === c.id}
                 className={cn(
                   "rounded-full px-3 py-1 text-[10px] font-semibold transition-colors",
-                  activeClass === c.label ? "bg-[#1B2D54] text-white" : "text-[#1B2D54] hover:bg-[#14757d]/10"
+                  activeClass === c.id ? "bg-[#1B2D54] text-white" : "text-[#1B2D54] hover:bg-[#14757d]/10"
                 )}
               >
-                {c.label}
-                {c.count !== undefined && ` (${c.count})`}
+                {tr(c.label)}
+                {c.count !== undefined && <bdi>{` (${c.count})`}</bdi>}
               </button>
             ))}
           </div>
@@ -442,7 +511,7 @@ export default function TeacherDashboardPage() {
             className="flex items-center gap-1.5 rounded-full bg-[#14757d] px-4 py-2 text-[11px] font-semibold text-white shadow-sm transition-colors hover:bg-[#0f6169] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#12939b]/40"
           >
             <Plus aria-hidden className="size-3.5" />
-            Quick Assignment
+            {tr("Quick Assignment")}
           </button>
         </div>
       </header>
@@ -461,11 +530,13 @@ export default function TeacherDashboardPage() {
             </span>
             <div className="leading-tight">
               <h2 className="flex items-center gap-2 text-sm font-semibold">
-                Needs Attention
-                <span className="rounded bg-[#fde8e8] px-1.5 py-0.5 text-[9px] font-semibold text-[#e5484d]">5 Urgent</span>
+                {tr("Needs Attention")}
+                <span className="rounded bg-[#fde8e8] px-1.5 py-0.5 text-[9px] font-semibold text-[#e5484d]">
+                  {tr("5 Urgent")}
+                </span>
               </h2>
               <p className="mt-1 text-[10px] text-[#1B2D54]/60">
-                Real-time alerts requiring teacher feedback, intervention, or admission checks
+                {tr("Real-time alerts requiring teacher feedback, intervention, or admission checks")}
               </p>
             </div>
           </div>
@@ -483,7 +554,7 @@ export default function TeacherDashboardPage() {
                   filter === f.key ? "bg-[#14757d] text-white" : "bg-[#eef2f1] text-[#1B2D54] hover:bg-[#dfe9e7]"
                 )}
               >
-                {f.label} ({f.count})
+                {tr(f.label)} <bdi>({f.count})</bdi>
               </button>
             ))}
           </div>
@@ -499,23 +570,23 @@ export default function TeacherDashboardPage() {
               <div className="flex items-center justify-between text-[10px]">
                 <span className="flex items-center gap-1.5 font-semibold text-[#14757d]">
                   <span aria-hidden className="size-1.5 rounded-full bg-[#14757d]" />
-                  Pending Cohort Join
+                  {tr("Pending Cohort Join")}
                 </span>
-                <span className="text-[#1B2D54]/50">Today</span>
+                <span className="text-[#1B2D54]/50">{tr("Today")}</span>
               </div>
 
               <div className="flex items-center gap-2.5">
                 <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#9be9ef] text-[10px] font-bold text-[#14757d]">
-                  +2
+                  <bdi>+2</bdi>
                 </span>
                 <div className="leading-tight">
-                  <p className="text-sm font-semibold">2 Students Waiting</p>
-                  <p className="text-[10px] text-[#1B2D54]/60">Grade 9A Enrollment Room</p>
+                  <p className="text-sm font-semibold">{tr("2 Students Waiting")}</p>
+                  <p className="text-[10px] text-[#1B2D54]/60">{tr("Grade 9A Enrollment Room")}</p>
                 </div>
               </div>
 
               <p className="rounded-lg border border-[#e3ece9] bg-white px-3 py-2.5 text-[11px] leading-snug text-[#1B2D54]/80">
-                Nour Adel &amp; Malek Omar requested approval into Grade 9A.
+                {tr("Nour Adel & Malek Omar requested approval into Grade 9A.")}
               </p>
 
               <div className="mt-auto flex">
@@ -529,18 +600,19 @@ export default function TeacherDashboardPage() {
               <div className="flex items-center justify-between text-[10px]">
                 <span className="flex items-center gap-1.5 font-semibold text-[#1B2D54]">
                   <span aria-hidden className="size-1.5 rounded-full bg-[#1B2D54]" />
-                  3 Unread Queries
+                  {tr("3 Unread Queries")}
                 </span>
-                <span className="text-[#1B2D54]/50">Within last 45 mins</span>
+                <span className="text-[#1B2D54]/50">{tr("Within last 45 mins")}</span>
               </div>
 
               <div className="grid gap-2 sm:grid-cols-3">
                 {QUERIES.map((q) => (
                   <p
                     key={q.name}
-                    className="rounded-lg border border-[#e3ece9] bg-white px-3 py-2.5 text-[11px] leading-snug text-[#1B2D54]/80"
+                    dir="ltr"
+                    className="rounded-lg border border-[#e3ece9] bg-white px-3 py-2.5 text-start text-[11px] leading-snug text-[#1B2D54]/80"
                   >
-                    <strong className="text-[#1B2D54]">{q.name}:</strong> &quot;{q.text}&quot;
+                    <strong className="text-[#1B2D54]">{q.name}:</strong> “{q.text}”
                   </p>
                 ))}
               </div>
@@ -551,7 +623,7 @@ export default function TeacherDashboardPage() {
                   className="flex items-center gap-1.5 rounded-lg bg-[#1B2D54] px-4 py-2 text-[11px] font-semibold text-white transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#12939b]/40"
                 >
                   <MessageSquare aria-hidden className="size-3.5" />
-                  Reply in Student Messages
+                  {tr("Reply in Student Messages")}
                 </button>
               </div>
             </div>
@@ -559,21 +631,20 @@ export default function TeacherDashboardPage() {
         </div>
       </Card>
 
-      {/* ---------------- Class progress ---------------- */}
       <Card className="p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="leading-tight">
-            <h2 className="text-sm font-semibold">Class Progress &amp; Completion</h2>
+            <h2 className="text-sm font-semibold">{tr("Class Progress & Completion")}</h2>
             <p className="mt-1 text-[10px] text-[#1B2D54]/60">
-              Track syllabus velocity and on-track benchmarks across cohorts
+              {tr("Track syllabus velocity and on-track benchmarks across cohorts")}
             </p>
           </div>
           <button
             type="button"
-            className="flex items-center gap-1 text-[10px] font-semibold text-[#14757d] hover:underline"
+            className="flex shrink-0 items-center gap-1 text-[10px] font-semibold text-[#14757d] hover:underline"
           >
-            Detailed Class Breakdown
-            <ChevronRight aria-hidden className="size-3.5" />
+            {tr("Detailed Class Breakdown")}
+            <ChevronRight aria-hidden className="size-3.5 rtl:rotate-180" />
           </button>
         </div>
 
@@ -590,15 +661,15 @@ export default function TeacherDashboardPage() {
                   {c.code}
                 </span>
                 <div className="min-w-0 flex-1 leading-tight">
-                  <p className="truncate text-xs font-semibold">{c.title}</p>
+                  <p className="truncate text-xs font-semibold">{tr(c.title)}</p>
                   <p className="mt-0.5 truncate text-[10px] text-[#1B2D54]/60">
-                    Active Module: <span className="font-semibold text-[#1B2D54]">{c.module}</span>
+                    {tr("Active Module:")} <span className="font-semibold text-[#1B2D54]">{tr(c.module)}</span>
                   </p>
                 </div>
                 <span className="hidden shrink-0 rounded-full bg-[#c9efe9] px-2 py-0.5 text-[9px] font-semibold text-[#14757d] sm:inline">
-                  {c.onTrack}
+                  {tr(c.onTrack)}
                 </span>
-                <span className="shrink-0 text-sm font-bold">{c.percent}%</span>
+                <Ltr className="shrink-0 text-sm font-bold">{c.percent}%</Ltr>
               </div>
 
               <div
@@ -612,8 +683,10 @@ export default function TeacherDashboardPage() {
               </div>
 
               <div className="mt-2 flex items-center justify-between text-[9px] text-[#1B2D54]/60">
-                <span>Next Milestone: {c.milestone}</span>
-                <span className="font-semibold">{c.due}</span>
+                <span>
+                  {tr("Next Milestone:")} {tr(c.milestone)}
+                </span>
+                <span className="font-semibold">{tr(c.due)}</span>
               </div>
             </div>
           ))}
@@ -621,19 +694,20 @@ export default function TeacherDashboardPage() {
       </Card>
 
       <div className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_20rem]">
+        {/* Hardest problems */}
         <Card className="p-5">
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div className="leading-tight">
               <h2 className="flex items-center gap-2 text-sm font-semibold">
                 <CircleHelp aria-hidden className="size-4 text-[#14757d]" />
-                Diagnostic: Hardest Problems &amp; Common Mistakes
+                {tr("Diagnostic: Hardest Problems & Common Mistakes")}
               </h2>
-              <p className="mt-1 pl-6 text-[10px] text-[#1B2D54]/60">
-                Automatic simulation telemetry identifying concept drop-offs this week
+              <p className="mt-1 ps-6 text-[10px] text-[#1B2D54]/60">
+                {tr("Automatic simulation telemetry identifying concept drop-offs this week")}
               </p>
             </div>
             <span className="rounded-full bg-[#9be9ef] px-2.5 py-1 text-[9px] font-semibold text-[#14757d]">
-              Based on 320 attempts
+              {tr("Based on 320 attempts")}
             </span>
           </div>
 
@@ -641,18 +715,18 @@ export default function TeacherDashboardPage() {
             {MISTAKES.map((m) => (
               <div key={m.id} className="flex min-w-0 flex-col gap-3 rounded-xl border border-[#e3ece9] bg-white p-3">
                 <div className="flex items-center justify-between gap-2 text-[9px]">
-                  <span className="font-semibold uppercase text-[#14757d]">{m.id}</span>
-                  <span className={cn("rounded-full px-2 py-0.5 font-semibold", m.tagTone)}>{m.tag}</span>
+                  <span className="font-semibold uppercase text-[#14757d] rtl:normal-case">{tr(m.id)}</span>
+                  <span className={cn("rounded-full px-2 py-0.5 font-semibold", m.tagTone)}>{tr(m.tag)}</span>
                 </div>
 
-                <p className="text-sm font-semibold leading-snug">{m.title}</p>
+                <p className="text-sm font-semibold leading-snug">{tr(m.title)}</p>
 
                 <div className="rounded-lg border border-[#e3ece9] bg-white px-3 py-2">
                   <div className="flex items-center justify-between text-[10px]">
-                    <span className="text-[#1B2D54]/60">First Attempt Success Rate</span>
-                    <span className={cn("font-semibold", m.rateTone)}>
+                    <span className="text-[#1B2D54]/60">{tr("First Attempt Success Rate")}</span>
+                    <Ltr className={cn("font-semibold", m.rateTone)}>
                       {m.rate}% ({m.count})
-                    </span>
+                    </Ltr>
                   </div>
                   <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-[#dfe9e7]">
                     <div className={cn("h-full rounded-full", m.barTone)} style={{ width: `${m.rate}%` }} />
@@ -672,8 +746,8 @@ export default function TeacherDashboardPage() {
                     className={cn("mt-0.5 size-3.5 shrink-0", m.danger ? "text-[#c81e1e]" : "text-[#14757d]")}
                   />
                   <p>
-                    <strong className={m.danger ? "text-[#c81e1e]" : "text-[#14757d]"}>Primary Pitfall:</strong>{" "}
-                    {m.pitfall}
+                    <strong className={m.danger ? "text-[#c81e1e]" : "text-[#14757d]"}>{tr("Primary Pitfall:")}</strong>{" "}
+                    <RichText value={m.pitfall} />
                   </p>
                 </div>
 
@@ -687,15 +761,14 @@ export default function TeacherDashboardPage() {
           </div>
         </Card>
 
-        {/* Class schedule */}
         <Card className="flex flex-col gap-3 p-5">
           <div className="flex items-center justify-between">
             <h2 className="flex items-center gap-2 text-sm font-semibold">
               <CalendarDays aria-hidden className="size-4 text-[#14757d]" />
-              Class Schedule
+              {tr("Class Schedule")}
             </h2>
             <button type="button" className="text-[10px] font-semibold text-[#14757d] hover:underline">
-              View All
+              {tr("View All")}
             </button>
           </div>
 
@@ -709,20 +782,20 @@ export default function TeacherDashboardPage() {
                   )}
                 >
                   <span className={cn("text-[8px] font-semibold", s.active ? "text-white/70" : "text-[#1B2D54]/50")}>
-                    {s.day}
+                    {tr(s.day)}
                   </span>
                   <span className="mt-1 text-base font-bold">{s.date}</span>
                 </span>
 
                 <div className="min-w-0 flex-1 leading-tight">
                   <div className="flex items-center justify-between gap-2">
-                    <p className="truncate text-[11px] font-semibold">{s.title}</p>
-                    <span className={cn("shrink-0 text-[10px] font-semibold", s.timeTone)}>{s.time}</span>
+                    <p className="truncate text-[11px] font-semibold">{tr(s.title)}</p>
+                    <span className={cn("shrink-0 text-[10px] font-semibold", s.timeTone)}>{tr(s.time)}</span>
                   </div>
-                  <p className="mt-0.5 truncate text-[9px] text-[#1B2D54]/60">{s.meta}</p>
+                  <p className="mt-0.5 truncate text-[9px] text-[#1B2D54]/60">{tr(s.meta)}</p>
                   <p className={cn("mt-1 flex items-center gap-1 text-[9px] font-semibold", s.noteTone)}>
                     <span aria-hidden className={cn("size-1.5 rounded-full", s.dotTone)} />
-                    {s.note}
+                    {tr(s.note)}
                   </p>
                 </div>
               </li>
@@ -733,7 +806,7 @@ export default function TeacherDashboardPage() {
             type="button"
             className="mt-auto rounded-xl bg-[#eef2f1] px-3 py-2.5 text-[11px] font-semibold transition-colors hover:bg-[#dfe9e7]"
           >
-            + Schedule Office Hour or Review
+            {tr("+ Schedule Office Hour or Review")}
           </button>
         </Card>
       </div>
