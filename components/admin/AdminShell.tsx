@@ -40,7 +40,6 @@ import { QuickManagement } from "./QuickManagement";
 const SKIP_AUTH = process.env.NEXT_PUBLIC_SKIP_AUTH === "true" && process.env.NODE_ENV !== "production";
 
 const CAP_IMG = "/images/admin/reicon_grad-cap-filled.png";
-const GROUP_IMG = "/images/admin/group.png";
 const PARK_IMG = "/images/Intern/bg-park.png";
 const AVATAR = "/images/Intern/char-boy-glasses.png";
 
@@ -309,25 +308,6 @@ export function AdminShell({ children }: { children: ReactNode }) {
             </div>
           ))}
         </nav>
-
-        {/* Bottom logo */}
-        {showLabels && (
-          <div className="relative z-10 flex shrink-0 items-center gap-3 px-5 pb-5 pt-2">
-            <div className="relative size-[3rem] shrink-0">
-              <Image
-                src={GROUP_IMG}
-                alt=""
-                fill
-                sizes="48px"
-                className="object-contain object-left rtl:object-right"
-              />
-            </div>
-
-            <span className="min-w-0 truncate text-[1.15rem] font-extrabold leading-tight tracking-tight text-[#14365a]">
-              JUNIOR HUB
-            </span>
-          </div>
-        )}
       </aside>
 
       {/* ================= Main ================= */}
