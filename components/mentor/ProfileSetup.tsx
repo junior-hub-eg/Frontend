@@ -3,36 +3,71 @@
 import { useState } from "react";
 import { Camera, Check, Link2 } from "lucide-react";
 import { useT } from "@/lib/i18n/client";
+import { errorMessage } from "@/lib/api-client";
+import { tk } from "@/lib/i18n/translate";
+import { getMonitorProfile, updateMentorProfile, type MentoringLevel, type MonitorProfile } from "@/lib/monitor-api";
 import { Avatar, Card, Eyebrow, PageHeading, fieldCls, ghostBtn, primaryBtn } from "./mentor-ui";
+import { LoadState, initialsOf, useMentorData } from "./mentor-data";
 import { cn } from "@/lib/utils";
 
-const TRACKS = ["Frontend", "Backend", "AI/ML", "Data Analysis", "Mobile", "Design"];
+/** The mentor's track is set by the admin; the chips show which one it is. */
+const TRACKS: { code: string; label: string }[] = [
+  { code: "FRONTEND", label: tk("Frontend") },
+  { code: "BACKEND", label: tk("Backend") },
+  { code: "AI", label: tk("AI/ML") },
+  { code: "DATA", label: tk("Data Analysis") },
+  { code: "MOBILE", label: tk("Mobile") },
+  { code: "UIUX", label: tk("Design") },
+];
 const BIO_MAX = 300;
 
 export default function ProfileSetup() {
+  const { data, error, reload } = useMentorData(getMonitorProfile, tk("Could not load your profile."));
+  if (!data) return <LoadState error={error} onRetry={reload} />;
+  return <ProfileForm initial={data} />;
+}
+
+function ProfileForm({ initial }: { initial: MonitorProfile }) {
   const t = useT();
-  const [fullName, setFullName] = useState("Alex Morgan");
-  const [title, setTitle] = useState("Frontend Development Mentor");
-  const [bio, setBio] = useState("I help junior developers build confidence with modern frontend work, clear communication and a solid learning routine.");
-  const [tracks, setTracks] = useState<string[]>(["Frontend", "Design"]);
-  const [expertise, setExpertise] = useState("React, JavaScript, HTML/CSS, Accessibility, Design Systems");
-  const [languages, setLanguages] = useState("English, Arabic");
-  const [level, setLevel] = useState("Beginners");
-  const [link, setLink] = useState("https://meet.juniorhub.demo/mentor-alex");
+  /** The last saved profile: what Cancel goes back to. */
+  const [profile, setProfile] = useState(initial);
+  const m = profile.mentor;
+  const [bio, setBio] = useState(m.bio);
+  const [expertise, setExpertise] = useState(m.skills.join(", "));
+  const [languages, setLanguages] = useState(m.languages.join(", "));
+  const [level, setLevel] = useState<MentoringLevel>(profile.mentoringLevel ?? "Beginner");
+  const [link, setLink] = useState(profile.meetingLink ?? "");
   const [saved, setSaved] = useState(false);
   const [touched, setTouched] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
-  const toggle = (tr: string) => {
-    setSaved(false);
-    setTracks((cur) => (cur.includes(tr) ? cur.filter((x) => x !== tr) : [...cur, tr]));
-  };
-  const invalid = fullName.trim() === "" || title.trim() === "" || tracks.length === 0;
   const linkBad = link.trim() !== "" && !/^https?:\/\/\S+$/i.test(link.trim());
 
-  function save() {
+  async function save() {
     setTouched(true);
-    if (invalid || linkBad) return;
-    setSaved(true);
+    if (linkBad) return;
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const result = await updateMentorProfile({ bio, skills: expertise, languages, mentoringLevel: level, meetingLink: link.trim() });
+      setProfile(result);
+      setSaved(true);
+    } catch (e) {
+      setSaveError(errorMessage(e, t("Could not save your profile.")));
+    } finally {
+      setSaving(false);
+    }
+  }
+  function reset() {
+    setBio(m.bio);
+    setExpertise(m.skills.join(", "));
+    setLanguages(m.languages.join(", "));
+    setLevel(profile.mentoringLevel ?? "Beginner");
+    setLink(profile.meetingLink ?? "");
+    setTouched(false);
+    setSaved(false);
+    setSaveError(null);
   }
   const on = <T,>(set: (v: T) => void) => (v: T) => {
     setSaved(false);
@@ -49,7 +84,7 @@ export default function ProfileSetup() {
           <p className="text-xs text-[#14305a]/60">{t("Students see this photo on your profile.")}</p>
         </div>
         <div className="flex items-center gap-4">
-          <Avatar initials="AM" size="lg" />
+          <Avatar initials={initialsOf(m.fullName)} size="lg" />
           <button type="button" className={ghostBtn}>
             <Camera className="size-4" /> {t("Change Photo")}
           </button>
@@ -64,11 +99,11 @@ export default function ProfileSetup() {
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="text-xs font-semibold">
             {t("Full name")} *
-            <input className={cn(fieldCls, "mt-1.5 font-normal")} value={fullName} onChange={(e) => on(setFullName)(e.target.value)} aria-invalid={touched && !fullName.trim()} />
+            <input className={cn(fieldCls, "mt-1.5 font-normal disabled:bg-[#f4f8f7]")} value={m.fullName} disabled />
           </label>
           <label className="text-xs font-semibold">
             {t("Professional title")} *
-            <input className={cn(fieldCls, "mt-1.5 font-normal")} value={title} onChange={(e) => on(setTitle)(e.target.value)} aria-invalid={touched && !title.trim()} />
+            <input className={cn(fieldCls, "mt-1.5 font-normal disabled:bg-[#f4f8f7]")} value={m.title} disabled />
           </label>
         </div>
         <label className="block text-xs font-semibold">
@@ -92,21 +127,21 @@ export default function ProfileSetup() {
         </div>
         <div className="flex flex-wrap gap-2" role="group" aria-label={t("Supported mentoring tracks")}>
           {TRACKS.map((tr) => {
-            const active = tracks.includes(tr);
+            const active = tr.code === m.trackCode;
             return (
               <button
-                key={tr}
+                key={tr.code}
                 type="button"
                 aria-pressed={active}
-                onClick={() => toggle(tr)}
-                className={cn("flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors", active ? "border-[#0f8f8c] bg-[#0f8f8c] text-white" : "border-[#cfe0dd] bg-white hover:bg-[#f1faf8]")}
+                disabled
+                className={cn("flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors", active ? "border-[#0f8f8c] bg-[#0f8f8c] text-white" : "border-[#cfe0dd] bg-white opacity-60")}
               >
-                {active && <Check className="size-3.5" />} {t(tr)}
+                {active && <Check className="size-3.5" />} {t(tr.label)}
               </button>
             );
           })}
         </div>
-        {touched && tracks.length === 0 && <p role="alert" className="text-xs font-semibold text-[#b83232]">{t("Pick at least one track.")}</p>}
+        <p className="text-[0.7rem] text-[#14305a]/55">{t("The admin sets your track. Ask them to change it.")}</p>
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="text-xs font-semibold">
             {t("Skills and areas of expertise")}
@@ -119,10 +154,10 @@ export default function ProfileSetup() {
         </div>
         <label className="block text-xs font-semibold sm:max-w-xs">
           {t("Mentoring level")}
-          <select className={cn(fieldCls, "mt-1.5 font-normal")} value={level} onChange={(e) => on(setLevel)(e.target.value)}>
-            <option value="Beginners">{t("Beginners")}</option>
+          <select className={cn(fieldCls, "mt-1.5 font-normal")} value={level} onChange={(e) => on(setLevel)(e.target.value as MentoringLevel)}>
+            <option value="Beginner">{t("Beginners")}</option>
             <option value="Intermediate">{t("Intermediate")}</option>
-            <option value="All levels">{t("All levels")}</option>
+            <option value="All">{t("All levels")}</option>
           </select>
         </label>
       </Card>
@@ -145,8 +180,9 @@ export default function ProfileSetup() {
 
       <div className="flex items-center justify-end gap-3">
         {saved && <span role="status" className="text-xs font-semibold text-[#0b7a77]">{t("Profile saved")}</span>}
-        <button type="button" className={ghostBtn} onClick={() => { setTouched(false); setSaved(false); }}>{t("Cancel")}</button>
-        <button type="button" className={primaryBtn} onClick={save}>
+        {saveError && <span role="alert" className="text-xs font-semibold text-[#b83232]">{saveError}</span>}
+        <button type="button" className={ghostBtn} onClick={reset}>{t("Cancel")}</button>
+        <button type="button" className={primaryBtn} disabled={saving} onClick={save}>
           <Check className="size-4" /> {t("Save Changes")}
         </button>
       </div>

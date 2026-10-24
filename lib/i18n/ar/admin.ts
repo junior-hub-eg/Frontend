@@ -325,4 +325,12 @@ export const admin: Record<string, string> = {
   "Password updated": "تم تحديث كلمة المرور",
   "The new password must be at least 8 characters.": "يجب أن تكون كلمة المرور الجديدة 8 أحرف على الأقل.",
   "The passwords do not match.": "كلمتا المرور غير متطابقتين.",
+  "{n} unread notifications": "{n} إشعار غير مقروء",
+  "Could not load the submissions.": "تعذّر تحميل التسليمات.",
+  "No submissions yet.": "لا توجد تسليمات بعد.",
+  "Could not load your notifications.": "تعذّر تحميل الإشعارات.",
+  "Could not load the roles.": "تعذّر تحميل الأدوار.",
+  "Could not save the permissions.": "تعذّر حفظ الصلاحيات.",
+  "Permissions of {role}": "صلاحيات {role}",
+  "Student\\Squad": "الطالب/الفريق",
 };

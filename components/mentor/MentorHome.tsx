@@ -5,20 +5,29 @@ import type { Route } from "next";
 import { ArrowRight, Bell, CalendarDays, CheckCircle2, ChevronRight, Clock, MessageSquare, ShieldCheck, Star, User, Users } from "lucide-react";
 import { useAuth } from "@/lib/auth/auth-context";
 import { useT } from "@/lib/i18n/client";
-import { MENTOR_CONVERSATIONS, MENTOR_SESSIONS } from "@/lib/data/mentor-workspace";
+import { getMonitorConversations, getMonitorHome } from "@/lib/monitor-api";
+import { tk } from "@/lib/i18n/translate";
 import { Avatar, Card, Eyebrow, Pill, ghostBtn, primaryBtn } from "./mentor-ui";
+import { LoadState, initialsOf, sessionDate, sessionTime, shortTime, useMentorData } from "./mentor-data";
+
+const loadHome = () => Promise.all([getMonitorHome(), getMonitorConversations()]);
+const SESSION_TYPE: Record<string, string> = { OneToOne: tk("1:1 session"), Group: tk("Group session") };
 
 export default function MentorHome() {
   const t = useT();
   const { user } = useAuth();
-  const upcoming = MENTOR_SESSIONS.filter((s) => s.status === "Upcoming");
-  const unread = MENTOR_CONVERSATIONS.filter((c) => c.unread > 0);
+  const { data, error, reload } = useMentorData(loadHome, tk("Could not load your dashboard."));
+
+  if (!data) return <LoadState error={error} onRetry={reload} />;
+  const [home, conversations] = data;
+  const upcoming = home.nextSessions;
+  const unread = conversations.filter((c) => c.unread > 0);
 
   const stats = [
-    { icon: CalendarDays, label: t("Upcoming sessions"), value: String(upcoming.length), hint: t("Next 7 days") },
-    { icon: Users, label: t("Assigned students"), value: "8", hint: t("Across 3 tracks") },
-    { icon: Bell, label: t("Pending actions"), value: "1", hint: t("Session follow-up") },
-    { icon: Star, label: t("Student rating"), value: "4.8", hint: t("From 24 ratings") },
+    { icon: CalendarDays, label: t("Upcoming sessions"), value: String(home.upcomingSessionsWeek), hint: t("{n} today", { n: home.upcomingSessionsToday }) },
+    { icon: Users, label: t("Assigned students"), value: String(home.totalStudents), hint: t("Assigned to you") },
+    { icon: Bell, label: t("Pending actions"), value: String(home.pendingReviews), hint: t("Session follow-up") },
+    { icon: Star, label: t("Student rating"), value: home.overallRating.toFixed(1), hint: t("Out of 5") },
   ];
 
   const quick = [
@@ -33,7 +42,7 @@ export default function MentorHome() {
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <Eyebrow>{t("Dashboard")}</Eyebrow>
-          <h1 className="mt-1 text-3xl font-bold">{t("Good morning, {name}.", { name: user?.firstName ?? "Alex" })}</h1>
+          <h1 className="mt-1 text-3xl font-bold">{t("Good morning, {name}.", { name: user?.firstName ?? "" })}</h1>
           <p className="mt-1 text-sm text-[#14305a]/65">{t("Here is what is happening across your mentorship workspace today.")}</p>
         </div>
         <Link href={"/mentor/availability" as Route} className={primaryBtn}>
@@ -66,17 +75,18 @@ export default function MentorHome() {
                 {t("View All Sessions")} <ArrowRight className="size-3.5 rtl:rotate-180" />
               </Link>
             </div>
+            {upcoming.length === 0 && <p className="py-8 text-center text-sm text-[#14305a]/60">{t("No upcoming sessions")}</p>}
             <ul className="mt-3 divide-y divide-[#e6efed]">
               {upcoming.map((s) => (
                 <li key={s.id} className="flex flex-wrap items-center gap-4 py-3">
-                  <Avatar initials={s.initials} />
+                  <Avatar initials={initialsOf(s.studentName)} />
                   <div className="min-w-[8rem] flex-1">
-                    <p className="text-sm font-semibold">{s.student}</p>
-                    <p className="text-xs text-[#14305a]/60">{t(s.track)}</p>
+                    <p className="text-sm font-semibold">{s.studentName}</p>
+                    <p className="text-xs text-[#14305a]/60">{t(SESSION_TYPE[s.type] ?? s.type)}</p>
                   </div>
                   <div className="text-xs text-[#14305a]/70">
-                    <p className="flex items-center gap-1.5"><CalendarDays className="size-3.5 text-[#0f8f8c]" /> {s.date}</p>
-                    <p className="mt-1 flex items-center gap-1.5"><Clock className="size-3.5 text-[#0f8f8c]" /> {s.time}</p>
+                    <p className="flex items-center gap-1.5"><CalendarDays className="size-3.5 text-[#0f8f8c]" /> {sessionDate(s.startsUtc)}</p>
+                    <p className="mt-1 flex items-center gap-1.5"><Clock className="size-3.5 text-[#0f8f8c]" /> {sessionTime(s.startsUtc, s.durationMinutes)}</p>
                   </div>
                   <Pill>{t("Upcoming")}</Pill>
                   <Link href={`/mentor/sessions/${s.id}` as Route} className={`${ghostBtn} !px-3 !py-1.5 text-xs`}>{t("View Details")}</Link>
@@ -95,19 +105,17 @@ export default function MentorHome() {
                 {t("Open Messages")} <ArrowRight className="size-3.5 rtl:rotate-180" />
               </Link>
             </div>
+            {home.recentActivity.length === 0 && <p className="py-8 text-center text-sm text-[#14305a]/60">{t("No activity from your students this week.")}</p>}
             <ul className="mt-3 divide-y divide-[#e6efed]">
-              {[
-                { initials: "SH", id: "sara-hassan", text: t("Sara completed \"Responsive Layouts\""), sub: t("Frontend track - 35 minutes ago"), icon: CheckCircle2 },
-                { initials: "LM", id: "sara-hassan", text: t("Lina shared feedback from your session"), sub: t("UI/UX Design - Yesterday"), icon: Star },
-              ].map((a) => (
-                <li key={a.text}>
-                  <Link href={`/mentor/students/${a.id}` as Route} className="flex items-center gap-3 py-3">
-                    <Avatar initials={a.initials} size="sm" />
+              {home.recentActivity.slice(0, 6).map((a, i) => (
+                <li key={`${a.studentId}-${a.occurredUtc}-${i}`}>
+                  <Link href={`/mentor/students/${a.studentId}` as Route} className="flex items-center gap-3 py-3">
+                    <Avatar initials={initialsOf(a.studentName)} size="sm" />
                     <span className="min-w-0 flex-1">
-                      <span className="block text-sm font-semibold">{a.text}</span>
-                      <span className="block text-xs text-[#14305a]/60">{a.sub}</span>
+                      <span className="block text-sm font-semibold">{a.detail ?? a.eventType}</span>
+                      <span className="block text-xs text-[#14305a]/60">{a.studentName} - {shortTime(a.occurredUtc)}</span>
                     </span>
-                    <a.icon className="size-4 text-[#0f8f8c]" />
+                    <CheckCircle2 className="size-4 text-[#0f8f8c]" />
                   </Link>
                 </li>
               ))}
@@ -129,8 +137,8 @@ export default function MentorHome() {
                 <Link href={"/mentor/messages" as Route} className="flex items-center gap-3 rounded-xl bg-[#f2faf8] p-3">
                   <MessageSquare className="size-4 text-[#0f8f8c]" />
                   <span className="min-w-0 flex-1 text-xs">
-                    <span className="block font-semibold">{t("{n} unread messages", { n: unread.length })}</span>
-                    <span className="block text-[#14305a]/60">{unread.map((c) => c.student.split(" ")[0]).join(" & ")} {t("are waiting for a reply")}</span>
+                    <span className="block font-semibold">{t("{n} unread messages", { n: home.unreadMessages })}</span>
+                    {unread.length > 0 && <span className="block text-[#14305a]/60">{unread.map((c) => c.partnerName.split(" ")[0]).join(" & ")} {t("are waiting for a reply")}</span>}
                   </span>
                   <ChevronRight className="size-4 rtl:rotate-180" />
                 </Link>

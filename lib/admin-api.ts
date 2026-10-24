@@ -204,3 +204,48 @@ export interface PlatformSettings {
 
 export const getPlatformSettings = () => api.get<PlatformSettings>("/api/v1/admin/settings");
 export const savePlatformSettings = (settings: PlatformSettings) => api.put<PlatformSettings>("/api/v1/admin/settings", settings);
+
+/* ---------- Assignments & submissions ---------- */
+
+export interface AdminSubmissionsOverview {
+  stats: { totalSubmissions: number; avgScore: string; pendingReview: number; approved: number };
+  rows: {
+    id: string;
+    student: string;
+    assignment: string;
+    track: string;
+    /** "Submitted", "Pending" or "Graded" */
+    status: string;
+    /** A picture in /images/Intern. */
+    avatar: string;
+    bg: string;
+    /** "Assignment" or "Squad" */
+    type: string;
+    submittedUtc: string;
+  }[];
+}
+
+export const getAdminSubmissions = () => api.get<AdminSubmissionsOverview>("/api/v1/admin/submissions");
+
+/* ---------- Roles & permissions ---------- */
+
+export interface RolePermission {
+  area: string;
+  canView: boolean;
+  canEdit: boolean;
+  canDelete: boolean;
+}
+
+export interface AdminRole {
+  id: string;
+  name: string;
+  /** "Full Access - 3 Users" */
+  meta: string;
+  isSystemRole: boolean;
+  permissions: RolePermission[];
+}
+
+export const getAdminRoles = () => api.get<AdminRole[]>("/api/v1/admin/roles");
+/** The description is left as it is. */
+export const updateAdminRolePermissions = (role: AdminRole, permissions: RolePermission[]) =>
+  api.put<AdminRole>(`/api/v1/admin/roles/${role.id}`, { name: role.name, permissions });

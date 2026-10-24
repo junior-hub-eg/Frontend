@@ -33,6 +33,7 @@ import {
 import { useAuth } from "@/lib/auth/auth-context";
 import { landingFont } from "@/components/Landing/font";
 import { APPROVALS_CHANGED, getApprovals } from "@/lib/admin-api";
+import { getUnreadNotificationCount } from "@/lib/notifications-api";
 import { useI18n } from "@/lib/i18n/client";
 import { tk } from "@/lib/i18n/translate";
 import { QuickManagement } from "./QuickManagement";
@@ -96,6 +97,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const [isDesktop, setIsDesktop] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
   const [waiting, setWaiting] = useState(0);
+  const [unseen, setUnseen] = useState(0);
 
   const searchRef = useRef<HTMLInputElement>(null);
 
@@ -128,6 +130,10 @@ export function AdminShell({ children }: { children: ReactNode }) {
       );
 
     void count();
+    getUnreadNotificationCount().then(
+      (n) => active && setUnseen(n),
+      () => {},
+    );
     window.addEventListener(APPROVALS_CHANGED, count);
 
     return () => {
@@ -379,7 +385,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
               className="pointer-events-auto relative grid size-[2.4em] place-items-center rounded-full border border-white/70 bg-white/55 text-[#14365a] shadow-[0_6px_18px_rgba(60,160,230,0.2)] backdrop-blur hover:bg-white/80"
             >
               <Bell className="size-[1.1em]" />
-              <span className="absolute end-[0.55em] top-[0.55em] size-[0.55em] rounded-full bg-[#e0245e]" />
+              {unseen > 0 && <span className="absolute end-[0.55em] top-[0.55em] size-[0.55em] rounded-full bg-[#e0245e]" aria-label={t("{n} unread notifications", { n: unseen })} />}
             </Link>
 
             <div className="pointer-events-auto relative">
