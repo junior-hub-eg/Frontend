@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { Lock, ShieldCheck } from "lucide-react";
 import { useT } from "@/lib/i18n/client";
-import { MENTOR_FEEDBACK } from "@/lib/data/mentor-workspace";
+import { tk } from "@/lib/i18n/translate";
+import { getMonitorFeedback } from "@/lib/monitor-api";
 import { Avatar, Card, Eyebrow, PageHeading, Pill, Stars } from "./mentor-ui";
+import { LoadState, useMentorData } from "./mentor-data";
 import { cn } from "@/lib/utils";
 
 const FILTERS = ["All", "5 stars", "4 stars"] as const;
@@ -12,8 +14,9 @@ const FILTERS = ["All", "5 stars", "4 stars"] as const;
 export default function MentorFeedback() {
   const t = useT();
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>("All");
-  const avg = MENTOR_FEEDBACK.length ? MENTOR_FEEDBACK.reduce((n, f) => n + f.rating, 0) / MENTOR_FEEDBACK.length : 0;
-  const list = MENTOR_FEEDBACK.filter((f) => filter === "All" || Math.floor(f.rating) === (filter === "5 stars" ? 5 : 4));
+  const { data, error, reload } = useMentorData(getMonitorFeedback, tk("Could not load your feedback."));
+  if (!data) return <LoadState error={error} onRetry={reload} />;
+  const list = data.items.filter((f) => filter === "All" || Math.floor(f.rating) === (filter === "5 stars" ? 5 : 4));
 
   return (
     <>
@@ -22,9 +25,9 @@ export default function MentorFeedback() {
       <div className="grid gap-4 md:grid-cols-[1fr_2fr]">
         <Card className="flex flex-col items-center justify-center text-center">
           <Eyebrow>{t("Overall rating")}</Eyebrow>
-          <p className="mt-1 text-5xl font-bold">4.8</p>
-          <Stars value={5} />
-          <p className="mt-2 text-xs text-[#14305a]/60">{t("Based on {n} student ratings", { n: 24 })}</p>
+          <p className="mt-1 text-5xl font-bold">{data.overallRating.toFixed(1)}</p>
+          <Stars value={data.overallRating} />
+          <p className="mt-2 text-xs text-[#14305a]/60">{t("Based on {n} student ratings", { n: data.totalReviews })}</p>
         </Card>
         <div className="flex items-center gap-4 rounded-2xl bg-[#14305a] p-6 text-white">
           <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#3cc4bd] text-[#14305a]"><Lock className="size-5" /></span>
@@ -58,7 +61,7 @@ export default function MentorFeedback() {
                 <Avatar initials={f.initials} size="sm" />
                 <div className="min-w-[10rem] flex-1">
                   <p className="text-sm font-semibold">{f.student} <span className="text-xs font-normal text-[#14305a]/55">· {t(f.track)}</span></p>
-                  <p className="text-xs text-[#14305a]/70">{t(f.comment)}</p>
+                  {f.comment && <p className="text-xs text-[#14305a]/70">{f.comment}</p>}
                 </div>
                 <div className="flex items-center gap-2"><Stars value={f.rating} /><span className="text-xs font-semibold">{f.rating.toFixed(1)}</span></div>
               </li>

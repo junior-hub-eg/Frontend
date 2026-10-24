@@ -1,16 +1,18 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
+import { useCallback, useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import type { Route } from "next";
 import { BarChart3, Bell, CalendarDays, ChevronRight, Clock, LoaderCircle, LogOut, Menu, MessageSquare, ShieldCheck, Star, User, Users, X } from "lucide-react";
 import { useAuth } from "@/lib/auth/auth-context";
-import { useT } from "@/lib/i18n/client";
+import { useI18n, useT } from "@/lib/i18n/client";
 import { tk } from "@/lib/i18n/translate";
 import { landingFont } from "@/components/Landing/font";
-import { MENTOR_CONVERSATIONS, MENTOR_NOTIFICATIONS } from "@/lib/data/mentor-workspace";
+import { getMonitorConversations } from "@/lib/monitor-api";
+import { getNotifications, getUnreadNotificationCount, markNotificationRead, notificationText, type AppNotification } from "@/lib/notifications-api";
 import { Avatar } from "./mentor-ui";
+import { shortTime } from "./mentor-data";
 
 const SKIP_AUTH = process.env.NEXT_PUBLIC_SKIP_AUTH === "true" && process.env.NODE_ENV !== "production";
 const noopSubscribe = () => () => {};
@@ -33,6 +35,11 @@ export function MentorShell({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth();
   const [open, setOpen] = useState(false);
   const [bell, setBell] = useState(false);
+  const { locale } = useI18n();
+  const [unread, setUnread] = useState(0);
+  const [unseen, setUnseen] = useState(0);
+  const [notes, setNotes] = useState<AppNotification[] | null>(null);
+  const [notesError, setNotesError] = useState(false);
   const hydrated = useSyncExternalStore(noopSubscribe, () => true, () => false);
   const allowed = SKIP_AUTH || (!!user && user.role === "mentor");
 
@@ -45,6 +52,31 @@ export function MentorShell({ children }: { children: ReactNode }) {
     setBell(false);
   }, [pathname]);
 
+  // The unread messages (sidebar badge) and notifications (bell dot), again on each page.
+  const isMentor = user?.role === "mentor";
+  useEffect(() => {
+    if (!isMentor) return;
+    let active = true;
+    getMonitorConversations().then((list) => active && setUnread(list.reduce((n, c) => n + c.unread, 0)), () => undefined);
+    getUnreadNotificationCount().then((n) => active && setUnseen(n), () => undefined);
+    return () => {
+      active = false;
+    };
+  }, [isMentor, pathname]);
+
+  const toggleBell = useCallback(() => {
+    setBell(!bell);
+    if (bell) return;
+    setNotesError(false);
+    getNotifications({ limit: 8 }).then(setNotes, () => setNotesError(true));
+  }, [bell]);
+  const openNote = (n: AppNotification) => {
+    if (n.isRead) return;
+    setUnseen((c) => Math.max(0, c - 1));
+    setNotes((all) => all?.map((x) => (x.id === n.id ? { ...x, isRead: true } : x)) ?? null);
+    markNotificationRead(n.id).catch(() => undefined);
+  };
+
   if (!allowed) {
     return (
       <div className="grid min-h-svh place-items-center" role="status" aria-label={t("Loading")}>
@@ -53,9 +85,8 @@ export function MentorShell({ children }: { children: ReactNode }) {
     );
   }
 
-  const name = user ? [user.firstName, user.lastName].filter(Boolean).join(" ") : "Alex Morgan";
+  const name = user ? [user.firstName, user.lastName].filter(Boolean).join(" ") : "";
   const initials = name.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase();
-  const unread = MENTOR_CONVERSATIONS.reduce((n, c) => n + c.unread, 0);
 
   return (
     <div className={`${landingFont.variable} flex min-h-svh bg-[#e9f7f4] font-[family-name:var(--font-poppins)] text-[#14305a]`}>
@@ -127,13 +158,13 @@ export function MentorShell({ children }: { children: ReactNode }) {
             <div className="relative">
               <button
                 type="button"
-                onClick={() => setBell((v) => !v)}
+                onClick={toggleBell}
                 aria-label={t("Notifications")}
                 aria-expanded={bell}
                 className="relative grid size-10 place-items-center rounded-full border border-[#dbe8e6] bg-white hover:bg-[#f1faf8]"
               >
                 <Bell className="size-4" />
-                <span className="absolute end-2.5 top-2.5 size-2 rounded-full bg-[#0f8f8c]" />
+                {unseen > 0 && <span className="absolute end-2.5 top-2.5 size-2 rounded-full bg-[#0f8f8c]" aria-label={t("{n} unread notifications", { n: unseen })} />}
               </button>
               {bell && (
                 <>
@@ -141,19 +172,37 @@ export function MentorShell({ children }: { children: ReactNode }) {
                   <div role="menu" className="absolute end-0 top-full z-50 mt-2 w-80 max-w-[85vw] rounded-2xl border border-[#dbe8e6] bg-white p-4 shadow-xl">
                     <p className="text-[0.6rem] font-bold uppercase tracking-[0.14em] text-[#0f8f8c]">{t("Notifications")}</p>
                     <p className="text-sm font-bold">{t("What needs your attention")}</p>
-                    <ul className="mt-3 space-y-1">
-                      {MENTOR_NOTIFICATIONS.map((n) => (
-                        <li key={n.id}>
-                          <Link href={n.href as Route} role="menuitem" className="flex items-center gap-2 rounded-xl p-2 hover:bg-[#f1faf8]">
-                            <span className="min-w-0 flex-1">
-                              <span className="block text-xs font-semibold">{t(n.title)}</span>
-                              <span className="block truncate text-[0.7rem] text-[#14305a]/60">{t(n.body)}</span>
-                            </span>
-                            <ChevronRight className="size-3.5 shrink-0 text-[#14305a]/40 rtl:rotate-180" />
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
+                    {notesError ? (
+                      <p role="alert" className="mt-3 text-xs font-semibold text-[#b83232]">{t("Could not load your notifications.")}</p>
+                    ) : !notes ? (
+                      <p role="status" className="mt-3 flex justify-center"><LoaderCircle className="size-5 animate-spin text-[#0f8f8c]" /></p>
+                    ) : notes.length === 0 ? (
+                      <p className="mt-3 py-4 text-center text-xs text-[#14305a]/60">{t("No notifications yet.")}</p>
+                    ) : (
+                      <ul className="mt-3 space-y-1">
+                        {notes.map((n) => {
+                          const body = (
+                            <>
+                              <span className="min-w-0 flex-1">
+                                <span className={`block text-xs ${n.isRead ? "font-medium text-[#14305a]/70" : "font-semibold"}`}>{notificationText(n, locale)}</span>
+                                <span className="block truncate text-[0.7rem] text-[#14305a]/60">{n.extraText ? `${n.extraText} · ` : ""}{shortTime(n.createdUtc)}</span>
+                              </span>
+                              {!n.isRead && <span className="size-2 shrink-0 rounded-full bg-[#0f8f8c]" />}
+                              {n.link && <ChevronRight className="size-3.5 shrink-0 text-[#14305a]/40 rtl:rotate-180" />}
+                            </>
+                          );
+                          return (
+                            <li key={n.id}>
+                              {n.link?.startsWith("/") ? (
+                                <Link href={n.link as Route} role="menuitem" onClick={() => openNote(n)} className="flex items-center gap-2 rounded-xl p-2 hover:bg-[#f1faf8]">{body}</Link>
+                              ) : (
+                                <button type="button" role="menuitem" onClick={() => openNote(n)} className="flex w-full items-center gap-2 rounded-xl p-2 text-start hover:bg-[#f1faf8]">{body}</button>
+                              )}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
                   </div>
                 </>
               )}

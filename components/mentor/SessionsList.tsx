@@ -5,14 +5,21 @@ import Link from "next/link";
 import type { Route } from "next";
 import { CalendarDays, CheckCircle2, Clock, Search, UserX } from "lucide-react";
 import { useT } from "@/lib/i18n/client";
-import { MENTOR_SESSIONS, type MentorSession, type SessionStatus } from "@/lib/data/mentor-workspace";
+import { errorMessage } from "@/lib/api-client";
+import { tk } from "@/lib/i18n/translate";
+import { getMonitorSessions, setSessionNoShow, type MonitorSession } from "@/lib/monitor-api";
 import { Avatar, Card, EmptyState, PageHeading, Pill, ghostBtn } from "./mentor-ui";
+import { LoadState, initialsOf, sessionDate, sessionTime, useMentorData } from "./mentor-data";
 import { cn } from "@/lib/utils";
 
+type SessionStatus = "Upcoming" | "Completed" | "NoShow";
+const loadSessions = () => getMonitorSessions();
+const SESSION_TYPE: Record<string, string> = { OneToOne: tk("1:1 session"), Group: tk("Group session") };
+
 const TABS: { key: SessionStatus; label: string; empty: { title: string; hint: string } }[] = [
-  { key: "Upcoming", label: "Upcoming", empty: { title: "No upcoming sessions", hint: "Confirmed student sessions will appear here." } },
-  { key: "Completed", label: "Completed", empty: { title: "No completed sessions", hint: "Try a different student or search term." } },
-  { key: "NoShow", label: "Student no-show", empty: { title: "No student no-show sessions", hint: "Try a different student or search term." } },
+  { key: "Upcoming", label: tk("Upcoming"), empty: { title: tk("No upcoming sessions"), hint: tk("Confirmed student sessions will appear here.") } },
+  { key: "Completed", label: tk("Completed"), empty: { title: tk("No completed sessions"), hint: tk("Try a different student or search term.") } },
+  { key: "NoShow", label: tk("Student no-show"), empty: { title: tk("No student no-show sessions"), hint: tk("Try a different student or search term.") } },
 ];
 
 /** Sessions list with its three tabs (Upcoming, Completed, Student no-show) and their empty states. */
@@ -20,12 +27,31 @@ export default function SessionsList() {
   const t = useT();
   const [tab, setTab] = useState<SessionStatus>("Upcoming");
   const [q, setQ] = useState("");
-  const [items, setItems] = useState<MentorSession[]>(MENTOR_SESSIONS);
+  const { data, error, reload, setData } = useMentorData(loadSessions, tk("Could not load your sessions."));
+  const [busy, setBusy] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const items: MonitorSession[] = data ?? [];
   const current = TABS.find((x) => x.key === tab)!;
   const query = q.trim().toLowerCase();
-  const rows = items.filter((s) => s.status === tab && (!query || s.student.toLowerCase().includes(query) || s.track.toLowerCase().includes(query)));
+  const rows = items
+    .filter((s) => s.status === tab && (!query || s.studentName.toLowerCase().includes(query) || (s.topic ?? "").toLowerCase().includes(query)))
+    .sort((a, b) => (tab === "Upcoming" ? a.startsUtc.localeCompare(b.startsUtc) : b.startsUtc.localeCompare(a.startsUtc)));
   const count = (k: SessionStatus) => items.filter((s) => s.status === k).length;
   const EmptyIcon = tab === "Upcoming" ? CalendarDays : tab === "Completed" ? CheckCircle2 : UserX;
+
+  async function undoNoShow(s: MonitorSession) {
+    setBusy(s.id);
+    setActionError(null);
+    try {
+      const { topic, agenda, meetingLink, mentorNotes, followUpPoints, learningGoals } = s;
+      const saved = await setSessionNoShow(s.id, { topic, agenda, meetingLink, mentorNotes, followUpPoints, learningGoals }, false);
+      setData((all) => (all ?? []).map((x) => (x.id === s.id ? saved : x)));
+    } catch (e) {
+      setActionError(errorMessage(e, t("Could not update the session.")));
+    } finally {
+      setBusy(null);
+    }
+  }
 
   return (
     <>
@@ -64,22 +90,25 @@ export default function SessionsList() {
           <span>{t("Student")}</span><span>{t("Date and time")}</span><span>{t("Status")}</span><span className="text-end">{t("Action")}</span>
         </div>
 
-        {rows.length === 0 ? (
+        {actionError && <p role="alert" className="mx-5 mb-3 rounded-xl bg-[#fdecec] px-4 py-2 text-xs font-semibold text-[#b83232]">{actionError}</p>}
+        {!data ? (
+          <LoadState error={error} onRetry={reload} />
+        ) : rows.length === 0 ? (
           <EmptyState icon={<EmptyIcon className="size-5" />} title={t(current.empty.title)} hint={t(current.empty.hint)} />
         ) : (
           <ul className="divide-y divide-[#e6efed]">
             {rows.map((s) => (
               <li key={s.id} className="grid items-center gap-3 px-5 py-3 sm:grid-cols-[1.3fr_1.2fr_0.8fr_0.8fr] sm:gap-4">
                 <div className="flex items-center gap-3">
-                  <Avatar initials={s.initials} />
+                  <Avatar initials={initialsOf(s.studentName)} />
                   <div>
-                    <p className="text-sm font-semibold">{s.student}</p>
-                    <p className="text-xs text-[#14305a]/60">{t(s.track)}</p>
+                    <p className="text-sm font-semibold">{s.studentName}</p>
+                    <p className="text-xs text-[#14305a]/60">{t(SESSION_TYPE[s.type] ?? s.type)}</p>
                   </div>
                 </div>
                 <div className="text-xs text-[#14305a]/70">
-                  <p className="flex items-center gap-1.5"><CalendarDays className="size-3.5 text-[#0f8f8c]" /> {s.date}</p>
-                  <p className="mt-1 flex items-center gap-1.5"><Clock className="size-3.5 text-[#0f8f8c]" /> {s.time}</p>
+                  <p className="flex items-center gap-1.5"><CalendarDays className="size-3.5 text-[#0f8f8c]" /> {sessionDate(s.startsUtc)}</p>
+                  <p className="mt-1 flex items-center gap-1.5"><Clock className="size-3.5 text-[#0f8f8c]" /> {sessionTime(s.startsUtc, s.durationMinutes)}</p>
                 </div>
                 <div>
                   <Pill tone={s.status === "NoShow" ? "amber" : "teal"}>
@@ -87,7 +116,7 @@ export default function SessionsList() {
                   </Pill>
                 </div>
                 <div className="flex justify-end gap-2">
-                  {s.status === "NoShow" && <button type="button" onClick={() => setItems((all) => all.map((x) => (x.id === s.id ? { ...x, status: "Upcoming" } : x)))} className={`${ghostBtn} !px-3 !py-1.5 text-xs`}>{t("Undo no-show")}</button>}
+                  {s.status === "NoShow" && <button type="button" disabled={busy === s.id} onClick={() => undoNoShow(s)} className={`${ghostBtn} !px-3 !py-1.5 text-xs`}>{t("Undo no-show")}</button>}
                   <Link href={`/mentor/sessions/${s.id}` as Route} className={`${ghostBtn} !px-3 !py-1.5 text-xs`}>{t("View Details")}</Link>
                 </div>
               </li>
