@@ -23,17 +23,20 @@ export function PageHero({
   title,
   children,
   contentClassName = "pb-[1.5em]",
+  pictureTop = false,
 }: {
   title: string;
   children?: ReactNode;
   /** Bottom padding of the hero content (use "pb-0" + negative margin to let cards overlap the hero) */
   contentClassName?: string;
+  /** Show the top of the park picture (the sky), so the title stays readable on a short hero. */
+  pictureTop?: boolean;
 }) {
   return (
     <section className="relative">
       {/* The picture has its own clipped layer so children can overflow the hero */}
       <div aria-hidden className="absolute inset-0 overflow-hidden rounded-[1.2em] lg:rounded-none">
-        <Image src="/images/Intern/bg-park.png" alt="" fill priority sizes="100vw" className="object-cover" />
+        <Image src="/images/Intern/bg-park.png" alt="" fill priority sizes="100vw" className={`object-cover ${pictureTop ? "object-top" : ""}`} />
       </div>
 
       <div className={`relative z-10 px-[1.2em] pt-[calc(var(--u)*5.4)] sm:px-[1.6em] lg:px-[9%] ${contentClassName}`}>
