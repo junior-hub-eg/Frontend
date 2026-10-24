@@ -16,6 +16,9 @@ import { mentors } from "./ar/mentors";
 import { mentorWorkspace } from "./ar/mentor-workspace";
 import { recruitment } from "./ar/recruitment";
 import { teacher } from "./ar/teacher";
+import { students } from "./ar/students";
+import { curriculum } from "./ar/curriculum";
+import { assignments } from "./ar/assignments";
 
 /** Arabic translations, keyed by the English text. `node scripts/i18n-check.mjs` lists missing ones. */
 export const ar: Record<string, string> = {
@@ -37,4 +40,7 @@ export const ar: Record<string, string> = {
   ...calendar,
   ...admin,
   ...teacher,
+  ...students,
+  ...curriculum,
+  ...assignments
 };

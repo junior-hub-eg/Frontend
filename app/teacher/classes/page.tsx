@@ -203,7 +203,6 @@ function Slider({ children, className }: { children: ReactNode; className?: stri
 type SortKey = "attendance" | "mastery" | "name";
 
 export default function MyClassesPage() {
-  // The page reads ?class= and ?tab= (links from the dashboard).
   return (
     <Suspense fallback={null}>
       <MyClasses />
