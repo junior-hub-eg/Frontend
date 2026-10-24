@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, type ReactNode } from "react";
 import Image from "next/image";
 import {
@@ -49,7 +48,6 @@ function Ltr({ children, className }: { children: ReactNode; className?: string 
   );
 }
 
-
 const BREADCRUMB = ["CurriculumConsole", "Design Sprints & Usability Testing", "UI/UX Evaluation Pipeline"];
 
 type StatTone = "red" | "teal";
@@ -92,7 +90,7 @@ const CANDIDATES: {
   avatar: string;
   photo?: string;
   cohort: string;
-  submitted: string;
+  submitted: [string, string];
   file: string;
   size: string;
   total: number;
@@ -107,7 +105,7 @@ const CANDIDATES: {
     avatar: "bg-[#f5a524]",
     photo: "/images/teacher/students/youssef.png",
     cohort: "Cohort 9B",
-    submitted: "Submitted yesterday at 8:42 AM (Attempt 1) • On Time",
+    submitted: ["Submitted yesterday at 8:42 AM", "(Attempt 1) • On Time"],
     file: "figma-design-audit_yc...",
     size: "2.4 MB • Verified checksum",
     total: 75,
@@ -128,7 +126,7 @@ const CANDIDATES: {
     avatar: "bg-[#12939b]",
     photo: "/images/teacher/students/sara.png",
     cohort: "Cohort 9A",
-    submitted: "Submitted today at 9:10 AM (Attempt 1) • On Time",
+    submitted: ["Submitted today at 9:10 AM", "(Attempt 1) • On Time"],
     file: "mobile-onboarding_sh...",
     size: "3.1 MB • Verified checksum",
     total: 95,
@@ -148,7 +146,7 @@ const CANDIDATES: {
     avatar: "bg-[#7c5cff]",
     photo: "/images/teacher/students/omar.png",
     cohort: "Cohort 9A",
-    submitted: "Submitted today at 7:55 AM (Attempt 2) • On Time",
+    submitted: ["Submitted today at 7:55 AM", "(Attempt 2) • On Time"],
     file: "kyc-flow-audit_oa...",
     size: "2.8 MB • Verified checksum",
     total: 98,
@@ -250,9 +248,6 @@ const VELOCITY_LABELS = ["08:00", "10:00", "12:00", "14:00", "16:00 (Peak 1)", "
 const VELOCITY_9A = [8, 25, 35, 70, 80, 55, 62, 48, 12];
 const VELOCITY_9B = [12, 20, 38, 34, 58, 50, 85, 44, 10];
 
-/* ------------------------------------------------------------------ */
-/* Small building blocks                                               */
-/* ------------------------------------------------------------------ */
 
 function Card({ className, children }: { className?: string; children: ReactNode }) {
   return (
@@ -390,6 +385,7 @@ export default function AssignmentsPage() {
 
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-4 pb-6 pt-4 font-[family-name:var(--font-poppins)] text-[#1B2D54]">
+      {/* Sky background: only the top part, fading into white */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[453px] [mask-image:linear-gradient(to_bottom,black_60%,transparent)]"
@@ -404,6 +400,7 @@ export default function AssignmentsPage() {
         />
       </div>
 
+      {/* ---------------- Hero ---------------- */}
       <header className="flex min-w-0 flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div className="min-w-0 flex-1">
           <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-1.5 text-[11px] font-semibold text-[#14243f]">
@@ -553,16 +550,14 @@ export default function AssignmentsPage() {
             </div>
           </Card>
 
-          {/* Submission + rubric + feedback */}
           <Card className="flex flex-col gap-5 p-6">
-            {/* Submission: keep the same layout in English and Arabic */}
             <div dir="ltr" className="flex flex-wrap items-center justify-between gap-3">
               {/* Student info */}
               <div className="flex min-w-0 items-center gap-3">
                 {candidate.photo ? (
                   <Image
                     src={candidate.photo}
-                    alt={candidate.name}
+                    alt={tr(candidate.name)}
                     width={48}
                     height={48}
                     className="size-12 shrink-0 rounded-full object-cover"
@@ -578,26 +573,27 @@ export default function AssignmentsPage() {
                   </span>
                 )}
 
-                <div className="min-w-0 text-left leading-tight">
+                <div className="min-w-0 leading-tight">
                   <h2 dir="auto" className="text-left text-lg font-bold">
                     {tr(candidate.name)}
                   </h2>
 
-                  <div className="mt-1 flex flex-wrap items-center gap-1">
-                    <p
-                      dir="auto"
-                      className="flex max-w-[15rem] items-start gap-1.5 text-left text-[11px] leading-snug text-[#1B2D54]/70"
-                    >
-                      <Clock
-                        aria-hidden
-                        className="mt-0.5 size-3 shrink-0 text-[#0b6b70]"
-                      />
-                      <span>{tr(candidate.submitted)}</span>
-                    </p>
+                  <div className="mt-1 flex items-center gap-2">
+                    <div className="flex items-start gap-1.5">
+                      <Clock aria-hidden className="mt-0.5 size-3 shrink-0 text-[#0b6b70]" />
+                      <div className="text-[11px] leading-snug text-[#1B2D54]/70">
+                        <p dir="auto" className="text-left">
+                          {tr(candidate.submitted[0])}
+                        </p>
+                        <p dir="auto" className="text-left">
+                          {tr(candidate.submitted[1])}
+                        </p>
+                      </div>
+                    </div>
 
                     <span
                       dir="auto"
-                      className="shrink-0 rounded-md bg-[#bff3f3] px-2 py-0.5 text-left text-[9px] font-semibold text-[#0b6b70]"
+                      className="shrink-0 whitespace-nowrap rounded-md bg-[#bff3f3] px-2 py-0.5 text-[9px] font-semibold text-[#0b6b70]"
                     >
                       {tr(candidate.cohort)}
                     </span>
@@ -606,11 +602,8 @@ export default function AssignmentsPage() {
               </div>
 
               {/* File card */}
-              <div dir="ltr" className="flex min-w-0 items-center gap-2 rounded-xl bg-[#f1f4f4] px-4 py-3">
-                <FileText
-                  aria-hidden
-                  className="size-5 shrink-0 text-[#1B2D54]/70"
-                />
+              <div className="flex min-w-0 items-center gap-2 rounded-xl bg-[#f1f4f4] px-4 py-3">
+                <FileText aria-hidden className="size-5 shrink-0 text-[#1B2D54]/70" />
 
                 <div className="min-w-0 leading-tight">
                   <p dir="ltr" className="truncate text-left text-[10px] font-semibold">
@@ -623,13 +616,10 @@ export default function AssignmentsPage() {
 
                 <button
                   type="button"
-                  className="flex shrink-0 items-center gap-1 rounded-md bg-white px-3 py-1.5 text-[11px] font-semibold shadow-sm ring-1 ring-[#e3ece9] hover:bg-[#f6f9f8]"
+                  className="flex shrink-0 items-center gap-1 whitespace-nowrap rounded-md bg-white px-3 py-1.5 text-[11px] font-semibold shadow-sm ring-1 ring-[#e3ece9] hover:bg-[#f6f9f8]"
                 >
                   <span dir="auto">{tr("Open in Figma")}</span>
-                  <ArrowUpRight
-                    aria-hidden
-                    className="size-3.5 rtl:-scale-x-100"
-                  />
+                  <ArrowUpRight aria-hidden className="size-3.5" />
                 </button>
               </div>
             </div>
@@ -694,6 +684,7 @@ export default function AssignmentsPage() {
                 })}
               </ul>
             </div>
+
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-[#0b6b70] px-5 py-4 text-white">
               <div className="flex items-center gap-3">
                 <div className="grid size-14 place-items-center rounded-lg bg-white text-center leading-none text-[#0b6b70]">
@@ -716,7 +707,6 @@ export default function AssignmentsPage() {
                 {tr("Recalculate Rubric")}
               </button>
             </div>
-
             <div>
               <div className="flex items-center justify-between gap-2">
                 <h3 className="flex items-center gap-2 text-sm font-bold">
@@ -779,6 +769,7 @@ export default function AssignmentsPage() {
           </Card>
         </div>
 
+        {/* ================= Right: review pipeline (aside, 4 columns) ================= */}
         <div className="flex min-w-0 flex-col gap-6 xl:col-span-4">
           <Card className="p-5">
             <div className="flex items-center justify-between gap-2">
@@ -883,7 +874,6 @@ export default function AssignmentsPage() {
 
                   <button
                     type="button"
-                    // TODO: connect to the real page
                     className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-lg bg-[#eef0f2] px-3 py-2.5 text-[11px] font-semibold text-[#14243f] hover:bg-[#e1e5e8]"
                   >
                     {tr(p.action)}
@@ -907,7 +897,6 @@ export default function AssignmentsPage() {
           </Card>
         </div>
       </div>
-
       <Card className="p-6">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div className="leading-tight">

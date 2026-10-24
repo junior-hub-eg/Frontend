@@ -37,12 +37,12 @@ export const assignments: Record<string, string> = {
   "Cohort 9B": "المجموعة 9B",
 
   // Submission
-  "Submitted yesterday at 8:42 AM (Attempt 1) • On Time":
-    "تم التسليم أمس الساعة 8:42 صباحًا (المحاولة 1) • في الموعد",
-  "Submitted today at 9:10 AM (Attempt 1) • On Time":
-    "تم التسليم اليوم الساعة 9:10 صباحًا (المحاولة 1) • في الموعد",
-  "Submitted today at 7:55 AM (Attempt 2) • On Time":
-    "تم التسليم اليوم الساعة 7:55 صباحًا (المحاولة 2) • في الموعد",
+    // Submission (two short lines)
+  "Submitted yesterday at 8:42 AM": "تم التسليم أمس الساعة 8:42 ص",
+  "Submitted today at 9:10 AM": "تم التسليم اليوم الساعة 9:10 ص",
+  "Submitted today at 7:55 AM": "تم التسليم اليوم الساعة 7:55 ص",
+  "(Attempt 1) • On Time": "(المحاولة 1) • في الموعد",
+  "(Attempt 2) • On Time": "(المحاولة 2) • في الموعد",
   "2.4 MB • Verified checksum": "2.4 ميجابايت • تم التحقق من سلامة الملف",
   "3.1 MB • Verified checksum": "3.1 ميجابايت • تم التحقق من سلامة الملف",
   "2.8 MB • Verified checksum": "2.8 ميجابايت • تم التحقق من سلامة الملف",
