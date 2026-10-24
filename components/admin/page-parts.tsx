@@ -3,20 +3,22 @@ import type { CSSProperties, ReactNode } from "react";
 
 const baseFont = { fontSize: "clamp(11px, calc(var(--u) * 1.05), 17px)" } as CSSProperties;
 
-/** Wraps an admin page: fills the space above Quick Management (set by AdminShell). */
+/**
+ * Wraps an admin page: fills the space above Quick Management (set by AdminShell).
+ */
 export function AdminPage({ children }: { children: ReactNode }) {
   return (
-    <div className="flex min-w-0 flex-col bg-[#eef3fa] xl:min-h-0 xl:flex-1" style={baseFont}>
+    <div className="flex min-w-0 flex-col xl:min-h-0 xl:flex-1" style={baseFont}>
       {children}
     </div>
   );
 }
 
-/** Park picture, full width, also behind the floating top bar. Content starts below the bar. */
+/** Top part of a page, with the park picture behind it (same as the dashboard hero). */
 export function AdminHero({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
     <section className={`relative shrink-0 overflow-hidden ${className}`}>
-      <Image src="/images/Intern/bg-park.png" alt="" fill priority sizes="100vw" className="object-fill" />
+      <Image src="/images/Intern/bg-park.png" alt="" fill priority sizes="100vw" className="object-cover" />
       <div className="relative z-10 px-[calc(var(--u)*1.6)] pb-[1.6em] pt-[calc(var(--u)*5.4)]">{children}</div>
     </section>
   );

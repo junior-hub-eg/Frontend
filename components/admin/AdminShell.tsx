@@ -25,6 +25,10 @@ import {
   UsersRound,
   Shield,
   Megaphone,
+  History,
+  ClipboardCheck,
+  Award,
+  KeyRound,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth/auth-context";
 import { landingFont } from "@/components/Landing/font";
@@ -54,6 +58,10 @@ const NAV_GROUPS = [
     { href: "/admin/assignments", label: tk("Assignments & Submissions"), icon: ClipboardList },
     { href: "/admin/roles", label: tk("Roles & Permissions"), icon: Shield },
     { href: "/admin/reports", label: tk("Reports & Analytics"), icon: TrendingUp },
+    { href: "/admin/activity-log", label: tk("Activity Log"), icon: History },
+    { href: "/admin/assessment-builder", label: tk("Assessment Builder"), icon: ClipboardCheck },
+    { href: "/admin/certificates", label: tk("Certificates"), icon: Award },
+    { href: "/admin/security", label: tk("Security & Login History"), icon: KeyRound },
     { href: "/admin/settings", label: tk("System Settings"), icon: Settings },
   ],
 ];
@@ -312,7 +320,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
       </aside>
 
       {/* ================= Main ================= */}
-      <main className="relative flex min-w-0 flex-1 flex-col overflow-y-auto rounded-[1.4rem] xl:overflow-hidden">
+      <main className="relative flex min-w-0 flex-1 flex-col overflow-y-auto rounded-[1.4rem] bg-[#eef3fa] xl:overflow-hidden">
         {/* ---------- Top bar ---------- */}
         <header
           className="pointer-events-none absolute inset-x-0 top-0 z-30 flex items-center gap-[0.7em] px-[calc(var(--u)*1.6)] pt-[calc(var(--u)*1.1)]"
@@ -343,7 +351,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
             </kbd>
           </label>
 
-          {/* Language switch: updated */}
+          {/* Language switch */}
           <button
             type="button"
             onClick={() => setLocale(locale === "ar" ? "en" : "ar")}
