@@ -44,6 +44,14 @@ const GROUP_IMG = "/images/admin/group.png";
 const PARK_IMG = "/images/Intern/bg-park.png";
 const AVATAR = "/images/Intern/char-boy-glasses.png";
 
+/** How the picture sits inside the round avatar. Change these four numbers only. */
+const AVATAR_FIT = {
+  scale: 1.35, // zoom: higher = the face gets bigger
+  originY: 0, // % from the top the zoom grows from (0 = top of the picture)
+  posX: 50, // % left/right shift of the picture
+  posY: 0, // % up/down shift of the picture (0 = shows the top of the cap)
+};
+
 const NAV_GROUPS = [
   [
     { href: "/admin/dashboard", label: tk("Admin Dashboard"), icon: LayoutGrid },
@@ -171,6 +179,9 @@ export function AdminShell({ children }: { children: ReactNode }) {
   }
 
   const displayName = user ? [user.firstName, user.lastName].filter(Boolean).join(" ") : t("Admin");
+
+  // The user's own picture if the API sends one, otherwise the cartoon character.
+  const avatarSrc = (user as { avatarUrl?: string } | null)?.avatarUrl || AVATAR;
 
   const navGroups = user?.isOwner
     ? [NAV_GROUPS[0], [...NAV_GROUPS[1], OWNER_NAV]]
@@ -377,15 +388,21 @@ export function AdminShell({ children }: { children: ReactNode }) {
                 onClick={() => setMenuOpen((v) => !v)}
                 aria-haspopup="menu"
                 aria-expanded={menuOpen}
-                className="flex h-[2.4em] items-center gap-[0.6em] rounded-full border border-white/70 bg-white/55 ps-[0.3em] pe-[0.9em] text-[0.8em] font-semibold text-[#14365a] shadow-[0_6px_18px_rgba(60,160,230,0.2)] backdrop-blur hover:bg-white/80"
+                className="flex h-[2.6em] items-center gap-[0.6em] rounded-full border border-white/70 bg-white/55 ps-[0.2em] pe-[0.9em] text-[0.8em] font-semibold text-[#14365a] shadow-[0_6px_18px_rgba(60,160,230,0.2)] backdrop-blur hover:bg-white/80"
               >
-                <span className="relative size-[1.9em] overflow-hidden rounded-full bg-[#ffc531]">
+                {/* Avatar: the head with the cap fills the circle, like the Figma pill */}
+                <span className="relative size-[2.2em] shrink-0 overflow-hidden rounded-full bg-[#ffb52e]">
                   <Image
-                    src={AVATAR}
+                    src={avatarSrc}
                     alt=""
                     fill
-                    sizes="32px"
-                    className="origin-top scale-[2.1] object-cover object-top"
+                    sizes="36px"
+                    className="object-cover"
+                    style={{
+                      objectPosition: `${AVATAR_FIT.posX}% ${AVATAR_FIT.posY}%`,
+                      transform: `scale(${AVATAR_FIT.scale})`,
+                      transformOrigin: `50% ${AVATAR_FIT.originY}%`,
+                    }}
                   />
                 </span>
 
