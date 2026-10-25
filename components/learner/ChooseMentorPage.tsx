@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import { useSearchParams } from "next/navigation";
 import {
   Briefcase,
   CalendarCheck,
@@ -9,6 +10,8 @@ import {
   ChevronLeft,
   ChevronRight,
   CircleCheck,
+  Hourglass,
+  MessageCircle,
   Languages,
   LoaderCircle,
   MessagesSquare,
@@ -27,19 +30,24 @@ import {
   chooseMentor,
   getMentor,
   getMentors,
+  getMentorMessages,
   getMentorSlots,
   getMyMentor,
   getMySessions,
+  markMentorMessagesRead,
+  sendMentorMessage,
   sessionTime,
   type Mentor,
   type MentorAssignment,
   type MentorProfile,
   type MentorSession,
   type MentorSlots,
+  type PendingMentorRequest,
   type SessionType,
 } from "@/lib/mentorship-api";
 import { useT } from "@/lib/i18n/client";
 import { dateLocale, tk, tNow } from "@/lib/i18n/translate";
+import DirectChat from "@/components/shared/DirectChat";
 
 const TRACK_NAMES: Record<string, string> = {
   FRONTEND: "Frontend",
@@ -131,6 +139,11 @@ export default function ChooseMentorPage() {
   const t = useT();
   const [mentors, setMentors] = useState<Mentor[] | null>(null);
   const [mine, setMine] = useState<MentorAssignment[]>([]);
+  const [pending, setPending] = useState<PendingMentorRequest[]>([]);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [chatWith, setChatWith] = useState<Mentor | null>(null);
+  // The notification of a new message from the mentor links here with ?chat=1.
+  const openChat = useSearchParams().get("chat") === "1";
   const [sessions, setSessions] = useState<MentorSession[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [track, setTrack] = useState("all");
@@ -148,15 +161,18 @@ export default function ChooseMentorPage() {
         if (!active) return;
         setMentors(list);
         setMine(my.currents);
+        setPending(my.pendingRequests ?? []);
         setSessions(booked);
+        if (openChat && my.current) setChatWith(my.current.mentor);
         setSelectedId(my.current?.mentor.id ?? list[0]?.id ?? null);
       })
       .catch((e) => active && setLoadError(errorMessage(e, "We couldn't load the mentors. Please try again.")));
     return () => {
       active = false;
     };
-  }, []);
+  }, [openChat]);
 
+  const pendingFor = (m: Mentor) => pending.some((p) => p.requestedMentor.id === m.id);
   const selected = mentors?.find((m) => m.id === selectedId) ?? null;
   const options = (() => {
     const list = mentors ?? [];
@@ -177,11 +193,23 @@ export default function ChooseMentorPage() {
       );
   })();
 
+  /**
+   * Choosing a mentor in a track without one applies at once; changing the mentor is a request the admin approves
+   * (the mentor changes only then).
+   */
   async function makeMyMentor(m: Mentor) {
     setError(null);
+    setNotice(null);
+    const changing = mine.some((a) => a.mentor.trackCode === m.trackCode);
+    const question = changing
+      ? t("Send a request to change your {track} mentor to {name}? Your mentor changes once the admin approves.", { track: trackName(m.trackCode), name: m.fullName })
+      : t("Make {name} your {track} mentor?", { name: m.fullName, track: trackName(m.trackCode) });
+    if (!window.confirm(question)) return;
     try {
       const my = await chooseMentor(m.id);
       setMine(my.currents);
+      setPending(my.pendingRequests ?? []);
+      setNotice(changing ? t("Your request was sent. Waiting for admin approval.") : t("{name} is now your mentor.", { name: m.fullName }));
       const ids = new Set(my.currents.map((c) => c.mentor.id));
       setMentors((list) => list?.map((x) => ({ ...x, isMyMentor: ids.has(x.id) })) ?? list);
       setProfile(null);
@@ -259,6 +287,13 @@ export default function ChooseMentorPage() {
                   {mine[0].mentor.skills.slice(0, 3).map((s) => (
                     <Chip key={s}>{s}</Chip>
                   ))}
+                  <button
+                    type="button"
+                    onClick={() => setChatWith(mine[0].mentor)}
+                    className="flex h-[2.4em] items-center justify-center gap-[0.4em] rounded-[0.6em] bg-[#12939b] px-[1em] text-[0.85em] font-semibold text-white hover:bg-[#0f7c83]"
+                  >
+                    <MessageCircle className="h-[1.1em] w-[1.1em]" /> {t("Message")}
+                  </button>
                 </div>
               </div>
             ) : (
@@ -273,10 +308,25 @@ export default function ChooseMentorPage() {
                     <span className="rounded-full bg-[#eaf3fb] px-[0.7em] py-[0.2em] text-[0.75em] font-bold text-[#14365a]">
                       {trackName(a.mentor.trackCode)}
                     </span>
+                    <button
+                      type="button"
+                      onClick={() => setChatWith(a.mentor)}
+                      aria-label={t("Message {name}", { name: a.mentor.fullName })}
+                      className="grid h-[2.2em] w-[2.2em] place-items-center rounded-full bg-[#e3f6fb] text-[#12939b] hover:bg-[#d2eef5]"
+                    >
+                      <MessageCircle className="h-[1.1em] w-[1.1em]" />
+                    </button>
                   </li>
                 ))}
               </ul>
             )}
+
+            {pending.map((p) => (
+              <p key={p.id} className="mt-[0.8em] flex items-center gap-[0.5em] rounded-[0.8em] bg-[#fff4d6] px-[0.9em] py-[0.6em] text-[0.85em] font-semibold text-[#8a5a00]">
+                <Hourglass className="h-[1.1em] w-[1.1em] shrink-0" />
+                {t("Your request to change to {name} is waiting for admin approval.", { name: p.requestedMentor.fullName })}
+              </p>
+            ))}
 
             {sessions.length > 0 && (
               <div className="mt-[1em] border-t border-[#e8eef5] pt-[0.8em]">
@@ -325,6 +375,9 @@ export default function ChooseMentorPage() {
               {error ?? loadError}
             </p>
           )}
+          {notice && !error && (
+            <p role="status" className="mt-[1em] rounded-[0.8em] bg-[#e3f6ee] px-[1em] py-[0.6em] text-[0.85em] font-semibold text-[#1f7a4a]">{notice}</p>
+          )}
           {!mentors && !loadError && <LoaderCircle className="mx-auto my-[3em] h-[2em] w-[2em] animate-spin text-[#12939b]" />}
 
           <div className="mt-[1em] grid items-start gap-[1em] xl:grid-cols-[1fr_minmax(0,27em)]">
@@ -363,13 +416,30 @@ export default function ChooseMentorPage() {
                     >
                       {t("View Profile")}
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => setSelectedId(m.id)}
-                      className="h-[2.8em] rounded-[0.6em] bg-[#14365a] text-[0.95em] font-semibold text-white hover:bg-[#0f2a47]"
-                    >
-                      {m.id === selectedId ? t("Selected") : t("Select Mentor")}
-                    </button>
+                    {m.isMyMentor ? (
+                      <button
+                        type="button"
+                        onClick={() => setChatWith(m)}
+                        className="flex h-[2.8em] items-center justify-center gap-[0.4em] rounded-[0.6em] bg-[#12939b] text-[0.95em] font-semibold text-white hover:bg-[#0f7c83]"
+                      >
+                        <MessageCircle className="h-[1.1em] w-[1.1em]" /> {t("Message")}
+                      </button>
+                    ) : pendingFor(m) ? (
+                      <span className="flex h-[2.8em] items-center justify-center gap-[0.4em] rounded-[0.6em] bg-[#fff4d6] px-[0.4em] text-center text-[0.8em] font-semibold leading-tight text-[#8a5a00]">
+                        <Hourglass className="h-[1.1em] w-[1.1em] shrink-0" /> {t("Waiting for admin approval")}
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedId(m.id);
+                          void makeMyMentor(m);
+                        }}
+                        className="h-[2.8em] rounded-[0.6em] bg-[#14365a] text-[0.95em] font-semibold text-white hover:bg-[#0f2a47]"
+                      >
+                        {t("Select Mentor")}
+                      </button>
+                    )}
                   </div>
                 </li>
               ))}
@@ -379,6 +449,7 @@ export default function ChooseMentorPage() {
               <BookingPanel
                 key={selected.id}
                 mentor={selected}
+                pending={pendingFor(selected)}
                 onMakeMine={() => makeMyMentor(selected)}
                 onBooked={(s) => setSessions((list) => [...list, s].sort((a, b) => a.startsUtc.localeCompare(b.startsUtc)))}
               />
@@ -386,6 +457,18 @@ export default function ChooseMentorPage() {
           </div>
         </section>
       </div>
+
+      {chatWith && (
+        <DirectChat
+          key={chatWith.id}
+          me="student"
+          partner={{ id: chatWith.id, name: chatWith.fullName, photoUrl: mentorAvatar(chatWith).src, subtitle: t("{track} mentor", { track: trackName(chatWith.trackCode) }) }}
+          load={getMentorMessages}
+          send={sendMentorMessage}
+          markRead={markMentorMessagesRead}
+          onClose={() => setChatWith(null)}
+        />
+      )}
 
       {profile && (
         <div
@@ -454,7 +537,7 @@ export default function ChooseMentorPage() {
 }
 
 /** Figma "Selected Mentor": the session type, a day and a time from the mentor's slots, then Book Session. */
-function BookingPanel({ mentor, onMakeMine, onBooked }: { mentor: Mentor; onMakeMine: () => Promise<void>; onBooked: (s: MentorSession) => void }) {
+function BookingPanel({ mentor, pending, onMakeMine, onBooked }: { mentor: Mentor; pending: boolean; onMakeMine: () => Promise<void>; onBooked: (s: MentorSession) => void }) {
   const t = useT();
   const [slots, setSlots] = useState<MentorSlots | null>(null);
   const [failed, setFailed] = useState<string | null>(null);
@@ -524,7 +607,12 @@ function BookingPanel({ mentor, onMakeMine, onBooked }: { mentor: Mentor; onMake
           <Chip key={s}>{s}</Chip>
         ))}
       </div>
-      {!mentor.isMyMentor && (
+      {pending && (
+        <p className="mt-[0.8em] flex items-center gap-[0.4em] text-[0.85em] font-semibold text-[#8a5a00]">
+          <Hourglass className="h-[1em] w-[1em]" /> {t("Waiting for admin approval")}
+        </p>
+      )}
+      {!mentor.isMyMentor && !pending && (
         <button
           type="button"
           disabled={making}
