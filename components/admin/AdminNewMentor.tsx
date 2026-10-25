@@ -1,16 +1,17 @@
 "use client";
 
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useCallback, useState, type FormEvent, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { Route } from "next";
 import { Eye, EyeOff, ImageIcon, LoaderCircle, Mail, Briefcase, Lock, User } from "lucide-react";
-import { createMentor, getAdminTracks, type NewMentor } from "@/lib/admin-api";
+import { createMentor, getAdminTracks, type AdminMentor, type NewMentor } from "@/lib/admin-api";
 import { ApiError, errorMessage } from "@/lib/api-client";
 import { useI18n } from "@/lib/i18n/client";
 import { tk } from "@/lib/i18n/translate";
 import { AdminPage } from "./AdminPage";
 import { LoadState, useAdminData } from "./admin-data";
+import { StarterStudents } from "./StarterStudents";
 
 const card = "rounded-[1.1em] bg-white p-[1.4em] shadow-[0_6px_22px_rgba(20,54,90,0.07)]";
 const box =
@@ -46,6 +47,8 @@ export default function AdminNewMentor() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [created, setCreated] = useState<AdminMentor | null>(null);
+  const toMentors = useCallback(() => router.push("/admin/mentors" as Route), [router]);
 
   const set = (key: keyof typeof form) => (value: string) => setForm((f) => ({ ...f, [key]: value }));
 
@@ -81,8 +84,8 @@ export default function AdminNewMentor() {
 
     setSaving(true);
     try {
-      await createMentor(body);
-      router.push("/admin/mentors" as Route);
+      // Next: offer the students of this track who wait for a mentor (StarterStudents).
+      setCreated(await createMentor(body));
     } catch (err) {
       if (err instanceof ApiError && err.code === "VALIDATION_FAILED") setFieldErrors(err.fieldErrors);
       setError(errorMessage(err, tk("We couldn't add the mentor. Please try again.")));
@@ -108,7 +111,16 @@ export default function AdminNewMentor() {
           {t("Create a mentor account. The mentor can sign in right away with the email and password you set.")}
         </p>
 
-        <form onSubmit={submit} noValidate className={`${card} mx-auto mt-[1.2em] max-w-[46em]`}>
+        {created && (
+          <section className={`${card} mx-auto mt-[1.2em] max-w-[46em]`}>
+            <p className="mb-[1em] rounded-[0.6em] bg-[#dff7ea] px-[1em] py-[0.6em] text-[0.85em] font-semibold text-[#17935f]">
+              {t("{name} was added as a mentor.", { name: created.fullName })}
+            </p>
+            <StarterStudents mentorId={created.id} mentorName={created.fullName} trackCode={created.trackCode} onDone={toMentors} />
+          </section>
+        )}
+
+        <form onSubmit={submit} noValidate hidden={!!created} className={`${card} mx-auto mt-[1.2em] max-w-[46em]`}>
           <div className="grid gap-[1em] sm:grid-cols-2">
             <Field label={t("Full name")} icon={<User className="size-[1.1em]" />} error={fieldError("fullName")}>
               <input value={form.fullName} onChange={(e) => set("fullName")(e.target.value)} className={input} autoComplete="off" />

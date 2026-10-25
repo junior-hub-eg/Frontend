@@ -16,10 +16,15 @@ export type InspectorInfo = {
   approveLabel: string;
 };
 
-/** One row of the queue. Sign-ups come from the API, the rest is mock for now. */
+/** Which API a request comes from: a sign-up, a student's mentor change, a mentor's new track. */
+export type RequestSource = "signup" | "mentorChange" | "trackRequest";
+
+/** One row of the queue, from one of the three request APIs. */
 export type QueueItem = {
   id: string;
-  source: "api" | "mock";
+  source: RequestSource;
+  /** For an approved mentor sign-up: offer them the students who wait for a mentor. */
+  mentor?: { id: string; name: string; trackCode: string };
   kind: ApprovalKind;
   priority: Priority;
   name: string;

@@ -1,14 +1,38 @@
 "use client";
 
 import { ChevronDown, RotateCcw, Search } from "lucide-react";
+import type { AdminTrack, AnnouncementAudience } from "@/lib/admin-api";
 import { useT } from "@/lib/i18n/client";
 import { PANEL } from "../page-parts";
-import { MOCK_NOTIF_TABS } from "../dashboardMock";
 
 export type NotifTab = "all" | "sent" | "scheduled" | "drafts";
 
-/** Search and tabs are live. The three dropdowns are visual for now (TODO(api)). */
-export function NotificationFilters({ tab, onTab, query, onQuery, onReset }: { tab: NotifTab; onTab: (v: NotifTab) => void; query: string; onQuery: (v: string) => void; onReset: () => void }) {
+export type NotifFilters = { audience: AnnouncementAudience | "all"; track: string };
+
+const AUDIENCES: AnnouncementAudience[] = ["Everyone", "Students", "Mentors", "Teachers"];
+
+/** Search, status tabs (with their counts) and the audience / track dropdowns. */
+export function NotificationFilters({
+  tab,
+  onTab,
+  counts,
+  query,
+  onQuery,
+  filters,
+  onFilters,
+  tracks,
+  onReset,
+}: {
+  tab: NotifTab;
+  onTab: (v: NotifTab) => void;
+  counts: Record<NotifTab, number>;
+  query: string;
+  onQuery: (v: string) => void;
+  filters: NotifFilters;
+  onFilters: (v: NotifFilters) => void;
+  tracks: AdminTrack[];
+  onReset: () => void;
+}) {
   const t = useT();
   const tabs: { key: NotifTab; label: string }[] = [
     { key: "all", label: t("All") },
@@ -16,11 +40,8 @@ export function NotificationFilters({ tab, onTab, query, onQuery, onReset }: { t
     { key: "scheduled", label: t("Scheduled") },
     { key: "drafts", label: t("Drafts") },
   ];
-  const selects = [
-    [t("Audience"), t("All Audiences")],
-    [t("Channel"), t("All Channels")],
-    [t("Cohort"), t("All Tracks")],
-  ];
+  const select =
+    "h-[2.4em] appearance-none rounded-[0.6em] bg-[#eef3fa] ps-[0.9em] pe-[2em] text-[0.75em] font-semibold text-[#14365a] outline-none";
 
   return (
     <div className={`${PANEL} grid gap-[0.8em] p-[1em]`}>
@@ -37,22 +58,54 @@ export function NotificationFilters({ tab, onTab, query, onQuery, onReset }: { t
         </label>
         <div role="tablist" className="flex gap-[0.3em] rounded-[0.7em] bg-[#eef3fa] p-[0.25em] text-[0.75em]">
           {tabs.map((x) => (
-            <button key={x.key} type="button" role="tab" aria-selected={tab === x.key} onClick={() => onTab(x.key)} className={`rounded-[0.5em] px-[0.9em] py-[0.5em] font-semibold ${tab === x.key ? "bg-white text-[#0b6f86] shadow-sm" : "text-[#14365a]"}`}>
-              {x.label} ({MOCK_NOTIF_TABS[x.key].toLocaleString()})
+            <button
+              key={x.key}
+              type="button"
+              role="tab"
+              aria-selected={tab === x.key}
+              onClick={() => onTab(x.key)}
+              className={`rounded-[0.5em] px-[0.9em] py-[0.5em] font-semibold ${tab === x.key ? "bg-white text-[#0b6f86] shadow-sm" : "text-[#14365a]"}`}
+            >
+              {x.label} ({counts[x.key]})
             </button>
           ))}
         </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-[0.6em]">
-        {selects.map(([label, value]) => (
-          <label key={label} className="relative">
-            <select aria-label={label} className="h-[2.4em] appearance-none rounded-[0.6em] bg-[#eef3fa] ps-[0.9em] pe-[2em] text-[0.75em] font-semibold text-[#14365a] outline-none">
-              <option>{`${label}: ${value}`}</option>
-            </select>
-            <ChevronDown className="pointer-events-none absolute end-[0.6em] top-1/2 size-[1em] -translate-y-1/2" />
-          </label>
-        ))}
+        <label className="relative">
+          <select
+            aria-label={t("Audience")}
+            value={filters.audience}
+            onChange={(e) => onFilters({ ...filters, audience: e.target.value as NotifFilters["audience"] })}
+            className={select}
+          >
+            <option value="all">{`${t("Audience")}: ${t("All Audiences")}`}</option>
+            {AUDIENCES.map((a) => (
+              <option key={a} value={a}>
+                {`${t("Audience")}: ${t(a)}`}
+              </option>
+            ))}
+          </select>
+          <ChevronDown className="pointer-events-none absolute end-[0.6em] top-1/2 size-[1em] -translate-y-1/2" />
+        </label>
+        <label className="relative">
+          <select aria-label={t("Channel")} disabled className={select}>
+            <option>{`${t("Channel")}: ${t("In-App")}`}</option>
+          </select>
+          <ChevronDown className="pointer-events-none absolute end-[0.6em] top-1/2 size-[1em] -translate-y-1/2" />
+        </label>
+        <label className="relative">
+          <select aria-label={t("Cohort")} value={filters.track} onChange={(e) => onFilters({ ...filters, track: e.target.value })} className={select}>
+            <option value="all">{`${t("Cohort")}: ${t("All Tracks")}`}</option>
+            {tracks.map((tr) => (
+              <option key={tr.code} value={tr.code}>
+                {`${t("Cohort")}: ${tr.name}`}
+              </option>
+            ))}
+          </select>
+          <ChevronDown className="pointer-events-none absolute end-[0.6em] top-1/2 size-[1em] -translate-y-1/2" />
+        </label>
         <button type="button" onClick={onReset} className="ms-auto inline-flex items-center gap-[0.4em] text-[0.75em] font-semibold text-[#0b6f86]">
           <RotateCcw className="size-[1em]" /> {t("Reset Filters")}
         </button>

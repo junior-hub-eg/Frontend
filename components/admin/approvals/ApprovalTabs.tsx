@@ -12,10 +12,10 @@ type Props = {
 const TABS: { key: ApprovalTab; label: string }[] = [
   { key: "all", label: "All Requests" },
   { key: "squad", label: "Squad Joins & Transfers" },
-  { key: "session", label: "Mentor 1-on-1 Sessions" },
+  // Students asking for another mentor, and mentors asking to teach another track.
+  { key: "session", label: "Mentor Changes & Track Requests" },
   { key: "milestone", label: "Capstone Milestone Reviews" },
   { key: "certificate", label: "Certificate Approvals" },
-  // The only tab that is backed by the real API (mentor / teacher sign-ups).
   { key: "signup", label: "Mentor & Teacher Sign-ups" },
 ];
 

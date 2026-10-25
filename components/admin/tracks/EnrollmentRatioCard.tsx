@@ -10,12 +10,10 @@ export function EnrollmentRatioCard({ tracks, total }: { tracks: AdminTrack[]; t
   const t = useT();
   const r = 40;
   const len = 2 * Math.PI * r;
-  let used = 0;
+  const frac = (n: number) => (total > 0 ? n / total : 0);
   const parts = tracks.map((tr, i) => {
-    const frac = total > 0 ? tr.students / total : 0;
-    const part = { tr, color: COLORS[i % COLORS.length], dash: frac * len, offset: -used * len, pct: Math.round(frac * 100) };
-    used += frac;
-    return part;
+    const before = tracks.slice(0, i).reduce((a, x) => a + frac(x.students), 0);
+    return { tr, color: COLORS[i % COLORS.length], dash: frac(tr.students) * len, offset: -before * len, pct: Math.round(frac(tr.students) * 100) };
   });
 
   return (

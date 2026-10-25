@@ -32,7 +32,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/lib/auth/auth-context";
 import { landingFont } from "@/components/Landing/font";
-import { APPROVALS_CHANGED, getApprovals } from "@/lib/admin-api";
+import { APPROVALS_CHANGED, getApprovals, getMentorRequests, getTrackRequests } from "@/lib/admin-api";
 import { getUnreadNotificationCount } from "@/lib/notifications-api";
 import { useI18n } from "@/lib/i18n/client";
 import { tk } from "@/lib/i18n/translate";
@@ -120,15 +120,15 @@ export function AdminShell({ children }: { children: ReactNode }) {
     setMobileOpen(false);
   }, [pathname, isDesktop]);
 
-  // Count the sign-ups waiting for approval again on every page change.
+  // Count the requests waiting for the admin (sign-ups, mentor changes, new tracks) on every page change.
   useEffect(() => {
     if (user?.role !== "admin") return;
 
     let active = true;
 
     const count = () =>
-      getApprovals().then(
-        (list) => active && setWaiting(list.length),
+      Promise.all([getApprovals(), getMentorRequests(), getTrackRequests()]).then(
+        (lists) => active && setWaiting(lists.reduce((n, l) => n + l.length, 0)),
         () => {},
       );
 

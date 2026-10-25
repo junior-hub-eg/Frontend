@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronLeft, ChevronRight, ClipboardCheck, Download, GraduationCap, Rocket, Search, Users } from "lucide-react";
+import { ChevronLeft, ChevronRight, ClipboardCheck, Download, GraduationCap, Plus, Rocket, Search, Users } from "lucide-react";
 import { getAdminMentors, getAdminSquads, type AdminSquad, type AdminSquadStatus } from "@/lib/admin-api";
 import { useT } from "@/lib/i18n/client";
 import { tk } from "@/lib/i18n/translate";
-import { AdminSurface, BTN_SECONDARY, INPUT, PageHeader, PANEL, StatCard, StatGrid } from "./page-parts";
+import { AdminSurface, BTN_PRIMARY, BTN_SECONDARY, INPUT, PageHeader, PANEL, StatCard, StatGrid } from "./page-parts";
 import { SquadCard, STATUS_LABEL } from "./SquadCard";
 import { LoadState, useAdminData } from "./admin-data";
+import { CreateSquadDialog } from "./squad-detail/CreateSquadDialog";
 
 const PAGE_SIZE = 4;
 const STATUSES: AdminSquadStatus[] = ["Active", "Waiting", "InReview", "Completed"];
@@ -52,6 +53,7 @@ export default function AdminSquads() {
   const [monitor, setMonitor] = useState("all");
   const [status, setStatus] = useState("all");
   const [page, setPage] = useState(1);
+  const [creating, setCreating] = useState(false);
 
   function replace(updated: AdminSquad) {
     squads.setData((list) => list?.map((s) => (s.id === updated.id ? updated : s)) ?? null);
@@ -100,10 +102,22 @@ export default function AdminSquads() {
         title={t("Squad Management")}
         description={t("Manage collaborative student teams, sprint progress, and mentor allocations across live technical tracks.")}
         actions={
-          <button type="button" onClick={() => exportCsv(filtered)} disabled={filtered.length === 0} className={BTN_SECONDARY}>
-            <Download className="size-[1.1em]" /> {t("Export Squads")}
-          </button>
+          <>
+            <button type="button" onClick={() => exportCsv(filtered)} disabled={filtered.length === 0} className={BTN_SECONDARY}>
+              <Download className="size-[1.1em]" /> {t("Export Squads")}
+            </button>
+            <button type="button" onClick={() => setCreating(true)} className={BTN_PRIMARY}>
+              <Plus className="size-[1.1em]" /> {t("Create Squad")}
+            </button>
+          </>
         }
+      />
+
+      <CreateSquadDialog
+        open={creating}
+        onClose={() => setCreating(false)}
+        mentors={active}
+        onCreated={(squad) => squads.setData((list) => [squad, ...(list ?? [])])}
       />
 
       <StatGrid busy={!ready}>
@@ -191,7 +205,7 @@ export default function AdminSquads() {
 
       <div className="grid gap-[1.2em] md:grid-cols-2">
         {visible.map((s, i) => (
-          <SquadCard key={s.id} squad={s} mentors={active} onChanged={replace} index={from + i} />
+          <SquadCard key={s.id} squad={s} mentors={active} onChanged={replace} index={from + i} href={`/admin/squads/${s.id}`} />
         ))}
       </div>
 

@@ -1,8 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import type { Route } from "next";
-import { Download, Plus, Video } from "lucide-react";
+import { Download, Plus, UserX, Video } from "lucide-react";
 import { getAdminMentors, getApprovals, type AdminMentor, type AdminMentorsPage } from "@/lib/admin-api";
 import { useI18n } from "@/lib/i18n/client";
 import { tk } from "@/lib/i18n/translate";
@@ -10,6 +11,7 @@ import { AdminPage } from "./AdminPage";
 import { LoadState, useAdminData } from "./admin-data";
 import { MentorStats } from "./MentorStats";
 import { MentorsTable } from "./MentorsTable";
+import { UnassignedStudents } from "./UnassignedStudents";
 
 const card = "rounded-[1.1em] bg-white p-[1.2em] shadow-[0_6px_22px_rgba(20,54,90,0.07)]";
 
@@ -93,6 +95,7 @@ export default function AdminMentors() {
   const { t } = useI18n();
   const page = useAdminData(getAdminMentors, tk("We couldn't load the mentors. Please try again."));
   const approvals = useAdminData(getApprovals, tk("We couldn't load the sign-ups. Please try again."));
+  const [showUnassigned, setShowUnassigned] = useState(false);
 
   const mentors = page.data?.mentors ?? [];
   const applicants = (approvals.data ?? []).filter((a) => a.role === "Mentor");
@@ -138,6 +141,16 @@ export default function AdminMentors() {
             >
               <Download className="size-[1em]" /> {t("Export Roster")}
             </button>
+            <button
+              type="button"
+              onClick={() => setShowUnassigned((v) => !v)}
+              aria-expanded={showUnassigned}
+              className={`inline-flex items-center gap-[0.4em] rounded-[0.6em] border px-[1em] py-[0.55em] font-medium ${
+                showUnassigned ? "border-[#06b6d4] bg-[#e0f6fc] text-[#0b6f86]" : "border-[#d5dee8] bg-white text-[#14365a]"
+              }`}
+            >
+              <UserX className="size-[1em]" /> {t("Students without a mentor")}
+            </button>
             <Link
               href={"/admin/mentors/new" as Route}
               className="inline-flex items-center gap-[0.4em] rounded-[0.6em] bg-[#1d6fe0] px-[1.1em] py-[0.55em] font-semibold text-white hover:bg-[#1859b5]"
@@ -148,6 +161,12 @@ export default function AdminMentors() {
         </section>
 
         <MentorStats stats={stats} pending={pending} className="mt-[1.2em]" />
+
+        {showUnassigned && (
+          <div className="mt-[1.2em]">
+            <UnassignedStudents mentors={mentors} onAssigned={page.reload} />
+          </div>
+        )}
 
         {/* ---------- Table + side column ---------- */}
         <section className="mt-[1.2em] grid gap-[1.2em] xl:grid-cols-[minmax(0,1.9fr)_minmax(0,1fr)]">

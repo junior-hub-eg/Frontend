@@ -1,9 +1,23 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { BadgeCheck, CheckCheck, ClipboardList, LoaderCircle, SlidersHorizontal, UserCheck, UsersRound } from "lucide-react";
 
-import { APPROVALS_CHANGED, approveSignup, getApprovals, rejectSignup, type AdminApproval } from "@/lib/admin-api";
+import {
+  APPROVALS_CHANGED,
+  approveMentorRequest,
+  approveSignup,
+  approveTrackRequest,
+  getApprovals,
+  getMentorRequests,
+  getTrackRequests,
+  rejectMentorRequest,
+  rejectSignup,
+  rejectTrackRequest,
+  type AdminApproval,
+  type AdminMentorRequest,
+  type AdminTrackRequest,
+} from "@/lib/admin-api";
 import { errorMessage } from "@/lib/api-client";
 import { useT } from "@/lib/i18n/client";
 import { tk } from "@/lib/i18n/translate";
@@ -13,10 +27,10 @@ import ApprovalInspector from "./approvals/ApprovalInspector";
 import ApprovalQueue from "./approvals/ApprovalQueue";
 import ApprovalTabs from "./approvals/ApprovalTabs";
 import ResolutionVelocity from "./approvals/ResolutionVelocity";
-import { MOCK_APPROVAL_ITEMS } from "./approvals/approvalsMock";
 import type { ApprovalTab, Priority, QueueItem } from "./approvals/types";
 import { AdminSurface } from "./page-parts";
 import StatTile from "./StatTile";
+import { StarterStudents } from "./StarterStudents";
 
 const PAGE_SIZE = 5;
 
@@ -49,7 +63,8 @@ function signupToItem(a: AdminApproval, t: T): QueueItem {
 
   return {
     id: a.id,
-    source: "api",
+    source: "signup",
+    mentor: isMentor && a.trackCode ? { id: a.id, name: a.fullName, trackCode: a.trackCode } : undefined,
     kind: "signup",
     priority: "normal",
     name: a.fullName,
@@ -80,18 +95,80 @@ function signupToItem(a: AdminApproval, t: T): QueueItem {
   };
 }
 
-/** Monitors and teachers who signed up wait here until the admin approves or rejects them (real API).
- *  The other request types are mock data for now (see approvals/approvalsMock.ts). */
+/** A student asked to change their mentor: approving gives them the requested mentor in that track. */
+function mentorChangeToItem(r: AdminMentorRequest, t: T): QueueItem {
+  return {
+    id: r.id,
+    source: "mentorChange",
+    kind: "session",
+    priority: "medium",
+    name: r.student.fullName,
+    subtitle: t("Student • {track}", { track: r.trackName }),
+    note: t("Wants {mentor} as their mentor", { mentor: r.requestedMentor.fullName }),
+    typeLabel: t("Mentor Change"),
+    context: r.trackName,
+    submitted: ago(r.createdUtc),
+    sla: t("Waiting for your decision"),
+    primaryLabel: t("Approve"),
+    inspector: {
+      ticket: `#MC-${r.id.replace(/-/g, "").slice(0, 4).toUpperCase()}`,
+      idLabel: r.student.fullName,
+      chips: [t("Mentor Change"), r.trackName],
+      cards: [
+        { label: "Current mentor", value: r.currentMentor?.fullName ?? t("No mentor yet") },
+        { label: "Requested mentor", value: r.requestedMentor.fullName, accent: true },
+      ],
+      approveLabel: t("Approve & Notify"),
+    },
+  };
+}
+
+/** A mentor asked to teach another track too: approving lists, matches and books them in it. */
+function trackRequestToItem(r: AdminTrackRequest, t: T): QueueItem {
+  return {
+    id: r.id,
+    source: "trackRequest",
+    kind: "session",
+    priority: "normal",
+    name: r.mentor.fullName,
+    subtitle: t("Mentor • {track}", { track: r.currentTrackName }),
+    note: r.note ?? t("Wants to teach {track} too", { track: r.trackName }),
+    typeLabel: t("New Track Request"),
+    context: r.trackName,
+    submitted: ago(r.createdUtc),
+    sla: t("Waiting for your decision"),
+    primaryLabel: t("Approve"),
+    inspector: {
+      ticket: `#TR-${r.id.replace(/-/g, "").slice(0, 4).toUpperCase()}`,
+      idLabel: r.mentor.fullName,
+      chips: [t("New Track Request")],
+      cards: [
+        { label: "Current track", value: r.currentTrackName },
+        { label: "Requested track", value: r.trackName, accent: true },
+      ],
+      quote: r.note ? { title: t("Note"), by: r.mentor.fullName, text: r.note } : undefined,
+      approveLabel: t("Approve & Notify"),
+    },
+  };
+}
+
+/**
+ * Everything waiting for the admin, from the API: monitor / teacher sign-ups, students asking for
+ * another mentor, and mentors asking to teach another track. Squad transfers, milestones and
+ * certificates have no requests in the backend yet, so their tabs stay empty.
+ */
 export default function AdminApprovals() {
   const t = useT();
   const approvals = useAdminData(getApprovals, tk("We couldn't load the sign-ups. Please try again."));
+  const mentorRequests = useAdminData(getMentorRequests, tk("We couldn't load the requests. Please try again."));
+  const trackRequests = useAdminData(getTrackRequests, tk("We couldn't load the requests. Please try again."));
+  const [starter, setStarter] = useState<QueueItem["mentor"] | null>(null);
 
   const [tab, setTab] = useState<ApprovalTab>("all");
   const [priority, setPriority] = useState<Priority | "all">("all");
   const [page, setPage] = useState(1);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [checked, setChecked] = useState<Set<string>>(new Set());
-  const [resolved, setResolved] = useState<Set<string>>(new Set()); // mock rows that were handled
   const [busyId, setBusyId] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -100,11 +177,14 @@ export default function AdminApprovals() {
   const [reason, setReason] = useState("");
 
   const queue = useMemo(() => {
-    const api = (approvals.data ?? []).map((a) => signupToItem(a, t));
-    const mock = MOCK_APPROVAL_ITEMS.filter((m) => !resolved.has(m.id));
+    const rows = [
+      ...(approvals.data ?? []).map((a) => signupToItem(a, t)),
+      ...(mentorRequests.data ?? []).map((r) => mentorChangeToItem(r, t)),
+      ...(trackRequests.data ?? []).map((r) => trackRequestToItem(r, t)),
+    ];
 
-    return [...api, ...mock].sort((a, b) => RANK[a.priority] - RANK[b.priority]);
-  }, [approvals.data, resolved, t]);
+    return rows.sort((a, b) => RANK[a.priority] - RANK[b.priority]);
+  }, [approvals.data, mentorRequests.data, trackRequests.data, t]);
 
   // Everything except the tab: the tab counts are computed on this.
   const base = useMemo(() => (priority === "all" ? queue : queue.filter((r) => r.priority === priority)), [queue, priority]);
@@ -155,23 +235,24 @@ export default function AdminApprovals() {
       return next;
     });
 
-  function dropSignup(id: string) {
-    approvals.setData((list) => list?.filter((a) => a.id !== id) ?? null);
+  function drop(item: QueueItem) {
+    if (item.source === "signup") approvals.setData((list) => list?.filter((a) => a.id !== item.id) ?? null);
+    if (item.source === "mentorChange") mentorRequests.setData((list) => list?.filter((a) => a.id !== item.id) ?? null);
+    if (item.source === "trackRequest") trackRequests.setData((list) => list?.filter((a) => a.id !== item.id) ?? null);
     window.dispatchEvent(new Event(APPROVALS_CHANGED)); // the sidebar count
   }
+
+  const closeStarter = useCallback(() => setStarter(null), []);
 
   const fail = (e: unknown) => setError(errorMessage(e, tk("We couldn't save the change. Please try again.")));
 
   /** Returns true when the request was approved. */
   async function approveOne(item: QueueItem) {
     try {
-      if (item.source === "api") {
-        await approveSignup(item.id);
-        dropSignup(item.id);
-      } else {
-        // TODO(api): squad / session / milestone / certificate approvals.
-        setResolved((prev) => new Set(prev).add(item.id));
-      }
+      if (item.source === "signup") await approveSignup(item.id);
+      else if (item.source === "mentorChange") await approveMentorRequest(item.id);
+      else await approveTrackRequest(item.id);
+      drop(item);
 
       return true;
     } catch (e) {
@@ -188,10 +269,11 @@ export default function AdminApprovals() {
 
     if (await approveOne(item)) {
       setDone(
-        item.source === "api"
+        item.source === "signup"
           ? t("{name} is approved and can sign in now.", { name: item.name })
           : t("Approved: {name}", { name: item.name }),
       );
+      if (item.mentor) setStarter(item.mentor);
     }
 
     setBusyId(null);
@@ -232,13 +314,10 @@ export default function AdminApprovals() {
     setError(null);
 
     try {
-      if (item.source === "api") {
-        await rejectSignup(item.id, reason.trim());
-        dropSignup(item.id);
-      } else {
-        // TODO(api): decline for the other request types.
-        setResolved((prev) => new Set(prev).add(item.id));
-      }
+      if (item.source === "signup") await rejectSignup(item.id, reason.trim());
+      else if (item.source === "mentorChange") await rejectMentorRequest(item.id, reason.trim());
+      else await rejectTrackRequest(item.id, reason.trim());
+      drop(item);
 
       setDone(t("{name} was rejected.", { name: item.name }));
       setDeclining(null);
@@ -348,8 +427,9 @@ export default function AdminApprovals() {
           counts={counts}
         />
 
-        {/* While the sign-ups load (or fail) the mock rows are already shown. */}
         {!approvals.data && <LoadState error={approvals.error} onRetry={approvals.reload} />}
+        {mentorRequests.error && <LoadState error={mentorRequests.error} onRetry={mentorRequests.reload} />}
+        {trackRequests.error && <LoadState error={trackRequests.error} onRetry={trackRequests.reload} />}
 
         <div className="grid items-start gap-5 2xl:grid-cols-[minmax(0,1fr)_26rem]">
           <div className="min-w-0">
@@ -370,7 +450,11 @@ export default function AdminApprovals() {
                 setPriority(v);
                 setPage(1);
               }}
-              onRefresh={approvals.reload}
+              onRefresh={() => {
+                approvals.reload();
+                mentorRequests.reload();
+                trackRequests.reload();
+              }}
               busyId={busyId}
               onApprove={approve}
               onDecline={openDecline}
@@ -398,7 +482,7 @@ export default function AdminApprovals() {
 
           <label className="grid gap-1 text-[0.8rem]">
             <span className="font-semibold">
-              {declining?.source === "api" ? t("Reason (optional, sent by email)") : t("Reason (optional)")}
+              {declining?.source === "signup" ? t("Reason (optional, sent by email)") : t("Reason (optional)")}
             </span>
             <textarea
               value={reason}
@@ -434,6 +518,12 @@ export default function AdminApprovals() {
             </button>
           </div>
         </div>
+      </AdminDialog>
+
+      <AdminDialog open={!!starter} title="Assign students" onClose={() => setStarter(null)}>
+        {starter && (
+          <StarterStudents mentorId={starter.id} mentorName={starter.name} trackCode={starter.trackCode} onDone={closeStarter} />
+        )}
       </AdminDialog>
     </AdminSurface>
   );

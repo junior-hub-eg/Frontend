@@ -9,6 +9,7 @@ import { AdminPage, PageHero } from "./AdminPage";
 import { ReportStats } from "./ReportStats";
 import { ReportCharts } from "./ReportCharts";
 import { LoadState, useAdminData } from "./admin-data";
+import { SystemReportPanel } from "./SystemReportPanel";
 
 const PERIODS: { id: ReportPeriod; label: string }[] = [
   { id: "week", label: tk("This Week") },
@@ -50,6 +51,7 @@ export default function AdminReports() {
 
       <div className="relative z-10 mx-auto -mt-[3.5em] w-full lg:w-[82%]">
         <ReportCharts report={data} />
+        <SystemReportPanel className="mt-[1.2em]" />
       </div>
     </AdminPage>
   );
