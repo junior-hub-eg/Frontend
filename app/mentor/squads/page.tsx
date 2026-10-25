@@ -1,6 +1,6 @@
-import MonitorDashboard from "@/components/mentor/MonitorDashboard";
+import MySquads from "@/components/mentor/area/MySquads";
 
-/** The squads this mentor monitors and the projects waiting for their review (moved here from /mentor/dashboard). */
+/** M2 · My squads (design of 26 Oct 2026). */
 export default function MentorSquadsPage() {
-  return <MonitorDashboard />;
+  return <MySquads />;
 }
