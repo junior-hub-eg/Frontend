@@ -1,5 +1,6 @@
 /** School teachers (backend TeacherController and StudentClassesController, 23 Oct 2026). */
-import { api } from "@/lib/api-client";
+import { api, API_BASE_URL, ApiError } from "@/lib/api-client";
+import { getToken } from "@/lib/auth/token";
 
 export type SchoolSubject = "Math" | "Science" | "Physics" | "Language";
 export type Gender = "Male" | "Female";
@@ -197,3 +198,241 @@ export const changeDue = (id: string, dueUtc: string) => api.patch<AssignmentDet
 export const gradeSubmission = (id: string, studentId: string, score: number, feedback: string) =>
   api.post<AssignmentDetail>(`/api/v1/teacher/assignments/${id}/students/${studentId}/grade`, { score, feedback });
 export const answerQuestion = (id: string, answer: string) => api.post<void>(`/api/v1/teacher/questions/${id}/answer`, { answer });
+
+// ---------- Teacher design pages (26 Oct 2026): messages, calendar, progress, nudges, settings ----------
+
+export type StudentStatus = ClassStudentStatus;
+
+export interface TeacherMessages {
+  stats: {
+    unreadDirect: number;
+    openQuestions: number;
+    eventsToday: number;
+    nextEventUtc: string | null;
+    nextEventTitle: string | null;
+    averageReplyMinutes: number | null;
+  };
+  channels: {
+    classId: string;
+    name: string;
+    grade: number;
+    students: number;
+    lastText: string | null;
+    lastSender: string | null;
+    lastUtc: string | null;
+    messages: number;
+  }[];
+  direct: {
+    studentId: string;
+    fullName: string;
+    photoUrl: string | null;
+    gender: Gender | null;
+    classId: string;
+    className: string;
+    mastery: number | null;
+    status: ClassStudentStatus;
+    lastText: string | null;
+    lastUtc: string | null;
+    unread: number;
+  }[];
+}
+
+export interface ThreadMessage {
+  id: string;
+  senderId: string;
+  senderName: string;
+  senderRole: "Teacher" | "Student";
+  mine: boolean;
+  text: string;
+  createdUtc: string;
+  broadcast: boolean;
+}
+
+export interface Competency {
+  title: string;
+  percent: number;
+}
+
+export interface StudentThread {
+  studentId: string;
+  fullName: string;
+  photoUrl: string | null;
+  gender: Gender | null;
+  classId: string;
+  className: string;
+  email: string;
+  mastery: number | null;
+  status: ClassStudentStatus;
+  attendance: number;
+  competencies: Competency[];
+  deliverables: { assignmentId: string; title: string; status: AssignmentStatus; score: number | null; maxPoints: number; dueUtc: string }[];
+  messages: ThreadMessage[];
+}
+
+export interface ChannelThread {
+  classId: string;
+  name: string;
+  students: number;
+  messages: ThreadMessage[];
+}
+
+export type EventKind = "Lesson" | "OfficeHour" | "OneOnOne" | "Review" | "Meeting";
+export type CalendarKind = EventKind | "Deadline" | "Plan";
+
+export interface CalendarItem {
+  id: string;
+  /** "Event" can be edited; "Due" and "Plan" come from assignments and the weekly plan. */
+  source: "Event" | "Due" | "Plan";
+  kind: CalendarKind;
+  title: string;
+  notes: string | null;
+  location: string | null;
+  classId: string | null;
+  className: string | null;
+  studentId: string | null;
+  studentName: string | null;
+  startUtc: string;
+  endUtc: string;
+}
+
+export interface TeacherCalendar {
+  from: string;
+  to: string;
+  items: CalendarItem[];
+  channels: { kind: CalendarKind; count: number; hours: number }[];
+  bookingSlug: string;
+}
+
+export interface SaveEvent {
+  kind: EventKind;
+  title: string;
+  notes?: string | null;
+  location?: string | null;
+  classId?: string | null;
+  studentId?: string | null;
+  startUtc: string;
+  endUtc: string;
+}
+
+export interface Spotlight {
+  studentId: string;
+  fullName: string;
+  photoUrl: string | null;
+  gender: Gender | null;
+  className: string;
+  mastery: number | null;
+  strong: Competency[];
+  weak: Competency[];
+  timeSpentMinutes: number;
+}
+
+export interface TeacherProgress {
+  basis: "Grammar" | "Subjects";
+  columns: { key: string; title: string }[];
+  rows: {
+    studentId: string;
+    fullName: string;
+    photoUrl: string | null;
+    gender: Gender | null;
+    classId: string;
+    className: string;
+    scores: (number | null)[];
+    mastery: number | null;
+    status: ClassStudentStatus;
+    timeSpentMinutes: number;
+  }[];
+  stats: { mastery: number | null; ready: number; total: number; needsFocus: number; weeklyHoursPerStudent: number };
+  skillGaps: Competency[];
+  top: Spotlight | null;
+  needsHelp: Spotlight | null;
+}
+
+export type NudgeKind = "Reminder" | "Hint" | "Parent" | "Certificate";
+
+export interface TeacherSettings {
+  fullName: string;
+  email: string;
+  school: string;
+  subjects: SchoolSubject[];
+  grades: number[];
+  bookingSlug: string;
+  officeLocation: string | null;
+  notifyMessages: boolean;
+  notifySubmissions: boolean;
+  notifyQuestions: boolean;
+  weeklyDigest: boolean;
+}
+
+export interface TeacherStudentsPage {
+  stats: { total: number; needsAssistance: number; onTrack: number; topQuartile: number; averageMastery: number | null };
+  students: {
+    studentId: string;
+    fullName: string;
+    email: string;
+    photoUrl: string | null;
+    gender: Gender | null;
+    classId: string;
+    className: string;
+    grade: number;
+  }[];
+}
+
+export const getTeacherAssignments = (classId?: string) =>
+  api.get<Assignment[]>(`/api/v1/teacher/assignments${classId ? `?classId=${classId}` : ""}`);
+export const getTeacherProfile = () =>
+  api.get<{ id: string; fullName: string; firstName: string; email: string; school: { id: string; name: string }; subjects: SchoolSubject[]; grades: number[] }>(
+    "/api/v1/teacher/me",
+  );
+export const getTeacherStudentsList = (classId?: string) =>
+  api.get<TeacherStudentsPage>(`/api/v1/teacher/students${classId ? `?classId=${classId}` : ""}`);
+
+export const getTeacherMessages = () => api.get<TeacherMessages>("/api/v1/teacher/messages");
+export const getStudentThread = (studentId: string) => api.get<StudentThread>(`/api/v1/teacher/messages/students/${studentId}`);
+export const sendStudentMessage = (studentId: string, text: string) =>
+  api.post<ThreadMessage>(`/api/v1/teacher/messages/students/${studentId}`, { text });
+export const getChannel = (classId: string) => api.get<ChannelThread>(`/api/v1/teacher/messages/classes/${classId}`);
+export const postToChannel = (classId: string, text: string) => api.post<ThreadMessage>(`/api/v1/teacher/messages/classes/${classId}`, { text });
+export const broadcast = (classId: string | null, text: string) =>
+  api.post<{ classes: number; students: number }>("/api/v1/teacher/broadcast", { classId, text });
+
+export const getTeacherCalendar = (from?: string, to?: string) => {
+  const q = new URLSearchParams();
+  if (from) q.set("from", from);
+  if (to) q.set("to", to);
+  const qs = q.toString();
+  return api.get<TeacherCalendar>(`/api/v1/teacher/calendar${qs ? `?${qs}` : ""}`);
+};
+export const createEvent = (event: SaveEvent) => api.post<CalendarItem>("/api/v1/teacher/calendar/events", event);
+export const updateEvent = (id: string, event: SaveEvent) => api.put<CalendarItem>(`/api/v1/teacher/calendar/events/${id}`, event);
+export const deleteEvent = (id: string) => api.delete<void>(`/api/v1/teacher/calendar/events/${id}`);
+
+export const getTeacherProgress = (classId?: string, basis?: "Grammar" | "Subjects") => {
+  const q = new URLSearchParams();
+  if (classId) q.set("classId", classId);
+  if (basis) q.set("basis", basis);
+  const qs = q.toString();
+  return api.get<TeacherProgress>(`/api/v1/teacher/progress${qs ? `?${qs}` : ""}`);
+};
+
+export const nudgeStudent = (studentId: string, kind: NudgeKind, assignmentId?: string | null, text?: string) =>
+  api.post<{ id: string; kind: NudgeKind; studentName: string; parent: string | null; createdUtc: string }>(
+    `/api/v1/teacher/students/${studentId}/nudge`,
+    { kind, assignmentId: assignmentId ?? null, text: text ?? null },
+  );
+
+export const getTeacherSettings = () => api.get<TeacherSettings>("/api/v1/teacher/settings");
+export const updateTeacherSettings = (changes: Partial<Omit<TeacherSettings, "fullName" | "email" | "school" | "subjects" | "grades">>) =>
+  api.put<TeacherSettings>("/api/v1/teacher/settings", changes);
+
+/** Downloads a file from the API with the signed-in token (the .ics calendar). */
+export async function downloadFromApi(path: string, filename: string) {
+  const token = getToken();
+  const res = await fetch(`${API_BASE_URL}${path}`, { credentials: "include", headers: token ? { Authorization: `Bearer ${token}` } : {} });
+  if (!res.ok) throw new ApiError(`Request to ${path} failed with ${res.status}`, res.status);
+  const url = URL.createObjectURL(await res.blob());
+  const a = Object.assign(document.createElement("a"), { href: url, download: filename });
+  a.click();
+  URL.revokeObjectURL(url);
+}
+export const changeTeacherPassword = (currentPassword: string, newPassword: string, confirmPassword: string) =>
+  api.put<void>("/api/v1/teacher/password", { currentPassword, newPassword, confirmPassword });

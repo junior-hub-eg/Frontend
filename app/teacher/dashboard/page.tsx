@@ -21,15 +21,19 @@ import { errorMessage } from "@/lib/api-client";
 import { useI18n } from "@/lib/i18n/client";
 import { dateLocale, tk } from "@/lib/i18n/translate";
 import {
+  answerQuestion,
   changeDue,
   decideJoinRequest,
   getTeacherDashboard,
+  nudgeStudent,
   type ClassQuestion,
+  type NudgeKind,
   type TeacherAlert,
   type TeacherDashboard,
 } from "@/lib/teacher-api";
 import { cn } from "@/lib/utils";
-import { Card, LoadBlock, StudentAvatar, formatDate, useTeacherData } from "@/components/teacher/teacher-ui";
+import { Card, LoadBlock, StudentAvatar, formatDate, inputClass, useTeacherData } from "@/components/teacher/teacher-ui";
+import { EventDialog, QuickAssignmentDialog, TeacherDialog, useToast } from "@/components/teacher/teacher-dialogs";
 
 type Stat = {
   label: string;
@@ -176,24 +180,43 @@ function DragRow({ children, className }: { children: ReactNode; className?: str
 }
 
 /** One alert with the action that fits it. Extending and accepting change data, so they reload the dashboard. */
-function AlertCard({ alert, onChanged }: { alert: TeacherAlert; onChanged: () => void }) {
+function AlertCard({ alert, onChanged, onNotice }: { alert: TeacherAlert; onChanged: () => void; onNotice: (text: string) => void }) {
   const { t } = useI18n();
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const tone = KIND_TONE[alert.kind];
 
-  async function run(key: string, action: () => Promise<unknown>) {
+  async function run(key: string, action: () => Promise<unknown>, reload = true) {
     setBusy(key);
     setError(null);
     try {
       await action();
-      onChanged();
+      if (reload) onChanged();
     } catch (e) {
       setError(errorMessage(e));
     } finally {
       setBusy(null);
     }
   }
+
+  /** A reminder, hint or note to the parent: the student gets a notification; the dashboard does not change. */
+  const nudge = (kind: NudgeKind) =>
+    run(
+      kind,
+      async () => {
+        const sent = await nudgeStudent(alert.studentId, kind, alert.assignmentId);
+        onNotice(
+          kind === "Parent"
+            ? sent.parent
+              ? t("{student} and their parent {parent} were notified.", { student: sent.studentName, parent: sent.parent })
+              : t("{student} was notified. No parent is on file.", { student: sent.studentName })
+            : kind === "Hint"
+              ? t("Hint sent to {student}.", { student: sent.studentName })
+              : t("Reminder sent to {student}.", { student: sent.studentName }),
+        );
+      },
+      false,
+    );
 
   const note = (() => {
     switch (alert.kind) {
@@ -221,18 +244,22 @@ function AlertCard({ alert, onChanged }: { alert: TeacherAlert; onChanged: () =>
               busy={busy === "extend"}
               onClick={() => run("extend", () => changeDue(alert.assignmentId!, new Date(Math.max(Date.now(), Date.parse(alert.atUtc!)) + 864e5).toISOString()))}
             />
-            <ActionButton label={t("Send Reminder")} variant="secondary" />
+            <ActionButton label={t("Send Reminder")} variant="secondary" busy={busy === "Reminder"} onClick={() => nudge("Reminder")} />
           </>
         );
       case "LowScore":
         return (
           <>
-            <ActionButton label={t("Review Attempt")} variant="primary" />
-            <ActionButton label={t("Send Hint")} variant="secondary" />
+            <ActionButton
+              label={t("Review Attempt")}
+              variant="primary"
+              href={`/teacher/assignments?assignment=${alert.assignmentId}&student=${alert.studentId}`}
+            />
+            <ActionButton label={t("Send Hint")} variant="secondary" busy={busy === "Hint"} onClick={() => nudge("Hint")} />
           </>
         );
       case "Inactive":
-        return <ActionButton label={t("Notify Parent & Student")} variant="dark" />;
+        return <ActionButton label={t("Notify Parent & Student")} variant="dark" busy={busy === "Parent"} onClick={() => nudge("Parent")} />;
       default:
         return (
           <>
@@ -279,9 +306,86 @@ function AlertCard({ alert, onChanged }: { alert: TeacherAlert; onChanged: () =>
   );
 }
 
-/** Open questions from students (the design's "Unread Queries" card). */
-function QuestionsCard({ questions }: { questions: ClassQuestion[] }) {
+/** Answers students' open questions one by one (from the "Unread Queries" card). */
+function AnswerQuestionsDialog({ questions, onClose, onAnswered }: { questions: ClassQuestion[]; onClose: () => void; onAnswered: () => void }) {
   const { t } = useI18n();
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [done, setDone] = useState<Record<string, boolean>>({});
+  const [busy, setBusy] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function send(q: ClassQuestion) {
+    const text = (answers[q.id] ?? "").trim();
+    if (!text) return;
+    setBusy(q.id);
+    setError(null);
+    try {
+      await answerQuestion(q.id, text);
+      setDone((d) => ({ ...d, [q.id]: true }));
+      onAnswered();
+    } catch (e) {
+      setError(errorMessage(e));
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  return (
+    <TeacherDialog title={t("Students' questions")} subtitle={t("Your answer reaches the student on their page.")} onClose={onClose} wide>
+      <ul className="grid gap-3">
+        {questions.map((q) => (
+          <li key={q.id} className="rounded-xl border border-[#e3ece9] p-3">
+            <p className="flex items-center justify-between gap-2 text-[10px] text-[#1B2D54]/60">
+              <span className="font-semibold text-[#1B2D54]">
+                {q.studentName} • {t("Class {name}", { name: q.className })}
+              </span>
+              <span>{formatDate(q.createdUtc, true)}</span>
+            </p>
+            <p dir="auto" className="mt-1.5 text-[12px]">{q.text}</p>
+            {done[q.id] ? (
+              <p className="mt-2 text-[11px] font-semibold text-[#14757d]">{t("Answered")}</p>
+            ) : (
+              <div className="mt-2 flex gap-2">
+                <input
+                  dir="auto"
+                  className={inputClass}
+                  value={answers[q.id] ?? ""}
+                  onChange={(e) => setAnswers((a) => ({ ...a, [q.id]: e.target.value }))}
+                  onKeyDown={(e) => e.key === "Enter" && send(q)}
+                  placeholder={t("Write your answer…")}
+                  maxLength={2000}
+                />
+                <button
+                  type="button"
+                  onClick={() => send(q)}
+                  disabled={busy === q.id || !(answers[q.id] ?? "").trim()}
+                  className="flex shrink-0 items-center gap-1 rounded-lg bg-[#14757d] px-3 text-[11px] font-semibold text-white disabled:opacity-50"
+                >
+                  {busy === q.id && <LoaderCircle className="size-3 animate-spin" />}
+                  {t("Send")}
+                </button>
+              </div>
+            )}
+          </li>
+        ))}
+      </ul>
+      {error && <p role="alert" className="mt-3 text-[11px] text-[#c81e1e]">{error}</p>}
+      <div className="mt-4 flex justify-between gap-2">
+        <Link href={"/teacher/messages" as Route} className="rounded-full bg-[#eef2f1] px-4 py-2 text-[11px] font-semibold">
+          {t("Open Messages")}
+        </Link>
+        <button type="button" onClick={onClose} className="rounded-full bg-[#14757d] px-5 py-2 text-[11px] font-semibold text-white">
+          {t("Done")}
+        </button>
+      </div>
+    </TeacherDialog>
+  );
+}
+
+/** Open questions from students (the design's "Unread Queries" card). */
+function QuestionsCard({ questions, onAnswered }: { questions: ClassQuestion[]; onAnswered: () => void }) {
+  const { t } = useI18n();
+  const [open, setOpen] = useState(false);
   return (
     <div className="flex min-w-0 flex-col gap-3 rounded-xl border border-[#e3ece9] bg-white p-3 md:col-span-2 xl:col-span-2">
       <div className="flex items-center justify-between text-[10px]">
@@ -305,14 +409,26 @@ function QuestionsCard({ questions }: { questions: ClassQuestion[] }) {
       )}
 
       <div className="mt-auto flex justify-end">
-        <button
-          type="button"
-          className="flex items-center gap-1.5 rounded-lg bg-[#1B2D54] px-4 py-2 text-[11px] font-semibold text-white transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#12939b]/40"
-        >
-          <MessageSquare aria-hidden className="size-3.5" />
-          {t("Reply in Student Messages")}
-        </button>
+        {questions.length === 0 ? (
+          <Link
+            href={"/teacher/messages" as Route}
+            className="flex items-center gap-1.5 rounded-lg bg-[#1B2D54] px-4 py-2 text-[11px] font-semibold text-white transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#12939b]/40"
+          >
+            <MessageSquare aria-hidden className="size-3.5" />
+            {t("Reply in Student Messages")}
+          </Link>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className="flex items-center gap-1.5 rounded-lg bg-[#1B2D54] px-4 py-2 text-[11px] font-semibold text-white transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#12939b]/40"
+          >
+            <MessageSquare aria-hidden className="size-3.5" />
+            {t("Reply in Student Messages")}
+          </button>
+        )}
       </div>
+      {open && <AnswerQuestionsDialog questions={questions} onClose={() => setOpen(false)} onAnswered={onAnswered} />}
     </div>
   );
 }
@@ -326,6 +442,8 @@ export default function TeacherDashboardPage() {
   const { t } = useI18n();
   const [activeClass, setActiveClass] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | Group>("all");
+  const [dialog, setDialog] = useState<"assignment" | "office-hour" | null>(null);
+  const toast = useToast();
   const load = useCallback(() => getTeacherDashboard(activeClass ?? undefined), [activeClass]);
   const dashboard = useTeacherData(load, tk("We couldn't load your dashboard. Please try again."));
   const d: TeacherDashboard | null = dashboard.data;
@@ -460,6 +578,7 @@ export default function TeacherDashboardPage() {
 
           <button
             type="button"
+            onClick={() => setDialog("assignment")}
             className="flex items-center gap-1.5 rounded-full bg-[#14757d] px-4 py-2 text-[11px] font-semibold text-white shadow-sm transition-colors hover:bg-[#0f6169] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#12939b]/40"
           >
             <Plus aria-hidden className="size-3.5" />
@@ -518,12 +637,12 @@ export default function TeacherDashboardPage() {
 
         <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {visibleAlerts.map((a) => (
-            <AlertCard key={`${a.kind}-${a.studentId}-${a.assignmentId ?? a.classId}`} alert={a} onChanged={dashboard.reload} />
+            <AlertCard key={`${a.kind}-${a.studentId}-${a.assignmentId ?? a.classId}`} alert={a} onChanged={dashboard.reload} onNotice={toast.show} />
           ))}
           {visibleAlerts.length === 0 && (
             <p className="text-[11px] text-[#1B2D54]/60 md:col-span-2 xl:col-span-3">{t("Nothing needs your attention right now.")}</p>
           )}
-          {filter !== "blockers" && <QuestionsCard questions={d.questions} />}
+          {filter !== "blockers" && <QuestionsCard questions={d.questions} onAnswered={dashboard.reload} />}
         </div>
       </Card>
 
@@ -617,7 +736,7 @@ export default function TeacherDashboardPage() {
                       </div>
                     </div>
                     <div className="mt-auto flex gap-2">
-                      <ActionButton label={t("Review Problem")} variant="dark" />
+                      <ActionButton label={t("Review Problem")} variant="dark" href={`/teacher/assignments?assignment=${m.assignmentId}`} />
                       <ActionButton label={t("Class Error Matrix")} variant="secondary" href={`/teacher/classes?class=${classIdOf(m.className)}`} />
                     </div>
                   </div>
@@ -641,7 +760,7 @@ export default function TeacherDashboardPage() {
               {d.schedule.map((s, i) => {
                 const date = new Date(s.dateUtc);
                 return (
-                  <li key={`${s.kind}-${s.title}-${s.dateUtc}`} className="flex min-w-0 items-start gap-3">
+                  <li key={`${s.kind}-${s.classId}-${s.title}-${s.dateUtc}`} className="flex min-w-0 items-start gap-3">
                     <span
                       className={cn(
                         "flex w-11 shrink-0 flex-col items-center rounded-xl py-1.5 leading-none",
@@ -675,15 +794,39 @@ export default function TeacherDashboardPage() {
             </ul>
           )}
 
-          <button
-            type="button"
-            className="mt-auto rounded-xl bg-[#eef2f1] px-3 py-2.5 text-[11px] font-semibold transition-colors hover:bg-[#dfe9e7]"
-          >
-            + {t("Schedule Office Hour or Review")}
-          </button>
+          <div className="mt-auto flex flex-col gap-2">
+            <Link href={"/teacher/calendar" as Route} className="text-end text-[10px] font-semibold text-[#14757d] hover:underline">
+              {t("View All")}
+            </Link>
+            <button
+              type="button"
+              onClick={() => setDialog("office-hour")}
+              className="rounded-xl bg-[#eef2f1] px-3 py-2.5 text-[11px] font-semibold transition-colors hover:bg-[#dfe9e7]"
+            >
+              + {t("Schedule Office Hour or Review")}
+            </button>
+          </div>
         </Card>
       </div>
 
+      {dialog === "assignment" && (
+        <QuickAssignmentDialog
+          onClose={() => setDialog(null)}
+          onCreated={dashboard.reload}
+          defaults={{ classId: activeClass ?? undefined }}
+        />
+      )}
+      {dialog === "office-hour" && (
+        <EventDialog
+          defaults={{ kind: "OfficeHour", classId: activeClass ?? undefined }}
+          onClose={() => setDialog(null)}
+          onSaved={(item) => {
+            setDialog(null);
+            if (item) toast.show(t("{title} was added to your calendar.", { title: item.title }));
+          }}
+        />
+      )}
+      {toast.node}
     </div>
   );
 }

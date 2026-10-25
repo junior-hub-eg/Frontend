@@ -29,12 +29,29 @@ const SUBJECTS: {
     href: "/learner/ai-curriculum/mathematics" as Route,
   },
   {
+    title: tk("Arabic Language"),
+    desc: tk("Learn and practice grammar analysis and writing with AI explanations, interactive exercises and real examples."),
+    img: `${IMG}/arabic.png`,
+    w: 780,
+    h: 380,
+    bg: "#ffffff",
+    href: "/learner/ai-curriculum/arabic" as Route,
+  },
+  {
     title: tk("Physics"),
     desc: tk("Explore physics concepts with AI-guided videos, interactive experiments, and real-time coding."),
     img: `${IMG}/image%2039.png`,
     w: 451,
     h: 301,
     bg: "#ddf5f7",
+  },
+  {
+    title: tk("Chemistry"),
+    desc: tk("Understand chemistry concepts with AI explanations, virtual labs, and interactive problem solving."),
+    img: `${IMG}/chemistry.png`,
+    w: 780,
+    h: 380,
+    bg: "#ffffff",
   },
 ];
 
@@ -66,7 +83,7 @@ export default function AiCurriculumPage() {
           {SUBJECTS.map((s) => (
             <li
               key={s.title}
-              className={`relative flex flex-col overflow-hidden rounded-[1.8em] ${s.href ? "transition hover:shadow-lg" : ""}`}
+              className={`relative flex flex-col overflow-hidden rounded-[1.8em] ${s.bg === "#ffffff" ? "border border-[#e3e9f0]" : ""} ${s.href ? "transition hover:shadow-lg" : ""}`}
               style={{ backgroundColor: s.bg }}
             >
               <div className="relative aspect-[523/396] w-full">
