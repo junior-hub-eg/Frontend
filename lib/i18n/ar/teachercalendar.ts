@@ -1,0 +1,86 @@
+export const teacherCalendar = {
+  "UI/UX Department • Term 1": "قسم UI/UX • الفصل الأول",
+  "Academic Timetable & Design Studio Schedule": "الجدول الأكاديمي وجدول استوديو التصميم",
+  "Sync External Calendar": "مزامنة تقويم خارجي",
+  "Schedule Studio Event": "جدولة فعالية في الاستوديو",
+  Day: "يوم",
+  Week: "أسبوع",
+  Month: "شهر",
+  Agenda: "جدول الأعمال",
+
+  "October 2024": "أكتوبر 2024",
+  "Previous month": "الشهر السابق",
+  "Next month": "الشهر التالي",
+  Su: "أح",
+  Mo: "اث",
+  Tu: "ثل",
+  We: "أر",
+  Th: "خم",
+  Fr: "جم",
+  Sa: "سب",
+
+  "Studio Channels": "قنوات الاستوديو",
+  "6 ACTIVE": "6 نشطة",
+  "Cohort 9A Live Design Critiques": "مراجعات التصميم المباشرة للدفعة 9A",
+  "Cohort 9B UX Research Labs": "مختبرات أبحاث UX للدفعة 9B",
+  "1-on-1 Mentorship & Remedial": "إرشاد فردي وحصص علاجية",
+  "Figma Sprints & Deadlines": "سبرنتات Figma والمواعيد النهائية",
+  "Industry Juries & Hiring Reviews": "لجان الصناعة ومراجعات التوظيف",
+  "Design Faculty Syncs": "اجتماعات هيئة التدريس",
+
+  "1-on-1 Booking Link": "رابط حجز الجلسات الفردية",
+  "Public Figma review link for apprentices": "رابط مراجعة Figma عام للمتدربين",
+  Copy: "نسخ",
+  Copied: "تم النسخ",
+  "PHYSICAL & CLOUD HUB": "المركز الفعلي والسحابي",
+  "Design Studio Lab 304 & Zoom Room 4": "معمل استوديو التصميم 304 وغرفة Zoom 4",
+  "32 Figma Interactive Terminals Active • Dual 4K Projection Sync Enabled":
+    "32 جهاز Figma تفاعلي نشط • مزامنة عرض 4K مزدوجة مفعّلة",
+
+  MON: "الاثنين",
+  TUE: "الثلاثاء",
+  WED: "الأربعاء",
+  THU: "الخميس",
+  FRI: "الجمعة",
+  "LIVE NOW": "مباشر الآن",
+
+  "UI/UX Fundamentals": "أساسيات UI/UX",
+  "Lesson 3.2: Responsive Auto Layout & Constraints": "الدرس 3.2: Auto Layout المتجاوب والقيود",
+  "Studio 304": "استوديو 304",
+  "Cohort 9A": "الدفعة 9A",
+  "Cohort 9B": "الدفعة 9B",
+
+  "Cohort 9A Live Design Critique": "مراجعة تصميم مباشرة للدفعة 9A",
+  "Mobile App Wireframes & Information Architecture Review": "مراجعة الـ Wireframes وهيكلة المعلومات لتطبيق الموبايل",
+
+  "Faculty Syllabus Sync": "مزامنة منهج هيئة التدريس",
+  "Term 1 Assessment Rubric calibration": "معايرة معايير تقييم الفصل الأول",
+  "Zoom Room 2": "غرفة Zoom 2",
+
+  "Cohort 9B UX Research Lab": "مختبر أبحاث UX للدفعة 9B",
+  "Usability Testing Synthesis & User Journey Mapping": "تلخيص اختبارات الاستخدام ورسم رحلة المستخدم",
+  "Lab 304": "معمل 304",
+
+  "Portfolio Review Call": "مكالمة مراجعة البورتفوليو",
+  "Sara's Mentor Review (Sprint 04 Showcase Case Study)": "مراجعة المرشد لسارة (دراسة حالة عرض السبرنت 04)",
+  "Google Meet + Hybrid": "Google Meet + حضوري",
+
+  "1-on-1 Mentoring Clinic": "عيادة الإرشاد الفردي",
+  "Youssef Ahmed & Karim Tarek": "يوسف أحمد وكريم طارق",
+  "Auto Layout Nesting & WCAG": "تداخل Auto Layout ومعايير WCAG",
+
+  "Design Review Breakout Rooms": "غرف مراجعة التصميم الفرعية",
+  "Peer Feedback & Heuristic Evaluation (Cohorts 9A & 9B)": "ملاحظات الأقران والتقييم الاستدلالي (الدفعتان 9A و9B)",
+  "Breakout 1-6 + Virtual": "غرف 1-6 + افتراضي",
+
+  "Remedial Clinic: Figma Tokens": "عيادة علاجية: Figma Tokens",
+  "Design system color primitives setup": "إعداد ألوان نظام التصميم الأساسية",
+  "Terminal 12 + Studio 304": "جهاز 12 + استوديو 304",
+
+  "ACTIVE SESSION • UI/UX Design Cohort 9A": "جلسة نشطة • تصميم UI/UX الدفعة 9A",
+  "Tuesday In-Person & Hybrid Studio Lab 304": "الثلاثاء حضوري وهجين • معمل الاستوديو 304",
+  "Lesson 3.3: Interactive Variants & Micro-interactions in Figma": "الدرس 3.3: Interactive Variants والتفاعلات الدقيقة في Figma",
+  "24 of 28 apprentices actively connected via Figma Live multiplayer": "24 من 28 متدربًا متصلون الآن عبر Figma Live",
+  "Open Figma Slide Deck": "فتح عرض Figma",
+  "Enter Studio 304 Live Stream": "دخول البث المباشر لاستوديو 304",
+};
