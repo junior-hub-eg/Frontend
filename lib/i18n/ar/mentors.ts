@@ -370,4 +370,13 @@ export const mentors: Record<string, string> = {
   "Your question": "سؤالك",
   "Send": "إرسال",
   "This chat is full, start a new one": "المحادثة دي اتملت، ابدأ محادثة جديدة",
+
+  // Mentor-student chat and the mentor change request (26 Oct 2026)
+  "No messages yet. Say hello!": "مفيش رسائل لسه. ابدأ وقول أهلاً!",
+  "Make {name} your {track} mentor?": "تختار {name} مرشدك في {track}؟",
+  "Send a request to change your {track} mentor to {name}? Your mentor changes once the admin approves.": "تبعت طلب تغيير مرشدك في {track} إلى {name}؟ المرشد هيتغير بعد موافقة الأدمن.",
+  "Your request was sent. Waiting for admin approval.": "طلبك اتبعت. في انتظار موافقة الأدمن.",
+  "{name} is now your mentor.": "{name} بقى مرشدك.",
+  "Your request to change to {name} is waiting for admin approval.": "طلب التغيير إلى {name} في انتظار موافقة الأدمن.",
+  "Waiting for admin approval": "في انتظار موافقة الأدمن",
 };

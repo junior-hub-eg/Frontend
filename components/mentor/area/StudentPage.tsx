@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import type { Route } from "next";
 import { ClipboardCheck, MessageSquare } from "lucide-react";
 import { errorMessage } from "@/lib/api-client";
 import { useI18n } from "@/lib/i18n/client";
-import { addStudentNote, getMyStudent } from "@/lib/monitor-api";
+import { addStudentNote, getMonitorMessages, getMyStudent, markMonitorMessagesRead, sendMonitorMessage } from "@/lib/monitor-api";
+import DirectChat from "@/components/shared/DirectChat";
 import { cn } from "@/lib/utils";
 import {
   Card, Dialog, EmptyState, ErrorState, Field, LevelBadge, LinkButton, MentorAvatar, MentorPage, Pill, PrimaryButton, ProgressBar, RolePill,
@@ -22,7 +23,9 @@ type Tab = "overview" | "squads" | "reviews" | "notes" | "sessions";
 
 export default function StudentPage({ id }: { id: string }) {
   const { t, intl } = useI18n();
-  const router = useRouter();
+  // The notification of a new message links here with ?chat=1.
+  const params = useSearchParams();
+  const [chatting, setChatting] = useState(params.get("chat") === "1");
   const rel = useRelative();
   const { data, error, loading, reload, setData } = useApi(() => getMyStudent(id), [id]);
   const [tab, setTab] = useState<Tab>("overview");
@@ -56,7 +59,6 @@ export default function StudentPage({ id }: { id: string }) {
   const previous = scored[scored.length - 2];
   const upcoming = data.sessions.filter((s) => s.status === "Upcoming").sort((a, b) => a.startsUtc.localeCompare(b.startsUtc));
   const day = (iso: string) => new Date(iso).toLocaleDateString(intl, { month: "short", day: "numeric" });
-  const message = () => router.push((data.isMentee ? `/mentor/messages?student=${data.id}` : `/mentor/squads/${sq?.squadId}?tab=chat`) as Route);
 
   return (
     <MentorPage title={data.fullName} subtitle={<span><Link href={"/mentor/students" as Route} className="hover:underline">{t("My students")}</Link>{sq ? ` › ${sq.squadName}` : ""}</span>}>
@@ -77,7 +79,7 @@ export default function StudentPage({ id }: { id: string }) {
           </div>
           <div className="flex gap-[0.6em]">
             <PrimaryButton onClick={() => setWriting(true)}><ClipboardCheck className="size-[1.1em]" /> {t("Write review")}</PrimaryButton>
-            <SecondaryButton onClick={message} disabled={!data.isMentee && !sq}><MessageSquare className="size-[1.1em]" /> {t("Message")}</SecondaryButton>
+            <SecondaryButton onClick={() => setChatting(true)}><MessageSquare className="size-[1.1em]" /> {t("Message")}</SecondaryButton>
           </div>
         </div>
       </Card>
@@ -235,6 +237,8 @@ export default function StudentPage({ id }: { id: string }) {
         </div>
       )}
 
+      {chatting && <DirectChat key={data.id} me="mentor" partner={{ id: data.id, name: data.fullName, photoUrl: data.photoUrl, subtitle: sq?.squadName }}
+        load={getMonitorMessages} send={sendMonitorMessage} markRead={markMonitorMessagesRead} onClose={() => setChatting(false)} />}
       {writing && <NoteDialog name={data.fullName} onClose={() => setWriting(false)} onSave={(text, share) =>
         addStudentNote(id, text, share).then((n) => { setData({ ...data, notes: [n, ...data.notes] }); setWriting(false); setTab("notes"); })} />}
     </MentorPage>
