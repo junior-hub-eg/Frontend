@@ -50,6 +50,7 @@ export default function AdminNotificationsCenter() {
 
   const saved = (a: Announcement) => {
     list.setData((l) => (l?.some((x) => x.id === a.id) ? l.map((x) => (x.id === a.id ? a : x)) : [a, ...(l ?? [])]));
+    void list.reload(); // only the list carries each announcement's reach
     setEditing(null);
     setComposerKey((k) => k + 1);
   };
