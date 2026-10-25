@@ -58,6 +58,25 @@ function store(id: string | null) {
  * The Junior Hub assistant: a floating chat on every student page. It answers questions about the student's own
  * journey (next lesson, XP, squad, mentor...) and the platform. Chats are stored by the backend.
  */
+/** The top-bar button (AssistantButton) asks the chat to open or close with this window event. */
+const TOGGLE_EVENT = "jh:assistant-toggle";
+
+/** The assistant's button in the learner top bar, next to the bell. */
+export function AssistantButton() {
+  const { t } = useI18n();
+  return (
+    <button
+      type="button"
+      onClick={() => window.dispatchEvent(new Event(TOGGLE_EVENT))}
+      aria-label={t("Open assistant")}
+      title={t("Junior Hub assistant")}
+      className="grid h-[2.8em] w-[2.8em] place-items-center rounded-full bg-[#12939b] text-white shadow-[0_6px_18px_-6px_rgba(18,147,155,0.7)] transition hover:bg-[#0f7a81]"
+    >
+      <MessageCircle className="h-[1.2em] w-[1.2em]" />
+    </button>
+  );
+}
+
 export function AssistantChat() {
   const { t, intl, dir, locale } = useI18n();
   const [open, setOpen] = useState(false);
@@ -110,6 +129,16 @@ export function AssistantChat() {
     const id = readStored();
     if (id) void openConversation(id);
   }
+
+  const toggleRef = useRef<() => void>(() => undefined);
+  useEffect(() => {
+    toggleRef.current = toggleOpen;
+  });
+  useEffect(() => {
+    const onToggle = () => toggleRef.current();
+    window.addEventListener(TOGGLE_EVENT, onToggle);
+    return () => window.removeEventListener(TOGGLE_EVENT, onToggle);
+  }, []);
 
   function newChat() {
     setConversationId(null);
@@ -191,7 +220,7 @@ export function AssistantChat() {
         <section
           role="dialog"
           aria-label={t("Junior Hub assistant")}
-          className="fixed inset-0 z-[60] flex flex-col bg-white sm:inset-auto sm:bottom-24 sm:end-6 sm:h-[min(620px,calc(100vh-8rem))] sm:w-[380px] sm:overflow-hidden sm:rounded-2xl sm:border sm:border-[#d7e6ea] sm:shadow-[0_20px_60px_-15px_rgba(20,54,90,0.35)]"
+          className="fixed inset-0 z-[60] flex flex-col bg-white sm:inset-auto sm:top-24 sm:end-6 sm:h-[min(620px,calc(100vh-8rem))] sm:w-[380px] sm:overflow-hidden sm:rounded-2xl sm:border sm:border-[#d7e6ea] sm:shadow-[0_20px_60px_-15px_rgba(20,54,90,0.35)]"
         >
           <header className="flex items-center gap-2 bg-[#14365a] px-4 py-3 text-white">
             <span className="grid size-9 place-items-center rounded-full bg-[#12939b]">
@@ -384,18 +413,6 @@ export function AssistantChat() {
         </section>
       )}
 
-      <button
-        type="button"
-        onClick={toggleOpen}
-        aria-label={open ? t("Close assistant") : t("Open assistant")}
-        aria-expanded={open}
-        className={cn(
-          "fixed bottom-5 end-5 z-[61] grid size-14 place-items-center rounded-full bg-[#12939b] text-white shadow-[0_10px_30px_-8px_rgba(18,147,155,0.7)] transition hover:scale-105 hover:bg-[#0f7a81] sm:bottom-6 sm:end-6",
-          open && "max-sm:hidden"
-        )}
-      >
-        {open ? <X className="size-6" /> : <MessageCircle className="size-6" />}
-      </button>
     </>
   );
 }
