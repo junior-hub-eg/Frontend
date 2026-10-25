@@ -5,7 +5,7 @@ import { ROLE_HOME, ROLE_PATH_PREFIX } from "@/lib/constants";
 import { TOKEN_COOKIE, decodeToken, isTokenExpired } from "@/lib/auth/token";
 
 /**
- * Route guard by role prefix (/learner, /guardian, /mentor, /admin).
+ * Route guard by role prefix (/learner, /guardian, /mentor, /teacher).
  *
  * Reads the backend JWT from the `jh_token` cookie (written by
  * lib/auth/token.ts on login) and checks its expiry and role claim. The
@@ -30,17 +30,10 @@ export function proxy(request: NextRequest) {
     ([, prefix]) => pathname === prefix || pathname.startsWith(`${prefix}/`)
   );
 
-  // The admin has its own login page (23 Oct 2026). It is open to everyone; a signed-in admin goes to the dashboard.
-  if (pathname === ADMIN_LOGIN) {
-    return session?.role === "admin"
-      ? NextResponse.redirect(new URL(ROLE_HOME.admin, request.url))
-      : NextResponse.next();
-  }
-
   if (roleEntry) {
     const [requiredRole] = roleEntry;
     if (!session) {
-      return NextResponse.redirect(new URL(requiredRole === "admin" ? ADMIN_LOGIN : "/login", request.url));
+      return NextResponse.redirect(new URL("/login", request.url));
     }
     if (session.role !== requiredRole) {
       return NextResponse.redirect(new URL(ROLE_HOME[session.role], request.url));
@@ -54,10 +47,8 @@ export function proxy(request: NextRequest) {
   return NextResponse.next();
 }
 
-const ADMIN_LOGIN = "/admin/login";
-
-/** Backend role claim → frontend role: students, mentors who monitor squads (21 Oct 2026), the admin and teachers (23 Oct 2026). */
-const BACKEND_ROLE: Record<string, UserRole> = { Student: "learner", Mentor: "mentor", Admin: "admin", Teacher: "teacher" };
+/** Backend role claim → frontend role: students, mentors who monitor squads (21 Oct 2026) and teachers (23 Oct 2026). The admin uses its own app. */
+const BACKEND_ROLE: Record<string, UserRole> = { Student: "learner", Mentor: "mentor", Teacher: "teacher" };
 
 function readSessionCookie(request: NextRequest): { id: string; role: UserRole } | null {
   const token = request.cookies.get(TOKEN_COOKIE)?.value;

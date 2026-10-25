@@ -224,7 +224,7 @@ export function seedDemoUsers() {
   const users = readStore<StoredUser>(USERS_KEY);
   if (users.length > 0) return;
 
-  const demoRoles: UserRole[] = ["learner", "guardian", "mentor", "admin"];
+  const demoRoles: UserRole[] = ["learner", "guardian", "mentor"];
   const seeded: StoredUser[] = demoRoles.map((role) => ({
     id: crypto.randomUUID(),
     role,

@@ -1,7 +1,7 @@
 /**
  * Real auth — the .NET backend's /api/v1/auth and /api/v1/me (JH-SRS §5.2).
- * Backend roles: Student → "learner", Mentor → "mentor", Admin → "admin", Teacher → "teacher" (23 Oct 2026). The admin signs in on its own
- * page (/admin/login → POST /api/v1/auth/admin/login); the main login refuses the admin (separate systems, 26 Oct 2026).
+ * Backend roles: Student → "learner", Mentor → "mentor", Teacher → "teacher" (23 Oct 2026). The admin uses its own app
+ * (junior-hub-eg/AdminDash, 26 Oct 2026); the main login refuses the admin account.
  */
 import { api, refreshAccessToken } from "@/lib/api-client";
 import { decodeToken, getToken, setToken, TOKEN_CHANGE_EVENT } from "@/lib/auth/token";
@@ -30,11 +30,10 @@ function emitChange() {
 interface LoginResponse {
   accessToken: string;
   expiresIn: number;
-  /** Student, Mentor or Admin. */
+  /** Student, Mentor or Teacher. */
   role?: string;
   student: { id: string; firstName: string; grade: number | null; className: string | null } | null;
   mentor?: { id: string; firstName: string; fullName: string; title: string; trackCode: string } | null;
-  admin?: { id: string; firstName: string; fullName: string; isOwner: boolean } | null;
   teacher?: { id: string; firstName: string; fullName: string; schoolName: string } | null;
 }
 
@@ -58,18 +57,6 @@ interface MentorMeResponse {
 const sessionRole = () => decodeToken(getToken() ?? "")?.role;
 const isMentorSession = () => sessionRole() === "Mentor";
 
-function adminUser(a: { id: string; fullName: string; isOwner?: boolean }, email: string): User {
-  const [firstName, ...rest] = a.fullName.split(/\s+/);
-  return {
-    id: a.id,
-    role: "admin",
-    firstName,
-    lastName: rest.join(" ") || undefined,
-    email,
-    isOwner: a.isOwner ?? false,
-    createdAt: new Date().toISOString(),
-  };
-}
 
 function mentorUser(m: { id: string; fullName: string }, email: string): User {
   const [firstName, ...rest] = m.fullName.split(/\s+/);
@@ -117,14 +104,6 @@ async function loadProfile(): Promise<User> {
     storeUser(user);
     return user;
   }
-  if (sessionRole() === "Admin") {
-    // The admin has no profile endpoint: keep what the login stored, or rebuild it from the token.
-    const cached = getCurrentUserSnapshot();
-    if (cached?.role === "admin") return cached;
-    const user = adminUser({ id: decodeToken(getToken() ?? "")?.sub ?? "", fullName: "Admin" }, "");
-    storeUser(user);
-    return user;
-  }
   if (isMentorSession()) {
     const cached = getCurrentUserSnapshot();
     const me = await api.get<MentorMeResponse>("/api/v1/monitor/me");
@@ -167,19 +146,9 @@ export async function login(email: string, password: string, rememberMe = false)
   return startSession(res, email);
 }
 
-/** The admin login page: only the admin account can sign in (others get NOT_AN_ADMIN). */
-export async function adminLogin(email: string, password: string, rememberMe = false): Promise<User> {
-  const res = await api.post<LoginResponse>("/api/v1/auth/admin/login", { email, password, rememberMe });
-  return startSession(res, email);
-}
 
 async function startSession(res: LoginResponse, email: string): Promise<User> {
   setToken(res.accessToken);
-  if (res.role === "Admin" && res.admin) {
-    const user = adminUser(res.admin, email.trim().toLowerCase());
-    storeUser(user);
-    return user;
-  }
   if (res.role === "Teacher" && res.teacher) {
     const user = teacherUser(res.teacher, email.trim().toLowerCase());
     storeUser(user);

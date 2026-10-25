@@ -8,8 +8,6 @@ import * as apiAuth from "@/lib/auth/api-auth";
 interface AuthContextValue {
   user: User | null;
   login: (email: string, password: string, rememberMe?: boolean) => Promise<User>;
-  /** The admin login page (/admin/login). */
-  adminLogin: (email: string, password: string, rememberMe?: boolean) => Promise<User>;
   logout: () => void;
 }
 
@@ -28,17 +26,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return apiAuth.login(email, password, rememberMe);
   }
 
-  function adminLogin(email: string, password: string, rememberMe?: boolean) {
-    return apiAuth.adminLogin(email, password, rememberMe);
-  }
-
   function logout() {
-    const wasAdmin = user?.role === "admin";
     apiAuth.logout();
-    router.push(wasAdmin ? "/admin/login" : "/login");
+    router.push("/login");
   }
 
-  return <AuthContext.Provider value={{ user, login, adminLogin, logout }}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={{ user, login, logout }}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
