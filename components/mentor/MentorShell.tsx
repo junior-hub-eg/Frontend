@@ -73,11 +73,14 @@ export function MentorShell({ children }: { children: ReactNode }) {
     if (hydrated && !allowed) router.replace("/login");
   }, [hydrated, allowed, router]);
 
-  useEffect(() => {
+  // A new page closes the drawer and the menus.
+  const [shownPath, setShownPath] = useState(pathname);
+  if (shownPath !== pathname) {
+    setShownPath(pathname);
     setMobileOpen(false);
     setMenuOpen(false);
     setBellOpen(false);
-  }, [pathname]);
+  }
 
   // The reviews badge and the bell dot, again on each page.
   const isMentor = user?.role === "mentor";
@@ -324,12 +327,10 @@ function TopSearch() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  const text = q.trim();
+  const shown = text.length >= 2 ? result : null;
   useEffect(() => {
-    const text = q.trim();
-    if (text.length < 2) {
-      setResult(null);
-      return;
-    }
+    if (text.length < 2) return;
     let active = true;
     const timer = setTimeout(() => {
       searchMentorArea(text).then((r) => active && setResult(r), () => active && setResult({ squads: [], students: [] }));
@@ -338,14 +339,14 @@ function TopSearch() {
       active = false;
       clearTimeout(timer);
     };
-  }, [q]);
+  }, [text]);
 
   const go = (href: string) => {
     setOpen(false);
     setQ("");
     router.push(href as Route);
   };
-  const first = result?.squads[0] ? `/mentor/squads/${result.squads[0].id}` : result?.students[0] ? `/mentor/students/${result.students[0].id}` : null;
+  const first = shown?.squads[0] ? `/mentor/squads/${shown.squads[0].id}` : shown?.students[0] ? `/mentor/students/${shown.students[0].id}` : null;
 
   return (
     <div className="pointer-events-auto relative min-w-0 max-w-[34em] flex-1">
@@ -373,18 +374,18 @@ function TopSearch() {
         />
         <kbd className="pointer-events-none absolute end-[0.9em] top-1/2 hidden -translate-y-1/2 rounded-full bg-[#3aa6f2]/85 px-[0.7em] py-[0.15em] text-[0.7em] font-bold text-white sm:block">⌘K</kbd>
       </form>
-      {open && result && (
+      {open && shown && (
         <div className="absolute inset-x-0 top-full z-50 mt-2 overflow-hidden rounded-[1em] border border-[#e1e8f0] bg-white text-[0.85em] shadow-lg">
-          {result.squads.length === 0 && result.students.length === 0 && <p className="px-4 py-3 text-[#64748b]">{t("Nothing found.")}</p>}
-          {result.squads.length > 0 && <p className="px-4 pt-3 text-[0.8em] font-semibold uppercase text-[#64748b]">{t("Squads")}</p>}
-          {result.squads.map((s) => (
+          {shown.squads.length === 0 && shown.students.length === 0 && <p className="px-4 py-3 text-[#64748b]">{t("Nothing found.")}</p>}
+          {shown.squads.length > 0 && <p className="px-4 pt-3 text-[0.8em] font-semibold uppercase text-[#64748b]">{t("Squads")}</p>}
+          {shown.squads.map((s) => (
             <button key={s.id} type="button" onMouseDown={() => go(`/mentor/squads/${s.id}`)} className="flex w-full items-center justify-between gap-3 px-4 py-2 text-start hover:bg-[#f5f8fc]">
               <span className="font-semibold text-[#1b2d54]">{s.name}</span>
               <span className="truncate text-[#64748b]">{s.projectTitle}</span>
             </button>
           ))}
-          {result.students.length > 0 && <p className="px-4 pt-3 text-[0.8em] font-semibold uppercase text-[#64748b]">{t("Students")}</p>}
-          {result.students.map((s) => (
+          {shown.students.length > 0 && <p className="px-4 pt-3 text-[0.8em] font-semibold uppercase text-[#64748b]">{t("Students")}</p>}
+          {shown.students.map((s) => (
             <button key={s.id} type="button" onMouseDown={() => go(`/mentor/students/${s.id}`)} className="flex w-full items-center gap-3 px-4 py-2 text-start hover:bg-[#f5f8fc]">
               <MentorAvatar name={s.fullName} photoUrl={s.photoUrl} className="size-7" />
               <span className="font-semibold text-[#1b2d54]">{s.fullName}</span>

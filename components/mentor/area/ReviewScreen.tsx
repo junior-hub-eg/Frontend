@@ -33,15 +33,18 @@ export default function ReviewScreen({ squadId, round }: { squadId: string; roun
   const [open, setOpen] = useState<string | null>(null);
   const [decision, setDecision] = useState<"Approved" | "ChangesRequested" | null>(null);
   const [feedback, setFeedback] = useState("");
-  const [busy, setBusy] = useState<"draft" | "submit" | null>(null);
-  const [notice, setNotice] = useState<{ ok: boolean; text: string } | null>(null);
-
-  useEffect(() => {
-    if (!data) return;
+  // The saved decision and feedback, and the first student still to review, when the sheet arrives.
+  const [loaded, setLoaded] = useState<string | null>(null);
+  const sheetKey = data ? `${data.squadId}/${data.round}` : null;
+  if (data && loaded !== sheetKey) {
+    setLoaded(sheetKey);
     setDecision(data.decision);
     setFeedback(data.feedback ?? "");
     setOpen((o) => o ?? data.students.find((s) => s.status !== "Done")?.studentId ?? null);
-  }, [data]);
+  }
+  const [busy, setBusy] = useState<"draft" | "submit" | null>(null);
+  const [notice, setNotice] = useState<{ ok: boolean; text: string } | null>(null);
+
 
   if (error)
     return (

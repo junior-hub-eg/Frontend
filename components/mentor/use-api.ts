@@ -9,7 +9,10 @@ export function useApi<T>(load: () => Promise<T>, deps: unknown[] = []) {
   const [error, setError] = useState<{ status: number; code?: string; requestId?: string | null } | null>(null);
   const [loading, setLoading] = useState(true);
   const loadRef = useRef(load);
-  loadRef.current = load;
+  useEffect(() => {
+    loadRef.current = load;
+  });
+  const key = JSON.stringify(deps);
 
   const reload = useCallback(() => {
     let active = true;
@@ -32,9 +35,18 @@ export function useApi<T>(load: () => Promise<T>, deps: unknown[] = []) {
     return () => {
       active = false;
     };
+    // The caller's deps decide when to load again (see `key`).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, deps);
+  }, [key]);
 
-  useEffect(() => reload(), [reload]);
+  // Loading starts after the first render, so the state changes happen in the request's callbacks.
+  useEffect(() => {
+    let cancel = () => {};
+    const timer = setTimeout(() => (cancel = reload()), 0);
+    return () => {
+      clearTimeout(timer);
+      cancel();
+    };
+  }, [reload]);
   return { data, setData, error, loading, reload };
 }

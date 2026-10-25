@@ -298,7 +298,8 @@ export function LinksTab({ detail, onLinks }: { detail: SquadDetail; onLinks: (l
     if (asked.current || links.length === 0) return;
     if (links.some((l) => l.status === "Unknown" || !l.checkedUtc || Date.now() - new Date(l.checkedUtc).getTime() > 86400000)) {
       asked.current = true;
-      check();
+      const timer = setTimeout(check, 0);
+      return () => clearTimeout(timer);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -501,10 +502,11 @@ export function ChatTab({ detail }: { detail: SquadDetail }) {
     getSquadChat(id, first.sentUtc).then((r) => { setMessages((all) => [...r.messages, ...(all ?? [])]); setHasMore(r.hasMore); }, () => undefined);
   };
 
+  const [opened] = useState(() => Date.now());
   const groups = useMemo(() => {
     const out: { label: string; items: SquadChatMessage[] }[] = [];
-    const today = new Date().toDateString();
-    const yesterday = new Date(Date.now() - 86400000).toDateString();
+    const today = new Date(opened).toDateString();
+    const yesterday = new Date(opened - 86400000).toDateString();
     for (const m of messages ?? []) {
       const d = new Date(m.sentUtc).toDateString();
       const label = d === today ? t("Today") : d === yesterday ? t("Yesterday") : new Date(m.sentUtc).toLocaleDateString(intl, { weekday: "long", month: "short", day: "numeric" });
@@ -512,7 +514,7 @@ export function ChatTab({ detail }: { detail: SquadDetail }) {
       out[out.length - 1].items.push(m);
     }
     return out;
-  }, [messages, t, intl]);
+  }, [messages, t, intl, opened]);
 
   const online = detail.participants.filter((p) => p.online).length;
   return (

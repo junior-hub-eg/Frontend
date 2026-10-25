@@ -23,6 +23,7 @@ export default function MySquads() {
   const router = useRouter();
   const text = useSquadText();
   const rel = useRelative();
+  const [now] = useState(() => Date.now());
   const { data, error, loading, reload } = useApi(getMentorSquads);
   const [tab, setTab] = useState<"current" | "history">("current");
   const [status, setStatus] = useState<SquadState | "all">("all");
@@ -181,7 +182,7 @@ export default function MySquads() {
                               <span className="min-w-0 flex-1">
                                 <span className="block truncate text-[0.88em] font-semibold text-[#1b2d54]">{row.name}</span>
                                 <span className="block truncate text-[0.75em] text-[#64748b]">
-                                  {kind === "Overdue" && c ? t("Review overdue by {n} days", { n: Math.max(1, Math.round(-(new Date(row.reviewDueUtc!).getTime() - Date.now()) / 86400000)) })
+                                  {kind === "Overdue" && c ? t("Review overdue by {n} days", { n: Math.max(1, Math.round(-(new Date(row.reviewDueUtc!).getTime() - now) / 86400000)) })
                                     : kind === "Review" && c ? `${t("Review due {when}", { when: c.label.toLowerCase() })} · ${t("{a} of {b} submitted", { a: row.submittedCount, b: row.memberCount })}`
                                     : `${t("Behind schedule")} · ${t("{n} members have a warning", { n: row.warnings })}`}
                                 </span>
@@ -219,6 +220,7 @@ function deadlines(rows: SquadRow[]) {
 
 function DeadlineItem({ row, at, kind, inline = false }: { row: SquadRow; at: string; kind: "review" | "sprint"; inline?: boolean }) {
   const { t, intl } = useI18n();
+  const [now] = useState(() => Date.now());
   const rel = useRelative();
   const d = new Date(at);
   const c = rel.countdown(at);
@@ -229,7 +231,7 @@ function DeadlineItem({ row, at, kind, inline = false }: { row: SquadRow; at: st
     </span>
   );
   const sub = kind === "review" ? t("Review due") : t("{sprint} ends", { sprint: row.sprintName ?? t("Sprint") });
-  const pill = <Pill tone={c.overdue ? "red" : c.tone === "orange" ? "amber" : "blue"} dot={false}>{c.overdue ? c.label : kind === "review" && !c.overdue && c.tone === "orange" ? t("In {n} hours", { n: Math.max(1, Math.round((d.getTime() - Date.now()) / 3600000)) }) : c.label}</Pill>;
+  const pill = <Pill tone={c.overdue ? "red" : c.tone === "orange" ? "amber" : "blue"} dot={false}>{c.overdue ? c.label : kind === "review" && !c.overdue && c.tone === "orange" ? t("In {n} hours", { n: Math.max(1, Math.round((d.getTime() - now) / 3600000)) }) : c.label}</Pill>;
   if (inline)
     return (
       <Link href={`/mentor/squads/${row.id}` as Route} className="block xl:px-[1em] xl:first:ps-0">

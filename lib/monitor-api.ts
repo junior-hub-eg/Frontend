@@ -430,3 +430,176 @@ export const getSquadChat = (squadId: string, before?: string) =>
   api.get<{ messages: SquadChatMessage[]; hasMore: boolean }>(`/api/v1/monitor/squads/${squadId}/chat${before ? `?before=${encodeURIComponent(before)}` : ""}`);
 export const sendSquadChat = (squadId: string, body: string) => api.post<SquadChatMessage>(`/api/v1/monitor/squads/${squadId}/chat`, { body });
 export const markSquadChatRead = (squadId: string) => api.post<void>(`/api/v1/monitor/squads/${squadId}/chat/read`);
+
+// ---------- The mentor area, phase 2 (M5–M9) ----------
+
+export interface SquadStudentRow {
+  studentId: string;
+  fullName: string;
+  photoUrl: string | null;
+  squadId: string;
+  squadName: string;
+  role: string;
+  level: SquadLevel;
+  tasksDone: number;
+  lastActiveUtc: string | null;
+  lastReview: number | null;
+  warning: "Inactive" | "Overdue" | null;
+  idleDays: number;
+  overdueTasks: number;
+}
+
+export interface MenteeRow {
+  studentId: string;
+  fullName: string;
+  photoUrl: string | null;
+  trackCode: string;
+  trackName: string;
+  level: SquadLevel;
+  sessionsDone: number;
+  nextSessionUtc: string | null;
+  lastActiveUtc: string | null;
+}
+
+export interface StudentReviewHistory {
+  squadId: string;
+  squadName: string;
+  round: number;
+  mentorId: string;
+  overall: number | null;
+  strengths: string | null;
+  toImprove: string | null;
+  shared: boolean;
+  submittedUtc: string | null;
+  updatedUtc: string;
+}
+
+export interface StudentPage {
+  id: string;
+  fullName: string;
+  photoUrl: string | null;
+  totalXp: number;
+  trackCode: string | null;
+  trackName: string | null;
+  level: SquadLevel | null;
+  isMentee: boolean;
+  currentSquad: { squadId: string; squadName: string; projectTitle: string; role: string; tasksDone: number; points: number; submitted: boolean; lastActiveUtc: string | null; warning: string | null } | null;
+  trackProgress: { title: string; lessons: number; done: number; percent: number }[];
+  reviews: StudentReviewHistory[];
+  squads: { squadId: string; squadName: string; projectTitle: string; role: string; joinedUtc: string; leftUtc: string | null; status: "Current" | "Completed"; monitorId: string | null }[];
+  notes: { id: string; text: string; shared: boolean; createdUtc: string }[];
+  sessions: { id: string; type: string; startsUtc: string; durationMinutes: number; status: MentorSessionStatus; topic: string | null }[];
+  lastActiveUtc: string | null;
+}
+
+export interface CalendarSession {
+  id: string;
+  type: "OneToOne" | "Group";
+  startsUtc: string;
+  durationMinutes: number;
+  topic: string | null;
+  students: { id: string; fullName: string; photoUrl: string | null }[];
+  squadName: string | null;
+  squadId: string | null;
+  overlaps: boolean;
+}
+
+export interface MentorCalendar {
+  marks: { kind: "SprintStarts" | "SprintEnds" | "ReviewDue"; atUtc: string; squadId: string; squadName: string; sprintName: string | null }[];
+  sessions: CalendarSession[];
+  timeOff: { id: string; startDate: string; endDate: string; reason: string | null }[];
+}
+
+export interface MentorAnnouncement {
+  id: string;
+  title: string;
+  body: string;
+  link: string | null;
+  language: "en" | "ar";
+  squadIds: string[];
+  squadNames: string[];
+  includeMentees: boolean;
+  status: "Draft" | "Scheduled" | "Sent";
+  sendAtUtc: string | null;
+  sentUtc: string | null;
+  recipients: number;
+  readPercent: number | null;
+  updatedUtc: string;
+}
+
+export interface MentorAnnouncementsPage {
+  squads: { squadId: string; squadName: string; students: number }[];
+  mentees: number;
+  announcements: MentorAnnouncement[];
+}
+
+export interface SquadReport {
+  squadId: string;
+  squadName: string;
+  progress: number;
+  tasksDone: number;
+  tasksTotal: number;
+  pointsDone: number;
+  pointsTotal: number;
+  delays: number;
+  sprints: { name: string; startDate: string; endDate: string; percent: number }[];
+  members: { studentId: string; fullName: string; photoUrl: string | null; tasks: number; points: number }[];
+  delayRows: { sprintName: string | null; reason: DelayReason; note: string | null; createdUtc: string }[];
+  review: { state: SquadState; firstRound: number | null; firstDecision: string | null; firstAverage: number | null; studentReviewsDone: number; students: number; exports: number };
+}
+
+export interface StudentReport {
+  studentId: string;
+  fullName: string;
+  photoUrl: string | null;
+  tasksDone: number;
+  points: number;
+  averageScore: number | null;
+  sessions: number;
+  delays: number;
+  sprints: { squadName: string; sprintName: string; tasks: number; points: number }[];
+  reviews: StudentReviewHistory[];
+  exports: number;
+}
+
+export interface NotificationSettings {
+  newSquad: boolean;
+  submission: boolean;
+  warning: boolean;
+  chatMessage: boolean;
+  adminReply: boolean;
+}
+
+export interface MentorSettings {
+  stats: { squadsCompleted: number; averageReviewDays: number | null; averageStudentScore: number | null };
+  capacity: { maxStudents: number; maxSquads: number; squadsNow: number; studentsNow: number };
+  notifications: NotificationSettings;
+  passwordChangedUtc: string | null;
+  trackRequests: { id: string; trackCode: string; trackName: string; status: "Pending" | "Approved" | "Rejected"; createdUtc: string }[];
+}
+
+export const getMyStudents = () => api.get<{ squadStudents: SquadStudentRow[]; mentees: MenteeRow[] }>("/api/v1/monitor/my-students");
+export const getMyStudent = (id: string) => api.get<StudentPage>(`/api/v1/monitor/my-students/${id}`);
+export const addStudentNote = (id: string, text: string, share: boolean) => api.post<StudentPage["notes"][number]>(`/api/v1/monitor/my-students/${id}/notes`, { text, share });
+export const getMentorCalendar = (fromIso: string, toIso: string) =>
+  api.get<MentorCalendar>(`/api/v1/monitor/calendar?from=${encodeURIComponent(fromIso)}&to=${encodeURIComponent(toIso)}`);
+export const moveMentorSession = (id: string, startsUtc: string) => api.post<void>(`/api/v1/monitor/sessions/${id}/move`, { startsUtc });
+export const cancelMentorSession = (id: string) => api.post<void>(`/api/v1/monitor/sessions/${id}/cancel`);
+export const addTimeOff = (startDate: string, endDate: string, reason: string) =>
+  api.post<MentorCalendar["timeOff"][number]>("/api/v1/monitor/time-off", { startDate, endDate, reason });
+export const removeTimeOff = (id: string) => api.post<void>(`/api/v1/monitor/time-off/${id}/remove`);
+export const getMentorAnnouncements = () => api.get<MentorAnnouncementsPage>("/api/v1/monitor/announcements");
+export const saveMentorAnnouncement = (a: {
+  id?: string | null; title: string; body: string; link: string; language: "en" | "ar"; squadIds: string[]; includeMentees: boolean;
+  mode: "Now" | "Schedule" | "Draft"; sendAtUtc?: string | null;
+}) => api.post<MentorAnnouncement>("/api/v1/monitor/announcements", a);
+export const getSquadReport = (id: string, from?: string, to?: string) =>
+  api.get<SquadReport>(`/api/v1/monitor/reports/squads/${id}${from ? `?from=${from}&to=${to ?? ""}` : ""}`);
+export const getStudentReport = (id: string) => api.get<StudentReport>(`/api/v1/monitor/reports/students/${id}`);
+export const recordReportExport = (r: { squadId?: string; studentId?: string; language: "en" | "ar" }) => api.post<void>("/api/v1/monitor/reports/exports", r);
+export const getMentorSettings = () => api.get<MentorSettings>("/api/v1/monitor/settings");
+export const saveNotificationSettings = (s: NotificationSettings) => api.put<NotificationSettings>("/api/v1/monitor/settings/notifications", s);
+export const changeMentorPassword = (currentPassword: string, newPassword: string, confirmPassword: string) =>
+  api.put<void>("/api/v1/monitor/me/password", { currentPassword, newPassword, confirmPassword });
+export const getMyTrackRequests = () => api.get<{ id: string; trackCode: string; status: string }[]>("/api/v1/monitor/track-requests");
+export const sendTrackRequest = (trackCode: string, note: string) => api.post("/api/v1/monitor/track-requests", { trackCode, note });

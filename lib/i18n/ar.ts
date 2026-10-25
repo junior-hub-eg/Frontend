@@ -19,9 +19,12 @@ import { teacher } from "./ar/teacher";
 import { students } from "./ar/students";
 import { curriculum } from "./ar/curriculum";
 import { assignments } from "./ar/assignments";
+import { mentorArea } from "./ar/mentor-area";
 
 /** Arabic translations, keyed by the English text. `node scripts/i18n-check.mjs` lists missing ones. */
 export const ar: Record<string, string> = {
+  // First, so the older dictionaries keep their own wording for the texts they share.
+  ...mentorArea,
   ...common,
   ...landing,
   ...auth,
