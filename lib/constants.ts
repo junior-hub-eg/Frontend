@@ -7,7 +7,6 @@ export const ROLE_HOME: Record<UserRole, string> = {
   learner: "/learner/dashboard",
   guardian: "/guardian/dashboard",
   mentor: "/mentor/dashboard",
-  admin: "/admin/dashboard",
   teacher: "/teacher/dashboard",
 };
 
@@ -16,7 +15,6 @@ export const ROLE_PATH_PREFIX: Record<UserRole, string> = {
   learner: "/learner",
   guardian: "/guardian",
   mentor: "/mentor",
-  admin: "/admin",
   teacher: "/teacher",
 };
 
