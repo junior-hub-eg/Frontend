@@ -4,13 +4,14 @@ import { useState, type CSSProperties, type ReactNode } from "react";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Poppins } from "next/font/google";
-import { AlignLeft, Award, Bell, Check, ChevronDown, LoaderCircle, Search, X } from "lucide-react";
+import { AlignLeft, Award, Check, ChevronDown, LoaderCircle, Search, X } from "lucide-react";
 import { errorMessage } from "@/lib/api-client";
 import { AVATARS, EMOTIONS, GENDERS, avatarOf, avatarOrDefault, charactersFor, type Avatar, type Gender } from "@/lib/avatars";
 import { cn } from "@/lib/utils";
 import { useI18n, useT } from "@/lib/i18n/client";
 import { tk } from "@/lib/i18n/translate";
 import { LanguageSwitcher } from "@/components/shared/LanguageSwitcher";
+import { NotificationBell } from "@/components/shared/NotificationBell";
 import { LearnerSidebar } from "./learner-sidebar";
 
 const poppins = Poppins({ subsets: ["latin"], weight: ["400", "500", "600", "700", "800"] });
@@ -126,14 +127,7 @@ export function LearnerShell({
           <LanguageSwitcher className="h-[2.8em] gap-[0.5em] rounded-full border border-white/70 bg-white/55 px-[1em] text-[0.95em] font-medium text-[#14365a] backdrop-blur" />
 
           <div className="ms-auto flex items-center gap-[1.2em]">
-            <button
-              type="button"
-              aria-label={t("Notifications")}
-              title={t("Notifications")}
-              className="grid h-[2.8em] w-[2.8em] place-items-center rounded-full border border-white/70 bg-white/55 text-[#14365a] backdrop-blur"
-            >
-              <Bell className="h-[1.2em] w-[1.2em]" />
-            </button>
+            <NotificationBell home="/learner" />
 
             {/* The track in focus and the student's level in it; hidden until the student has a track */}
             {(levelLabel || trackLabel) && (
