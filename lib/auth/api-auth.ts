@@ -1,7 +1,7 @@
 /**
  * Real auth — the .NET backend's /api/v1/auth and /api/v1/me (JH-SRS §5.2).
  * Backend roles: Student → "learner", Mentor → "mentor", Admin → "admin", Teacher → "teacher" (23 Oct 2026). The admin signs in on its own
- * page (/admin/login → POST /api/v1/auth/admin/login); an admin who uses the main login is sent to the admin pages.
+ * page (/admin/login → POST /api/v1/auth/admin/login); the main login refuses the admin (separate systems, 26 Oct 2026).
  */
 import { api, refreshAccessToken } from "@/lib/api-client";
 import { decodeToken, getToken, setToken, TOKEN_CHANGE_EVENT } from "@/lib/auth/token";
