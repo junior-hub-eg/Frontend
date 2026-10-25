@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Bell, CheckCheck, ChevronRight, LoaderCircle } from "lucide-react";
 import { useI18n } from "@/lib/i18n/client";
+import { useLiveChannel } from "@/lib/live-channel";
 import {
   getNotifications,
   getUnreadNotificationCount,
@@ -16,8 +17,11 @@ import {
   type AppNotification,
 } from "@/lib/notifications-api";
 
-/** The teacher's top-bar bell: a dot for unread notifications and the latest ones in a menu. */
-export function TeacherBell() {
+/**
+ * The top-bar bell of the teacher and the student: a dot for unread notifications and the latest ones in a menu.
+ * A new one arrives live ("NotificationReceived"). Links inside the user's own area (`home`, "/teacher" or "/learner") open in place.
+ */
+export function NotificationBell({ home }: { home: "/teacher" | "/learner" }) {
   const { t, locale } = useI18n();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -33,6 +37,13 @@ export function TeacherBell() {
     };
   }, [pathname]);
 
+  useLiveChannel({
+    NotificationReceived: (n: Omit<AppNotification, "isRead">) => {
+      setUnseen((c) => c + 1);
+      setNotes((all) => (all ? [{ ...n, isRead: false }, ...all.filter((x) => x.id !== n.id)] : all));
+    },
+  });
+
   const toggle = useCallback(() => {
     setOpen((o) => !o);
     if (open) return;
@@ -41,7 +52,7 @@ export function TeacherBell() {
   }, [open]);
 
   const read = (n: AppNotification) => {
-    if (n.link?.startsWith("/teacher")) setOpen(false);
+    if (n.link?.startsWith(home)) setOpen(false);
     if (n.isRead) return;
     setUnseen((c) => Math.max(0, c - 1));
     setNotes((all) => all?.map((x) => (x.id === n.id ? { ...x, isRead: true } : x)) ?? null);
@@ -113,7 +124,7 @@ export function TeacherBell() {
                   );
                   return (
                     <li key={n.id}>
-                      {n.link?.startsWith("/teacher") ? (
+                      {n.link?.startsWith(home) ? (
                         <Link href={n.link as Route} role="menuitem" onClick={() => read(n)} className="flex items-center gap-2 rounded-xl p-2 hover:bg-[#f1f7f6]">
                           {body}
                         </Link>
