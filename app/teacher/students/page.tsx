@@ -1,13 +1,17 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useCallback, useMemo, useState, type ReactNode } from "react";
 import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ChartColumn,
+  Check,
   ChevronDown,
   CircleAlert,
   CircleCheck,
   Clock,
+  Copy,
   Download,
   Search,
   SlidersHorizontal,
@@ -16,14 +20,14 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n/client";
-
-function useTr() {
-  const { t } = useI18n();
-  return (s: string) => (/[A-Za-z]/.test(s) ? t(s) : s);
-}
+import { dateLocale, tk, type TFunction } from "@/lib/i18n/translate";
+import { getTeacherClasses, type ClassStudentStatus, type TeacherClass } from "@/lib/teacher-api";
+import { getStudentsDirectory, type DirectoryStudent } from "@/lib/teacher-students-api";
+import { LoadBlock, StudentAvatar, useTeacherData } from "@/components/teacher/teacher-ui";
+import { TeacherDialog } from "@/components/teacher/teacher-dialogs";
 
 function Bidi({ text }: { text: string }) {
-  const parts = text.split(/([+-]?\d[\d.,:/-]*%?)/); 
+  const parts = text.split(/([+-]?\d[\d.,:/-]*%?)/);
   return (
     <>
       {parts.map((p, i) =>
@@ -39,71 +43,89 @@ function Bidi({ text }: { text: string }) {
   );
 }
 
-
-type Status = "On Track" | "Top Quartile" | "Struggling";
-
-type Student = {
-  id: string;
-  name: string;
-  email: string;
-  initials: string;
-  avatar: string; 
-  photo: string; 
-  className: string;
-  lessonsDone: number;
-  lessonsTotal: number;
-  problemsDone: number;
-  problemsTotal: number;
-  mastery: number;
-  timeSpent: string;
-  lastActive: string;
-  status: Status;
-};
-
-const STUDENTS: Student[] = [
-  { id: "JH-9A-042", name: "Sara Hassan", email: "sara.hassan@edu.jh.org", initials: "SH", avatar: "bg-[#f06292]", photo: "/images/teacher/students/sara.png", className: "Grade 9A", lessonsDone: 14, lessonsTotal: 16, problemsDone: 48, problemsTotal: 52, mastery: 87, timeSpent: "4h 25m", lastActive: "Today, 10:14 AM", status: "On Track" },
-  { id: "JH-9A-018", name: "Omar Ali", email: "omar.ali@edu.jh.org", initials: "OA", avatar: "bg-[#12939b]", photo: "/images/teacher/students/omar.png", className: "Grade 9A", lessonsDone: 16, lessonsTotal: 16, problemsDone: 52, problemsTotal: 52, mastery: 92, timeSpent: "5h 10m", lastActive: "Today, 08:42 AM", status: "Top Quartile" },
-  { id: "JH-9A-031", name: "Youssef Ahmed", email: "youssef.ahmed@edu.jh.org", initials: "YA", avatar: "bg-[#f5a524]", photo: "/images/teacher/students/youssef.png", className: "Grade 9A", lessonsDone: 12, lessonsTotal: 16, problemsDone: 39, problemsTotal: 52, mastery: 61, timeSpent: "3h 15m", lastActive: "Yesterday", status: "Struggling" },
-  { id: "JH-9A-012", name: "Zainab Ezzat", email: "zainab.ezzat@edu.jh.org", initials: "ZE", avatar: "bg-[#ff8a65]", photo: "/images/teacher/students/zainab.png", className: "Grade 9A", lessonsDone: 16, lessonsTotal: 16, problemsDone: 50, problemsTotal: 52, mastery: 94, timeSpent: "4h 50m", lastActive: "Today, 11:20 AM", status: "Top Quartile" },
-  { id: "JH-9A-027", name: "Karim Tarek", email: "karim.tarek@edu.jh.org", initials: "KT", avatar: "bg-[#5c6bc0]", photo: "/images/teacher/students/karim.png", className: "Grade 9A", lessonsDone: 13, lessonsTotal: 16, problemsDone: 44, problemsTotal: 52, mastery: 72, timeSpent: "3h 55m", lastActive: "2 days ago", status: "On Track" },
-  { id: "JH-9B-009", name: "Lina Hamdy", email: "lina.hamdy@edu.jh.org", initials: "LH", avatar: "bg-[#7c5cff]", photo: "/images/teacher/students/lina.png", className: "Grade 9B", lessonsDone: 14, lessonsTotal: 16, problemsDone: 46, problemsTotal: 52, mastery: 79, timeSpent: "4h 05m", lastActive: "Today, 09:12 AM", status: "On Track" },
-];
-
-const TOTAL_STUDENTS = 54;
-const PAGES = [1, 2, 3, "…", 9] as const;
-
-const CLASS_OPTIONS = ["All Classes", "Grade 9A", "Grade 9B"];
+const PAGE_SIZE = 6;
 
 type Filter = "all" | "struggling" | "on-track" | "top";
-const FILTERS: { key: Filter; label: string; count: number; status?: Status }[] = [
-  { key: "all", label: "All", count: 54 },
-  { key: "struggling", label: "Struggling", count: 3, status: "Struggling" },
-  { key: "on-track", label: "On Track", count: 41, status: "On Track" },
-  { key: "top", label: "Top Quartile", count: 10, status: "Top Quartile" },
+const FILTERS: { key: Filter; label: string; status?: ClassStudentStatus }[] = [
+  { key: "all", label: tk("All") },
+  { key: "struggling", label: tk("Struggling"), status: "NeedsAssistance" },
+  { key: "on-track", label: tk("On Track"), status: "OnTrack" },
+  { key: "top", label: tk("Top Quartile"), status: "TopQuartile" },
 ];
 
-const STATUS_STYLE: Record<Status, string> = {
-  "On Track": "bg-[#eef2f1] text-[#1B2D54]/70",
-  "Top Quartile": "bg-[#c9efe9] text-[#14757d]",
-  Struggling: "bg-[#fde8e8] text-[#c81e1e]",
+const STATUS_LABEL: Record<ClassStudentStatus, string> = {
+  OnTrack: tk("On Track"),
+  TopQuartile: tk("Top Quartile"),
+  NeedsAssistance: tk("Struggling"),
 };
 
-const COLUMNS = [
-  "Student",
-  "Student ID",
-  "Class",
-  "Lessons",
-  "Problems Solved",
-  "Mastery",
-  "Time Spent",
-  "Last Active",
-  "Status",
+const STATUS_STYLE: Record<ClassStudentStatus, string> = {
+  OnTrack: "bg-[#eef2f1] text-[#1B2D54]/70",
+  TopQuartile: "bg-[#c9efe9] text-[#14757d]",
+  NeedsAssistance: "bg-[#fde8e8] text-[#c81e1e]",
+};
+
+type Sort = "default" | "mastery" | "lastActive" | "name";
+const SORTS: { key: Sort; label: string }[] = [
+  { key: "default", label: tk("Default order") },
+  { key: "mastery", label: tk("Mastery (highest first)") },
+  { key: "lastActive", label: tk("Last active (most recent)") },
+  { key: "name", label: tk("Name (A-Z)") },
 ];
 
-function masteryTone(value: number) {
+const COLUMNS = [
+  tk("Student"),
+  tk("Student ID"),
+  tk("Class"),
+  tk("Lessons"),
+  tk("Problems Solved"),
+  tk("Mastery"),
+  tk("Time Spent"),
+  tk("Last Active"),
+  tk("Status"),
+];
+
+function masteryTone(value: number | null) {
+  if (value == null) return { bg: "bg-[#eef2f1]", dot: "bg-[#1B2D54]/30", text: "text-[#1B2D54]/60" };
   if (value >= 90) return { bg: "bg-[#e2f6ea]", dot: "bg-[#22a559]", text: "text-[#168a45]" };
   if (value >= 70) return { bg: "bg-[#fff1d6]", dot: "bg-[#f5a524]", text: "text-[#c76a0a]" };
   return { bg: "bg-[#fde8e8]", dot: "bg-[#e5484d]", text: "text-[#c81e1e]" };
+}
+
+const shortId = (s: DirectoryStudent) => `JH-${s.className}-${s.studentId.slice(0, 3)}`.toUpperCase();
+
+function formatDuration(minutes: number, t: TFunction) {
+  const total = Math.max(0, Math.round(minutes));
+  const h = Math.floor(total / 60);
+  const m = total % 60;
+  return h > 0 ? t("{h}h {m}m", { h, m: String(m).padStart(2, "0") }) : t("{m}m", { m });
+}
+
+function lastActiveLabel(iso: string | null, t: TFunction) {
+  if (!iso) return t("Never");
+  const date = new Date(iso);
+  const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const days = Math.round((startOfDay(new Date()) - startOfDay(date)) / 86_400_000);
+  if (days <= 0) {
+    const time = date.toLocaleTimeString(dateLocale("en-US"), { hour: "2-digit", minute: "2-digit" });
+    return t("Today, {time}", { time });
+  }
+  if (days === 1) return t("Yesterday");
+  if (days < 30) return t("{n} days ago", { n: days });
+  return date.toLocaleDateString(dateLocale("en-GB"), { day: "numeric", month: "short", year: "numeric" });
+}
+
+/** Page numbers with gaps: 1 2 3 … 9 */
+function pageList(current: number, count: number): (number | "…")[] {
+  if (count <= 7) return Array.from({ length: count }, (_, i) => i + 1);
+  const set = new Set([1, count, current - 1, current, current + 1].filter((p) => p >= 1 && p <= count));
+  const sorted = [...set].sort((a, b) => a - b);
+  const out: (number | "…")[] = [];
+  sorted.forEach((p, i) => {
+    if (i > 0 && p - sorted[i - 1] > 1) out.push("…");
+    out.push(p);
+  });
+  return out;
 }
 
 function StatCard({
@@ -121,18 +143,15 @@ function StatCard({
   icon: ReactNode;
   danger?: boolean;
 }) {
-  const tr = useTr();
   return (
     <div className="flex items-center justify-between gap-3 rounded-2xl border border-[#e3ece9] bg-white p-4 shadow-sm">
       <div className="min-w-0 leading-tight">
-        <p className="text-[9px] font-semibold uppercase tracking-wide text-[#1B2D54]/60 rtl:normal-case rtl:tracking-normal">
-          {tr(label)}
-        </p>
+        <p className="text-[9px] font-semibold uppercase tracking-wide text-[#1B2D54]/60 rtl:normal-case rtl:tracking-normal">{label}</p>
         <p className={cn("mt-1.5 text-2xl font-bold leading-none", danger && "text-[#e5484d]")}>
-          <Bidi text={tr(value)} />
+          <Bidi text={value} />
         </p>
         <p className={cn("mt-1.5 text-[10px] font-medium", noteTone)}>
-          <Bidi text={tr(note)} />
+          <Bidi text={note} />
         </p>
       </div>
       <span
@@ -147,43 +166,37 @@ function StatCard({
   );
 }
 
-function Avatar({ student }: { student: Student }) {
-  const [failed, setFailed] = useState(false);
-
-  if (!failed) {
-    return (
-      <Image
-        src={student.photo}
-        alt=""
-        width={64}
-        height={64}
-        onError={() => setFailed(true)}
-        className="size-8 shrink-0 rounded-full object-cover"
-      />
-    );
-  }
-
-  return (
-    <span
-      className={cn(
-        "flex size-8 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white",
-        student.avatar
-      )}
-    >
-      {student.initials}
-    </span>
-  );
-}
-
-function exportCsv(rows: Student[]) {
-  const head = ["Name", "Email", "Student ID", "Class", "Lessons", "Problems solved", "Mastery %", "Time spent", "Last active", "Status"];
+function exportCsv(rows: DirectoryStudent[], t: TFunction) {
+  const head = [
+    t("Name"),
+    t("Email"),
+    t("Student ID"),
+    t("Class"),
+    t("Lessons"),
+    t("Problems Solved"),
+    t("Mastery %"),
+    t("Time Spent"),
+    t("Last Active"),
+    t("Status"),
+  ];
   const esc = (v: string | number) => `"${String(v).replaceAll('"', '""')}"`;
   const lines = rows.map((s) =>
-    [s.name, s.email, s.id, s.className, `${s.lessonsDone}/${s.lessonsTotal}`, `${s.problemsDone}/${s.problemsTotal}`, s.mastery, s.timeSpent, s.lastActive, s.status]
+    [
+      s.fullName,
+      s.email,
+      shortId(s),
+      t("Grade {grade}{name}", { grade: s.grade, name: s.className }),
+      `${s.lessonsDone}/${s.lessonsTotal}`,
+      `${s.problemsSolved}/${s.problemsTotal}`,
+      s.mastery ?? "",
+      formatDuration(s.timeSpentMinutes, t),
+      s.lastActiveUtc ?? "",
+      t(STATUS_LABEL[s.status]),
+    ]
       .map(esc)
       .join(",")
   );
-  const csv = "\uFEFF" + [head.map(esc).join(","), ...lines].join("\n");
+  const csv = "﻿" + [head.map(esc).join(","), ...lines].join("\r\n");
   const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
   const a = document.createElement("a");
   a.href = url;
@@ -192,28 +205,133 @@ function exportCsv(rows: Student[]) {
   URL.revokeObjectURL(url);
 }
 
+/** "Enroll Student": there is no enroll-by-email; students join a class with its code. */
+function EnrollDialog({ classes, onClose }: { classes: TeacherClass[] | null; onClose: () => void }) {
+  const { t } = useI18n();
+  const [copied, setCopied] = useState<string | null>(null);
+
+  const copy = async (c: TeacherClass) => {
+    try {
+      await navigator.clipboard.writeText(c.joinCode);
+      setCopied(c.id);
+      setTimeout(() => setCopied((v) => (v === c.id ? null : v)), 2000);
+    } catch {
+      /* clipboard blocked: the code stays visible to copy by hand */
+    }
+  };
+
+  return (
+    <TeacherDialog
+      title={t("Enroll Student")}
+      subtitle={t("Students join a class with its join code from their account. Share the code of the class below.")}
+      onClose={onClose}
+    >
+      {classes == null ? (
+        <LoadBlock error={null} onRetry={() => {}} />
+      ) : classes.length === 0 ? (
+        <p className="py-6 text-center text-[11px] text-[#1B2D54]/60">{t("You have no classes yet.")}</p>
+      ) : (
+        <ul className="grid gap-2">
+          {classes.map((c) => (
+            <li key={c.id} className="flex items-center justify-between gap-3 rounded-xl border border-[#e3ece9] bg-[#f6f9f8] p-3">
+              <div className="min-w-0 leading-tight">
+                <p className="text-xs font-semibold">{t("Grade {grade}{name}", { grade: c.grade, name: c.name })}</p>
+                <p className="mt-0.5 text-[10px] text-[#1B2D54]/60">
+                  {c.autoAccept ? t("Students join instantly") : t("Requests need your approval")}
+                  {c.pendingRequests > 0 && (
+                    <span className="ms-1.5 rounded-full bg-[#fff1d6] px-1.5 font-semibold text-[#c76a0a]">
+                      {t("{n} pending", { n: c.pendingRequests })}
+                    </span>
+                  )}
+                </p>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <bdi dir="ltr" className="rounded-md bg-white px-2 py-1 font-mono text-xs font-bold tracking-wider">
+                  {c.joinCode}
+                </bdi>
+                <button
+                  type="button"
+                  onClick={() => copy(c)}
+                  aria-label={t("Copy code")}
+                  className="flex items-center gap-1 rounded-lg bg-[#14757d] px-2.5 py-1.5 text-[10px] font-semibold text-white hover:bg-[#0f6169]"
+                >
+                  {copied === c.id ? <Check aria-hidden className="size-3" /> : <Copy aria-hidden className="size-3" />}
+                  {copied === c.id ? t("Copied") : t("Copy")}
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+      <Link
+        href="/teacher/classes"
+        className="mt-4 flex items-center justify-center rounded-full border border-[#e3ece9] px-4 py-2 text-[11px] font-semibold hover:bg-[#f6f9f8]"
+      >
+        {t("Review pending join requests in My Classes")}
+      </Link>
+    </TeacherDialog>
+  );
+}
 
 export default function StudentsPage() {
-  const tr = useTr();
-  const [classFilter, setClassFilter] = useState(CLASS_OPTIONS[0]);
+  const { t } = useI18n();
+  const router = useRouter();
+  const [classFilter, setClassFilter] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
+  const [sort, setSort] = useState<Sort>("default");
+  const [sortOpen, setSortOpen] = useState(false);
+  const [enrollOpen, setEnrollOpen] = useState(false);
+
+  const loadStudents = useCallback(() => getStudentsDirectory(classFilter || undefined), [classFilter]);
+  const { data, error, reload } = useTeacherData(loadStudents, t("Could not load the students."));
+  const { data: classes } = useTeacherData(getTeacherClasses, t("Could not load your classes."));
+
+  const students = useMemo(() => data?.students ?? [], [data]);
+
+  const counts = useMemo(() => {
+    const c: Record<Filter, number> = { all: students.length, struggling: 0, "on-track": 0, top: 0 };
+    for (const s of students) {
+      if (s.status === "NeedsAssistance") c.struggling++;
+      else if (s.status === "OnTrack") c["on-track"]++;
+      else c.top++;
+    }
+    return c;
+  }, [students]);
 
   const rows = useMemo(() => {
     const status = FILTERS.find((f) => f.key === filter)?.status;
     const q = query.trim().toLowerCase();
-    return STUDENTS.filter(
+    const list = students.filter(
       (s) =>
-        (classFilter === CLASS_OPTIONS[0] || s.className === classFilter) &&
         (!status || s.status === status) &&
-        (!q || s.name.toLowerCase().includes(q) || s.id.toLowerCase().includes(q) || s.email.toLowerCase().includes(q))
+        (!q ||
+          s.fullName.toLowerCase().includes(q) ||
+          s.email.toLowerCase().includes(q) ||
+          s.studentId.toLowerCase().includes(q) ||
+          shortId(s).toLowerCase().includes(q))
     );
-  }, [classFilter, filter, query]);
+    if (sort === "mastery") list.sort((a, b) => (b.mastery ?? -1) - (a.mastery ?? -1));
+    else if (sort === "lastActive") list.sort((a, b) => (b.lastActiveUtc ?? "").localeCompare(a.lastActiveUtc ?? ""));
+    else if (sort === "name") list.sort((a, b) => a.fullName.localeCompare(b.fullName));
+    return list;
+  }, [students, filter, query, sort]);
+
+  const pageCount = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  const current = Math.min(page, pageCount);
+  const pageRows = rows.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE);
+  const from = rows.length ? (current - 1) * PAGE_SIZE + 1 : 0;
+  const to = (current - 1) * PAGE_SIZE + pageRows.length;
+
+  const stats = data?.stats;
+  const classCount = classFilter ? 1 : (classes?.length ?? new Set(students.map((s) => s.classId)).size);
+  const avgMinutes = students.length ? students.reduce((sum, s) => sum + s.timeSpentMinutes, 0) / students.length : 0;
+
+  const openStudent = (id: string) => router.push(`/teacher/messages?student=${encodeURIComponent(id)}`);
 
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-4 pb-6 pt-4 font-[family-name:var(--font-poppins)] text-[#1B2D54]">
-
       <div
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[340px] overflow-hidden [mask-image:linear-gradient(to_bottom,black_60%,transparent)]"
@@ -233,262 +351,351 @@ export default function StudentsPage() {
         <div className="ps-2">
           <p className="flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-wide text-[#14757d] rtl:normal-case rtl:tracking-normal">
             <ChartColumn aria-hidden className="size-3.5" />
-            {tr("Cohort Analytics & Oversight")}
+            {t("Cohort Analytics & Oversight")}
           </p>
-          <h1 className="mt-1 text-2xl font-bold">{tr("Students Directory")}</h1>
+          <h1 className="mt-1 text-2xl font-bold">{t("Students Directory")}</h1>
           <p className="mt-0.5 max-w-xl text-[11px] text-[#1B2D54]/70">
-            {tr("Manage student roster, track mastery velocity, and review individualized learning interventions.")}
+            {t("Manage student roster, track mastery velocity, and review individualized learning interventions.")}
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
-            onClick={() => exportCsv(rows)}
-            className="flex items-center gap-1.5 rounded-xl border border-[#e3ece9] bg-white px-4 py-2 text-[11px] font-semibold shadow-sm transition-colors hover:bg-[#f6f9f8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#12939b]/40"
+            onClick={() => exportCsv(rows, t)}
+            disabled={rows.length === 0}
+            className="flex items-center gap-1.5 rounded-xl border border-[#e3ece9] bg-white px-4 py-2 text-[11px] font-semibold shadow-sm transition-colors hover:bg-[#f6f9f8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#12939b]/40 disabled:opacity-50"
           >
             <Download aria-hidden className="size-3.5" />
-            {tr("Export Roster CSV")}
+            {t("Export Roster CSV")}
           </button>
           <button
             type="button"
+            onClick={() => setEnrollOpen(true)}
             className="flex items-center gap-1.5 rounded-xl bg-[#14757d] px-4 py-2 text-[11px] font-semibold text-white shadow-sm transition-colors hover:bg-[#0f6169] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#12939b]/40"
           >
             <UserPlus aria-hidden className="size-3.5" />
-            {tr("Enroll Student")}
+            {t("Enroll Student")}
           </button>
         </div>
       </header>
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Total Enrolled" value="54" note="Across 2 Sections" noteTone="text-[#14757d]" icon={<Users aria-hidden className="size-5" />} />
-        <StatCard label="Cohort Mastery" value="81.3%" note="+3.4% w/w" noteTone="text-[#168a45]" icon={<CircleCheck aria-hidden className="size-5" />} />
-        <StatCard label="Struggling Alerts" value="3" note="Immediate review" noteTone="text-[#1B2D54]/60" danger icon={<CircleAlert aria-hidden className="size-5" />} />
-        <StatCard label="Avg Practice Hours" value="4.4h" note="Per student/wk" noteTone="text-[#1B2D54]/60" icon={<Clock aria-hidden className="size-5" />} />
-      </div>
+      {!stats ? (
+        <LoadBlock error={error} onRetry={reload} />
+      ) : (
+        <>
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <StatCard
+              label={t("Total Enrolled")}
+              value={String(stats.total)}
+              note={classCount === 1 ? t("In 1 class") : t("Across {n} classes", { n: classCount })}
+              noteTone="text-[#14757d]"
+              icon={<Users aria-hidden className="size-5" />}
+            />
+            <StatCard
+              label={t("Class Mastery")}
+              value={stats.averageMastery == null ? "—" : `${Math.round(stats.averageMastery * 10) / 10}%`}
+              note={stats.averageMastery == null ? t("No graded work yet") : t("Average mastery")}
+              noteTone="text-[#168a45]"
+              icon={<CircleCheck aria-hidden className="size-5" />}
+            />
+            <StatCard
+              label={t("Struggling Alerts")}
+              value={String(stats.needsAssistance)}
+              note={stats.needsAssistance > 0 ? t("Immediate review") : t("No one needs help now")}
+              noteTone="text-[#1B2D54]/60"
+              danger={stats.needsAssistance > 0}
+              icon={<CircleAlert aria-hidden className="size-5" />}
+            />
+            <StatCard
+              label={t("Avg Practice Time")}
+              value={formatDuration(avgMinutes, t)}
+              note={t("Practice time per student")}
+              noteTone="text-[#1B2D54]/60"
+              icon={<Clock aria-hidden className="size-5" />}
+            />
+          </div>
 
-      <section className="rounded-2xl border border-[#e3ece9] bg-white shadow-sm">
-        <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-col items-start gap-2">
-            <div className="relative">
-              <select
-                value={classFilter}
-                onChange={(e) => setClassFilter(e.target.value)}
-                aria-label={tr("Class")}
-                className="w-36 appearance-none rounded-lg border border-[#e3ece9] bg-white py-2 ps-3 pe-8 text-[11px] font-medium outline-none focus:border-[#12939b] focus:ring-2 focus:ring-[#12939b]/20"
-              >
-                {CLASS_OPTIONS.map((c) => (
-                  <option key={c} value={c}>
-                    {tr(c)}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown aria-hidden className="pointer-events-none absolute end-2.5 top-1/2 size-3.5 -translate-y-1/2" />
-            </div>
-
-            <div role="tablist" className="flex flex-wrap items-center gap-1.5">
-              {FILTERS.map((f) => {
-                const active = filter === f.key;
-                return (
-                  <button
-                    key={f.key}
-                    type="button"
-                    role="tab"
-                    aria-selected={active}
-                    onClick={() => setFilter(f.key)}
-                    className={cn(
-                      "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[10px] font-semibold transition-colors",
-                      active ? "bg-[#1B2D54] text-white" : "bg-[#f1f3f5] text-[#1B2D54] hover:bg-[#e6eaec]"
-                    )}
+          <section className="rounded-2xl border border-[#e3ece9] bg-white shadow-sm">
+            <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-col items-start gap-2">
+                <div className="relative">
+                  <select
+                    value={classFilter}
+                    onChange={(e) => {
+                      setClassFilter(e.target.value);
+                      setPage(1);
+                    }}
+                    aria-label={t("Class")}
+                    className="w-36 appearance-none rounded-lg border border-[#e3ece9] bg-white py-2 ps-3 pe-8 text-[11px] font-medium outline-none focus:border-[#12939b] focus:ring-2 focus:ring-[#12939b]/20"
                   >
-                    {tr(f.label)}
-                    <span
-                      className={cn(
-                        "text-[9px] font-medium",
-                        active && "text-white/70",
-                        !active && f.key === "struggling" && "rounded-full bg-[#fde8e8] px-1.5 text-[#c81e1e]",
-                        !active && f.key !== "struggling" && "text-[#1B2D54]/50"
-                      )}
-                    >
-                      {f.count}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+                    <option value="">{t("All Classes")}</option>
+                    {(classes ?? []).map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {t("Grade {grade}{name}", { grade: c.grade, name: c.name })}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown aria-hidden className="pointer-events-none absolute end-2.5 top-1/2 size-3.5 -translate-y-1/2" />
+                </div>
 
-          <div className="flex items-center gap-2">
-            <label className="relative block">
-              <Search aria-hidden className="pointer-events-none absolute start-3 top-1/2 size-3.5 -translate-y-1/2 text-[#1B2D54]/50" />
-              <input
-                type="search"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder={tr("Search student by name or ID...")}
-                aria-label={tr("Search student by name or ID...")}
-                className="w-full rounded-lg border border-transparent bg-[#f1f3f5] py-2.5 ps-9 pe-3 text-[11px] outline-none placeholder:text-[#1B2D54]/50 focus:border-[#12939b] focus:bg-white focus:ring-2 focus:ring-[#12939b]/20 sm:w-64"
-              />
-            </label>
-            <button
-              type="button"
-              aria-label={tr("More filters")}
-              // TODO: open the advanced filters
-              className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#f1f3f5] text-[#1B2D54] transition-colors hover:bg-[#e6eaec] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#12939b]/40"
-            >
-              <SlidersHorizontal aria-hidden className="size-4" />
-            </button>
-          </div>
-        </div>
-
-        {/* Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[960px] border-collapse text-start text-[11px]">
-            <thead>
-              <tr className="border-y border-[#e3ece9] bg-[#f6f9f8] text-[9px] font-semibold uppercase tracking-wide text-[#1B2D54]/60 rtl:normal-case rtl:tracking-normal">
-                {COLUMNS.map((c) => (
-                  <th key={c} scope="col" className="px-4 py-2.5 text-start font-semibold">
-                    {tr(c)}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((s) => {
-                const lessonsPct = Math.round((s.lessonsDone / s.lessonsTotal) * 100);
-                const tone = masteryTone(s.mastery);
-                return (
-                  <tr key={s.id} className="border-b border-[#e3ece9] transition-colors last:border-b-0 hover:bg-[#f6f9f8]">
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2.5">
-                        <Avatar student={s} />
-                        <div className="min-w-0 leading-tight">
-                          <p className="truncate text-xs font-semibold">{s.name}</p>
-                          <p className="truncate text-[10px] text-[#1B2D54]/55">{s.email}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-[#1B2D54]/70">
-                      <bdi>{s.id}</bdi>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="rounded-md bg-[#eef2f1] px-2 py-0.5 text-[10px] font-medium">{tr(s.className)}</span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="w-28">
-                        <div className="flex items-center justify-between text-[10px]">
-                          <bdi className="font-semibold">
-                            {s.lessonsDone}/{s.lessonsTotal}
-                          </bdi>
-                          <bdi className="text-[#1B2D54]/55">{lessonsPct}%</bdi>
-                        </div>
-                        <div
-                          className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-[#dfe9e7]"
-                          role="progressbar"
-                          aria-valuemin={0}
-                          aria-valuemax={100}
-                          aria-valuenow={lessonsPct}
-                        >
-                          <div
-                            className={cn("h-full rounded-full", lessonsPct < 80 ? "bg-[#c81e1e]" : "bg-[#14757d]")}
-                            style={{ width: `${lessonsPct}%` }}
-                          />
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <bdi>
-                        <span className="font-semibold">{s.problemsDone}</span>
-                        <span className="text-[#1B2D54]/50">/{s.problemsTotal}</span>
-                      </bdi>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span
+                <div role="tablist" className="flex flex-wrap items-center gap-1.5">
+                  {FILTERS.map((f) => {
+                    const active = filter === f.key;
+                    return (
+                      <button
+                        key={f.key}
+                        type="button"
+                        role="tab"
+                        aria-selected={active}
+                        onClick={() => {
+                          setFilter(f.key);
+                          setPage(1);
+                        }}
                         className={cn(
-                          "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-semibold",
-                          tone.bg,
-                          tone.text
+                          "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[10px] font-semibold transition-colors",
+                          active ? "bg-[#1B2D54] text-white" : "bg-[#f1f3f5] text-[#1B2D54] hover:bg-[#e6eaec]"
                         )}
                       >
-                        <span aria-hidden className={cn("size-1.5 rounded-full", tone.dot)} />
-                        <bdi>{s.mastery}%</bdi>
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-[#1B2D54]/80">
-                      <Bidi text={tr(s.timeSpent)} />
-                    </td>
-                    <td className="px-4 py-3 text-[#1B2D54]/80">
-                      <Bidi text={tr(s.lastActive)} />
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={cn("rounded-md px-2 py-1 text-[10px] font-semibold", STATUS_STYLE[s.status])}>
-                        {tr(s.status)}
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
+                        {t(f.label)}
+                        <span
+                          className={cn(
+                            "text-[9px] font-medium",
+                            active && "text-white/70",
+                            !active && f.key === "struggling" && "rounded-full bg-[#fde8e8] px-1.5 text-[#c81e1e]",
+                            !active && f.key !== "struggling" && "text-[#1B2D54]/50"
+                          )}
+                        >
+                          {counts[f.key]}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
 
-              {rows.length === 0 && (
-                <tr>
-                  <td colSpan={COLUMNS.length} className="px-4 py-10 text-center text-[#1B2D54]/60">
-                    {tr("No students match your filters.")}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Footer: count + pagination */}
-        <div className="flex flex-col items-center justify-between gap-3 border-t border-[#e3ece9] p-4 text-[10px] sm:flex-row">
-          <p className="text-[#1B2D54]/70">
-            {tr("Showing")} <strong className="text-[#1B2D54]">
-              <bdi dir="ltr">{rows.length > 0 ? `1-${rows.length}` : "0"}</bdi>
-            </strong> {tr("of")}{" "}
-            <strong className="text-[#1B2D54]">{TOTAL_STUDENTS}</strong> {tr("students")}
-          </p>
-
-          <nav aria-label="Pagination" className="flex items-center gap-1">
-            <button
-              type="button"
-              disabled={page === 1}
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              className="rounded-lg bg-[#eef2f1] px-3 py-1.5 font-semibold transition-colors hover:bg-[#dfe9e7] disabled:opacity-50"
-            >
-              {tr("Previous")}
-            </button>
-            {PAGES.map((p, i) =>
-              typeof p === "number" ? (
+              <div className="relative flex items-center gap-2">
+                <label className="relative block min-w-0 flex-1">
+                  <Search aria-hidden className="pointer-events-none absolute start-3 top-1/2 size-3.5 -translate-y-1/2 text-[#1B2D54]/50" />
+                  <input
+                    type="search"
+                    value={query}
+                    onChange={(e) => {
+                      setQuery(e.target.value);
+                      setPage(1);
+                    }}
+                    placeholder={t("Search student by name or ID...")}
+                    aria-label={t("Search student by name or ID...")}
+                    className="w-full rounded-lg border border-transparent bg-[#f1f3f5] py-2.5 ps-9 pe-3 text-[11px] outline-none placeholder:text-[#1B2D54]/50 focus:border-[#12939b] focus:bg-white focus:ring-2 focus:ring-[#12939b]/20 sm:w-64"
+                  />
+                </label>
                 <button
-                  key={p}
                   type="button"
-                  onClick={() => setPage(p)}
-                  aria-current={page === p ? "page" : undefined}
+                  aria-label={t("Sort by")}
+                  aria-expanded={sortOpen}
+                  onClick={() => setSortOpen((o) => !o)}
                   className={cn(
-                    "size-7 rounded-lg font-semibold transition-colors",
-                    page === p ? "bg-[#1B2D54] text-white" : "hover:bg-[#eef2f1]"
+                    "flex size-9 shrink-0 items-center justify-center rounded-lg text-[#1B2D54] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#12939b]/40",
+                    sortOpen || sort !== "default" ? "bg-[#1B2D54] text-white" : "bg-[#f1f3f5] hover:bg-[#e6eaec]"
                   )}
                 >
-                  {p}
+                  <SlidersHorizontal aria-hidden className="size-4" />
                 </button>
-              ) : (
-                <span key={`gap-${i}`} aria-hidden className="px-1 text-[#1B2D54]/50">
-                  {p}
-                </span>
-              )
-            )}
-            <button
-              type="button"
-              disabled={page === 9}
-              onClick={() => setPage((p) => Math.min(9, p + 1))}
-              className="rounded-lg bg-[#eef2f1] px-3 py-1.5 font-semibold transition-colors hover:bg-[#dfe9e7] disabled:opacity-50"
-            >
-              {tr("Next")}
-            </button>
-          </nav>
-        </div>
-      </section>
+                {sortOpen && (
+                  <div className="absolute end-0 top-full z-20 mt-2 w-56 rounded-xl border border-[#e3ece9] bg-white p-2 shadow-lg">
+                    <p className="px-2 pb-1 text-[9px] font-semibold uppercase tracking-wide text-[#1B2D54]/60 rtl:normal-case rtl:tracking-normal">
+                      {t("Sort by")}
+                    </p>
+                    {SORTS.map((o) => (
+                      <button
+                        key={o.key}
+                        type="button"
+                        onClick={() => {
+                          setSort(o.key);
+                          setSortOpen(false);
+                          setPage(1);
+                        }}
+                        className={cn(
+                          "flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-start text-[11px] hover:bg-[#f6f9f8]",
+                          sort === o.key && "font-semibold text-[#14757d]"
+                        )}
+                      >
+                        {t(o.label)}
+                        {sort === o.key && <Check aria-hidden className="size-3.5" />}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {error && <LoadBlock error={error} onRetry={reload} className="mx-4 mb-3" />}
+
+            {/* Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[960px] border-collapse text-start text-[11px]">
+                <thead>
+                  <tr className="border-y border-[#e3ece9] bg-[#f6f9f8] text-[9px] font-semibold uppercase tracking-wide text-[#1B2D54]/60 rtl:normal-case rtl:tracking-normal">
+                    {COLUMNS.map((c) => (
+                      <th key={c} scope="col" className="px-4 py-2.5 text-start font-semibold">
+                        {t(c)}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {pageRows.map((s) => {
+                    const lessonsPct = s.lessonsTotal > 0 ? Math.round((s.lessonsDone / s.lessonsTotal) * 100) : 0;
+                    const tone = masteryTone(s.mastery);
+                    return (
+                      <tr
+                        key={`${s.classId}-${s.studentId}`}
+                        onClick={() => openStudent(s.studentId)}
+                        className="cursor-pointer border-b border-[#e3ece9] transition-colors last:border-b-0 hover:bg-[#f6f9f8]"
+                      >
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2.5">
+                            <StudentAvatar name={s.fullName} photoUrl={s.photoUrl} gender={s.gender} size={32} />
+                            <div className="min-w-0 leading-tight">
+                              <Link
+                                href={`/teacher/messages?student=${encodeURIComponent(s.studentId)}`}
+                                onClick={(e) => e.stopPropagation()}
+                                className="block truncate text-xs font-semibold hover:text-[#14757d] hover:underline"
+                              >
+                                {s.fullName}
+                              </Link>
+                              <p className="truncate text-[10px] text-[#1B2D54]/55">{s.email}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-[#1B2D54]/70">
+                          <bdi>{shortId(s)}</bdi>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="whitespace-nowrap rounded-md bg-[#eef2f1] px-2 py-0.5 text-[10px] font-medium">
+                            {t("Grade {grade}{name}", { grade: s.grade, name: s.className })}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="w-28">
+                            <div className="flex items-center justify-between text-[10px]">
+                              <bdi className="font-semibold">
+                                {s.lessonsDone}/{s.lessonsTotal}
+                              </bdi>
+                              <bdi className="text-[#1B2D54]/55">{lessonsPct}%</bdi>
+                            </div>
+                            <div
+                              className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-[#dfe9e7]"
+                              role="progressbar"
+                              aria-valuemin={0}
+                              aria-valuemax={100}
+                              aria-valuenow={lessonsPct}
+                            >
+                              <div
+                                className={cn("h-full rounded-full", lessonsPct < 80 ? "bg-[#c81e1e]" : "bg-[#14757d]")}
+                                style={{ width: `${lessonsPct}%` }}
+                              />
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <bdi>
+                            <span className="font-semibold">{s.problemsSolved}</span>
+                            <span className="text-[#1B2D54]/50">/{s.problemsTotal}</span>
+                          </bdi>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span
+                            className={cn(
+                              "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-semibold",
+                              tone.bg,
+                              tone.text
+                            )}
+                          >
+                            <span aria-hidden className={cn("size-1.5 rounded-full", tone.dot)} />
+                            <bdi>{s.mastery == null ? "—" : `${Math.round(s.mastery)}%`}</bdi>
+                          </span>
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3 text-[#1B2D54]/80">
+                          <Bidi text={formatDuration(s.timeSpentMinutes, t)} />
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3 text-[#1B2D54]/80">
+                          <Bidi text={lastActiveLabel(s.lastActiveUtc, t)} />
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={cn("whitespace-nowrap rounded-md px-2 py-1 text-[10px] font-semibold", STATUS_STYLE[s.status])}>
+                            {t(STATUS_LABEL[s.status])}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+
+                  {rows.length === 0 && (
+                    <tr>
+                      <td colSpan={COLUMNS.length} className="px-4 py-10 text-center text-[#1B2D54]/60">
+                        {students.length === 0 ? t("No students in your classes yet.") : t("No students match your filters.")}
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Footer: count + pagination */}
+            <div className="flex flex-col items-center justify-between gap-3 border-t border-[#e3ece9] p-4 text-[10px] sm:flex-row">
+              <p className="text-[#1B2D54]/70">
+                {t("Showing")}{" "}
+                <strong className="text-[#1B2D54]">
+                  <bdi dir="ltr">{rows.length > 0 ? `${from}-${to}` : "0"}</bdi>
+                </strong>{" "}
+                {t("of")} <strong className="text-[#1B2D54]">{rows.length}</strong> {t("students")}
+              </p>
+
+              <nav aria-label={t("Pagination")} className="flex flex-wrap items-center justify-center gap-1">
+                  <button
+                    type="button"
+                    disabled={current === 1}
+                    onClick={() => setPage(current - 1)}
+                    className="rounded-lg bg-[#eef2f1] px-3 py-1.5 font-semibold transition-colors hover:bg-[#dfe9e7] disabled:opacity-50"
+                  >
+                    {t("Previous")}
+                  </button>
+                  {pageList(current, pageCount).map((p, i) =>
+                    typeof p === "number" ? (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => setPage(p)}
+                        aria-current={current === p ? "page" : undefined}
+                        className={cn(
+                          "size-7 rounded-lg font-semibold transition-colors",
+                          current === p ? "bg-[#1B2D54] text-white" : "hover:bg-[#eef2f1]"
+                        )}
+                      >
+                        {p}
+                      </button>
+                    ) : (
+                      <span key={`gap-${i}`} aria-hidden className="px-1 text-[#1B2D54]/50">
+                        {p}
+                      </span>
+                    )
+                  )}
+                  <button
+                    type="button"
+                    disabled={current === pageCount}
+                    onClick={() => setPage(current + 1)}
+                    className="rounded-lg bg-[#eef2f1] px-3 py-1.5 font-semibold transition-colors hover:bg-[#dfe9e7] disabled:opacity-50"
+                  >
+                    {t("Next")}
+                  </button>
+                </nav>
+            </div>
+          </section>
+        </>
+      )}
+
+      {enrollOpen && <EnrollDialog classes={classes} onClose={() => setEnrollOpen(false)} />}
     </div>
   );
 }

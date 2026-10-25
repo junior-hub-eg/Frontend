@@ -29,6 +29,7 @@ import {
   ClipboardCheck,
   Award,
   KeyRound,
+  Languages,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth/auth-context";
 import { landingFont } from "@/components/Landing/font";
@@ -63,6 +64,7 @@ const NAV_GROUPS = [
   ],
   [
     { href: "/admin/tracks", label: tk("Tracks"), icon: Layers },
+    { href: "/admin/grammar", label: tk("Grammar Coach"), icon: Languages },
     { href: "/admin/assignments", label: tk("Assignments & Submissions"), icon: ClipboardList },
     { href: "/admin/roles", label: tk("Roles & Permissions"), icon: Shield },
     { href: "/admin/reports", label: tk("Reports & Analytics"), icon: TrendingUp },

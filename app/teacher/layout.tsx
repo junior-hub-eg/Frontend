@@ -8,7 +8,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { Poppins } from "next/font/google";
 import {
   AlignLeft,
-  Bell,
   BookOpen,
   CalendarDays,
   ChevronDown,
@@ -27,6 +26,7 @@ import { avatarOrDefault } from "@/lib/avatars";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n/client";
 import { LanguageSwitcher } from "@/components/shared/LanguageSwitcher";
+import { TeacherBell } from "@/components/teacher/TeacherBell";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -218,14 +218,7 @@ export default function TeacherLayout({ children }: { children: ReactNode }) {
 
           {/* me-[1.6em] moves the bell and the teacher name a bit away from the screen edge (both languages) */}
           <div className="ms-auto flex items-center gap-[1.2em] me-[1.6em]">
-            <button
-              type="button"
-              aria-label={t("Notifications")}
-              title={t("Notifications")}
-              className="grid h-[2.8em] w-[2.8em] place-items-center rounded-full border border-white/70 bg-white/55 text-[#14365a] backdrop-blur"
-            >
-              <Bell className="h-[1.2em] w-[1.2em]" />
-            </button>
+            <TeacherBell />
 
             <div className="relative">
               <button

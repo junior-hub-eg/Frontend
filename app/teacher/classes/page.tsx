@@ -28,6 +28,10 @@ import {
   type TeacherClassDetail,
 } from "@/lib/teacher-api";
 import { LoadBlock, StudentAvatar, SUBJECT_LABEL, useTeacherData } from "@/components/teacher/teacher-ui";
+import { AnnouncementDialog, AssignmentsTab, InviteTab, PlanTab } from "@/components/teacher/ClassTabs";
+import { useToast } from "@/components/teacher/teacher-dialogs";
+import Link from "next/link";
+import type { Route } from "next";
 
 type TabKey = "students" | "invite" | "lesson" | "assignments";
 
@@ -45,9 +49,9 @@ const STATUS_LABEL: Record<ClassStudentStatus, string> = {
 };
 
 const QUICK_LINKS = [
-  { title: tk("Digital Curriculum"), note: tk("Textbook & Guide"), icon: GraduationCap, trailing: ExternalLink },
-  { title: tk("AI Grading Copilot"), note: tk("Auto-diagnostic summaries"), icon: Sparkles, trailing: ExternalLink },
-  { title: tk("Class Announcements"), note: tk("Broadcast to parents & students"), icon: Megaphone, trailing: ChevronRight },
+  { title: tk("Digital Curriculum"), note: tk("Textbook & Guide"), icon: GraduationCap, trailing: ExternalLink, href: "/teacher/curriculum" },
+  { title: tk("AI Grading Copilot"), note: tk("Auto-diagnostic summaries"), icon: Sparkles, trailing: ExternalLink, href: "/teacher/progress" },
+  { title: tk("Class Announcements"), note: tk("Broadcast to parents & students"), icon: Megaphone, trailing: ChevronRight, href: null },
 ];
 
 const STATUS_STYLE: Record<ClassStudentStatus, string> = {
@@ -219,6 +223,8 @@ function MyClasses() {
   const [tab, setTab] = useState<TabKey>(TABS.some((x) => x.key === requestedTab) ? (requestedTab as TabKey) : "students");
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortKey>("attendance");
+  const [announce, setAnnounce] = useState(false);
+  const toast = useToast();
 
   const list = classes.data ?? [];
   const activeClass = list.some((c) => c.id === chosen) ? chosen! : list[0]?.id ?? null;
@@ -360,6 +366,15 @@ function MyClasses() {
                 <button
                   type="button"
                   aria-label={t("Export")}
+                  title={t("Export")}
+                  onClick={() => {
+                    const head = [t("Student Name"), t("Email"), t("Attendance"), t("Mastery"), t("Status")];
+                    const lines = rows.map((s) => [s.fullName, s.email, `${s.attendance}%`, s.mastery === null ? "" : `${s.mastery}%`, t(STATUS_LABEL[s.status])]);
+                    const csv = [head, ...lines].map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\r\n");
+                    const url = URL.createObjectURL(new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" }));
+                    Object.assign(document.createElement("a"), { href: url, download: `class-${d.name}.csv` }).click();
+                    URL.revokeObjectURL(url);
+                  }}
                   className="grid size-8 place-items-center rounded-lg border border-[#e3ece9] bg-white hover:bg-[#f6f9f8]"
                 >
                   <Download aria-hidden className="size-3.5" />
@@ -425,12 +440,12 @@ function MyClasses() {
                           </span>
                         </td>
                         <td className="px-3 py-3 text-center">
-                          <button
-                            type="button"
-                            className="rounded-lg bg-[#eef0f2] px-3 py-1.5 text-[10px] font-bold text-[#14243f] transition-colors hover:bg-[#e1e5e8]"
+                          <Link
+                            href={`/teacher/messages?student=${s.id}` as Route}
+                            className="inline-block rounded-lg bg-[#eef0f2] px-3 py-1.5 text-[10px] font-bold text-[#14243f] transition-colors hover:bg-[#e1e5e8]"
                           >
                             {t("Details")} <span className="inline-block rtl:rotate-180">→</span>
-                          </button>
+                          </Link>
                         </td>
                       </tr>
                     );
@@ -452,17 +467,20 @@ function MyClasses() {
               </p>
             </div>
           </div>
+        ) : !d ? (
+          <LoadBlock error={detail.error} onRetry={detail.reload} />
+        ) : tab === "invite" ? (
+          <InviteTab d={d} onChange={detail.setData} reload={() => { detail.reload(); classes.reload(); }} notify={toast.show} />
+        ) : tab === "lesson" ? (
+          <PlanTab d={d} onChange={detail.setData} reload={detail.reload} notify={toast.show} />
         ) : (
-          <p className="p-8 text-center text-[11px] text-[#1B2D54]/60">{t("This tab is coming soon.")}</p>
+          <AssignmentsTab d={d} onChange={detail.setData} reload={() => { detail.reload(); classes.reload(); }} notify={toast.show} />
         )}
       </Card>
       <div className="grid gap-3 md:grid-cols-3">
-        {QUICK_LINKS.map(({ title, note, icon: Icon, trailing: Trailing }) => (
-          <button
-            key={title}
-            type="button"
-            className="flex items-center gap-3 rounded-2xl border border-[#e3ece9] bg-white p-3 text-start shadow-sm transition-colors hover:bg-[#f6f9f8]"
-          >
+        {QUICK_LINKS.map(({ title, note, icon: Icon, trailing: Trailing, href }) => {
+          const inner = (
+            <>
             <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#c9efe9] text-[#14757d]">
               <Icon aria-hidden className="size-4" />
             </span>
@@ -471,9 +489,22 @@ function MyClasses() {
               <span className="block truncate text-[9px] text-[#1B2D54]/60">{t(note)}</span>
             </span>
             <Trailing aria-hidden className="size-3.5 shrink-0 text-[#1B2D54]/60 rtl:rotate-180" />
-          </button>
-        ))}
+            </>
+          );
+          const cls = "flex items-center gap-3 rounded-2xl border border-[#e3ece9] bg-white p-3 text-start shadow-sm transition-colors hover:bg-[#f6f9f8]";
+          return href ? (
+            <Link key={title} href={href as Route} className={cls}>
+              {inner}
+            </Link>
+          ) : (
+            <button key={title} type="button" onClick={() => setAnnounce(true)} disabled={!d} className={cls}>
+              {inner}
+            </button>
+          );
+        })}
       </div>
+      {announce && d && <AnnouncementDialog d={d} onClose={() => setAnnounce(false)} notify={toast.show} />}
+      {toast.node}
     </div>
   );
 }
