@@ -12,10 +12,12 @@ import { useApi } from "../use-api";
 const localInput = (d: Date) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
 
 export default function Announcements() {
-  const { t, intl } = useI18n();
+  const { t, intl, locale } = useI18n();
   const { data, error, loading, reload } = useApi(getMentorAnnouncements);
   const [id, setId] = useState<string | null>(null);
-  const [language, setLanguage] = useState<"en" | "ar">("en");
+  // An announcement is written in the site's language; an edited one keeps its own.
+  const [editLanguage, setEditLanguage] = useState<"en" | "ar" | null>(null);
+  const language = editLanguage ?? (locale === "ar" ? "ar" : "en");
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [link, setLink] = useState("");
@@ -31,11 +33,11 @@ export default function Announcements() {
   const recipients = (data?.squads.filter((s) => squads.includes(s.squadId)).reduce((n, s) => n + s.students, 0) ?? 0) + (mentees ? data?.mentees ?? 0 : 0);
   const toggle = (sid: string) => setSquads(squads.includes(sid) ? squads.filter((x) => x !== sid) : [...squads, sid]);
   const edit = (a: MentorAnnouncement) => {
-    setId(a.id); setTitle(a.title); setBody(a.body); setLink(a.link ?? ""); setLanguage(a.language); setSquads(a.squadIds); setMentees(a.includeMentees);
+    setId(a.id); setTitle(a.title); setBody(a.body); setLink(a.link ?? ""); setEditLanguage(a.language); setSquads(a.squadIds); setMentees(a.includeMentees);
     if (a.sendAtUtc) { setWhen("schedule"); setSendAt(localInput(new Date(a.sendAtUtc))); } else setWhen("now");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
-  const reset = () => { setId(null); setTitle(""); setBody(""); setLink(""); setSquads([]); setMentees(false); setWhen("now"); };
+  const reset = () => { setId(null); setEditLanguage(null); setTitle(""); setBody(""); setLink(""); setSquads([]); setMentees(false); setWhen("now"); };
   const submit = (mode: "Now" | "Schedule" | "Draft") => {
     setBusy(true);
     setNotice(null);
@@ -54,10 +56,7 @@ export default function Announcements() {
     <MentorPage title={t("Announcements")} subtitle={t("Write to your squads and mentees.")}>
       <div className="grid items-start gap-[1.4em] xl:grid-cols-[1fr_24em]">
         <Card>
-          <div className="mb-[1em] flex items-center justify-between">
-            <h2 className="text-[1.15em] font-bold text-[#1b2d54]">{id ? t("Edit announcement") : t("New announcement")}</h2>
-            <SegmentTabs value={language} onChange={setLanguage} tabs={[{ value: "en", label: "EN" }, { value: "ar", label: "AR" }]} />
-          </div>
+          <h2 className="mb-[1em] text-[1.15em] font-bold text-[#1b2d54]">{id ? t("Edit announcement") : t("New announcement")}</h2>
           <div dir={language === "ar" ? "rtl" : "ltr"} className="space-y-[1em]">
             <label className="block text-[0.85em]">
               <span className="mb-[0.4em] block font-medium text-[#1b2d54]">{t("Title")}</span>
