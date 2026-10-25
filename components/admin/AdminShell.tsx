@@ -12,36 +12,34 @@ import {
   ClipboardList,
   ShieldCheck,
   Settings,
-  UserPlus,
-  Layers,
   LayoutGrid,
   LoaderCircle,
   TrendingUp,
   LogOut,
   Menu,
   Search,
-  UserCheck,
   Users,
-  UsersRound,
   Shield,
-  Megaphone,
   History,
   ClipboardCheck,
   Award,
   KeyRound,
+  GraduationCap,
+  Terminal,
+  Presentation,
+  Folder,
+  Clock,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth/auth-context";
 import { landingFont } from "@/components/Landing/font";
-import { APPROVALS_CHANGED, getApprovals } from "@/lib/admin-api";
+import { APPROVALS_CHANGED, getApprovals, getMentorRequests, getTrackRequests } from "@/lib/admin-api";
 import { getUnreadNotificationCount } from "@/lib/notifications-api";
 import { useI18n } from "@/lib/i18n/client";
 import { tk } from "@/lib/i18n/translate";
-import { QuickManagement } from "./QuickManagement";
 
 const SKIP_AUTH = process.env.NEXT_PUBLIC_SKIP_AUTH === "true" && process.env.NODE_ENV !== "production";
 
 const CAP_IMG = "/images/admin/reicon_grad-cap-filled.png";
-const PARK_IMG = "/images/Intern/bg-park.png";
 const AVATAR = "/images/Intern/char-boy-glasses.png";
 
 /** How the picture sits inside the round avatar. Change these four numbers only. */
@@ -52,25 +50,31 @@ const AVATAR_FIT = {
   posY: 0, // % up/down shift of the picture (0 = shows the top of the cap)
 };
 
+/**
+ * Same order as the new Figma sidebar. Two items the design shows (User Profile, Rewards)
+ * are left out because there is no page for them yet.
+ * Assignments, Assessment Builder and Activity Log are not in the design but their pages exist.
+ */
 const NAV_GROUPS = [
   [
-    { href: "/admin/dashboard", label: tk("Admin Dashboard"), icon: LayoutGrid },
-    { href: "/admin/students", label: tk("Student Management"), icon: Users },
-    { href: "/admin/squads", label: tk("Squads Management"), icon: UsersRound },
-    { href: "/admin/mentors", label: tk("Mentors Management"), icon: UserCheck },
-    { href: "/admin/approvals", label: tk("Approvals"), icon: UserPlus },
-    { href: "/admin/notifications", label: tk("Notifications"), icon: Megaphone },
+    { href: "/admin/dashboard", label: tk("Dashboard"), icon: LayoutGrid },
+    { href: "/admin/students", label: tk("Student Management"), icon: GraduationCap },
+    { href: "/admin/squads", label: tk("Squad Management"), icon: Users },
   ],
   [
-    { href: "/admin/tracks", label: tk("Tracks"), icon: Layers },
-    { href: "/admin/assignments", label: tk("Assignments & Submissions"), icon: ClipboardList },
+    { href: "/admin/mentors", label: tk("Mentors Management"), icon: Terminal },
+    { href: "/admin/tracks", label: tk("Track Management"), icon: Presentation },
+    { href: "/admin/notifications", label: tk("Notifications"), icon: Bell },
     { href: "/admin/roles", label: tk("Roles & Permissions"), icon: Shield },
-    { href: "/admin/reports", label: tk("Reports & Analytics"), icon: TrendingUp },
-    { href: "/admin/activity-log", label: tk("Activity Log"), icon: History },
-    { href: "/admin/assessment-builder", label: tk("Assessment Builder"), icon: ClipboardCheck },
+    { href: "/admin/projects", label: tk("Projects"), icon: Folder },
+    { href: "/admin/assignments", label: tk("Assignments & Submissions"), icon: ClipboardList },
     { href: "/admin/certificates", label: tk("Certificates"), icon: Award },
-    { href: "/admin/security", label: tk("Security & Login History"), icon: KeyRound },
-    { href: "/admin/settings", label: tk("System Settings"), icon: Settings },
+    { href: "/admin/assessment-builder", label: tk("Assessment Builder"), icon: ClipboardCheck },
+    { href: "/admin/reports", label: tk("Analytics"), icon: TrendingUp },
+    { href: "/admin/activity-log", label: tk("Activity Log"), icon: History },
+    { href: "/admin/approvals", label: tk("Pending Requests"), icon: Clock },
+    { href: "/admin/security", label: tk("Security"), icon: KeyRound },
+    { href: "/admin/settings", label: tk("Settings"), icon: Settings },
   ],
 ];
 
@@ -116,15 +120,15 @@ export function AdminShell({ children }: { children: ReactNode }) {
     setMobileOpen(false);
   }, [pathname, isDesktop]);
 
-  // Count the sign-ups waiting for approval again on every page change.
+  // Count the requests waiting for the admin (sign-ups, mentor changes, new tracks) on every page change.
   useEffect(() => {
     if (user?.role !== "admin") return;
 
     let active = true;
 
     const count = () =>
-      getApprovals().then(
-        (list) => active && setWaiting(list.length),
+      Promise.all([getApprovals(), getMentorRequests(), getTrackRequests()]).then(
+        (lists) => active && setWaiting(lists.reduce((n, l) => n + l.length, 0)),
         () => {},
       );
 
@@ -200,7 +204,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
 
   return (
     <div
-      className={`${landingFont.variable} flex h-svh gap-2 overflow-hidden bg-[#eaf3fb] p-2 font-[family-name:var(--font-poppins)]`}
+      className={`${landingFont.variable} flex h-svh gap-2 overflow-hidden bg-[#eef3fb] p-2 font-[family-name:var(--font-poppins)]`}
       style={vars}
     >
       {/* Dark backdrop behind the mobile drawer */}
@@ -216,34 +220,30 @@ export function AdminShell({ children }: { children: ReactNode }) {
       {/* ================= Sidebar ================= */}
       <aside
         aria-label={t("Sidebar")}
-        className={`fixed bottom-2 start-2 top-2 z-50 flex w-[15rem] max-w-[calc(100vw-1rem)] shrink-0 flex-col overflow-hidden rounded-[1.6rem] border border-white/60 shadow-[0_10px_30px_rgba(20,90,140,0.18)] transition-[transform,width] duration-200 lg:relative lg:z-auto lg:max-w-none lg:translate-x-0 lg:rtl:translate-x-0 ${
+        className={`fixed bottom-2 start-2 top-2 z-50 flex w-[15rem] max-w-[calc(100vw-1rem)] shrink-0 flex-col overflow-hidden rounded-[2rem] border border-white/70 shadow-[0_14px_40px_rgba(20,120,180,0.22)] transition-[transform,width] duration-200 lg:relative lg:z-auto lg:max-w-none lg:translate-x-0 lg:rtl:translate-x-0 ${
           mobileOpen ? "translate-x-0" : "-translate-x-[calc(100%+1rem)] rtl:translate-x-[calc(100%+1rem)]"
         } ${expanded ? "lg:w-[15rem]" : "lg:w-[4.5rem]"}`}
       >
-        {/* Frosted glass: blurred park picture + light blue wash */}
-        <Image
-          src={PARK_IMG}
-          alt=""
-          fill
-          sizes="240px"
+        {/* Frosted glass: light blue gradient with a soft glow on top */}
+        <span
           aria-hidden
-          className="pointer-events-none origin-left scale-150 object-cover blur-[14px] rtl:origin-right"
+          className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#bdebfb] via-[#a9e3f8] to-[#8fd4f4]"
         />
 
         <span
           aria-hidden
-          className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#c8ebfb]/80 via-[#d4effc]/55 to-[#9fd8f5]/80"
+          className="pointer-events-none absolute -start-16 -top-24 size-64 rounded-full bg-white/35 blur-2xl"
         />
 
         {/* Waves at the bottom */}
         <span
           aria-hidden
-          className="pointer-events-none absolute -bottom-20 -start-12 size-64 rounded-full bg-[#b9d9fb]/70"
+          className="pointer-events-none absolute -bottom-20 -start-12 size-64 rounded-full bg-[#c3dcfb]/80"
         />
 
         <span
           aria-hidden
-          className="pointer-events-none absolute -bottom-28 start-8 size-72 rounded-full bg-[#7fcdf1]/65"
+          className="pointer-events-none absolute -bottom-28 start-8 size-72 rounded-full bg-[#74c9f2]/75"
         />
 
         {/* Logo */}
@@ -288,8 +288,8 @@ export function AdminShell({ children }: { children: ReactNode }) {
                           showLabels ? "px-3.5" : "justify-center px-0"
                         } ${
                           active
-                            ? "bg-gradient-to-r from-[#9de0d0] to-[#bfeadf] font-semibold text-[#14365a] shadow-[0_4px_12px_rgba(60,190,170,0.25)] rtl:bg-gradient-to-l"
-                            : "font-medium text-[#14365a] hover:bg-white/45"
+                            ? "bg-gradient-to-r from-[#3fc9ee] to-[#86e8d4] font-semibold text-[#0b2a4a] shadow-[0_6px_16px_rgba(34,190,240,0.35)] rtl:bg-gradient-to-l"
+                            : "font-medium text-[#14365a] hover:bg-white/50"
                         }`}
                       >
                         <item.icon className="size-[1.15rem] shrink-0" strokeWidth={1.8} />
@@ -314,10 +314,25 @@ export function AdminShell({ children }: { children: ReactNode }) {
             </div>
           ))}
         </nav>
+
+        {/* Bottom logo */}
+        {showLabels && (
+          <div className="relative z-10 shrink-0 px-5 pb-5 pt-2 text-center">
+            <div className="flex items-center justify-center gap-2.5">
+              <Image src={CAP_IMG} alt="" width={26} height={26} className="size-[1.6rem] shrink-0 object-contain" />
+
+              <span className="text-[1.05rem] font-extrabold tracking-tight text-[#14365a]">JUNIOR HUB</span>
+            </div>
+
+            <p className="mt-0.5 text-[0.62rem] font-medium uppercase tracking-[0.18em] text-[#14365a]/80">
+              {t("Build your dreams")}
+            </p>
+          </div>
+        )}
       </aside>
 
       {/* ================= Main ================= */}
-      <main className="relative flex min-w-0 flex-1 flex-col overflow-y-auto rounded-[1.4rem] bg-[#eef3fa] xl:overflow-hidden">
+      <main className="relative flex min-w-0 flex-1 flex-col overflow-y-auto rounded-[1.4rem] bg-[#f5f8fe] xl:overflow-hidden">
         {/* ---------- Top bar ---------- */}
         <header
           className="pointer-events-none absolute inset-x-0 top-0 z-30 flex items-center gap-[0.7em] px-[calc(var(--u)*1.6)] pt-[calc(var(--u)*1.1)]"
@@ -340,10 +355,10 @@ export function AdminShell({ children }: { children: ReactNode }) {
               ref={searchRef}
               type="search"
               placeholder={t("Search anything....")}
-              className="h-[2.6em] w-full rounded-full border border-white/70 bg-white/55 ps-[2.8em] pe-[1em] text-[0.8em] text-[#14365a] shadow-[0_6px_18px_rgba(60,160,230,0.25)] outline-none backdrop-blur placeholder:text-[#14365a]/70 focus:ring-2 focus:ring-[#12939b]/40 sm:pe-[4em]"
+              className="h-[2.6em] w-full rounded-full border border-white/80 bg-[#d7f2fb]/80 ps-[2.8em] pe-[1em] text-[0.8em] text-[#14365a] shadow-[0_8px_24px_rgba(34,190,240,0.35)] outline-none backdrop-blur placeholder:text-[#14365a]/70 focus:ring-2 focus:ring-[#06b6d4]/50 sm:pe-[4em]"
             />
 
-            <kbd className="pointer-events-none absolute end-[0.9em] top-1/2 hidden -translate-y-1/2 rounded-full bg-[#3aa6f2]/85 px-[0.7em] py-[0.15em] text-[0.65em] font-bold text-white sm:block">
+            <kbd className="pointer-events-none absolute end-[0.9em] top-1/2 hidden -translate-y-1/2 rounded-full bg-[#06b6d4] px-[0.7em] py-[0.15em] text-[0.65em] font-bold text-white sm:block">
               ⌘K
             </kbd>
           </label>
@@ -353,7 +368,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
             type="button"
             onClick={() => setLocale(locale === "ar" ? "en" : "ar")}
             aria-label={t("Change language")}
-            className="pointer-events-auto flex h-[2.4em] items-center gap-[0.5em] rounded-full border border-white/70 bg-white/55 px-[1.1em] text-[0.8em] font-semibold text-[#14365a] shadow-[0_6px_18px_rgba(60,160,230,0.2)] backdrop-blur"
+            className="pointer-events-auto flex h-[2.4em] items-center gap-[0.5em] rounded-full border border-white/80 bg-white/70 px-[1.1em] text-[0.8em] font-semibold text-[#14365a] shadow-[0_6px_18px_rgba(60,160,230,0.2)] backdrop-blur"
           >
             {locale === "ar" ? "EN" : "AR"} <ChevronDown className="size-[1em]" />
           </button>
@@ -362,7 +377,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
             <Link
               href={"/admin/notifications" as Route}
               aria-label={t("Notifications")}
-              className="pointer-events-auto relative grid size-[2.4em] place-items-center rounded-full border border-white/70 bg-white/55 text-[#14365a] shadow-[0_6px_18px_rgba(60,160,230,0.2)] backdrop-blur hover:bg-white/80"
+              className="pointer-events-auto relative grid size-[2.4em] place-items-center rounded-full border border-white/80 bg-white/70 text-[#14365a] shadow-[0_6px_18px_rgba(60,160,230,0.2)] backdrop-blur hover:bg-white"
             >
               <Bell className="size-[1.1em]" />
               {unseen > 0 && <span className="absolute end-[0.55em] top-[0.55em] size-[0.55em] rounded-full bg-[#e0245e]" aria-label={t("{n} unread notifications", { n: unseen })} />}
@@ -374,7 +389,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
                 onClick={() => setMenuOpen((v) => !v)}
                 aria-haspopup="menu"
                 aria-expanded={menuOpen}
-                className="flex h-[2.6em] items-center gap-[0.6em] rounded-full border border-white/70 bg-white/55 ps-[0.2em] pe-[0.9em] text-[0.8em] font-semibold text-[#14365a] shadow-[0_6px_18px_rgba(60,160,230,0.2)] backdrop-blur hover:bg-white/80"
+                className="flex h-[2.6em] items-center gap-[0.6em] rounded-full border border-white/80 bg-white/70 ps-[0.2em] pe-[0.9em] text-[0.8em] font-semibold text-[#14365a] shadow-[0_6px_18px_rgba(60,160,230,0.2)] backdrop-blur hover:bg-white"
               >
                 {/* Avatar: the head with the cap fills the circle, like the Figma pill */}
                 <span className="relative size-[2.2em] shrink-0 overflow-hidden rounded-full bg-[#ffb52e]">
@@ -431,11 +446,6 @@ export function AdminShell({ children }: { children: ReactNode }) {
         {/* ---------- Page content ---------- */}
         <div className="relative flex shrink-0 flex-col xl:min-h-0 xl:flex-1 xl:shrink">
           {children}
-        </div>
-
-        {/* ---------- Quick Management ---------- */}
-        <div className="relative z-20 shrink-0 px-3 sm:px-4 xl:px-[2.4%]" style={baseFont}>
-          <QuickManagement />
         </div>
       </main>
     </div>

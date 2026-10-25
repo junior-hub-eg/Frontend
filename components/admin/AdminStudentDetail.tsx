@@ -3,14 +3,25 @@
 import { useCallback, useState } from "react";
 import Link from "next/link";
 import type { Route } from "next";
-import { ArrowLeft, LoaderCircle } from "lucide-react";
-import { changeStudentMentor, getAdminMentors, getAdminStudent, type AdminMentor, type AdminStudentDetail as Detail } from "@/lib/admin-api";
+import { ArrowLeft, ArrowRight, LoaderCircle } from "lucide-react";
+import {
+  changeStudentMentor,
+  getAdminMentors,
+  getAdminSquadFull,
+  getAdminSquads,
+  getAdminStudent,
+  moveStudentSquad,
+  type AdminMentor,
+  type AdminSquadMember,
+  type AdminStudentDetail as Detail,
+} from "@/lib/admin-api";
 import { errorMessage } from "@/lib/api-client";
 import { useT } from "@/lib/i18n/client";
 import { dateLocale, tk } from "@/lib/i18n/translate";
 import { AdminPage, PageHero } from "./AdminPage";
 import { STUDENT_STATUS_LABEL, STUDENT_STATUS_STYLE, StudentAvatar } from "./StudentsTable";
 import { LoadState, useAdminData } from "./admin-data";
+import { Bar } from "./squad-detail/parts";
 
 const card = "rounded-[1.1em] bg-white p-[1.2em] shadow-[0_6px_22px_rgba(20,54,90,0.07)]";
 
@@ -76,6 +87,24 @@ export default function AdminStudentDetail({ id }: { id: string }) {
               )}
               {mentors.error && <LoadState error={mentors.error} onRetry={mentors.reload} className="mt-[0.8em]" />}
             </section>
+
+            <SquadSection student={s} onMoved={student.reload} />
+
+            {s.recentActivity && s.recentActivity.length > 0 && (
+              <section className={card}>
+                <h2 className="text-[1em] font-bold text-[#14365a]">{t("Recent activity")}</h2>
+                <ul className="mt-[0.8em] grid gap-[0.5em] text-[0.85em]">
+                  {s.recentActivity.map((a, i) => (
+                    <li key={i} className="flex flex-wrap justify-between gap-[0.6em] border-b border-[#eef3f9] pb-[0.4em] last:border-0">
+                      <span className="text-[#14365a]">{a.text}</span>
+                      <span className="text-[#8a97a6]">
+                        {new Date(a.createdUtc).toLocaleString(dateLocale("en-GB"), { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
           </>
         )}
       </div>
@@ -160,5 +189,105 @@ function TrackMentorRow({
       {saved && <span className="text-[#12676b]">{t("Saved")}</span>}
       {error && <p role="alert" className="w-full text-[#b83232]">{error}</p>}
     </li>
+  );
+}
+
+/** The student's squad, their progress in it, and moving them to another squad (or out of it). */
+function SquadSection({ student, onMoved }: { student: Detail; onMoved: () => Promise<void> }) {
+  const t = useT();
+  const squads = useAdminData(getAdminSquads, tk("We couldn't load the squads. Please try again."));
+  const squadId = student.squadId;
+  const loadMember = useCallback(
+    async (): Promise<AdminSquadMember | null> =>
+      squadId ? ((await getAdminSquadFull(squadId)).members.find((m) => m.studentId === student.id) ?? null) : null,
+    [squadId, student.id],
+  );
+  const member = useAdminData(loadMember, tk("We couldn't load this squad. Please try again."));
+  const [target, setTarget] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function move(to: string | null) {
+    if (to === null && !window.confirm(t("Take {name} out of this squad?", { name: student.fullName }))) return;
+    setSaving(true);
+    setError(null);
+    try {
+      await moveStudentSquad(student.id, to);
+      setTarget("");
+      await onMoved();
+    } catch (e) {
+      setError(errorMessage(e, tk("We couldn't move the student. Please try again.")));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const m = member.data;
+  return (
+    <section className={card}>
+      <div className="flex flex-wrap items-center justify-between gap-[0.6em]">
+        <h2 className="text-[1em] font-bold text-[#14365a]">{t("Squad")}</h2>
+        {squadId && (
+          <Link
+            href={`/admin/squads/${squadId}` as Route}
+            className="inline-flex items-center gap-[0.3em] text-[0.85em] font-semibold text-[#0b89a6] hover:underline"
+          >
+            {t("Open Workspace")} <ArrowRight className="size-[1em] rtl:rotate-180" />
+          </Link>
+        )}
+      </div>
+
+      {!squadId ? (
+        <p className="mt-[0.6em] text-[0.85em] text-[#8a97a6]">{t("This student is not in a squad.")}</p>
+      ) : m ? (
+        <div className="mt-[0.8em] grid gap-[0.6em] text-[0.85em] sm:grid-cols-4">
+          <Fact label={t("Squad")} value={student.squadName ?? "—"} />
+          <Fact label={t("Role")} value={t(m.role)} />
+          <Fact label={t("Tasks")} value={`${m.tasksDone}/${m.tasksTotal}`} />
+          <Fact label={t("Story points")} value={String(m.storyPointsDone)} />
+          <div className="flex items-center gap-[0.6em] sm:col-span-4">
+            <Bar value={m.progress} />
+            <span className="shrink-0 font-semibold text-[#14365a]">{Math.round(m.progress)}%</span>
+          </div>
+        </div>
+      ) : (
+        member.error && <LoadState error={member.error} onRetry={member.reload} className="mt-[0.8em]" />
+      )}
+
+      <div className="mt-[1em] flex flex-wrap items-center gap-[0.6em] text-[0.85em]">
+        <label className="flex items-center gap-[0.5em]">
+          <span className="text-[#5b6b7c]">{t("Move to squad")}</span>
+          <select
+            value={target}
+            onChange={(e) => setTarget(e.target.value)}
+            disabled={!squads.data || saving}
+            className="rounded-[0.5em] border border-[#d5dee8] bg-white px-[0.6em] py-[0.35em]"
+          >
+            <option value="">{t("Choose a squad")}</option>
+            {squads.data
+              ?.filter((x) => x.id !== squadId && x.status !== "Completed")
+              .map((x) => (
+                <option key={x.id} value={x.id}>
+                  {x.name} ({x.students}/{x.capacity})
+                </option>
+              ))}
+          </select>
+        </label>
+        <button
+          type="button"
+          onClick={() => move(target)}
+          disabled={saving || !target}
+          className="inline-flex items-center gap-[0.4em] rounded-[0.5em] bg-[#1d6fe0] px-[1em] py-[0.4em] font-semibold text-white disabled:opacity-50"
+        >
+          {saving && <LoaderCircle className="size-[1em] animate-spin" />} {t("Move")}
+        </button>
+        {squadId && (
+          <button type="button" onClick={() => move(null)} disabled={saving} className="font-semibold text-[#b83232] hover:underline">
+            {t("Remove from squad")}
+          </button>
+        )}
+      </div>
+      {error && <p role="alert" className="mt-[0.5em] text-[0.85em] text-[#b83232]">{error}</p>}
+    </section>
   );
 }

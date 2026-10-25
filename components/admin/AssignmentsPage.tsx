@@ -1,24 +1,23 @@
 "use client";
 
-import Image from "next/image";
-import { CheckCircle2, Clock, FileText, Plus, Star } from "lucide-react";
+import { CheckCircle2, Clock, FileText, Star } from "lucide-react";
 import { useT } from "@/lib/i18n/client";
 import { tk } from "@/lib/i18n/translate";
-import { getAdminSubmissions } from "@/lib/admin-api";
+import { getAdminSubmissions, getSubmissionsByTrack } from "@/lib/admin-api";
 import { AdminBody, AdminHero, AdminPage } from "./page-parts";
 import { LoadState, useAdminData } from "./admin-data";
 
-const IMG = "/images/Intern";
-
-const BADGE: Record<string, string> = {
+const BADGE = {
   Submitted: "bg-[#cfeedd] text-[#2f9a5f]",
   Pending: "bg-[#fdeeb8] text-[#b7840f]",
-  Graded: "bg-[#e3e6ea] text-[#5a6270]",
 };
+
+/** The admin only follows the totals: mentors review the submissions (review notes, 25 Oct 2026). */
 
 export default function AssignmentsPage() {
   const t = useT();
-  const { data, error, reload } = useAdminData(getAdminSubmissions, tk("Could not load the submissions."));
+  const { data } = useAdminData(getAdminSubmissions, tk("Could not load the submissions."));
+  const byTrack = useAdminData(getSubmissionsByTrack, tk("Could not load the submissions."));
   const stats = data?.stats;
   const STATS = [
     { icon: FileText, label: "Total Submissions", value: stats ? stats.totalSubmissions.toLocaleString() : "–", color: "#14365a" },
@@ -49,61 +48,58 @@ export default function AssignmentsPage() {
 
       <AdminBody>
         <section className="rounded-[1.3em] bg-white p-[1.2em] shadow-[0_6px_22px_rgba(20,54,90,0.07)]">
-          <header className="flex items-center justify-between gap-[1em]">
-            <h2 className="text-[0.95em] font-bold text-[#0b1b2b]">{t("Recent Submissions")}</h2>
-            <button
-              type="button"
-              className="inline-flex items-center gap-[0.5em] rounded-[0.6em] bg-[#2f5be0] px-[1.2em] py-[0.55em] text-[0.75em] font-semibold text-white hover:bg-[#274ec4]"
-            >
-              <Plus className="size-[1.1em]" strokeWidth={3} /> {t("Create Assignment")}
-            </button>
+          <header>
+            <h2 className="text-[0.95em] font-bold text-[#0b1b2b]">{t("Submissions by track")}</h2>
+            <p className="text-[0.72em] text-[#14365a]/60">
+              {t("Mentors review and grade the squads' work. Here you follow how each track is doing.")}
+            </p>
           </header>
 
-          {!data ? (
-            <LoadState error={error} onRetry={reload} />
-          ) : data.rows.length === 0 ? (
+          {!byTrack.data ? (
+            <LoadState error={byTrack.error} onRetry={byTrack.reload} />
+          ) : byTrack.data.length === 0 ? (
             <p className="py-[2em] text-center text-[0.8em] text-[#14365a]/60">{t("No submissions yet.")}</p>
           ) : (
-          <div className="mt-[0.8em] overflow-x-auto">
-            <table className="w-full min-w-[40em] text-left text-[0.75em]">
-              <thead>
-                <tr className="text-[0.9em] font-medium text-[#14365a]/60">
-                  <th className="py-[0.6em] pr-[1em] font-medium">{t("Student\\Squad")}</th>
-                  <th className="py-[0.6em] pr-[1em] font-medium">{t("Assignment Name")}</th>
-                  <th className="py-[0.6em] pr-[1em] font-medium">{t("Track")}</th>
-                  <th className="py-[0.6em] pr-[1em] font-medium">{t("Status")}</th>
-                  <th className="py-[0.6em] text-right font-medium">{t("Actions")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.rows.map((r) => (
-                  <tr key={r.id} className="border-t border-[#eef2f6]">
-                    <td className="py-[0.7em] pr-[1em]">
-                      <span className="flex items-center gap-[0.7em]">
-                        <span className="relative size-[2em] shrink-0 overflow-hidden rounded-full" style={{ backgroundColor: r.bg }}>
-                          <Image src={`${IMG}/${r.avatar}`} alt="" fill sizes="32px" className="origin-top scale-[2.1] object-cover object-top" />
-                        </span>
-                        <span className="font-medium text-[#0b1b2b]">{r.student}</span>
-                      </span>
-                    </td>
-                    <td className="py-[0.7em] pr-[1em] text-[#14365a]/80">{r.assignment}</td>
-                    <td className="py-[0.7em] pr-[1em] text-[#14365a]/80">{r.track}</td>
-                    <td className="py-[0.7em] pr-[1em]">
-                      <span className={`inline-block rounded-full px-[0.9em] py-[0.15em] text-[0.85em] font-semibold ${BADGE[r.status] ?? BADGE.Submitted}`}>{t(r.status)}</span>
-                    </td>
-                    <td className="py-[0.7em] text-right">
-                      <button
-                        type="button"
-                        className="rounded-[0.5em] border border-[#d5dce5] px-[1em] py-[0.35em] text-[0.9em] font-semibold text-[#0b1b2b] hover:bg-[#eef4fa]"
-                      >
-                        {t("Review Submission")}
-                      </button>
-                    </td>
+            <div className="mt-[0.8em] overflow-x-auto">
+              <table className="w-full min-w-[40em] text-start text-[0.75em]">
+                <thead>
+                  <tr className="text-[0.9em] font-medium text-[#14365a]/60">
+                    <th className="py-[0.6em] pe-[1em] text-start font-medium">{t("Track")}</th>
+                    <th className="py-[0.6em] pe-[1em] text-start font-medium">{t("Squads")}</th>
+                    <th className="py-[0.6em] pe-[1em] text-start font-medium">{t("Submitted")}</th>
+                    <th className="py-[0.6em] pe-[1em] text-start font-medium">{t("In review")}</th>
+                    <th className="py-[0.6em] pe-[1em] text-start font-medium">{t("Approved")}</th>
+                    <th className="w-[12em] py-[0.6em] text-start font-medium">{t("Approval rate")}</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {byTrack.data.map((r) => {
+                    const rate = r.submitted ? Math.round((r.approved / r.submitted) * 100) : 0;
+                    return (
+                      <tr key={r.trackCode} className="border-t border-[#eef2f6]">
+                        <td className="py-[0.8em] pe-[1em] font-semibold text-[#0b1b2b]">{r.trackName}</td>
+                        <td className="py-[0.8em] pe-[1em] text-[#14365a]/80">{r.squads}</td>
+                        <td className="py-[0.8em] pe-[1em] text-[#14365a]/80">{r.submitted}</td>
+                        <td className="py-[0.8em] pe-[1em]">
+                          <span className={`inline-block rounded-full px-[0.9em] py-[0.15em] text-[0.85em] font-semibold ${BADGE.Pending}`}>{r.inReview}</span>
+                        </td>
+                        <td className="py-[0.8em] pe-[1em]">
+                          <span className={`inline-block rounded-full px-[0.9em] py-[0.15em] text-[0.85em] font-semibold ${BADGE.Submitted}`}>{r.approved}</span>
+                        </td>
+                        <td className="py-[0.8em]">
+                          <span className="flex items-center gap-[0.6em]">
+                            <span className="h-[0.5em] flex-1 overflow-hidden rounded-full bg-[#e7eef6]">
+                              <span className="block h-full rounded-full bg-[#2f9a5f]" style={{ width: `${rate}%` }} />
+                            </span>
+                            <span className="w-[3em] text-end font-semibold text-[#0b1b2b]">{rate}%</span>
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           )}
         </section>
       </AdminBody>
