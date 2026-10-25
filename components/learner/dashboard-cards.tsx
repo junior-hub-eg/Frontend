@@ -2,9 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Award, CalendarCheck, Crown, Flame, Gift, LoaderCircle, X, CalendarClock } from "lucide-react";
+import { ArrowRight, Award, CalendarCheck, Crown, Flame, Gift, LoaderCircle, Megaphone, Pin, X, CalendarClock } from "lucide-react";
 import { getAchievements, type Achievements } from "@/lib/learning-api";
 import { getMySessions, sessionTime, type MentorSession } from "@/lib/mentorship-api";
+import { getMyAnnouncements, type Announcement } from "@/lib/announcements-api";
 import { useT } from "@/lib/i18n/client";
 
 /** XP per dashboard level. The backend keeps total XP only, so the level is worked out here. */
@@ -115,6 +116,83 @@ export function NextSessionCard({ className = "" }: { className?: string }) {
         <span className="block text-[0.8em] text-[#14365a]/75">{sessionTime(next.startsUtc)}</span>
       </span>
     </Link>
+  );
+}
+
+/**
+ * The admin's announcements for this student (GET /announcements): the newest (pinned first) on
+ * the card; tapping it lists them all.
+ */
+export function AnnouncementsCard({ className = "" }: { className?: string }) {
+  const t = useT();
+  const [list, setList] = useState<Announcement[] | null>(null);
+  const [open, setOpen] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    let active = true;
+    getMyAnnouncements().then(
+      (items) => active && setList(items),
+      () => {},
+    );
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: MouseEvent) => box.current && !box.current.contains(e.target as Node) && setOpen(false);
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [open]);
+
+  if (!list || list.length === 0) return null;
+  const first = list[0];
+  return (
+    <div ref={box} className={`relative ${className}`}>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        className={`${glass} flex w-full items-center gap-[0.8em] p-[0.7em] pe-[1em] text-start`}
+      >
+        <span className="grid h-[3em] w-[3em] shrink-0 place-items-center rounded-[0.9em] bg-gradient-to-br from-[#f59e0b] to-[#e11d48] text-white">
+          <Megaphone className="h-[1.5em] w-[1.5em]" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-[0.95em] font-bold text-[#14365a]">{first.title}</span>
+          <span className="block truncate text-[0.8em] text-[#14365a]/75">{first.body}</span>
+        </span>
+        {list.length > 1 && (
+          <span className="shrink-0 rounded-full bg-[#e11d48] px-[0.55em] py-[0.1em] text-[0.75em] font-bold text-white">{list.length}</span>
+        )}
+      </button>
+      {open && (
+        <section
+          aria-label={t("Announcements")}
+          className="absolute start-0 top-full z-50 mt-[0.5em] w-full min-w-[18em] rounded-[1.2em] border border-white/80 bg-white/95 p-[1em] text-[#14365a] shadow-xl backdrop-blur-md"
+        >
+          <div className="flex items-center justify-between">
+            <h2 className="text-[1.05em] font-extrabold">{t("Announcements")}</h2>
+            <button type="button" onClick={() => setOpen(false)} aria-label={t("Close")} className="text-[#14365a]/60 hover:text-[#14365a]">
+              <X className="h-[1.1em] w-[1.1em]" />
+            </button>
+          </div>
+          <ul className="mt-[0.6em] flex max-h-[18em] flex-col gap-[0.6em] overflow-y-auto">
+            {list.map((a) => (
+              <li key={a.id} className="rounded-[0.8em] bg-[#f1f6fb] p-[0.7em] text-[0.85em]">
+                <p className="flex items-center gap-[0.3em] font-bold">
+                  {a.isPinned && <Pin className="h-[0.9em] w-[0.9em] shrink-0 text-[#e11d48]" aria-label={t("Pinned")} />}
+                  {a.title}
+                </p>
+                <p className="mt-[0.2em] whitespace-pre-line text-[#14365a]/80">{a.body}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+    </div>
   );
 }
 

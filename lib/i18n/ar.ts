@@ -1,5 +1,6 @@
 import { account } from "./ar/account";
 import { admin } from "./ar/admin";
+import { adminManage } from "./ar/admin-manage";
 import { auth } from "./ar/auth";
 import { backend } from "./ar/backend";
 import { calendar } from "./ar/calendar";
@@ -26,9 +27,12 @@ import { teacherProgress } from "./ar/teacher-progress";
 import { grammarCoach } from "./ar/grammar-coach";
 import { adminGrammar } from "./ar/admin-grammar";
 import { teacherGrammar } from "./ar/teacher-grammar";
+import { mentorArea } from "./ar/mentor-area";
 
 /** Arabic translations, keyed by the English text. `node scripts/i18n-check.mjs` lists missing ones. */
 export const ar: Record<string, string> = {
+  // First, so the older dictionaries keep their own wording for the texts they share.
+  ...mentorArea,
   ...common,
   ...landing,
   ...auth,
@@ -46,6 +50,7 @@ export const ar: Record<string, string> = {
   ...lesson,
   ...calendar,
   ...admin,
+  ...adminManage,
   ...teacher,
   ...students,
   ...curriculum,

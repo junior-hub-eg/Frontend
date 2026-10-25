@@ -9,7 +9,7 @@ import { useAuth } from "@/lib/auth/auth-context";
 import { getHub } from "@/lib/hub-api";
 import { getInternshipAccess } from "@/lib/interns-api";
 import { getTrackLessons, getTracks } from "@/lib/learning-api";
-import { DailyChallengeCard, LevelCard, NextSessionCard, RewardsButton } from "./dashboard-cards";
+import { AnnouncementsCard, DailyChallengeCard, LevelCard, NextSessionCard, RewardsButton } from "./dashboard-cards";
 import { avatarFor, useSquad } from "./interns-data";
 import { TeammatesPanel } from "./teammates-panel";
 import { useI18n, useT } from "@/lib/i18n/client";
@@ -328,6 +328,7 @@ export default function InternDashboard() {
           {levelCard()}
           <DailyChallengeCard />
           <NextSessionCard />
+          <AnnouncementsCard />
         </div>
 
         <div className="relative mx-auto mt-4 aspect-[4/3] w-full max-w-[720px] overflow-hidden rounded-[28px]">
@@ -424,6 +425,7 @@ export default function InternDashboard() {
           </div>
           <DailyChallengeCard className="mt-[1.2em] w-[20em]" />
           <NextSessionCard className="mt-[0.8em] w-[20em]" />
+          <AnnouncementsCard className="mt-[0.8em] w-[20em]" />
         </div>
 
         <div

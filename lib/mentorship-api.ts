@@ -1,6 +1,7 @@
 import { dateLocale } from "@/lib/i18n/translate";
 /** Mentorship (backend MentorsController). Errors are thrown as ApiError with the backend's code. */
 import { api } from "@/lib/api-client";
+import type { DirectMessage } from "@/lib/monitor-api";
 
 export interface Mentor {
   id: string;
@@ -29,6 +30,15 @@ export interface MyMentor {
   /** The student's mentor in each track they learn (a mentor per track). */
   currents: MentorAssignment[];
   history: MentorAssignment[];
+  /** Change requests the admin has not decided on yet: the mentor changes only once they approve. */
+  pendingRequests: PendingMentorRequest[];
+}
+
+export interface PendingMentorRequest {
+  id: string;
+  trackCode: string;
+  requestedMentor: Mentor;
+  createdUtc: string;
 }
 
 export const getMentors = (options: { track?: string; all?: boolean } = {}) => {
@@ -96,3 +106,9 @@ export function sessionTime(startsUtc: string) {
     timeZone: "Africa/Cairo",
   });
 }
+
+/** The student's private chat with their mentor; the backend refuses any mentor but the student's own (NOT_YOUR_MENTOR). */
+export const getMentorMessages = (mentorId: string) => api.get<DirectMessage[]>(`/api/v1/student/conversations/${mentorId}/messages`);
+export const sendMentorMessage = (mentorId: string, text: string) =>
+  api.post<DirectMessage>(`/api/v1/student/conversations/${mentorId}/messages`, { text });
+export const markMentorMessagesRead = (mentorId: string) => api.post<void>(`/api/v1/student/conversations/${mentorId}/read`);
