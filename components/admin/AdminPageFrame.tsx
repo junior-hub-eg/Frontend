@@ -4,62 +4,61 @@ import { useEffect, type ReactNode } from "react";
 import { X, type LucideIcon } from "lucide-react";
 
 import { useI18n } from "@/lib/i18n/client";
-import { AdminBody, AdminHero, AdminPage } from "./page-parts";
+import { AdminSurface, PageHeader, PANEL, StatCard, StatGrid, type Tone } from "./page-parts";
 
-/** Same white card the dashboard uses. */
-export const CARD = "rounded-[1.1em] bg-white shadow-[0_6px_22px_rgba(20,54,90,0.07)]";
+/** Same white card the rest of the admin uses. */
+export const CARD = PANEL;
 
 export type HeroStat = {
   label: string;
   value: string;
   icon: LucideIcon;
   valueClass?: string;
+  hint?: string;
 };
 
-/** Title + stat chips on the park picture, then the page content below (built on page-parts). */
+const TONES: Tone[] = ["cyan", "green", "amber", "violet"];
+
+/** New look: title, four stat cards, then the page content (built on page-parts). */
 export function AdminPageHero({
   title,
   stats,
+  eyebrow,
+  description,
   children,
 }: {
   title: string;
   stats: HeroStat[];
+  eyebrow?: string;
+  description?: string;
   children: ReactNode;
 }) {
   const { t } = useI18n();
 
   return (
-    <AdminPage>
-      <AdminHero>
-        <div className="flex flex-wrap items-end justify-between gap-x-[1.5em] gap-y-[0.8em]">
-          <h1 className="text-[1.9em] font-extrabold leading-none text-[#0f7378] sm:text-[2.2em] xl:text-[2.5em]">
-            {t(title)}
-          </h1>
+    <AdminSurface>
+      <PageHeader
+        eyebrow={eyebrow ? t(eyebrow) : undefined}
+        title={t(title)}
+        description={description ? t(description) : undefined}
+      />
 
-          <ul className="flex flex-wrap gap-[0.6em]">
-            {stats.map((s) => (
-              <li
-                key={s.label}
-                className="flex items-center gap-[0.6em] rounded-[0.9em] border border-white/70 bg-white/55 px-[0.9em] py-[0.45em] shadow-sm backdrop-blur"
-              >
-                <span className="grid size-[2.2em] place-items-center rounded-[0.6em] bg-white/80 text-[#14365a]">
-                  <s.icon className="size-[1.1em]" />
-                </span>
+      <StatGrid>
+        {stats.map((s, i) => (
+          <StatCard
+            key={s.label}
+            label={t(s.label)}
+            value={s.value}
+            icon={s.icon}
+            tone={TONES[i % TONES.length]}
+            hint={s.hint ? t(s.hint) : undefined}
+            valueClass={s.valueClass}
+          />
+        ))}
+      </StatGrid>
 
-                <span className="leading-tight">
-                  <span className="block text-[0.7em] text-[#14365a]/60">{t(s.label)}</span>
-                  <span className={`block text-[1em] font-bold ${s.valueClass ?? "text-[#14365a]"}`}>
-                    {s.value}
-                  </span>
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </AdminHero>
-
-      <AdminBody>{children}</AdminBody>
-    </AdminPage>
+      <div className="min-w-0">{children}</div>
+    </AdminSurface>
   );
 }
 
@@ -70,7 +69,7 @@ export function AdminCard({
   children: ReactNode;
   className?: string;
 }) {
-  return <div className={`${CARD} p-[1.2em] ${className}`}>{children}</div>;
+  return <div className={`${PANEL} p-[1.2em] ${className}`}>{children}</div>;
 }
 
 export function AdminDialog({
@@ -145,4 +144,4 @@ export function StatusPill({ tone, children }: { tone: "green" | "amber"; childr
 }
 
 export const FIELD =
-  "h-9 w-full rounded-xl border border-[#cfe0ee] bg-white px-3 text-[0.8rem] text-[#14365a] outline-none focus:ring-2 focus:ring-[#12939b]/40";
+  "h-9 w-full rounded-xl border border-[#cfe0ee] bg-white px-3 text-[0.8rem] text-[#14365a] outline-none focus:ring-2 focus:ring-[#06b6d4]/40";
