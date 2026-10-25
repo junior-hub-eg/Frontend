@@ -6,20 +6,17 @@ import { ArrowRight, Briefcase, CheckCircle2, Monitor, PlayCircle, UserCheck, Bo
 import { useT } from "@/lib/i18n/client";
 import { tk } from "@/lib/i18n/translate";
 
+/** The student's real journey, in order: placement interview, track, courses, mentor, team project, then jobs. */
 const STEPS = [
-  { title: tk("Discover"), icon: CheckCircle2, text: tk("Take structured video courses with smart quizzes.") },
-  {
-    title: tk("Try Subject"),
-    icon: PlayCircle,
-    text: tk("AI interview evaluates your real skills and recommends what to study next."),
-  },
-  { title: tk("Choose Track"), icon: BookOpen, text: tk("Work with expert mentors and get help whenever you're stuck.") },
-  { title: tk("Learn & Build"), icon: Monitor, text: tk("Join a team, work on real projects, and earn scores.") },
-  { title: tk("Get Guidance"), icon: UserCheck, text: tk("Practice with case studies and mock interviews.") },
+  { title: tk("AI Interview"), icon: UserCheck, text: tk("AI interview evaluates your real skills and recommends what to study next.") },
+  { title: tk("Choose Track"), icon: CheckCircle2, text: tk("Pick the track that fits you and start at your level.") },
+  { title: tk("Learn"), icon: PlayCircle, text: tk("Take structured video courses with smart quizzes.") },
+  { title: tk("Get Guidance"), icon: BookOpen, text: tk("Work with expert mentors and get help whenever you're stuck.") },
+  { title: tk("Build"), icon: Monitor, text: tk("Join a team, work on real projects, and earn scores.") },
   {
     title: tk("Explore Opportunities"),
     icon: Briefcase,
-    text: tk("Get recommended to partner companies based on your profile."),
+    text: tk("Practice mock interviews and get recommended to partner companies."),
   },
 ];
 
