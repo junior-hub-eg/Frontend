@@ -142,3 +142,41 @@ html[lang="ar"] body * { letter-spacing: 0 !important; }
     animation: none !important;
   }
 }
+
+/*
+  Reports (components/report-kit): the PDF export prints only the report copy in .rk-print-root
+  (rendered at the end of <body> while printing), on A4, without navigation or buttons.
+*/
+@media screen {
+  .rk-print-root { display: none; }
+}
+
+@media print {
+  @page { size: A4; margin: 12mm 11mm 14mm; }
+
+  html, body { background: #fff !important; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  body:has(> .rk-print-root) > :not(.rk-print-root) { display: none !important; }
+  .rk-print-root {
+    display: block;
+    width: 100%;
+    font-size: 11px;
+    color: #1b2d54;
+    background: #fff;
+    font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  }
+  .rk-print-root[lang="ar"],
+  .rk-print-root[lang="ar"] :where(*) {
+    font-family: var(--font-cairo), Tahoma, sans-serif !important;
+    letter-spacing: 0 !important;
+  }
+  .rk-print-root section { box-shadow: none !important; }
+
+  .rk-no-print { display: none !important; }
+  .rk-print-only { display: flex !important; }
+  .rk-break { break-before: page; }
+  .rk-avoid, .rk-print-root tr, .rk-print-root svg { break-inside: avoid; }
+  .rk-print-root h2 { break-after: avoid; }
+  .rk-print-root .rk-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+}

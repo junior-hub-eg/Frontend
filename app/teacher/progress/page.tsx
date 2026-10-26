@@ -7,13 +7,14 @@ import {
   ArrowRight,
   Award,
   BellRing,
+  BookOpenCheck,
   CalendarPlus,
   ChevronLeft,
   ChevronRight,
   CircleAlert,
   CircleCheck,
+  ClipboardCheck,
   Clock,
-  FileDown,
   Flag,
   GraduationCap,
   MessageSquare,
@@ -23,11 +24,31 @@ import {
   Sparkles,
   Timer,
   TrendingUp,
+  Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { errorMessage } from "@/lib/api-client";
-import { useT } from "@/lib/i18n/client";
-import { tk, type TFunction } from "@/lib/i18n/translate";
+import { useI18n, useT } from "@/lib/i18n/client";
+import { makeT, tk, type TFunction } from "@/lib/i18n/translate";
+import { TEACHER_TREND_KEYS, exportTeacherExcel, getTeacherTrends, type TeacherTrendKey, type TeacherTrends } from "@/lib/reports-api";
+import {
+  ExportMenu,
+  FilterSelect,
+  KitError,
+  KitSkeleton,
+  KpiCard,
+  KpiGrid,
+  PrintReport,
+  PrintSection,
+  ReportCard,
+  ReportHeader,
+  ScheduleCard,
+  TrendChart,
+  defaultRange,
+  usePrintReport,
+  weeklyPoints,
+  type DateRange,
+} from "@/components/report-kit";
 import {
   getTeacherClasses,
   getTeacherProfile,
@@ -111,10 +132,18 @@ function downloadCsv(t: TFunction, data: TeacherProgress, rows: Row[]) {
   URL.revokeObjectURL(url);
 }
 
+const TREND_META: Record<TeacherTrendKey, { label: string; icon: typeof Search; suffix?: string }> = {
+  activeStudents: { label: tk("Active students"), icon: Users },
+  lessonsPassed: { label: tk("Lessons passed"), icon: BookOpenCheck },
+  assignmentsSubmitted: { label: tk("Assignments submitted"), icon: ClipboardCheck },
+  averageScore: { label: tk("Average score"), icon: TrendingUp, suffix: "%" },
+};
+
 export default function TeacherProgressPage() {
   const t = useT();
   const toast = useToast();
   const [classId, setClassId] = useState("");
+  const [range, setRange] = useState<DateRange>(defaultRange);
   const [basis, setBasis] = useState<Basis | undefined>(undefined);
   const [status, setStatus] = useState<StatusFilter>("all");
   const [query, setQuery] = useState("");
@@ -123,8 +152,11 @@ export default function TeacherProgressPage() {
 
   const loadProgress = useCallback(() => getTeacherProgress(classId || undefined, basis), [classId, basis]);
   const progress = useTeacherData(loadProgress, t("Could not load student progress"));
+  const loadTrends = useCallback(() => getTeacherTrends(classId || undefined, range.from, range.to), [classId, range.from, range.to]);
+  const trends = useTeacherData(loadTrends, t("Could not load the trends for this period"));
   const classes = useTeacherData(getTeacherClasses, t("Could not load your classes"));
   const profile = useTeacherData(getTeacherProfile, t("Could not load your profile"));
+  const { printing, print } = usePrintReport();
 
   const d = progress.data;
   const subjects = profile.data?.subjects ?? [];
@@ -143,6 +175,12 @@ export default function TeacherProgressPage() {
     if (!d || d.skillGaps.length === 0) return null;
     return d.skillGaps.reduce((min, s) => (s.percent < min.percent ? s : min));
   }, [d]);
+
+  const classOptions = [
+    { value: "", label: t("All classes") },
+    ...(classes.data ?? []).map((c) => ({ value: c.id, label: t("Grade {grade} • Class {name}", { grade: c.grade, name: c.name }) })),
+  ];
+  const className = classOptions.find((o) => o.value === classId)?.label;
 
   const changeClass = (id: string) => {
     setClassId(id);
@@ -163,7 +201,7 @@ export default function TeacherProgressPage() {
   };
 
   return (
-    <div className="flex min-w-0 flex-1 flex-col gap-4 pb-6 pt-4 font-[family-name:var(--font-poppins)] text-[#1B2D54] print:pt-0">
+    <div className="flex min-w-0 flex-1 flex-col gap-4 pb-6 pt-4 font-[family-name:var(--font-poppins)] text-[#1B2D54]">
       <header className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div className="max-w-md">
           <h1 className="text-2xl font-bold leading-tight">{t("Competency Matrix & Student Progress")}</h1>
@@ -171,47 +209,50 @@ export default function TeacherProgressPage() {
             {t("Scores from graded assignments and practice, updated as your students submit work")}
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2 print:hidden">
-          <button
-            type="button"
-            onClick={() => window.print()}
-            className="flex items-center gap-1.5 rounded-lg bg-white/90 px-3 py-2 text-[11px] font-semibold shadow-sm ring-1 ring-[#e3ece9] hover:bg-white"
-          >
-            <FileDown aria-hidden className="size-3.5" />
-            {t("Export Report (PDF)")}
-          </button>
-          <button
-            type="button"
-            disabled={!d || filtered.length === 0}
-            onClick={() => d && downloadCsv(t, d, filtered)}
-            className="flex items-center gap-1.5 rounded-lg bg-white/90 px-3 py-2 text-[11px] font-semibold shadow-sm ring-1 ring-[#e3ece9] hover:bg-white disabled:opacity-50"
-          >
-            <Sheet aria-hidden className="size-3.5" />
-            {t("Export CSV")}
-          </button>
-          <button
-            type="button"
-            onClick={() => setDialog({ type: "event", defaults: { kind: "Review", classId: classId || undefined } })}
-            className="flex items-center gap-1.5 rounded-lg bg-[#14757d] px-4 py-2 text-[11px] font-semibold text-white shadow-sm hover:bg-[#0f6169]"
-          >
-            <CalendarPlus aria-hidden className="size-3.5" />
-            {t("Schedule Review")}
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => setDialog({ type: "event", defaults: { kind: "Review", classId: classId || undefined } })}
+          className="flex items-center gap-1.5 self-start rounded-lg bg-[#14757d] px-4 py-2 text-[11px] font-semibold text-white shadow-sm hover:bg-[#0f6169] print:hidden"
+        >
+          <CalendarPlus aria-hidden className="size-3.5" />
+          {t("Schedule Review")}
+        </button>
       </header>
 
-      {/* Filters */}
+      <div className="flex flex-col gap-4 text-[14px]">
+        <ReportHeader
+          range={range}
+          onRangeChange={setRange}
+          filters={<FilterSelect label={t("Class")} value={classId} options={classOptions} onChange={changeClass} />}
+          actions={
+            <ExportMenu
+              onExcel={(lang) => exportTeacherExcel(classId || undefined, range.from, range.to, lang)}
+              onPdf={print}
+              extra={[
+                {
+                  key: "csv",
+                  label: t("Matrix as CSV"),
+                  icon: <Sheet aria-hidden className="size-[1.1em] text-[#0f7378]" />,
+                  disabled: !d || filtered.length === 0,
+                  run: () => {
+                    if (d) downloadCsv(t, d, filtered);
+                  },
+                },
+              ]}
+            />
+          }
+        />
+        <TrendsSection
+          trends={trends.data}
+          error={trends.data ? null : trends.error}
+          onRetry={trends.reload}
+          className={classId ? className : undefined}
+        />
+      </div>
+
+      {/* Filters of the matrix */}
       <Card className="flex flex-col gap-2 p-2.5 lg:flex-row lg:items-center print:hidden">
-        <div className="flex min-w-0 gap-1 overflow-x-auto rounded-lg bg-[#f6f9f8] p-1">
-          <TabButton active={classId === ""} onClick={() => changeClass("")}>
-            {t("All classes")}
-          </TabButton>
-          {(classes.data ?? []).map((c) => (
-            <TabButton key={c.id} active={classId === c.id} onClick={() => changeClass(c.id)}>
-              {t("Grade {grade} • Class {name}", { grade: c.grade, name: c.name })}
-            </TabButton>
-          ))}
-        </div>
+        <p className="px-1.5 text-[11px] font-semibold">{t("Competency Matrix")}</p>
         <div className="flex flex-wrap items-center gap-2 lg:ms-auto">
           <select
             aria-label={t("Status")}
@@ -270,229 +311,41 @@ export default function TeacherProgressPage() {
       {!d ? (
         <LoadBlock error={progress.error} onRetry={progress.reload} />
       ) : (
-        <>
-          <StatCards d={d} />
-
-          <div className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
-            <Card className="min-w-0 p-5">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                  <h2 className="text-sm font-semibold">{t("Competency Matrix Heatmap")}</h2>
-                  <p className="mt-0.5 text-[10px] text-[#1B2D54]/70">
-                    {d.basis === "Grammar"
-                      ? t("Average score per grammar topic from graded work")
-                      : t("Average score per subject from graded work")}
-                  </p>
-                </div>
-                <ul className="flex flex-wrap gap-x-3 gap-y-1 text-[9px] font-medium">
-                  <Legend color="bg-[#0f6f6b]" label={t("Advanced (90–100%)")} />
-                  <Legend color="bg-[#9be9ef]" label={t("Proficient (75–89%)")} />
-                  <Legend color="bg-[#fde8e8]" label={t("Developing (<70%)")} className="text-[#c62828]" />
-                </ul>
-              </div>
-
-              {d.rows.length === 0 || d.columns.length === 0 ? (
-                <Empty icon={GraduationCap} text={t("No grades yet. Scores appear here once you grade your students' work.")} />
-              ) : filtered.length === 0 ? (
-                <Empty icon={Search} text={t("No students match these filters.")} />
-              ) : (
-                <>
-                  <div className="mt-4 overflow-x-auto">
-                    <table className="w-full min-w-[560px] border-collapse text-[11px]">
-                      <thead>
-                        <tr className="bg-[#f6f9f8] text-[9px] font-semibold uppercase tracking-wide text-[#1B2D54]/70">
-                          <th scope="col" className="rounded-s-lg px-3 py-3 text-start">
-                            {t("Student")}
-                          </th>
-                          {d.columns.map((c) => (
-                            <th key={c.key} scope="col" dir="auto" className="px-2 py-3 text-center last:rounded-e-lg">
-                              {c.title}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filtered.map((r, i) => {
-                          const onPage = Math.floor(i / PAGE_SIZE) === current;
-                          return (
-                            <tr
-                              key={r.studentId}
-                              className={cn(
-                                "border-b border-[#eef2f1] last:border-0",
-                                r.status === "NeedsAssistance" && "bg-[#fff7f7]",
-                                !onPage && "hidden print:table-row",
-                              )}
-                            >
-                              <th scope="row" className="px-3 py-3 text-start font-normal">
-                                <div className="flex items-center gap-2.5">
-                                  <StudentAvatar name={r.fullName} photoUrl={r.photoUrl} gender={r.gender} size={32} />
-                                  <div className="min-w-0">
-                                    <p className="truncate text-[12px] font-semibold">{r.fullName}</p>
-                                    <p
-                                      className={cn(
-                                        "flex items-center gap-1 text-[9px]",
-                                        r.status === "NeedsAssistance" ? "text-[#c62828]" : "text-[#14757d]",
-                                      )}
-                                    >
-                                      {r.status === "NeedsAssistance" && <Flag aria-hidden className="size-2.5" />}
-                                      {t("Class {name}", { name: r.className })} • {t(STATUS_LABEL[r.status])}
-                                    </p>
-                                  </div>
-                                </div>
-                              </th>
-                              {r.scores.map((s, j) => (
-                                <td key={d.columns[j]?.key ?? j} className="px-2 py-3 text-center">
-                                  <span
-                                    className={cn(
-                                      "inline-block min-w-12 rounded px-2 py-1 text-[10px] font-semibold",
-                                      cellClass(s),
-                                    )}
-                                  >
-                                    {s === null ? "—" : `${Math.round(s)}%`}
-                                  </span>
-                                </td>
-                              ))}
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between print:hidden">
-                    <p className="text-[10px] font-medium text-[#1B2D54]/70">
-                      {t("Showing {shown} of {total} students", {
-                        shown: Math.min(PAGE_SIZE, filtered.length - current * PAGE_SIZE),
-                        total: filtered.length,
-                      })}
-                    </p>
-                    {pageCount > 1 && (
-                      <nav aria-label={t("Pages")} className="flex items-center gap-1.5">
-                        <PageButton disabled={current === 0} onClick={() => setPage(current - 1)} label={t("Previous page")}>
-                          <ChevronLeft aria-hidden className="size-3.5 rtl:rotate-180" />
-                        </PageButton>
-                        {pageList(pageCount, current).map((p, i) =>
-                          p === "gap" ? (
-                            <span key={`gap-${i}`} className="px-0.5 text-[10px] text-[#1B2D54]/50">
-                              …
-                            </span>
-                          ) : (
-                            <PageButton key={p} active={p === current} onClick={() => setPage(p)} label={t("Page {page}", { page: p + 1 })}>
-                              {p + 1}
-                            </PageButton>
-                          ),
-                        )}
-                        <PageButton
-                          disabled={current >= pageCount - 1}
-                          onClick={() => setPage(current + 1)}
-                          label={t("Next page")}
-                        >
-                          <ChevronRight aria-hidden className="size-3.5 rtl:rotate-180" />
-                        </PageButton>
-                      </nav>
-                    )}
-                  </div>
-                </>
-              )}
-            </Card>
-
-            <div className="flex min-w-0 flex-col gap-4">
-              <SkillGaps
-                d={d}
-                weakest={weakest}
-                onDrill={(skill) =>
-                  setDialog({
-                    type: "event",
-                    defaults: { kind: "Lesson", title: t("In-class drill: {skill}", { skill }), classId: classId || undefined },
-                  })
-                }
-              />
-              <Readiness
-                d={d}
-                onAssign={() =>
-                  setDialog({
-                    type: "assign",
-                    defaults: {
-                      classId: classId || undefined,
-                      title: weakest ? t("Practice: {skill}", { skill: weakest.title }) : undefined,
-                    },
-                  })
-                }
-              />
-            </div>
-          </div>
-
-          {(d.top || d.needsHelp) && (
-            <section className="break-inside-avoid">
-              <h2 className="text-lg font-bold">{t("Spotlight: recognition & support")}</h2>
-              <p className="mt-0.5 text-[11px] text-[#1B2D54]/70">{t("Your strongest student and the one who needs you most right now")}</p>
-              <div className="mt-3 grid gap-4 lg:grid-cols-2">
-                {d.top && (
-                  <SpotlightCard
-                    s={d.top}
-                    tone="top"
-                    actions={
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => d.top && nudge(d.top, "Certificate")}
-                          className="flex items-center gap-1.5 rounded-lg bg-[#14757d] px-4 py-2 text-[11px] font-semibold text-white hover:bg-[#0f6169]"
-                        >
-                          <Award aria-hidden className="size-3.5" />
-                          {t("Issue Certificate of Excellence")}
-                        </button>
-                        <Link
-                          href={`/teacher/messages?student=${d.top.studentId}`}
-                          className="flex items-center gap-1.5 rounded-lg bg-[#f6f9f8] px-4 py-2 text-[11px] font-semibold hover:bg-[#eef2f1]"
-                        >
-                          <MessageSquare aria-hidden className="size-3.5" />
-                          {t("Message")}
-                        </Link>
-                      </>
-                    }
-                  />
-                )}
-                {d.needsHelp && (
-                  <SpotlightCard
-                    s={d.needsHelp}
-                    tone="help"
-                    actions={
-                      <>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            d.needsHelp &&
-                            setDialog({
-                              type: "event",
-                              defaults: {
-                                kind: "OneOnOne",
-                                studentId: d.needsHelp.studentId,
-                                title: t("1-on-1 with {name}", { name: d.needsHelp.fullName }),
-                              },
-                            })
-                          }
-                          className="flex items-center gap-1.5 rounded-lg bg-[#c62828] px-4 py-2 text-[11px] font-semibold text-white hover:bg-[#a51f1f]"
-                        >
-                          <CalendarPlus aria-hidden className="size-3.5" />
-                          {t("Schedule 1-on-1 Session")}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => d.needsHelp && nudge(d.needsHelp, "Reminder")}
-                          className="flex items-center gap-1.5 rounded-lg bg-[#f6f9f8] px-4 py-2 text-[11px] font-semibold hover:bg-[#eef2f1]"
-                        >
-                          <BellRing aria-hidden className="size-3.5" />
-                          {t("Send reminder")}
-                        </button>
-                      </>
-                    }
-                  />
-                )}
-              </div>
-            </section>
-          )}
-        </>
+        <ProgressBody
+          d={d}
+          filtered={filtered}
+          current={current}
+          pageCount={pageCount}
+          setPage={setPage}
+          weakest={weakest}
+          onDrill={(skill) =>
+            setDialog({
+              type: "event",
+              defaults: { kind: "Lesson", title: t("In-class drill: {skill}", { skill }), classId: classId || undefined },
+            })
+          }
+          onAssign={() =>
+            setDialog({
+              type: "assign",
+              defaults: {
+                classId: classId || undefined,
+                title: weakest ? t("Practice: {skill}", { skill: weakest.title }) : undefined,
+              },
+            })
+          }
+          onNudge={nudge}
+          onOneOnOne={(s) =>
+            setDialog({
+              type: "event",
+              defaults: { kind: "OneOnOne", studentId: s.studentId, title: t("1-on-1 with {name}", { name: s.fullName }) },
+            })
+          }
+        />
       )}
+
+      <div className="text-[14px]">
+        <ScheduleCard />
+      </div>
 
       {dialog?.type === "event" && (
         <EventDialog
@@ -506,7 +359,300 @@ export default function TeacherProgressPage() {
       )}
       {dialog?.type === "assign" && <QuickAssignmentDialog defaults={dialog.defaults} onClose={() => setDialog(null)} />}
       {toast.node}
+
+      {printing && (
+        <PrintReport lang={printing} title={makeT(printing)(tk("Student progress report"))} subtitle={className} from={range.from} to={range.to}>
+          <PrintSection>
+            <TrendsSection trends={trends.data} error={null} className={classId ? className : undefined} />
+          </PrintSection>
+          {d && (
+            <PrintSection breakBefore className="flex flex-col gap-4 font-[family-name:var(--font-poppins)] text-[#1B2D54]">
+              <ProgressBody
+                d={d}
+                filtered={filtered}
+                current={0}
+                pageCount={1}
+                setPage={() => undefined}
+                weakest={weakest}
+                onDrill={() => undefined}
+                onAssign={() => undefined}
+                onNudge={() => undefined}
+                onOneOnOne={() => undefined}
+              />
+            </PrintSection>
+          )}
+        </PrintReport>
+      )}
     </div>
+  );
+}
+
+/** KPIs of the chosen period (vs the one before) and the weekly trend chart. */
+function TrendsSection({
+  trends,
+  error,
+  onRetry,
+  className,
+}: {
+  trends: TeacherTrends | null;
+  error: string | null;
+  onRetry?: () => void;
+  className?: string;
+}) {
+  const { t, intl } = useI18n();
+  if (error) {
+    return (
+      <ReportCard>
+        <KitError text={error} onRetry={onRetry} retryLabel={t("Try again")} />
+      </ReportCard>
+    );
+  }
+  return (
+    <>
+      <KpiGrid className="md:grid-cols-4 xl:grid-cols-4">
+        {TEACHER_TREND_KEYS.map((k) => {
+          const Icon = TREND_META[k].icon;
+          return (
+            <KpiCard
+              key={k}
+              label={t(TREND_META[k].label)}
+              icon={<Icon className="size-[1.1em]" />}
+              value={trends?.current[k] ?? null}
+              previous={trends?.previous[k] ?? null}
+              suffix={TREND_META[k].suffix}
+              loading={!trends}
+            />
+          );
+        })}
+      </KpiGrid>
+      <ReportCard
+        title={t("Weekly trends")}
+        hint={className ? t("{name} · per week", { name: className }) : t("Per week, for the chosen period")}
+      >
+        {!trends ? (
+          <KitSkeleton className="h-[15em] w-full" />
+        ) : (
+          <TrendChart
+            ariaLabel={t("Weekly trends")}
+            points={weeklyPoints(trends.series, intl, t)}
+            series={TEACHER_TREND_KEYS.map((k) => ({ key: k, label: t(TREND_META[k].label) }))}
+            empty={t("No activity in this period yet.")}
+          />
+        )}
+      </ReportCard>
+    </>
+  );
+}
+
+/** Stat cards, the competency matrix, skill gaps, readiness and the spotlight (on the page and in the PDF). */
+function ProgressBody({
+  d,
+  filtered,
+  current,
+  pageCount,
+  setPage,
+  weakest,
+  onDrill,
+  onAssign,
+  onNudge,
+  onOneOnOne,
+}: {
+  d: TeacherProgress;
+  filtered: Row[];
+  current: number;
+  pageCount: number;
+  setPage: (page: number) => void;
+  weakest: { title: string; percent: number } | null;
+  onDrill: (skill: string) => void;
+  onAssign: () => void;
+  onNudge: (s: Spotlight, kind: "Certificate" | "Reminder") => void;
+  onOneOnOne: (s: Spotlight) => void;
+}) {
+  const t = useT();
+  return (
+    <>
+      <StatCards d={d} />
+
+      <div className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_340px] print:grid-cols-1">
+        <Card className="min-w-0 p-5 print:break-inside-auto">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h2 className="text-sm font-semibold">{t("Competency Matrix Heatmap")}</h2>
+              <p className="mt-0.5 text-[10px] text-[#1B2D54]/70">
+                {d.basis === "Grammar"
+                  ? t("Average score per grammar topic from graded work")
+                  : t("Average score per subject from graded work")}
+              </p>
+            </div>
+            <ul className="flex flex-wrap gap-x-3 gap-y-1 text-[9px] font-medium">
+              <Legend color="bg-[#0f6f6b]" label={t("Advanced (90–100%)")} />
+              <Legend color="bg-[#9be9ef]" label={t("Proficient (75–89%)")} />
+              <Legend color="bg-[#fde8e8]" label={t("Developing (<70%)")} className="text-[#c62828]" />
+            </ul>
+          </div>
+
+          {d.rows.length === 0 || d.columns.length === 0 ? (
+            <Empty icon={GraduationCap} text={t("No grades yet. Scores appear here once you grade your students' work.")} />
+          ) : filtered.length === 0 ? (
+            <Empty icon={Search} text={t("No students match these filters.")} />
+          ) : (
+            <>
+              <div className="mt-4 overflow-x-auto">
+                <table className="w-full min-w-[560px] border-collapse text-[11px]">
+                  <thead>
+                    <tr className="bg-[#f6f9f8] text-[9px] font-semibold uppercase tracking-wide text-[#1B2D54]/70">
+                      <th scope="col" className="rounded-s-lg px-3 py-3 text-start">
+                        {t("Student")}
+                      </th>
+                      {d.columns.map((c) => (
+                        <th key={c.key} scope="col" dir="auto" className="px-2 py-3 text-center last:rounded-e-lg">
+                          {c.title}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filtered.map((r, i) => {
+                      const onPage = Math.floor(i / PAGE_SIZE) === current;
+                      return (
+                        <tr
+                          key={r.studentId}
+                          className={cn(
+                            "border-b border-[#eef2f1] last:border-0",
+                            r.status === "NeedsAssistance" && "bg-[#fff7f7]",
+                            !onPage && "hidden print:table-row",
+                          )}
+                        >
+                          <th scope="row" className="px-3 py-3 text-start font-normal">
+                            <div className="flex items-center gap-2.5">
+                              <StudentAvatar name={r.fullName} photoUrl={r.photoUrl} gender={r.gender} size={32} />
+                              <div className="min-w-0">
+                                <p className="truncate text-[12px] font-semibold">{r.fullName}</p>
+                                <p
+                                  className={cn(
+                                    "flex items-center gap-1 text-[9px]",
+                                    r.status === "NeedsAssistance" ? "text-[#c62828]" : "text-[#14757d]",
+                                  )}
+                                >
+                                  {r.status === "NeedsAssistance" && <Flag aria-hidden className="size-2.5" />}
+                                  {t("Class {name}", { name: r.className })} • {t(STATUS_LABEL[r.status])}
+                                </p>
+                              </div>
+                            </div>
+                          </th>
+                          {r.scores.map((s, j) => (
+                            <td key={d.columns[j]?.key ?? j} className="px-2 py-3 text-center">
+                              <span className={cn("inline-block min-w-12 rounded px-2 py-1 text-[10px] font-semibold", cellClass(s))}>
+                                {s === null ? "—" : `${Math.round(s)}%`}
+                              </span>
+                            </td>
+                          ))}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between print:hidden">
+                <p className="text-[10px] font-medium text-[#1B2D54]/70">
+                  {t("Showing {shown} of {total} students", {
+                    shown: Math.min(PAGE_SIZE, filtered.length - current * PAGE_SIZE),
+                    total: filtered.length,
+                  })}
+                </p>
+                {pageCount > 1 && (
+                  <nav aria-label={t("Pages")} className="flex items-center gap-1.5">
+                    <PageButton disabled={current === 0} onClick={() => setPage(current - 1)} label={t("Previous page")}>
+                      <ChevronLeft aria-hidden className="size-3.5" />
+                    </PageButton>
+                    {pageList(pageCount, current).map((p, i) =>
+                      p === "gap" ? (
+                        <span key={`gap-${i}`} className="px-0.5 text-[10px] text-[#1B2D54]/50">
+                          …
+                        </span>
+                      ) : (
+                        <PageButton key={p} active={p === current} onClick={() => setPage(p)} label={t("Page {page}", { page: p + 1 })}>
+                          {p + 1}
+                        </PageButton>
+                      ),
+                    )}
+                    <PageButton disabled={current >= pageCount - 1} onClick={() => setPage(current + 1)} label={t("Next page")}>
+                      <ChevronRight aria-hidden className="size-3.5" />
+                    </PageButton>
+                  </nav>
+                )}
+              </div>
+            </>
+          )}
+        </Card>
+
+        <div className="flex min-w-0 flex-col gap-4 print:grid print:grid-cols-2">
+          <SkillGaps d={d} weakest={weakest} onDrill={onDrill} />
+          <Readiness d={d} onAssign={onAssign} />
+        </div>
+      </div>
+
+      {(d.top || d.needsHelp) && (
+        <section className="break-inside-avoid">
+          <h2 className="text-lg font-bold">{t("Spotlight: recognition & support")}</h2>
+          <p className="mt-0.5 text-[11px] text-[#1B2D54]/70">{t("Your strongest student and the one who needs you most right now")}</p>
+          <div className="mt-3 grid gap-4 lg:grid-cols-2 print:grid-cols-2">
+            {d.top && (
+              <SpotlightCard
+                s={d.top}
+                tone="top"
+                actions={
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => d.top && onNudge(d.top, "Certificate")}
+                      className="flex items-center gap-1.5 rounded-lg bg-[#14757d] px-4 py-2 text-[11px] font-semibold text-white hover:bg-[#0f6169]"
+                    >
+                      <Award aria-hidden className="size-3.5" />
+                      {t("Issue Certificate of Excellence")}
+                    </button>
+                    <Link
+                      href={`/teacher/messages?student=${d.top.studentId}`}
+                      className="flex items-center gap-1.5 rounded-lg bg-[#f6f9f8] px-4 py-2 text-[11px] font-semibold hover:bg-[#eef2f1]"
+                    >
+                      <MessageSquare aria-hidden className="size-3.5" />
+                      {t("Message")}
+                    </Link>
+                  </>
+                }
+              />
+            )}
+            {d.needsHelp && (
+              <SpotlightCard
+                s={d.needsHelp}
+                tone="help"
+                actions={
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => d.needsHelp && onOneOnOne(d.needsHelp)}
+                      className="flex items-center gap-1.5 rounded-lg bg-[#c62828] px-4 py-2 text-[11px] font-semibold text-white hover:bg-[#a51f1f]"
+                    >
+                      <CalendarPlus aria-hidden className="size-3.5" />
+                      {t("Schedule 1-on-1 Session")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => d.needsHelp && onNudge(d.needsHelp, "Reminder")}
+                      className="flex items-center gap-1.5 rounded-lg bg-[#f6f9f8] px-4 py-2 text-[11px] font-semibold hover:bg-[#eef2f1]"
+                    >
+                      <BellRing aria-hidden className="size-3.5" />
+                      {t("Send reminder")}
+                    </button>
+                  </>
+                }
+              />
+            )}
+          </div>
+        </section>
+      )}
+    </>
   );
 }
 
@@ -640,7 +786,7 @@ function StatCards({ d }: { d: TeacherProgress }) {
           )}
           <Link href="/teacher/students" className="ms-auto flex items-center gap-1 text-[10px] font-semibold text-[#14757d] print:hidden">
             {t("Queue review")}
-            <ArrowRight aria-hidden className="size-3 rtl:rotate-180" />
+            <ArrowRight aria-hidden className="size-3" />
           </Link>
         </div>
       </Card>
@@ -721,7 +867,7 @@ function SkillGaps({
             className="mt-2 flex items-center gap-1 text-[10px] font-semibold text-[#14757d] hover:underline print:hidden"
           >
             {t("Schedule an in-class drill")}
-            <ArrowRight aria-hidden className="size-3 rtl:rotate-180" />
+            <ArrowRight aria-hidden className="size-3" />
           </button>
         </div>
       )}

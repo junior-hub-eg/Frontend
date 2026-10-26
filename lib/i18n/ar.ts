@@ -25,6 +25,7 @@ import { teacherProgress } from "./ar/teacher-progress";
 import { grammarCoach } from "./ar/grammar-coach";
 import { teacherGrammar } from "./ar/teacher-grammar";
 import { mentorArea } from "./ar/mentor-area";
+import { reportKit } from "./ar/report-kit";
 
 /** Arabic translations, keyed by the English text. `node scripts/i18n-check.mjs` lists missing ones. */
 export const ar: Record<string, string> = {
@@ -56,4 +57,5 @@ export const ar: Record<string, string> = {
   ...teacherProgress,
   ...grammarCoach,
   ...teacherGrammar,
+  ...reportKit,
 };
