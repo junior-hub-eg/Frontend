@@ -82,15 +82,15 @@ export default function JoinClassPage() {
             <p className="mt-1 flex items-center justify-center gap-1.5 text-xs text-[#1B2D54]/60">
               <School className="size-4" /> {state.c.schoolName} • {t("Grade {grade}", { grade: state.c.grade })}
             </p>
-            <Link href={"/learner/dashboard" as Route} className={`${button} mt-5 bg-[#14757d] text-white`}>
-              {t("Go to my dashboard")}
+            <Link href={"/learner/ai-curriculum/classes" as Route} className={`${button} mt-5 bg-[#14757d] text-white`}>
+              {t("Go to my classes")}
             </Link>
           </div>
         ) : state?.kind === "already" ? (
           <div className="mt-6">
             <p className="text-sm font-semibold text-[#14757d]">{t("You are already in this class, or your request is waiting.")}</p>
-            <Link href={"/learner/dashboard" as Route} className={`${button} mt-5 bg-[#14757d] text-white`}>
-              {t("Go to my dashboard")}
+            <Link href={"/learner/ai-curriculum/classes" as Route} className={`${button} mt-5 bg-[#14757d] text-white`}>
+              {t("Go to my classes")}
             </Link>
           </div>
         ) : state?.kind === "error" ? (
