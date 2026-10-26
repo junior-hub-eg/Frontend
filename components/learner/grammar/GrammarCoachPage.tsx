@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ChevronRight, MessageCircleQuestion, PenLine, ScanText, Sparkles } from "lucide-react";
+import { BookOpenCheck, ChevronRight, MessageCircleQuestion, PenLine, PlayCircle, ScanText, Sparkles } from "lucide-react";
 import {
   getGrammarTopics,
   startGrammarLesson,
@@ -13,11 +13,24 @@ import {
 import { useT } from "@/lib/i18n/client";
 import { tk } from "@/lib/i18n/translate";
 import CoachChat from "./CoachChat";
-import LessonPanel from "./LessonPanel";
+import LessonPanel, { TopicVideo } from "./LessonPanel";
 import PassagesDialog from "./PassagesDialog";
 import PracticeCard from "./PracticeCard";
 import TopicList from "./TopicList";
 import { CARD, ErrorBox, Spinner } from "./shared";
+import { cn } from "@/lib/utils";
+
+/** The parts of a lesson, one tab each, so each one has the whole width. */
+const TABS = [
+  { id: "video", label: tk("Lesson video"), icon: PlayCircle },
+  { id: "summary", label: tk("Lesson summary"), icon: BookOpenCheck },
+  { id: "practice", label: tk("Practise with the AI coach"), icon: Sparkles },
+  { id: "ask", label: tk("Ask the AI assistant"), icon: MessageCircleQuestion },
+] as const;
+type Tab = (typeof TABS)[number]["id"];
+
+/** The banner's skills (and the lesson's "start practice") open these tabs. */
+const SECTION_TAB: Record<number, Tab> = { 1: "practice", 2: "ask", 3: "summary" };
 
 /** What the AI coach does, shown in the banner (each one jumps to its place on the page). */
 const AI_SKILLS = [
@@ -91,7 +104,8 @@ export default function GrammarCoachPage() {
   const [lessonError, setLessonError] = useState<unknown>(null);
   const [sentence, setSentence] = useState("");
   const [passagesOpen, setPassagesOpen] = useState(false);
-  const sections = useRef<(HTMLElement | null)[]>([]);
+  const [tab, setTab] = useState<Tab>("video");
+  const tabs = useRef<HTMLDivElement>(null);
   const requested = useRef<string | null>(null);
 
   const loadTopics = useCallback(async () => {
@@ -131,8 +145,9 @@ export default function GrammarCoachPage() {
   }, [selected, lessons, loadLesson]);
 
   const goTo = (i: number) => {
-    if (i < 0) setPassagesOpen(true);
-    else sections.current[i]?.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (i < 0) return setPassagesOpen(true);
+    if (SECTION_TAB[i]) setTab(SECTION_TAB[i]);
+    tabs.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   const selectTopic = (key: string) => {
@@ -142,7 +157,7 @@ export default function GrammarCoachPage() {
       setLessonLoading(false);
       setSentence("");
     }
-    goTo(1);
+    tabs.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
 
@@ -182,14 +197,51 @@ export default function GrammarCoachPage() {
             {t("No grammar lessons are available yet.")}
           </p>
         ) : (
-          <div className="mt-[1em] grid items-start gap-[1em] lg:grid-cols-[minmax(13em,0.7fr)_minmax(0,1.55fr)] xl:grid-cols-[minmax(13em,0.7fr)_minmax(0,1.55fr)_minmax(16em,0.95fr)]">
-            <div ref={(el) => { sections.current[0] = el; }} className="scroll-mt-[1em]">
-              <TopicList topics={topics} selected={selected} onSelect={selectTopic} />
-            </div>
+          <div className="mt-[1em] grid items-start gap-[1em] lg:grid-cols-[minmax(13em,0.32fr)_minmax(0,1fr)]">
+            <TopicList topics={topics} selected={selected} onSelect={selectTopic} />
 
-            {/* The AI: practice written and checked by the coach, then the chat. */}
             <div className="flex min-w-0 flex-col gap-[1em]">
-              <div ref={(el) => { sections.current[1] = el; }} className="scroll-mt-[1em]">
+              <div ref={tabs} role="tablist" aria-label={t("Lesson parts")} className={`${CARD} flex scroll-mt-[1em] gap-[0.4em] overflow-x-auto p-[0.4em]`}>
+                {TABS.map((tb) => (
+                  <button
+                    key={tb.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={tab === tb.id}
+                    onClick={() => setTab(tb.id)}
+                    className={cn(
+                      "flex shrink-0 flex-1 items-center justify-center gap-[0.45em] whitespace-nowrap rounded-[0.8em] px-[1em] py-[0.7em] text-[0.85em] font-semibold transition",
+                      tab === tb.id ? "bg-[#14365a] text-white shadow-sm" : "text-[#14365a] hover:bg-[#eef6fb]"
+                    )}
+                  >
+                    <tb.icon className="h-[1.15em] w-[1.15em] shrink-0" />
+                    {t(tb.label)}
+                  </button>
+                ))}
+              </div>
+
+              {tab === "video" && (
+                <section className={`${CARD} p-[1em]`}>
+                  <TopicVideo key={topic.key} topic={topic} />
+                </section>
+              )}
+
+              {tab === "summary" && (
+                <LessonPanel
+                  topic={topic}
+                  lesson={lesson}
+                  loading={lessonLoading && !lesson}
+                  error={lesson ? null : lessonError}
+                  onRetry={() => {
+                    requested.current = null;
+                    void loadLesson(topic.key);
+                  }}
+                  onStartPractice={() => setTab("practice")}
+                />
+              )}
+
+              {/* Kept mounted (hidden), so the sentence and the chat survive a tab change. */}
+              <div hidden={tab !== "practice"}>
                 <PracticeCard
                   topicKey={topic.key}
                   first={lesson?.practice ?? null}
@@ -204,23 +256,9 @@ export default function GrammarCoachPage() {
                   onOpenPassages={() => setPassagesOpen(true)}
                 />
               </div>
-              <div ref={(el) => { sections.current[2] = el; }} className="scroll-mt-[1em]">
+              <div hidden={tab !== "ask"}>
                 <CoachChat topicKey={topic.key} topicTitle={topic.titleAr} context={sentence} />
               </div>
-            </div>
-
-            <div ref={(el) => { sections.current[3] = el; }} className="min-w-0 scroll-mt-[1em] lg:col-span-2 xl:col-span-1">
-              <LessonPanel
-                topic={topic}
-                lesson={lesson}
-                loading={lessonLoading && !lesson}
-                error={lesson ? null : lessonError}
-                onRetry={() => {
-                  requested.current = null;
-                  void loadLesson(topic.key);
-                }}
-                onStartPractice={() => goTo(1)}
-              />
             </div>
           </div>
         )}

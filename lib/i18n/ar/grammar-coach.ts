@@ -113,4 +113,6 @@ export const grammarCoach: Record<string, string> = {
   "The AI writes a sentence at your level, checks every word, and explains your mistakes without giving the answer away.": "الـ AI بيكتب لك جملة على قد مستواك، وبيصحح كل كلمة، وبيشرح غلطك من غير ما يقولك الإجابة.",
   "The AI is writing a sentence for you...": "الـ AI بيكتب لك جملة...",
   "A new sentence written by the AI for you. Click each word, then choose its grammatical role.": "جملة جديدة كتبها لك الـ AI. اضغط على كل كلمة واختار إعرابها.",
+  "Lesson video": "فيديو الدرس",
+  "Lesson parts": "أجزاء الدرس",
 };
