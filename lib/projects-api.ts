@@ -36,6 +36,21 @@ export interface ProjectSummary {
   myTasksDone: number;
   links: { kind: ProjectLinkKind; url: string }[];
   monitor: ProjectMonitor | null;
+  /** The catalog project's logo, or null (27 Oct 2026). */
+  logoUrl?: string | null;
+  /** The project time; null for squads formed before the catalog. */
+  durationWeeks?: number | null;
+  /** The links the admin prepared with the project: chat, meeting, Figma, ... */
+  projectLinks?: CatalogLink[];
+}
+
+export type CatalogLinkKind = "Chat" | "Meeting" | "Figma" | "GitHub" | "Drive" | "Docs" | "Other";
+
+/** A link the admin prepared with the project; an empty label shows the kind. */
+export interface CatalogLink {
+  kind: CatalogLinkKind;
+  label: string;
+  url: string;
 }
 
 export interface MyProjects {
@@ -70,6 +85,62 @@ export interface ProjectDetail {
   sprint: ProjectSprint | null;
   myTasks: ProjectTask[];
 }
+
+/** The project as a PRD, with the links each teammate submits (GET student/projects/{id}/brief). */
+export interface ProjectBrief {
+  squadId: string;
+  squadName: string;
+  title: string;
+  description: string;
+  logoUrl: string | null;
+  level: string;
+  status: ProjectStatus;
+  durationWeeks: number | null;
+  teamSize: number;
+  startedUtc: string | null;
+  /** The reveal plus the project time. */
+  dueUtc: string | null;
+  problem: string;
+  goals: string[];
+  targetUsers: string[];
+  useCases: string[];
+  requirements: string[];
+  deliverables: string[];
+  acceptanceCriteria: string[];
+  techStack: string[];
+  links: CatalogLink[];
+  detailedUseCases: BriefUseCase[];
+  members: BriefMember[];
+}
+
+/** A use case the admin wrote in full for the squad. */
+export interface BriefUseCase {
+  id: string;
+  title: string;
+  actor: string;
+  description: string;
+  preconditions: string;
+  /** One step per line. */
+  mainFlow: string;
+  /** One point per line. */
+  acceptanceCriteria: string;
+  role: string | null;
+}
+
+export interface BriefMember {
+  studentId: string;
+  fullName: string;
+  photoUrl: string | null;
+  role: string;
+  isMe: boolean;
+  /** The links the role submits (required), then others the member shared; url null while missing. */
+  links: { kind: ProjectLinkKind; url: string | null; required: boolean }[];
+  /** When they handed in their work; null while they have not. */
+  submittedUtc: string | null;
+}
+
+export const getProjectBrief = (id: string) =>
+  api.get<ProjectBrief>(`/api/v1/student/projects/${encodeURIComponent(id)}/brief`);
 
 export const getMyProjects = () => api.get<MyProjects>("/api/v1/student/projects");
 export const getMyProject = (id: string) => api.get<ProjectDetail>(`/api/v1/student/projects/${encodeURIComponent(id)}`);

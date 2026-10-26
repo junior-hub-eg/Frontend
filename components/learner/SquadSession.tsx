@@ -13,6 +13,7 @@ import { getSquad, type Squad, type SquadMember, type SquadRole } from "@/lib/in
 import { useLiveChannel } from "@/lib/live-channel";
 import { useI18n, useT } from "@/lib/i18n/client";
 import { ROLE_TITLE } from "./interns-data";
+import { ProjectLogo } from "@/components/learner/ProjectCatalogParts";
 
 const IMG = "/images/Intern";
 const DASHBOARD = "/learner/interns/internship";
@@ -139,8 +140,18 @@ function ProjectCard({
       {phase === "revealed" ? (
         <div className="jh-pop-in flex flex-col items-center gap-[0.5em]" style={{ animation: "jh-pop-in 0.5s ease-out" }}>
           <p className="text-[0.85em] font-bold uppercase tracking-wide text-[#14365a]/70">{t("Your squad's project")}</p>
+          {squad.projectLogoUrl && <ProjectLogo src={squad.projectLogoUrl} title={squad.projectTitle ?? ""} className="size-[4em]" />}
           <h2 className="text-[1.5em] font-extrabold leading-tight text-[#14365a]">{squad.projectTitle}</h2>
           {squad.projectDescription && <p className="line-clamp-5 text-[0.85em] text-[#14365a]/80">{squad.projectDescription}</p>}
+          <p className="flex flex-wrap justify-center gap-[0.4em] text-[0.75em] font-semibold text-[#14365a]/80">
+            <span className="rounded-full bg-white/70 px-[0.7em] py-[0.15em]">{t("{level} level", { level: t(squad.level) })}</span>
+            {squad.projectDurationWeeks ? (
+              <span className="rounded-full bg-white/70 px-[0.7em] py-[0.15em]">{t("{n} weeks", { n: squad.projectDurationWeeks })}</span>
+            ) : null}
+            {squad.seatsTotal > 0 && (
+              <span className="rounded-full bg-white/70 px-[0.7em] py-[0.15em]">{t("{n} members", { n: squad.seatsTotal })}</span>
+            )}
+          </p>
           <Link
             href={DASHBOARD}
             className="mt-[0.4em] rounded-[0.8em] bg-[#4f9cf0] px-[1.4em] py-[0.7em] text-[0.95em] font-extrabold tracking-wide text-[#14365a] shadow-[0_6px_18px_rgba(47,127,214,0.45)] hover:bg-[#3d8ce6]"
