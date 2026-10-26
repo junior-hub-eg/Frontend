@@ -78,4 +78,17 @@ export const teacherWorkspace: Record<string, string> = {
   "Ends": "ينتهي",
   "Room or link": "القاعة أو الرابط",
   "Schedule": "حدّد الموعد",
+  // Add or remove a class
+  "Add class": "إضافة فصل",
+  "Add a class": "إضافة فصل",
+  "Students join it with the class code you get after adding it.": "ينضم الطلاب إليه بكود الفصل الذي يظهر لك بعد الإضافة.",
+  "Class name": "اسم الفصل",
+  "Accept students who use the code automatically": "قبول الطلاب الذين ينضمون بالكود تلقائيًا",
+  "No classes yet. Add your first class, then share its code with your students.": "لا توجد فصول بعد. أضف أول فصل، ثم شارك الكود مع طلابك.",
+  "This class is empty. You can remove it if you added it by mistake.": "هذا الفصل فارغ. يمكنك حذفه إذا أضفته بالخطأ.",
+  "Remove class {name}?": "حذف فصل {name}؟",
+  "Class {name} was removed.": "تم حذف فصل {name}.",
+  "Remove class": "حذف الفصل",
+  "Class {name} was added. Share its code: {code}": "تمت إضافة فصل {name}. شارك الكود: {code}",
+  "Student Name": "اسم الطالب",
 };

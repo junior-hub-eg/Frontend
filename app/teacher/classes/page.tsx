@@ -12,6 +12,7 @@ import {
   ExternalLink,
   GraduationCap,
   Megaphone,
+  Plus,
   Search,
   Sparkles,
   UserPlus,
@@ -28,7 +29,7 @@ import {
   type TeacherClassDetail,
 } from "@/lib/teacher-api";
 import { LoadBlock, StudentAvatar, SUBJECT_LABEL, useTeacherData } from "@/components/teacher/teacher-ui";
-import { AnnouncementDialog, AssignmentsTab, InviteTab, PlanTab } from "@/components/teacher/ClassTabs";
+import { AddClassDialog, AnnouncementDialog, AssignmentsTab, InviteTab, PlanTab, RemoveClassButton } from "@/components/teacher/ClassTabs";
 import { useToast } from "@/components/teacher/teacher-dialogs";
 import Link from "next/link";
 import type { Route } from "next";
@@ -224,6 +225,7 @@ function MyClasses() {
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortKey>("attendance");
   const [announce, setAnnounce] = useState(false);
+  const [adding, setAdding] = useState(false);
   const toast = useToast();
 
   const list = classes.data ?? [];
@@ -271,6 +273,15 @@ function MyClasses() {
           <p className="mt-0.5 text-[11px] text-[#1B2D54]/70">{t("Track your classes and your students' performance.")}</p>
         </div>
 
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setAdding(true)}
+          className="flex shrink-0 items-center gap-1.5 rounded-full bg-[#14757d] px-4 py-2 text-[11px] font-semibold text-white shadow-sm transition-colors hover:bg-[#0f6169]"
+        >
+          <Plus aria-hidden className="size-3.5" />
+          {t("Add class")}
+        </button>
         <div className="min-w-0 max-w-full rounded-full bg-white/80 p-0.5 shadow-sm ring-1 ring-[#e3ece9] lg:max-w-[340px]">
           <div className="flex gap-0.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {list.map((c) => {
@@ -293,10 +304,17 @@ function MyClasses() {
             })}
           </div>
         </div>
+        </div>
       </header>
 
       {list.length === 0 && (
-        <Card className="text-center text-[11px] text-[#1B2D54]/70">{t("No classes yet. Ask the school admin to link your classes.")}</Card>
+        <Card className="flex flex-col items-center gap-3 text-center text-[11px] text-[#1B2D54]/70">
+          {t("No classes yet. Add your first class, then share its code with your students.")}
+          <button type="button" onClick={() => setAdding(true)} className="flex items-center gap-1.5 rounded-full bg-[#14757d] px-4 py-2 font-semibold text-white">
+            <Plus aria-hidden className="size-3.5" />
+            {t("Add class")}
+          </button>
+        </Card>
       )}
 
       <Slider>
@@ -470,7 +488,12 @@ function MyClasses() {
         ) : !d ? (
           <LoadBlock error={detail.error} onRetry={detail.reload} />
         ) : tab === "invite" ? (
-          <InviteTab d={d} onChange={detail.setData} reload={() => { detail.reload(); classes.reload(); }} notify={toast.show} />
+          <>
+            <InviteTab d={d} onChange={detail.setData} reload={() => { detail.reload(); classes.reload(); }} notify={toast.show} />
+            <div className="px-5 pb-5">
+              <RemoveClassButton d={d} notify={toast.show} onRemoved={() => { setChosen(null); classes.reload(); }} />
+            </div>
+          </>
         ) : tab === "lesson" ? (
           <PlanTab d={d} onChange={detail.setData} reload={detail.reload} notify={toast.show} />
         ) : (
@@ -503,6 +526,18 @@ function MyClasses() {
           );
         })}
       </div>
+      {adding && (
+        <AddClassDialog
+          onClose={() => setAdding(false)}
+          onAdded={(created) => {
+            setAdding(false);
+            setChosen(created.id);
+            setTab("invite");
+            classes.reload();
+            toast.show(t("Class {name} was added. Share its code: {code}", { name: created.name, code: created.joinCode }));
+          }}
+        />
+      )}
       {announce && d && <AnnouncementDialog d={d} onClose={() => setAnnounce(false)} notify={toast.show} />}
       {toast.node}
     </div>
