@@ -39,7 +39,7 @@ export default function Calendar() {
   return (
     <MentorPage title={t("Calendar")} subtitle={t("Your sprints, sessions and review due dates.")}>
       {cal.error ? <ErrorState title={t("We could not load your calendar")} onRetry={cal.reload} error={cal.error} /> : tab === "calendar" ? (
-        <CalendarView month={month} setMonth={setMonth} data={cal.data} loading={cal.loading} reload={cal.reload} tab={tab} setTab={setTab} avail={avail.data} />
+        <CalendarView month={month} setMonth={setMonth} data={cal.data} loading={cal.loading} reload={cal.reload} tab={tab} setTab={setTab} />
       ) : (
         <AvailabilityView data={avail.data} loading={avail.loading} reload={avail.reload} calendar={cal.data} reloadCalendar={cal.reload} tab={tab} setTab={setTab} />
       )}
@@ -52,9 +52,9 @@ function Tabs({ tab, setTab }: { tab: "calendar" | "availability"; setTab: (v: "
   return <UnderlineTabs value={tab} onChange={setTab} tabs={[{ value: "calendar", label: t("Calendar") }, { value: "availability", label: t("Availability") }]} />;
 }
 
-function CalendarView({ month, setMonth, data, loading, reload, tab, setTab, avail }: {
+function CalendarView({ month, setMonth, data, loading, reload, tab, setTab }: {
   month: Date; setMonth: (d: Date) => void; data: MentorCalendar | null; loading: boolean; reload: () => void;
-  tab: "calendar" | "availability"; setTab: (v: "calendar" | "availability") => void; avail: MentorAvailability | null;
+  tab: "calendar" | "availability"; setTab: (v: "calendar" | "availability") => void;
 }) {
   const { t, intl } = useI18n();
   const [view, setView] = useState<"month" | "week" | "list">("month");
@@ -157,12 +157,12 @@ function CalendarView({ month, setMonth, data, loading, reload, tab, setTab, ava
           )}
         </div>
       </Card>
-      <SidePanel selected={selected} avail={avail} calendar={data} onChanged={() => { setSelected(null); reload(); }} />
+      <SidePanel selected={selected} calendar={data} onChanged={() => { setSelected(null); reload(); }} />
     </div>
   );
 }
 
-function SidePanel({ selected, avail, calendar, onChanged }: { selected: Selected; avail: MentorAvailability | null; calendar: MentorCalendar | null; onChanged: () => void }) {
+function SidePanel({ selected, calendar, onChanged }: { selected: Selected; calendar: MentorCalendar | null; onChanged: () => void }) {
   const { t, intl } = useI18n();
   const [moving, setMoving] = useState(false);
   const [confirm, setConfirm] = useState(false);
@@ -209,7 +209,7 @@ function SidePanel({ selected, avail, calendar, onChanged }: { selected: Selecte
       )}
       <p className="mt-[0.8em] flex items-center gap-[0.4em] text-[0.75em] text-[#64748b]"><Clock className="size-[1em]" />{t("Students are notified when a session changes.")}</p>
       {err && <p className="mt-[0.5em] text-[0.8em] text-[#c81e1e]">{err}</p>}
-      {moving && <MoveDialog session={s} avail={avail} calendar={calendar} onClose={() => setMoving(false)} onDone={() => { setMoving(false); onChanged(); }} />}
+      {moving && <MoveDialog session={s} onClose={() => setMoving(false)} onDone={() => { setMoving(false); onChanged(); }} />}
       {confirm && (
         <Dialog title={t("Cancel session")} onClose={() => setConfirm(false)}
           footer={<><SecondaryButton onClick={() => setConfirm(false)}>{t("Keep it")}</SecondaryButton>
@@ -221,45 +221,30 @@ function SidePanel({ selected, avail, calendar, onChanged }: { selected: Selecte
   );
 }
 
-/** The mentor's weekly times in the next two weeks that are free, to move a session to. */
-function freeTimes(avail: MentorAvailability | null, calendar: MentorCalendar | null, except: string) {
-  if (!avail) return [];
-  const out: Date[] = [];
-  const now = new Date();
-  for (let i = 0; i < 14; i++) {
-    const day = addDays(now, i);
-    const key = day.toISOString().slice(0, 10);
-    if (calendar?.timeOff.some((o) => key >= o.startDate && key <= o.endDate)) continue;
-    const slots = avail.days.find((d) => d.label === WEEK[day.getDay()])?.slots ?? [];
-    for (const s of slots) {
-      const [h, m] = s.time.split(":").map(Number);
-      const at = new Date(day.getFullYear(), day.getMonth(), day.getDate(), h, m);
-      if (at <= now) continue;
-      if (calendar?.sessions.some((x) => x.id !== except && Math.abs(new Date(x.startsUtc).getTime() - at.getTime()) < 60000)) continue;
-      out.push(at);
-    }
-  }
-  return out;
-}
+/** A date as the value of a datetime-local field, in the browser's time. */
+const localInput = (d: Date) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
 
-function MoveDialog({ session, avail, calendar, onClose, onDone }: { session: CalendarSession; avail: MentorAvailability | null; calendar: MentorCalendar | null; onClose: () => void; onDone: () => void }) {
-  const { t, intl } = useI18n();
-  const options = freeTimes(avail, calendar, session.id);
-  const [at, setAt] = useState(options[0]?.toISOString() ?? "");
+/**
+ * "Move session": the mentor picks any day and time ahead (26 Oct 2026), not only a weekly slot. The server refuses a
+ * time in the past, on their time off, or on top of another session, and tells the student.
+ */
+function MoveDialog({ session, onClose, onDone }: { session: CalendarSession; onClose: () => void; onDone: () => void }) {
+  const { t } = useI18n();
+  const [now] = useState(() => new Date());
+  const [at, setAt] = useState(() => localInput(new Date(session.startsUtc) > now ? new Date(session.startsUtc) : new Date(now.getTime() + 86400000)));
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const when = at ? new Date(at) : null;
+  const valid = !!when && !Number.isNaN(when.getTime()) && when > now;
   return (
     <Dialog title={t("Move session")} onClose={onClose}
       footer={<><SecondaryButton onClick={onClose}>{t("Cancel")}</SecondaryButton>
-        <PrimaryButton disabled={busy || !at} onClick={() => { setBusy(true); moveMentorSession(session.id, at).then(onDone, (e) => { setErr(errorMessage(e)); setBusy(false); }); }}>{t("Move")}</PrimaryButton></>}>
-      <p className="text-[0.85em] text-[#475467]">{t("Sessions only happen inside your availability slots.")}</p>
-      {options.length === 0 ? <p className="text-[0.85em] text-[#c2570c]">{t("You have no free time in the next two weeks. Add slots in Availability.")}</p> : (
-        <Field label={t("New time")}>
-          <select value={at} onChange={(e) => setAt(e.target.value)} className={inputCls}>
-            {options.map((o) => <option key={o.toISOString()} value={o.toISOString()}>{o.toLocaleString(intl, { weekday: "long", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</option>)}
-          </select>
-        </Field>
-      )}
+        <PrimaryButton disabled={busy || !valid} onClick={() => { setBusy(true); setErr(null); moveMentorSession(session.id, when!.toISOString()).then(onDone, (e) => { setErr(errorMessage(e)); setBusy(false); }); }}>{t("Move")}</PrimaryButton></>}>
+      <p className="text-[0.85em] text-[#475467]">{t("Pick the new day and time. Your student gets a notification.")}</p>
+      <Field label={t("New time")}>
+        <input type="datetime-local" value={at} min={localInput(now)} step={300} onChange={(e) => setAt(e.target.value)} className={inputCls} />
+      </Field>
+      {at && !valid && <p className="text-[0.85em] text-[#c2570c]">{t("Pick a time in the future.")}</p>}
       {err && <p className="text-[0.85em] text-[#c81e1e]">{err}</p>}
     </Dialog>
   );
@@ -444,7 +429,7 @@ function AvailabilityView({ data, loading, reload, calendar, reloadCalendar, tab
       </Card>
 
       {offOpen && <TimeOffDialog onClose={() => setOffOpen(false)} onDone={() => { setOffOpen(false); reloadCalendar(); }} />}
-      {moving && <MoveDialog session={moving} avail={data} calendar={calendar} onClose={() => setMoving(null)} onDone={() => { setMoving(null); reloadCalendar(); }} />}
+      {moving && <MoveDialog session={moving} onClose={() => setMoving(null)} onDone={() => { setMoving(null); reloadCalendar(); }} />}
     </>
   );
 }

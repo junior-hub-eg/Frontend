@@ -446,6 +446,8 @@ export const mentorArea: Record<string, string> = {
   "Pick a session or a date to see it here.": "اختر جلسة أو تاريخًا لتراه هنا.",
   "Overlaps with the session with {name} at {time}": "تتعارض مع جلسة {name} الساعة {time}",
   "Session notes": "ملاحظات الجلسة",
+  "Pick the new day and time. Your student gets a notification.": "اختار اليوم والوقت الجديد، والطالب هيوصله إشعار.",
+  "Pick a time in the future.": "اختار وقت في المستقبل.",
   "Move session": "انقل الجلسة",
   "Cancel session": "ألغِ الجلسة",
   "Students are notified when a session changes.": "يتم إبلاغ الطلاب عند تغيير الجلسة.",
