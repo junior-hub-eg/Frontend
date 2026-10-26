@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { BadgeCheck, Camera, Eye, EyeOff, ImageUp, Sparkles, X } from "lucide-react";
-import { addStudentPassage, getStudentPassages, WORD_COLOR, type GrammarPassage, type ParsedWord } from "@/lib/grammar-api";
+import { BadgeCheck, Camera, Eye, EyeOff, ImageUp, Sparkles, Trash2, X } from "lucide-react";
+import { addStudentPassage, deleteStudentPassage, getStudentPassages, WORD_COLOR, type GrammarPassage, type ParsedWord } from "@/lib/grammar-api";
 import { useI18n } from "@/lib/i18n/client";
 import { dateLocale } from "@/lib/i18n/translate";
 import { ColorLegend, ErrorBox, PRIMARY_BTN, SOFT_BTN, Spinner } from "./shared";
@@ -74,9 +74,33 @@ function ParsedSentenceView({ words, showRoles }: { words: ParsedWord[]; showRol
   );
 }
 
-function PassageView({ passage, startShown = true }: { passage: GrammarPassage; startShown?: boolean }) {
+function PassageView({
+  passage,
+  startShown = true,
+  onDeleted,
+}: {
+  passage: GrammarPassage;
+  startShown?: boolean;
+  /** Set for the student's own passages: shows a Delete button. */
+  onDeleted?: (id: string) => void;
+}) {
   const { t } = useI18n();
   const [showRoles, setShowRoles] = useState(startShown);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<unknown>(null);
+
+  const remove = async () => {
+    if (!onDeleted || !window.confirm(t("Delete this passage and its إعراب?"))) return;
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await deleteStudentPassage(passage.id);
+      onDeleted(passage.id);
+    } catch (e) {
+      setDeleteError(e);
+      setDeleting(false);
+    }
+  };
   return (
     <article className="rounded-[1em] border border-[#e3eef5] bg-white p-[0.9em]">
       <header className="flex flex-wrap items-center justify-between gap-[0.5em]">
@@ -100,11 +124,29 @@ function PassageView({ passage, startShown = true }: { passage: GrammarPassage; 
         <p className="text-[0.75em] text-[#5b7089]">
           {showRoles ? t("Tap a word to see its full إعراب and why.") : t("Try it yourself: say each word's إعراب, then tap it to check.")}
         </p>
-        <button type="button" className={SOFT_BTN} onClick={() => setShowRoles((v) => !v)}>
-          {showRoles ? <EyeOff className="h-[1.1em] w-[1.1em]" /> : <Eye className="h-[1.1em] w-[1.1em]" />}
-          {showRoles ? t("Parse it myself first") : t("Show the إعراب")}
-        </button>
+        <div className="flex flex-wrap gap-[0.4em]">
+          <button type="button" className={SOFT_BTN} onClick={() => setShowRoles((v) => !v)}>
+            {showRoles ? <EyeOff className="h-[1.1em] w-[1.1em]" /> : <Eye className="h-[1.1em] w-[1.1em]" />}
+            {showRoles ? t("Parse it myself first") : t("Show the إعراب")}
+          </button>
+          {onDeleted && (
+            <button
+              type="button"
+              onClick={remove}
+              disabled={deleting}
+              className={`${SOFT_BTN} border-[#f3c2c2] text-[#b42323] hover:bg-[#fdecec]`}
+            >
+              <Trash2 className="h-[1.1em] w-[1.1em]" />
+              {deleting ? t("Deleting...") : t("Delete")}
+            </button>
+          )}
+        </div>
       </div>
+      {deleteError != null && (
+        <div className="mt-[0.5em]">
+          <ErrorBox error={deleteError} onRetry={remove} />
+        </div>
+      )}
       <div className="mt-[0.6em] space-y-[0.8em]">
         {passage.sentences.map((s, i) => (
           <ParsedSentenceView key={i} words={s.words} showRoles={showRoles} />
@@ -175,6 +217,11 @@ export default function PassagesDialog({ onClose }: { onClose: () => void }) {
     } finally {
       setBusy(false);
     }
+  };
+
+  const dropPassage = (id: string) => {
+    setPassages((list) => list?.filter((p) => p.id !== id) ?? list);
+    setAdded((a) => (a?.id === id ? null : a));
   };
 
   const canSend = !busy && (!!file || text.trim().length > 0);
@@ -249,7 +296,7 @@ export default function PassagesDialog({ onClose }: { onClose: () => void }) {
             <section className="space-y-[0.5em]">
               <h3 className="text-[0.9em] font-extrabold text-[#14365a]">{t("Your passage, parsed")}</h3>
               <ColorLegend />
-              <PassageView passage={added} />
+              <PassageView passage={added} onDeleted={dropPassage} />
             </section>
           )}
 
@@ -268,7 +315,7 @@ export default function PassagesDialog({ onClose }: { onClose: () => void }) {
               {ownPassages.length > 0 && (
                 <section className="space-y-[0.5em]">
                   <h3 className="text-[0.9em] font-extrabold text-[#14365a]">{t("Your passages")}</h3>
-                  {ownPassages.map((p) => <PassageView key={p.id} passage={p} />)}
+                  {ownPassages.map((p) => <PassageView key={p.id} passage={p} onDeleted={dropPassage} />)}
                 </section>
               )}
               {passages.length === 0 && !added && (
