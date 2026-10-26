@@ -1,18 +1,18 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import type { Route } from "next";
 import { AlertTriangle, Check, ClipboardCheck, ExternalLink, Info, LoaderCircle, RefreshCw, UserPlus, UserRound } from "lucide-react";
 import { errorMessage } from "@/lib/api-client";
 import { useI18n } from "@/lib/i18n/client";
-import { useLiveChannel } from "@/lib/live-channel";
 import {
-  checkSquadLinks, getSquadChat, markSquadChatRead, sendSquadChat,
-  type BoardTask, type LinkRow, type SquadChatMessage, type SquadDetail,
+  checkSquadLinks,
+  type BoardTask, type LinkRow, type SquadDetail,
 } from "@/lib/monitor-api";
+import { EmbeddedChat } from "@/components/chat/ChatWorkspace";
 import { cn } from "@/lib/utils";
-import { Card, MentorAvatar, Pill, PrimaryButton, RolePill, SecondaryButton, SelectPill, useRelative, type Tone } from "../mentor-area-ui";
+import { Card, MentorAvatar, Pill, RolePill, SecondaryButton, SelectPill, useRelative, type Tone } from "../mentor-area-ui";
 import { AddSquadStudents } from "./AddSquadStudents";
 
 const day = (iso: string, intl: string) => new Date(iso).toLocaleDateString(intl, { month: "short", day: "numeric" });
@@ -476,131 +476,8 @@ function Box({ label, value, hint, tone = "text-[#1b2d54]" }: { label: string; v
 
 // ---------- Chat ----------
 
+/** The squad's conversation of the one chat (27 Oct 2026): stickers, pictures and files, live. */
 export function ChatTab({ detail }: { detail: SquadDetail }) {
-  const { t, intl } = useI18n();
-  const [messages, setMessages] = useState<SquadChatMessage[] | null>(null);
-  const [hasMore, setHasMore] = useState(false);
-  const [text, setText] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
-  const end = useRef<HTMLDivElement>(null);
-  const id = detail.squad.id;
-
-  useEffect(() => {
-    getSquadChat(id).then((r) => { setMessages(r.messages); setHasMore(r.hasMore); }, (e) => setErr(errorMessage(e)));
-    markSquadChatRead(id).catch(() => undefined);
-  }, [id]);
-  useEffect(() => {
-    end.current?.scrollIntoView({ block: "nearest" });
-  }, [messages?.length]);
-
-  const live = useLiveChannel({
-    ChatMessage: (m: { id: string; squadId: string; senderId: string; senderName: string; senderPhotoUrl: string | null; recipientId: string | null; body: string; sentUtc: string }) => {
-      if (m.squadId !== id || m.recipientId) return;
-      setMessages((all) => (all?.some((x) => x.id === m.id) ? all : [...(all ?? []), { id: m.id, senderId: m.senderId, senderName: m.senderName, senderPhotoUrl: m.senderPhotoUrl, with: null, body: m.body, sentUtc: m.sentUtc, isMine: false }]));
-      markSquadChatRead(id).catch(() => undefined);
-    },
-  });
-  // Without the live channel, look for new messages every 15 seconds.
-  useEffect(() => {
-    if (live) return;
-    const timer = setInterval(() => getSquadChat(id).then((r) => setMessages(r.messages), () => undefined), 15000);
-    return () => clearInterval(timer);
-  }, [live, id]);
-
-  const send = (e: React.FormEvent) => {
-    e.preventDefault();
-    const body = text.trim();
-    if (!body) return;
-    setBusy(true);
-    sendSquadChat(id, body).then((m) => { setMessages((all) => [...(all ?? []), m]); setText(""); setBusy(false); }, (er) => { setErr(errorMessage(er)); setBusy(false); });
-  };
-  const older = () => {
-    const first = messages?.[0];
-    if (!first) return;
-    getSquadChat(id, first.sentUtc).then((r) => { setMessages((all) => [...r.messages, ...(all ?? [])]); setHasMore(r.hasMore); }, () => undefined);
-  };
-
-  const [opened] = useState(() => Date.now());
-  const groups = useMemo(() => {
-    const out: { label: string; items: SquadChatMessage[] }[] = [];
-    const today = new Date(opened).toDateString();
-    const yesterday = new Date(opened - 86400000).toDateString();
-    for (const m of messages ?? []) {
-      const d = new Date(m.sentUtc).toDateString();
-      const label = d === today ? t("Today") : d === yesterday ? t("Yesterday") : new Date(m.sentUtc).toLocaleDateString(intl, { weekday: "long", month: "short", day: "numeric" });
-      if (out[out.length - 1]?.label !== label) out.push({ label, items: [] });
-      out[out.length - 1].items.push(m);
-    }
-    return out;
-  }, [messages, t, intl, opened]);
-
-  const online = detail.participants.filter((p) => p.online).length;
-  return (
-    <div className="grid gap-[1.4em] lg:grid-cols-[1fr_20em]">
-      <section className="flex min-h-[32em] flex-col rounded-[1.2em] border border-[#e6ebf1]">
-        <header className="flex items-center justify-between border-b border-[#eef2f6] px-[1.2em] py-[0.9em]">
-          <div>
-            <h3 className="font-bold text-[#1b2d54]">{detail.squad.name}</h3>
-            <p className="text-[0.78em] text-[#64748b]">{t("{n} students · 1 monitor", { n: detail.members.length })}</p>
-          </div>
-          <Pill tone="green">{t("{n} online", { n: online })}</Pill>
-        </header>
-        <div className="max-h-[36em] flex-1 space-y-[1em] overflow-y-auto px-[1.2em] py-[1em]">
-          {hasMore && <button type="button" onClick={older} className="mx-auto block text-[0.8em] font-semibold text-[#0f7378]">{t("Show older messages")}</button>}
-          {messages === null && !err && <p className="text-center text-[0.85em] text-[#64748b]">{t("Loading")}</p>}
-          {messages?.length === 0 && <p className="py-[3em] text-center text-[0.85em] text-[#64748b]">{t("No messages yet. Say hello to the squad.")}</p>}
-          {groups.map((g) => (
-            <div key={g.label} className="space-y-[1em]">
-              <p className="flex items-center gap-3 text-[0.75em] text-[#64748b] before:h-px before:flex-1 before:bg-[#e6ebf1] after:h-px after:flex-1 after:bg-[#e6ebf1]">{g.label}</p>
-              {g.items.map((m) => {
-                const mine = m.isMine;
-                const time = new Date(m.sentUtc).toLocaleTimeString(intl, { hour: "numeric", minute: "2-digit" });
-                return (
-                  <div key={m.id} className={cn("flex gap-[0.7em]", mine && "flex-row-reverse")}>
-                    <MentorAvatar name={m.senderName} photoUrl={m.senderPhotoUrl} className="size-[2.2em]" />
-                    <div className={cn("max-w-[75%]", mine && "text-end")}>
-                      <p className={cn("flex items-center gap-[0.5em] text-[0.75em]", mine && "justify-end")}>
-                        <b className="text-[#1b2d54]">{m.senderName}</b>
-                        {mine && <span className="rounded-full bg-[#e0f4f2] px-[0.6em] text-[#0f7378]">{t("Monitor")}</span>}
-                        <span className="text-[#64748b]">{time}</span>
-                      </p>
-                      <p className={cn("mt-[0.3em] inline-block whitespace-pre-wrap rounded-[1em] px-[1em] py-[0.65em] text-start text-[0.85em]",
-                        mine ? "bg-gradient-to-r from-[#0f6b70] to-[#1b2d54] text-white rtl:bg-gradient-to-l" : "bg-[#f1f4f8] text-[#1b2d54]")}>
-                        {m.body}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ))}
-          <div ref={end} />
-        </div>
-        <form onSubmit={send} className="flex gap-[0.6em] border-t border-[#eef2f6] p-[0.9em]">
-          <input value={text} onChange={(e) => setText(e.target.value)} maxLength={1000} placeholder={t("Message {squad}…", { squad: detail.squad.name })}
-            className="flex-1 rounded-[0.8em] border border-[#d6dde6] bg-[#f7fafc] px-[1em] text-[0.88em] text-[#1b2d54] outline-none focus:border-[#0f7378]" aria-label={t("Message")} />
-          <PrimaryButton type="submit" disabled={busy || !text.trim()}>{t("Send")}</PrimaryButton>
-        </form>
-        {err && <p className="px-[1.2em] pb-[0.8em] text-[0.8em] text-[#c81e1e]">{err}</p>}
-      </section>
-      <aside className="rounded-[1.2em] border border-[#e6ebf1] bg-[#f7fafc] p-[1.2em]">
-        <h3 className="font-bold text-[#1b2d54]">{t("Participants")}</h3>
-        <p className="text-[0.78em] text-[#64748b]">{t("{n} people", { n: detail.participants.length })}</p>
-        <ul className="mt-[1em] space-y-[0.9em]">
-          {detail.participants.map((p) => (
-            <li key={p.id + p.name} className="flex items-center gap-[0.7em]">
-              <MentorAvatar name={p.name} photoUrl={p.photoUrl} className="size-[2.2em]" />
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-[0.85em] font-semibold text-[#1b2d54]">{p.name}</span>
-                <span className="block text-[0.72em] text-[#64748b]">{t(p.isMonitor ? "Monitor" : p.role === "UIUX" ? "UI/UX" : p.role)}</span>
-              </span>
-              <span className={cn("size-[0.55em] rounded-full", p.online ? "bg-[#16a34a]" : "bg-[#98a2b3]")} aria-label={t(p.online ? "Online" : "Offline")} />
-            </li>
-          ))}
-        </ul>
-      </aside>
-    </div>
-  );
+  return <EmbeddedChat target={{ squadId: detail.squad.id }} className="h-[min(70vh,40rem)]" />;
 }
 

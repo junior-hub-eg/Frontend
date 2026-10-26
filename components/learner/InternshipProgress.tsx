@@ -38,7 +38,8 @@ import { ProjectSubmitCard } from "./ProjectSubmitCard";
 import { useT } from "@/lib/i18n/client";
 import { currentLocale, tk } from "@/lib/i18n/translate";
 import RedirectToSquad, { SQUAD_PAGE } from "./RedirectToSquad";
-import { TeamChatButton, TeamChatPanel, useTeamChat, type ChatKey } from "./TeamChat";
+import { TeamChatButton } from "./TeamChat";
+import { getConversations, openChat } from "@/lib/chat-api";
 import { CatalogLinks, ProjectLogo } from "@/components/learner/ProjectCatalogParts";
 
 const IMG = "/images/Intern";
@@ -97,9 +98,10 @@ function TeamCard({
   onChat,
 }: {
   squad: Squad | null;
-  unreadFor: (key: ChatKey) => number;
+  unreadFor: (key: string) => number;
   unreadTotal: number;
-  onChat: (key: ChatKey | undefined) => void;
+  /** A person's id for a private chat; undefined for the squad's chat. */
+  onChat: (key: string | undefined) => void;
 }) {
   const t = useT();
   return (
@@ -621,9 +623,13 @@ export default function InternshipProgress() {
   const t = useT();
   const { squad, sprint, board, leaderboard, error, notReady, reload } = useInterns();
   const [moveError, setMoveError] = useState<string | null>(null);
-  const chat = useTeamChat(squad);
-  /** The chat drawer: closed (false), the list (undefined), the group (null) or a private chat (an id). */
-  const [chatOpen, setChatOpen] = useState<ChatKey | undefined | false>(false);
+  // The squad's conversation of the one chat (27 Oct 2026): its unread count on the Team chat button.
+  const [teamUnread, setTeamUnread] = useState(0);
+  const squadId = squad?.id;
+  useEffect(() => {
+    if (!squadId) return;
+    getConversations().then((all) => setTeamUnread(all.find((c) => c.squadId === squadId)?.unread ?? 0), () => undefined);
+  }, [squadId]);
 
   async function handleMove(task: SquadTask, to: TaskStatus) {
     setMoveError(null);
@@ -688,7 +694,18 @@ export default function InternshipProgress() {
                 {error}
               </p>
             )}
-            <TeamCard squad={squad} unreadFor={chat.unreadFor} unreadTotal={chat.unreadTotal} onChat={(key) => setChatOpen(key)} />
+            <TeamCard
+              squad={squad}
+              unreadFor={() => 0}
+              unreadTotal={teamUnread}
+              onChat={(key) => {
+                if (key) openChat({ userId: key });
+                else if (squad) {
+                  setTeamUnread(0);
+                  openChat({ squadId: squad.id });
+                }
+              }}
+            />
             <SprintCard sprint={sprint} />
             <ProjectSubmitCard />
             <ProjectLinks />
@@ -702,9 +719,6 @@ export default function InternshipProgress() {
         </div>
       </div>
 
-      {squad && chatOpen !== false && (
-        <TeamChatPanel chat={chat} squad={squad} open={chatOpen} onOpen={setChatOpen} onClose={() => setChatOpen(false)} />
-      )}
     </div>
   );
 }

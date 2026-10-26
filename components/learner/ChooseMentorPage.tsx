@@ -30,12 +30,9 @@ import {
   chooseMentor,
   getMentor,
   getMentors,
-  getMentorMessages,
   getMentorSlots,
   getMyMentor,
   getMySessions,
-  markMentorMessagesRead,
-  sendMentorMessage,
   sessionTime,
   type Mentor,
   type MentorAssignment,
@@ -47,7 +44,7 @@ import {
 } from "@/lib/mentorship-api";
 import { useT } from "@/lib/i18n/client";
 import { dateLocale, tk, tNow } from "@/lib/i18n/translate";
-import DirectChat from "@/components/shared/DirectChat";
+import { openChat as openChatPanel } from "@/lib/chat-api";
 
 const TRACK_NAMES: Record<string, string> = {
   FRONTEND: "Frontend",
@@ -141,7 +138,8 @@ export default function ChooseMentorPage() {
   const [mine, setMine] = useState<MentorAssignment[]>([]);
   const [pending, setPending] = useState<PendingMentorRequest[]>([]);
   const [notice, setNotice] = useState<string | null>(null);
-  const [chatWith, setChatWith] = useState<Mentor | null>(null);
+  // The one chat (27 Oct 2026): the top bar's chat panel opens on the conversation with the mentor.
+  const setChatWith = (m: Mentor) => openChatPanel({ userId: m.id });
   // The notification of a new message from the mentor links here with ?chat=1.
   const openChat = useSearchParams().get("chat") === "1";
   const [sessions, setSessions] = useState<MentorSession[]>([]);
@@ -458,17 +456,6 @@ export default function ChooseMentorPage() {
         </section>
       </div>
 
-      {chatWith && (
-        <DirectChat
-          key={chatWith.id}
-          me="student"
-          partner={{ id: chatWith.id, name: chatWith.fullName, photoUrl: mentorAvatar(chatWith).src, subtitle: t("{track} mentor", { track: trackName(chatWith.trackCode) }) }}
-          load={getMentorMessages}
-          send={sendMentorMessage}
-          markRead={markMentorMessagesRead}
-          onClose={() => setChatWith(null)}
-        />
-      )}
 
       {profile && (
         <div

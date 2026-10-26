@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import Link from "next/link";
+import { EmbeddedChat } from "@/components/chat/ChatWorkspace";
 import {
   CalendarDays,
   CheckCircle2,
@@ -18,20 +19,18 @@ import {
 import { ApiError, errorMessage } from "@/lib/api-client";
 import {
   askQuestion,
-  getClassChannel,
   getMyQuestions,
   getStudentAssignments,
   getStudentCalendar,
   getStudentClasses,
   joinClass,
-  postToClassChannel,
   submitAssignment,
   type ClassQuestion,
   type StudentAssignment,
   type StudentCalendarItem,
   type StudentClass,
 } from "@/lib/student-classes-api";
-import type { AssignmentStatus, ChannelThread } from "@/lib/teacher-api";
+import type { AssignmentStatus } from "@/lib/teacher-api";
 import { SUBJECT_LABEL, formatDate } from "@/components/teacher/teacher-ui";
 import { CARD, ErrorBox, PRIMARY_BTN, Spinner } from "@/components/learner/grammar/shared";
 import { useT } from "@/lib/i18n/client";
@@ -256,80 +255,9 @@ function AssignmentCard({ a, onSubmitted }: { a: StudentAssignment; onSubmitted:
   );
 }
 
-/** The class channel: the teacher's messages and the students' replies. */
+/** The class's conversation of the one chat (27 Oct 2026): the teacher's messages and the students' replies, live. */
 function ClassChannel({ classId }: { classId: string }) {
-  const t = useT();
-  const [thread, setThread] = useState<ChannelThread | null>(null);
-  const [error, setError] = useState<unknown>(null);
-  const [text, setText] = useState("");
-  const [busy, setBusy] = useState(false);
-
-  const load = useCallback(async () => {
-    setError(null);
-    try {
-      setThread(await getClassChannel(classId));
-    } catch (e) {
-      setError(e);
-    }
-  }, [classId]);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- loading the channel of the chosen class
-    void load();
-  }, [load]);
-
-  async function send(e: FormEvent) {
-    e.preventDefault();
-    if (!text.trim()) return;
-    setBusy(true);
-    try {
-      const m = await postToClassChannel(classId, text.trim());
-      setThread((th) => (th ? { ...th, messages: [...th.messages, m] } : th));
-      setText("");
-    } catch (err) {
-      setError(err);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  if (error != null) return <ErrorBox error={error} onRetry={load} />;
-  if (!thread) return <Spinner label={t("Loading...")} />;
-  return (
-    <div className="grid gap-[0.6em]">
-      <ul className="grid max-h-[22em] gap-[0.5em] overflow-y-auto pe-[0.3em]">
-        {thread.messages.length === 0 ? (
-          <li className="py-[1em] text-center text-[0.85em] text-[#5b7089]">{t("No messages in this class yet.")}</li>
-        ) : (
-          thread.messages.map((m) => (
-            <li
-              key={m.id}
-              className={cn(
-                "max-w-[85%] rounded-[1em] px-[0.9em] py-[0.5em] text-[0.85em]",
-                m.mine ? "ms-auto bg-[#1f9e95] text-white" : m.senderRole === "Teacher" ? "bg-[#eaf3fd] text-[#14365a]" : "bg-[#f3f6f9] text-[#14365a]",
-              )}
-            >
-              <span className={cn("block text-[0.75em] font-bold", m.mine ? "text-white/80" : "text-[#1f5f99]")}>
-                {m.mine ? t("You") : m.senderName}
-                {m.senderRole === "Teacher" && !m.mine && ` • ${t("Teacher")}`}
-              </span>
-              <span dir="auto" className="block whitespace-pre-line">{m.text}</span>
-              <span className={cn("block text-[0.7em]", m.mine ? "text-white/70" : "text-[#5b7089]")}>{formatDate(m.createdUtc, true)}</span>
-            </li>
-          ))
-        )}
-      </ul>
-      <form onSubmit={send} className="flex gap-[0.5em]">
-        <label className="sr-only" htmlFor="channel-text">
-          {t("Write a message…")}
-        </label>
-        <input id="channel-text" dir="auto" value={text} onChange={(e) => setText(e.target.value)} placeholder={t("Write a message…")} className={INPUT} />
-        <button type="submit" disabled={busy || !text.trim()} aria-label={t("Send")} className={cn(PRIMARY_BTN, "px-[1em]")}>
-          <Send className="h-[1em] w-[1em] rtl:-scale-x-100" />
-        </button>
-      </form>
-    </div>
-  );
+  return <EmbeddedChat target={{ classId }} className="h-[min(65vh,34rem)]" />;
 }
 
 function AskTeacher({ classes, questions, onAsked }: { classes: StudentClass[]; questions: ClassQuestion[]; onAsked: (q: ClassQuestion) => void }) {

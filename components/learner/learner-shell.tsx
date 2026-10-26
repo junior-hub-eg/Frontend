@@ -12,6 +12,7 @@ import { useI18n, useT } from "@/lib/i18n/client";
 import { tk } from "@/lib/i18n/translate";
 import { LanguageSwitcher } from "@/components/shared/LanguageSwitcher";
 import { NotificationBell } from "@/components/shared/NotificationBell";
+import { ChatButton } from "@/components/chat/ChatButton";
 import { AssistantButton } from "./AssistantChat";
 import { LearnerSidebar } from "./learner-sidebar";
 
@@ -129,6 +130,7 @@ export function LearnerShell({
 
           <div className="ms-auto flex items-center gap-[1.2em]">
             <AssistantButton />
+            <ChatButton />
             <NotificationBell home="/learner" />
 
             {/* The track in focus and the student's level in it; hidden until the student has a track */}

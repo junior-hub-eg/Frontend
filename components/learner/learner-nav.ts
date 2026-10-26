@@ -5,6 +5,7 @@ import {
   FileText,
   FolderOpen,
   LayoutDashboard,
+  MessageCircle,
   Settings,
   type LucideIcon,
 } from "lucide-react";
@@ -28,6 +29,7 @@ export const LEARNER_NAV_MAIN: LearnerNavItem[] = [
   },
   { label: tk("AI Curriculum"), href: "/learner/ai-curriculum" as Route, icon: Brain },
   { label: tk("Recruitment Practice"), href: "/learner/recruitment-practice" as Route, icon: FileText },
+  { label: tk("Messages"), href: "/learner/messages" as Route, icon: MessageCircle },
 ];
 
 /** Group 2 (below the divider in the Figma). */
