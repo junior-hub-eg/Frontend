@@ -1,50 +1,126 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { createPortal } from "react-dom";
 import { useSearchParams } from "next/navigation";
-import { AlertTriangle, ClipboardCheck, Clock, Download, Star, TrendingUp } from "lucide-react";
+import { Activity, CheckCircle2, ClipboardCheck, Clock, MessageSquare, Star, TrendingUp, UsersRound, Video } from "lucide-react";
 import { errorMessage } from "@/lib/api-client";
 import { useI18n } from "@/lib/i18n/client";
-import { makeT, type TFunction } from "@/lib/i18n/translate";
+import { makeT, tk } from "@/lib/i18n/translate";
 import {
   getMentorSquads, getMyMentorReports, getMyStudents, getSquadReport, getStudentReport, recordReportExport, sendMentorReport,
   type ReportCategory, type SquadReport, type StudentReport,
 } from "@/lib/monitor-api";
+import { MENTOR_TREND_KEYS, exportMentorExcel, getMentorTrends, type MentorTrendKey, type MentorTrends } from "@/lib/reports-api";
 import { cn } from "@/lib/utils";
 import {
-  Card, CardTitle, Dialog, EmptyState, ErrorState, Field, MentorAvatar, MentorPage, Pill, PrimaryButton, ProgressBar, SecondaryButton, SelectPill,
+  BarList, DataTable, DonutChart, ExportMenu, FilterSelect, KitError, KitSkeleton, KpiCard, KpiGrid, PrintReport, PrintSection, ReportCard,
+  ReportHeader, ScheduleCard, TrendChart, defaultRange, formatDay, usePrintReport, weeklyPoints, type DateRange,
+} from "@/components/report-kit";
+import {
+  Card, CardTitle, Dialog, EmptyState, ErrorState, Field, MentorAvatar, MentorPage, Pill, PrimaryButton, SecondaryButton, SelectPill,
   Skeleton, SquadStatePill, UnderlineTabs, inputCls,
 } from "../mentor-area-ui";
 import { useApi } from "../use-api";
 import { categoryLabel, delayLabel } from "./SquadDetail";
 
+type Tab = "squad" | "student";
+
+const KPI_META: Record<MentorTrendKey, { label: string; icon: React.ReactNode; tint: string }> = {
+  tasksDone: { label: tk("Tasks done"), icon: <ClipboardCheck className="size-[1.1em]" />, tint: "bg-[#e6f0ff] text-[#1d5fd1]" },
+  storyPoints: { label: tk("Story points"), icon: <Star className="size-[1.1em]" />, tint: "bg-[#fff1e3] text-[#c2570c]" },
+  activeMembers: { label: tk("Active members"), icon: <UsersRound className="size-[1.1em]" />, tint: "bg-[#e0f4f2] text-[#0f7378]" },
+  reviews: { label: tk("Reviews"), icon: <CheckCircle2 className="size-[1.1em]" />, tint: "bg-[#efe9ff] text-[#6b3fd6]" },
+  sessionsCompleted: { label: tk("Sessions completed"), icon: <Video className="size-[1.1em]" />, tint: "bg-[#e3f6ea] text-[#167a3e]" },
+  chatMessages: { label: tk("Chat messages"), icon: <MessageSquare className="size-[1.1em]" />, tint: "bg-[#fde8f1] text-[#b4236a]" },
+};
+
 export default function Reports() {
-  const { t } = useI18n();
+  const { t, intl } = useI18n();
   const params = useSearchParams();
-  const [tab, setTab] = useState<"squad" | "student">("squad");
+  const [tab, setTab] = useState<Tab>("squad");
   const squads = useApi(getMentorSquads);
   const students = useApi(getMyStudents);
-  const [pickedSquad, setSquadId] = useState("");
+  const [range, setRange] = useState<DateRange>(defaultRange);
+  /** "" = all squads (the trends); the squad report then shows the picked or the current squad. */
+  const [squadFilter, setSquadFilter] = useState("");
+  const [pickedSquad, setPickedSquad] = useState("");
   const [pickedStudent, setStudentId] = useState("");
+  const [period, setPeriod] = useState("all");
   const [reporting, setReporting] = useState(params.get("report") === "1");
   const mine = useApi(getMyMentorReports);
   const focus = params.get("report");
 
-  const squadId = pickedSquad || (squads.data?.find((s) => s.isCurrent) ?? squads.data?.[0])?.id || "";
+  const squadId = squadFilter || pickedSquad || (squads.data?.find((s) => s.isCurrent) ?? squads.data?.[0])?.id || "";
   const people = useMemo(() => {
     const all = [...(students.data?.squadStudents ?? []).map((s) => ({ id: s.studentId, name: s.fullName })), ...(students.data?.mentees ?? []).map((m) => ({ id: m.studentId, name: m.fullName }))];
     return [...new Map(all.map((p) => [p.id, p])).values()];
   }, [students.data]);
   const studentId = pickedStudent || people[0]?.id || "";
 
+  const trends = useApi(() => getMentorTrends(squadFilter || undefined, range.from, range.to), [squadFilter, range.from, range.to]);
+  const squadReport = useApi(() => (squadId ? getSquadReport(squadId) : Promise.resolve(null)), [squadId]);
+  const studentReport = useApi(() => (studentId && tab === "student" ? getStudentReport(studentId) : Promise.resolve(null)), [studentId, tab]);
+
+  const shownSquad = squadReport.data && (period === "all" ? squadReport.data : filterSprint(squadReport.data, period));
+
+  const { printing, print } = usePrintReport((lang) => {
+    const r = tab === "squad" ? (squadId ? { squadId } : null) : studentId ? { studentId } : null;
+    if (r) recordReportExport({ ...r, language: lang }).then(() => tab === "squad" && squadReport.reload(), () => undefined);
+  });
+
+  const squadOptions = [{ value: "", label: t("All squads") }, ...(squads.data ?? []).map((s) => ({ value: s.id, label: s.name }))];
+  const filterName = squadOptions.find((o) => o.value === squadFilter)?.label;
+
+  const pickSquad = (id: string) => {
+    setPickedSquad(id);
+    if (squadFilter) setSquadFilter(id);
+    setPeriod("all");
+  };
+
   return (
     <MentorPage title={t("Reports")} subtitle={t("Progress, scores and delays of your own squads and students.")}>
       {squads.error ? <ErrorState title={t("We could not load your reports")} onRetry={squads.reload} error={squads.error} /> : (
         <>
-          {tab === "squad"
-            ? <SquadReportView squadId={squadId} setSquadId={setSquadId} squads={squads.data ?? []} tab={tab} setTab={setTab} />
-            : <StudentReportView studentId={studentId} setStudentId={setStudentId} people={people} tab={tab} setTab={setTab} />}
+          <ReportHeader
+            range={range}
+            onRangeChange={setRange}
+            filters={<FilterSelect label={t("Squad")} value={squadFilter} options={squadOptions} onChange={(v) => { setSquadFilter(v); if (v) setPickedSquad(v); setPeriod("all"); }} />}
+            actions={
+              <ExportMenu
+                onExcel={(lang) => exportMentorExcel(squadFilter || undefined, range.from, range.to, lang)}
+                onPdf={print}
+              />
+            }
+          />
+
+          <TrendsSection trends={trends.data} loading={trends.loading} error={trends.error ? t("We could not load the activity for this period.") : null} onRetry={trends.reload} squadName={squadFilter ? filterName : undefined} />
+
+          <Card>
+            <UnderlineTabs value={tab} onChange={setTab} tabs={[{ value: "squad", label: t("Squad report") }, { value: "student", label: t("Student report") }]} />
+            <div className="mt-[1.2em] flex flex-wrap gap-[0.6em]">
+              {tab === "squad" ? (
+                <>
+                  <SelectPill label={t("Squad")} value={squadId} onChange={pickSquad} options={(squads.data ?? []).map((s) => ({ value: s.id, label: s.name }))} />
+                  <SelectPill label={t("Period")} value={period} onChange={setPeriod} options={sprintOptions(squadReport.data, t, intl)} />
+                </>
+              ) : (
+                <SelectPill label={t("Student")} value={studentId} onChange={setStudentId} options={people.map((p) => ({ value: p.id, label: p.name }))} />
+              )}
+            </div>
+          </Card>
+
+          {tab === "squad" ? (
+            (squads.data?.length ?? 1) === 0 ? <Card><EmptyState title={t("No squads yet")} text={t("Reports show up once you monitor a squad.")} /></Card>
+              : squadReport.error ? <ErrorState title={t("We could not load this report")} onRetry={squadReport.reload} error={squadReport.error} />
+              : !shownSquad ? <Card><Skeleton className="h-[16em] w-full" /></Card> : <SquadReportBody data={shownSquad} />
+          ) : (
+            people.length === 0 && !students.loading ? <Card><EmptyState title={t("No students yet")} text={t("Reports show up once you monitor a squad.")} /></Card>
+              : studentReport.error ? <ErrorState title={t("We could not load this report")} onRetry={studentReport.reload} error={studentReport.error} />
+              : !studentReport.data ? <Card><Skeleton className="h-[16em] w-full" /></Card> : <StudentReportBody data={studentReport.data} />
+          )}
+
+          <ScheduleCard />
+
           <p className="text-[0.82em] text-[#475467]">
             {t("Something wrong with a squad or a student?")}{" "}
             <button type="button" onClick={() => setReporting(true)} className="font-semibold text-[#0f7378]">{t("Report it to the Admin")} →</button>
@@ -67,61 +143,72 @@ export default function Reports() {
             </Card>
           )}
           {reporting && <GeneralReportDialog onClose={() => { setReporting(false); mine.reload(); }} />}
+
+          {printing && (
+            <PrintReport
+              lang={printing}
+              title={makeT(printing)(tab === "squad" ? tk("Mentor report") : tk("Student report"))}
+              subtitle={tab === "squad" ? shownSquad?.squadName ?? filterName : studentReport.data?.fullName}
+              from={range.from}
+              to={range.to}
+            >
+              <PrintSection>
+                <TrendsSection trends={trends.data} loading={false} error={null} squadName={squadFilter ? filterName : undefined} />
+              </PrintSection>
+              <PrintSection breakBefore>
+                {tab === "squad" ? shownSquad && <SquadReportBody data={shownSquad} print /> : studentReport.data && <StudentReportBody data={studentReport.data} print />}
+              </PrintSection>
+            </PrintReport>
+          )}
         </>
       )}
     </MentorPage>
   );
 }
 
-function Header({ tab, setTab, children, onExport }: { tab: "squad" | "student"; setTab: (v: "squad" | "student") => void; children: React.ReactNode; onExport: (lang: "ar" | "en") => void }) {
-  const { t } = useI18n();
+/** KPI row (this period vs the one before) and the weekly trend chart. */
+function TrendsSection({ trends, loading, error, onRetry, squadName }: { trends: MentorTrends | null; loading: boolean; error: string | null; onRetry?: () => void; squadName?: string }) {
+  const { t, intl } = useI18n();
+  if (error) return <ReportCard><KitError text={error} onRetry={onRetry} retryLabel={t("Try again")} /></ReportCard>;
+  const series = MENTOR_TREND_KEYS.map((k) => ({ key: k, label: t(KPI_META[k].label) }));
   return (
-    <Card>
-      <UnderlineTabs value={tab} onChange={setTab} tabs={[{ value: "squad", label: t("Squad report") }, { value: "student", label: t("Student report") }]} />
-      <div className="mt-[1.2em] flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap gap-[0.6em]">{children}</div>
-        <div className="flex gap-[0.6em]">
-          <SecondaryButton onClick={() => onExport("ar")}><Download className="size-[1em]" /> {t("Export PDF · AR")}</SecondaryButton>
-          <PrimaryButton onClick={() => onExport("en")}><Download className="size-[1em]" /> {t("Export PDF · EN")}</PrimaryButton>
-        </div>
-      </div>
-    </Card>
+    <>
+      <KpiGrid>
+        {MENTOR_TREND_KEYS.map((k) => (
+          <KpiCard
+            key={k}
+            label={t(KPI_META[k].label)}
+            icon={KPI_META[k].icon}
+            tint={KPI_META[k].tint}
+            value={trends?.current[k] ?? null}
+            previous={trends?.previous[k] ?? null}
+            loading={loading && !trends}
+          />
+        ))}
+      </KpiGrid>
+      <ReportCard
+        title={<span className="flex items-center gap-[0.5em]"><Activity aria-hidden className="size-[1em] text-[#0f7378]" />{t("Weekly activity")}</span>}
+        hint={squadName ? t("{name} · per week", { name: squadName }) : t("Per week, for the chosen period")}
+      >
+        {!trends ? (
+          <KitSkeleton className="h-[15em] w-full" />
+        ) : (
+          <TrendChart
+            ariaLabel={t("Weekly activity")}
+            points={weeklyPoints(trends.series, intl, t)}
+            series={series}
+            defaultHidden={["chatMessages"]}
+            empty={t("No activity in this period yet.")}
+          />
+        )}
+      </ReportCard>
+    </>
   );
 }
 
-function SquadReportView({ squadId, setSquadId, squads, tab, setTab }: {
-  squadId: string; setSquadId: (v: string) => void; squads: { id: string; name: string; sprintStartDate: string | null; sprintEndDate: string | null }[];
-  tab: "squad" | "student"; setTab: (v: "squad" | "student") => void;
-}) {
-  const { t, intl } = useI18n();
-  const [period, setPeriod] = useState("all");
-  const report = useApi(() => (squadId ? getSquadReport(squadId) : Promise.resolve(null)), [squadId]);
-  const [printing, setPrinting] = useState<"ar" | "en" | null>(null);
-  const data = report.data;
+function sprintOptions(data: SquadReport | null, t: (s: string) => string, intl: string) {
   const sprints = data?.sprints ?? [];
-  const periods = [{ value: "all", label: sprints.length ? `${day(sprints[0].startDate, intl)} – ${day(sprints[sprints.length - 1].endDate, intl, true)}` : t("All sprints") },
-    ...sprints.map((s) => ({ value: s.name, label: `${s.name} · ${day(s.startDate, intl)} – ${day(s.endDate, intl)}` }))];
-  const shown = period === "all" ? data : data && filterSprint(data, period);
-
-  const exportPdf = (lang: "ar" | "en") => {
-    if (!data) return;
-    recordReportExport({ squadId, language: lang }).catch(() => undefined);
-    setPrinting(lang);
-    setTimeout(() => { window.print(); setPrinting(null); report.reload(); }, 300);
-  };
-
-  return (
-    <>
-      <Header tab={tab} setTab={setTab} onExport={exportPdf}>
-        <SelectPill label={t("Squad")} value={squadId} onChange={(v) => { setSquadId(v); setPeriod("all"); }} options={squads.map((s) => ({ value: s.id, label: s.name }))} />
-        <SelectPill label={t("Period")} value={period} onChange={setPeriod} options={periods} />
-      </Header>
-      {squads.length === 0 ? <Card><EmptyState title={t("No squads yet")} text={t("Reports show up once you monitor a squad.")} /></Card>
-        : report.error ? <ErrorState title={t("We could not load this report")} onRetry={report.reload} error={report.error} />
-        : !shown ? <Card><Skeleton className="h-[16em] w-full" /></Card> : <SquadReportBody data={shown} t={t} intl={intl} />}
-      {printing && shown && createPortal(<PrintFrame lang={printing}><SquadReportBody data={shown} t={makeT(printing)} intl={printing === "ar" ? "ar-EG" : "en-GB"} print /></PrintFrame>, document.body)}
-    </>
-  );
+  return [{ value: "all", label: t("All sprints") }, ...sprints.map((s) => ({ value: s.name, label: `${s.name} · ${sprintDates(s, intl)}` }))];
 }
 
 function filterSprint(data: SquadReport, name: string): SquadReport {
@@ -129,167 +216,115 @@ function filterSprint(data: SquadReport, name: string): SquadReport {
   return { ...data, sprints: s ? [s] : [], delayRows: data.delayRows.filter((d) => d.sprintName === name), delays: data.delayRows.filter((d) => d.sprintName === name).length };
 }
 
-const day = (iso: string, intl: string, year = false) => new Date(iso).toLocaleDateString(intl, { month: "short", day: "numeric", ...(year ? { year: "numeric" } : {}) });
+const sprintDates = (s: { startDate: string; endDate: string }, intl: string) => `${formatDay(s.startDate, intl)} – ${formatDay(s.endDate, intl)}`;
 
-function SquadReportBody({ data, t, intl, print = false }: { data: SquadReport; t: TFunction; intl: string; print?: boolean }) {
-  const maxPoints = Math.max(1, ...data.members.map((m) => m.points));
-  return (
-    <>
-      {print && <h1 className="text-[1.6em] font-extrabold text-[#1b2d54]">{t("Squad report")} · {data.squadName}</h1>}
-      <div className="grid grid-cols-2 gap-[1em] lg:grid-cols-4">
-        <Stat icon={<TrendingUp className="size-[1.1em] text-[#0f7378]" />} tint="bg-[#e0f4f2]" value={`${data.progress}%`} label={t("Overall progress")} />
-        <Stat icon={<ClipboardCheck className="size-[1.1em] text-[#1d5fd1]" />} tint="bg-[#e6f0ff]" value={`${data.tasksDone} / ${data.tasksTotal}`} label={t("Tasks done")} />
-        <Stat icon={<Star className="size-[1.1em] text-[#c2570c]" />} tint="bg-[#fff1e3]" value={`${data.pointsDone} / ${data.pointsTotal}`} label={t("Story points")} />
-        <Stat icon={<Clock className="size-[1.1em] text-[#c81e1e]" />} tint="bg-[#fde8e8]" value={String(data.delays)} label={t("Delays")} />
-      </div>
-      <div className="grid gap-[1.4em] lg:grid-cols-[1fr_30em]">
-        <Card>
-          <CardTitle>{t("Progress per sprint")}</CardTitle>
-          <div className="flex h-[14em] items-end justify-around gap-[1em]">
-            {data.sprints.map((s) => (
-              <div key={s.name} className="flex h-full flex-1 flex-col items-center justify-end">
-                <span className="mb-[0.3em] text-[0.8em] font-semibold text-[#1b2d54]">{s.percent}%</span>
-                <span className="w-[3.8em] rounded-[0.6em] bg-gradient-to-b from-[#2bb3ad] to-[#0f7378]" style={{ height: `${Math.max(3, s.percent)}%` }} />
-                <span className="mt-[0.5em] text-[0.75em] text-[#64748b]">{s.name}</span>
-              </div>
-            ))}
-          </div>
-        </Card>
-        <Card>
-          <CardTitle>{t("Tasks and story points per member")}</CardTitle>
-          <ul className="space-y-[0.8em]">
-            {data.members.map((m) => (
-              <li key={m.studentId} className="flex items-center gap-[0.7em] text-[0.82em]">
-                <MentorAvatar name={m.fullName} photoUrl={m.photoUrl} className="size-[2em]" />
-                <span className="w-[8.5em] truncate text-[#1b2d54]">{m.fullName}</span>
-                <ProgressBar value={(m.points / maxPoints) * 100} className="flex-1" />
-                <span className="w-[7em] text-[0.9em] text-[#64748b]">{t("{t} tasks · {p} pts", { t: m.tasks, p: m.points })}</span>
-              </li>
-            ))}
-          </ul>
-        </Card>
-      </div>
-      <div className="grid gap-[1.4em] lg:grid-cols-2">
-        <Card>
-          <CardTitle>{t("Delays and reasons")}</CardTitle>
-          {data.delayRows.length === 0 ? <p className="text-[0.85em] text-[#475467]">{t("No delays. The squad is on time.")}</p> : (
-            <ul className="divide-y divide-[#eef2f6]">
-              {data.delayRows.map((d, i) => (
-                <li key={i} className="flex items-center gap-[0.8em] py-[0.8em]">
-                  <span className="grid size-[2.4em] place-items-center rounded-[0.7em] bg-[#fdf0e6]"><AlertTriangle className="size-[1.1em] text-[#c2570c]" /></span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-[0.88em] font-semibold text-[#1b2d54]">{d.sprintName ?? t("Sprint")}{d.note ? ` · ${d.note}` : ""}</span>
-                    <span className="text-[0.75em] text-[#64748b]">{t("Marked late on {date}", { date: day(d.createdUtc, intl) })}</span>
-                  </span>
-                  <Pill tone="orange" dot={false}>{t(delayLabel(d.reason))}</Pill>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-        <Card>
-          <CardTitle>{t("Review result")}</CardTitle>
-          <SquadStatePill state={data.review.state} />
-          <dl className="mt-[1em] divide-y divide-[#eef2f6] text-[0.85em]">
-            <div className="flex justify-between py-[0.8em]"><dt className="text-[#475467]">{t("First review round")}</dt>
-              <dd className="font-medium text-[#1b2d54]">{data.review.firstDecision ? `${t(data.review.firstDecision === "Approved" ? "Approved" : "Changes requested")}${data.review.firstAverage != null ? ` · ${t("average {n}", { n: data.review.firstAverage })}` : ""}` : "—"}</dd></div>
-            <div className="flex justify-between py-[0.8em]"><dt className="text-[#475467]">{t("Student reviews done")}</dt><dd className="font-medium text-[#1b2d54]">{t("{a} of {b}", { a: data.review.studentReviewsDone, b: data.review.students })}</dd></div>
-            <div className="flex justify-between py-[0.8em]"><dt className="text-[#475467]">{t("Reports exported")}</dt><dd className="font-medium text-[#1b2d54]">{t("{n} PDF files", { n: data.review.exports })}</dd></div>
-          </dl>
-        </Card>
-      </div>
-    </>
-  );
-}
-
-function StudentReportView({ studentId, setStudentId, people, tab, setTab }: {
-  studentId: string; setStudentId: (v: string) => void; people: { id: string; name: string }[]; tab: "squad" | "student"; setTab: (v: "squad" | "student") => void;
-}) {
+function SquadReportBody({ data, print = false }: { data: SquadReport; print?: boolean }) {
   const { t, intl } = useI18n();
-  const report = useApi(() => (studentId ? getStudentReport(studentId) : Promise.resolve(null)), [studentId]);
-  const [printing, setPrinting] = useState<"ar" | "en" | null>(null);
-  const exportPdf = (lang: "ar" | "en") => {
-    if (!report.data) return;
-    recordReportExport({ studentId, language: lang }).catch(() => undefined);
-    setPrinting(lang);
-    setTimeout(() => { window.print(); setPrinting(null); }, 300);
-  };
+  type DelayRow = SquadReport["delayRows"][number];
   return (
-    <>
-      <Header tab={tab} setTab={setTab} onExport={exportPdf}>
-        <SelectPill label={t("Student")} value={studentId} onChange={setStudentId} options={people.map((p) => ({ value: p.id, label: p.name }))} />
-      </Header>
-      {people.length === 0 ? <Card><EmptyState title={t("No students yet")} text={t("Reports show up once you monitor a squad.")} /></Card>
-        : report.error ? <ErrorState title={t("We could not load this report")} onRetry={report.reload} error={report.error} />
-        : !report.data ? <Card><Skeleton className="h-[16em] w-full" /></Card> : <StudentReportBody data={report.data} t={t} intl={intl} />}
-      {printing && report.data && createPortal(<PrintFrame lang={printing}><StudentReportBody data={report.data} t={makeT(printing)} intl={printing === "ar" ? "ar-EG" : "en-GB"} print /></PrintFrame>, document.body)}
-    </>
+    <div className="space-y-[1.4em]">
+      {print && <h2 className="text-[1.3em] font-extrabold text-[#1b2d54]">{t("Squad report")} · {data.squadName}</h2>}
+      <KpiGrid className="md:grid-cols-4 xl:grid-cols-4">
+        <KpiCard icon={<TrendingUp className="size-[1.1em]" />} label={t("Overall progress")} value={`${data.progress}%`} />
+        <KpiCard icon={<ClipboardCheck className="size-[1.1em]" />} tint="bg-[#e6f0ff] text-[#1d5fd1]" label={t("Tasks done")} value={`${data.tasksDone} / ${data.tasksTotal}`} />
+        <KpiCard icon={<Star className="size-[1.1em]" />} tint="bg-[#fff1e3] text-[#c2570c]" label={t("Story points")} value={`${data.pointsDone} / ${data.pointsTotal}`} />
+        <KpiCard icon={<Clock className="size-[1.1em]" />} tint="bg-[#fde8e8] text-[#c81e1e]" label={t("Delays")} value={data.delays} />
+      </KpiGrid>
+      <div className="grid gap-[1.4em] lg:grid-cols-2">
+        <ReportCard title={t("Progress per sprint")}>
+          <BarList
+            max={100}
+            suffix="%"
+            valueWidth="4em"
+            empty={t("No sprints yet.")}
+            items={data.sprints.map((s) => ({ key: s.name, label: <span title={sprintDates(s, intl)}>{s.name} <span className="text-[#94a3b8]">· {sprintDates(s, intl)}</span></span>, value: s.percent }))}
+          />
+        </ReportCard>
+        <ReportCard title={t("Tasks and story points per member")}>
+          <BarList
+            empty={t("No members yet.")}
+            items={data.members.map((m) => ({
+              key: m.studentId,
+              leading: <MentorAvatar name={m.fullName} photoUrl={m.photoUrl} className="size-[2em] shrink-0" />,
+              label: m.fullName,
+              value: m.points,
+              display: t("{t} tasks · {p} pts", { t: m.tasks, p: m.points }),
+              color: "#2a78d6",
+            }))}
+          />
+        </ReportCard>
+      </div>
+      <ReportCard title={t("Delays and reasons")}>
+        <DataTable<DelayRow>
+          rows={data.delayRows}
+          rowKey={(_, i) => String(i)}
+          empty={t("No delays. The squad is on time.")}
+          initialSort={{ key: "date", desc: true }}
+          columns={[
+            { key: "sprint", header: t("Sprint"), render: (d) => <b>{d.sprintName ?? t("Sprint")}</b>, sortValue: (d) => d.sprintName },
+            { key: "reason", header: t("Reason"), render: (d) => <Pill tone="orange" dot={false}>{t(delayLabel(d.reason))}</Pill>, sortValue: (d) => t(delayLabel(d.reason)) },
+            { key: "note", header: t("Note"), render: (d) => <span className="text-[#475467]" dir="auto">{d.note || "—"}</span> },
+            { key: "date", header: t("Marked late on"), render: (d) => new Date(d.createdUtc).toLocaleDateString(intl, { day: "numeric", month: "short", year: "numeric" }), sortValue: (d) => d.createdUtc, align: "end" },
+          ]}
+        />
+      </ReportCard>
+      <div className="grid gap-[1.4em] lg:grid-cols-2">
+        <ReportCard title={t("Task completion")}>
+          <DonutChart
+            centerLabel={t("tasks")}
+            empty={t("No tasks yet.")}
+            segments={[
+              { key: "done", label: t("Done"), value: data.tasksDone, color: "#00949a" },
+              { key: "open", label: t("Not done yet"), value: Math.max(0, data.tasksTotal - data.tasksDone), color: "#cbd5e1" },
+            ]}
+          />
+        </ReportCard>
+        <ReportCard title={t("Review result")} action={<SquadStatePill state={data.review.state} />}>
+          <dl className="divide-y divide-[#eef2f6] text-[0.85em]">
+            <div className="flex justify-between gap-3 py-[0.8em]"><dt className="text-[#475467]">{t("First review round")}</dt>
+              <dd className="font-medium text-[#1b2d54]">{data.review.firstDecision ? `${t(data.review.firstDecision === "Approved" ? "Approved" : "Changes requested")}${data.review.firstAverage != null ? ` · ${t("average {n}", { n: data.review.firstAverage })}` : ""}` : "—"}</dd></div>
+            <div className="flex justify-between gap-3 py-[0.8em]"><dt className="text-[#475467]">{t("Student reviews done")}</dt><dd className="font-medium text-[#1b2d54]">{t("{a} of {b}", { a: data.review.studentReviewsDone, b: data.review.students })}</dd></div>
+            <div className="flex justify-between gap-3 py-[0.8em]"><dt className="text-[#475467]">{t("Reports exported")}</dt><dd className="font-medium text-[#1b2d54]">{t("{n} PDF files", { n: data.review.exports })}</dd></div>
+          </dl>
+        </ReportCard>
+      </div>
+    </div>
   );
 }
 
-function StudentReportBody({ data, t, intl, print = false }: { data: StudentReport; t: TFunction; intl: string; print?: boolean }) {
-  const maxPoints = Math.max(1, ...data.sprints.map((s) => s.points));
+function StudentReportBody({ data, print = false }: { data: StudentReport; print?: boolean }) {
+  const { t, intl } = useI18n();
   const scored = data.reviews.filter((r) => r.overall != null);
   return (
-    <>
-      {print && <h1 className="text-[1.6em] font-extrabold text-[#1b2d54]">{t("Student report")} · {data.fullName}</h1>}
-      <div className="grid grid-cols-2 gap-[1em] lg:grid-cols-4">
-        <Stat icon={<ClipboardCheck className="size-[1.1em] text-[#1d5fd1]" />} tint="bg-[#e6f0ff]" value={String(data.tasksDone)} label={t("Tasks done")} />
-        <Stat icon={<Star className="size-[1.1em] text-[#c2570c]" />} tint="bg-[#fff1e3]" value={String(data.points)} label={t("Story points")} />
-        <Stat icon={<TrendingUp className="size-[1.1em] text-[#0f7378]" />} tint="bg-[#e0f4f2]" value={data.averageScore != null ? `${data.averageScore} / 5` : "—"} label={t("Average review score")} />
-        <Stat icon={<Clock className="size-[1.1em] text-[#c81e1e]" />} tint="bg-[#fde8e8]" value={String(data.sessions)} label={t("Sessions done")} />
-      </div>
+    <div className="space-y-[1.4em]">
+      {print && <h2 className="text-[1.3em] font-extrabold text-[#1b2d54]">{t("Student report")} · {data.fullName}</h2>}
+      <KpiGrid className="md:grid-cols-4 xl:grid-cols-4">
+        <KpiCard icon={<ClipboardCheck className="size-[1.1em]" />} tint="bg-[#e6f0ff] text-[#1d5fd1]" label={t("Tasks done")} value={data.tasksDone} />
+        <KpiCard icon={<Star className="size-[1.1em]" />} tint="bg-[#fff1e3] text-[#c2570c]" label={t("Story points")} value={data.points} />
+        <KpiCard icon={<TrendingUp className="size-[1.1em]" />} label={t("Average review score")} value={data.averageScore != null ? `${data.averageScore} / 5` : "—"} />
+        <KpiCard icon={<Clock className="size-[1.1em]" />} tint="bg-[#fde8e8] text-[#c81e1e]" label={t("Sessions done")} value={data.sessions} />
+      </KpiGrid>
       <div className="grid gap-[1.4em] lg:grid-cols-2">
-        <Card>
-          <CardTitle>{t("Tasks and story points per sprint")}</CardTitle>
-          <ul className="space-y-[0.8em]">
-            {data.sprints.map((s, i) => (
-              <li key={i} className="flex items-center gap-[0.7em] text-[0.82em]">
-                <span className="w-[11em] truncate text-[#1b2d54]">{s.squadName} · {s.sprintName}</span>
-                <ProgressBar value={(s.points / maxPoints) * 100} className="flex-1" />
-                <span className="w-[7em] text-[0.9em] text-[#64748b]">{t("{t} tasks · {p} pts", { t: s.tasks, p: s.points })}</span>
-              </li>
-            ))}
-          </ul>
-        </Card>
-        <Card>
-          <CardTitle>{t("Review score trend")}</CardTitle>
-          {scored.length === 0 ? <p className="text-[0.85em] text-[#475467]">{t("No reviews yet.")}</p> : (
-            <div className="flex h-[12em] items-end justify-around gap-[0.8em]">
-              {scored.map((r, i) => (
-                <div key={i} className="flex h-full flex-1 flex-col items-center justify-end">
-                  <span className="mb-[0.3em] text-[0.75em] font-semibold text-[#1b2d54]">{r.overall}</span>
-                  <span className="w-[2.4em] rounded-[0.5em] bg-gradient-to-b from-[#2bb3ad] to-[#0f6b70]" style={{ height: `${((r.overall ?? 0) / 5) * 100}%` }} />
-                  <span className="mt-[0.4em] text-[0.7em] text-[#64748b]">{r.submittedUtc ? new Date(r.submittedUtc).toLocaleDateString(intl, { month: "short", day: "numeric" }) : `R${i + 1}`}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </Card>
+        <ReportCard title={t("Tasks and story points per sprint")}>
+          <BarList
+            empty={t("No sprints yet.")}
+            items={data.sprints.map((s, i) => ({ key: String(i), label: `${s.squadName} · ${s.sprintName}`, value: s.points, display: t("{t} tasks · {p} pts", { t: s.tasks, p: s.points }) }))}
+          />
+        </ReportCard>
+        <ReportCard title={t("Review score trend")}>
+          <TrendChart
+            height={200}
+            ariaLabel={t("Review score trend")}
+            empty={t("No reviews yet.")}
+            series={[{ key: "score", label: t("Review score") }]}
+            points={scored.map((r, i) => {
+              const label = r.submittedUtc ? new Date(r.submittedUtc).toLocaleDateString(intl, { month: "short", day: "numeric" }) : `R${i + 1}`;
+              return { key: String(i), label, values: { score: r.overall } };
+            })}
+          />
+        </ReportCard>
       </div>
-    </>
-  );
-}
-
-function Stat({ icon, tint, value, label }: { icon: React.ReactNode; tint: string; value: string; label: string }) {
-  return (
-    <Card>
-      <span className={cn("grid size-[2.4em] place-items-center rounded-[0.7em]", tint)}>{icon}</span>
-      <p className="mt-[0.7em] text-[1.9em] font-extrabold text-[#1b2d54]">{value}</p>
-      <p className="text-[0.8em] text-[#475467]">{label}</p>
-    </Card>
-  );
-}
-
-/** Only this is printed ("Export PDF"): the report in the chosen language and direction. */
-function PrintFrame({ lang, children }: { lang: "ar" | "en"; children: React.ReactNode }) {
-  return (
-    <>
-      <style>{`@media screen { #mentor-print { display: none } } @media print { body > *:not(#mentor-print) { display: none !important } #mentor-print { display: block } @page { margin: 14mm } }`}</style>
-      <div id="mentor-print" dir={lang === "ar" ? "rtl" : "ltr"} lang={lang} className="space-y-[1.2em] bg-white p-[1em] font-[family-name:var(--font-poppins)] text-[12px]" style={lang === "ar" ? { fontFamily: "var(--font-cairo), Tahoma, sans-serif" } : undefined}>
-        {children}
-      </div>
-    </>
+    </div>
   );
 }
 

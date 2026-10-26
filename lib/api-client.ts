@@ -125,6 +125,54 @@ async function request<T>(baseUrl: string, path: string, options: RequestInit = 
   return res.json() as Promise<T>;
 }
 
+/** The file name from a Content-Disposition header (RFC 6266: filename* first, then filename). */
+export function dispositionFileName(header: string | null): string | null {
+  if (!header) return null;
+  const star = /filename\*\s*=\s*([^']*)'[^']*'([^;]+)/i.exec(header);
+  if (star) {
+    try {
+      return decodeURIComponent(star[2].trim().replace(/^"|"$/g, ""));
+    } catch {
+      // fall through to the plain filename
+    }
+  }
+  const plain = /filename\s*=\s*("([^"]*)"|[^;]+)/i.exec(header);
+  return plain ? (plain[2] ?? plain[1]).trim() : null;
+}
+
+/**
+ * Downloads a file from the backend with the same auth (and one token refresh) as `api`,
+ * and saves it under the name the server gives in Content-Disposition (or `fallbackName`).
+ */
+export async function downloadFile(path: string, fallbackName: string, options: RequestInit = {}): Promise<void> {
+  if (!API_BASE_URL) throw new ApiError(`No API base URL configured for "${path}". Set NEXT_PUBLIC_API_URL.`, 0);
+  const hadToken = getToken() !== null;
+  const init: RequestInit = { ...options, method: options.method ?? "GET" };
+  let res = await send(API_BASE_URL, path, init);
+  if (res.status === 401 && hadToken) {
+    if (await refreshAccessToken()) res = await send(API_BASE_URL, path, init);
+    else setToken(null);
+  }
+  if (!res.ok) {
+    let body: unknown;
+    try {
+      body = await res.json();
+    } catch {
+      // no JSON body
+    }
+    throw new ApiError(`Request to ${path} failed with ${res.status}`, res.status, body);
+  }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = dispositionFileName(res.headers.get("Content-Disposition")) ?? fallbackName;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 export const api = {
   get: <T>(path: string, options?: RequestInit) => request<T>(API_BASE_URL, path, { ...options, method: "GET" }),
   post: <T>(path: string, body?: unknown, options?: RequestInit) =>

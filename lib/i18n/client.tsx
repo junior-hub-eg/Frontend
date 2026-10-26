@@ -50,3 +50,16 @@ export function useI18n(): I18n {
 export function useT(): TFunction {
   return useI18n().t;
 }
+
+/**
+ * Shows its children in another language than the page (for example a report printed in Arabic from the
+ * English page). It changes what useI18n()/useT() return below it; the page's own language stays as it is.
+ */
+export function LocaleOverride({ locale, children }: { locale: Locale; children: ReactNode }) {
+  const parent = useI18n();
+  const value = useMemo<I18n>(
+    () => ({ ...parent, locale, dir: dirOf(locale), intl: intlLocale(locale), t: makeT(locale) }),
+    [parent, locale],
+  );
+  return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
+}
