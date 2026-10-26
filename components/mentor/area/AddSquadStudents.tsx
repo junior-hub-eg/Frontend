@@ -9,6 +9,10 @@ import { Dialog, MentorAvatar, PrimaryButton, SecondaryButton, inputCls } from "
 
 const ALL_ROLES: SquadSeatRole[] = ["Frontend", "Backend", "UIUX", "AI", "Testing", "Data", "Mobile", "Gaming"];
 
+/** The seat of a track's students, as the backend sets it: a Frontend student joins only as Frontend. */
+const roleForTrack = (code: string | null): SquadSeatRole | null =>
+  code ? (ALL_ROLES.find((r) => r.toUpperCase() === code.toUpperCase() && r !== "Gaming") ?? "Gaming") : null;
+
 /**
  * "Add students" (26 Oct 2026): the students of the squad's school who are in no squad, and the seats still open.
  * Each student is added in a role that has an open seat, so the squad never goes over the number it needs. The
@@ -40,12 +44,18 @@ export function AddSquadStudents({ squadId, onClose, onAdded }: { squadId: strin
   const seatsLeft = data?.seats.length ? data.seats.reduce((n, s) => n + Math.max(0, s.needed - s.filled), 0) : null;
   const full = seatsLeft === 0;
   const q = query.trim().toLowerCase();
-  const students = (data?.students ?? []).filter(
+  // Only students whose track's role has an open seat (a student with no track yet may take any open seat).
+  const fitting = (data?.students ?? []).filter((s) => {
+    const r = roleForTrack(s.trackCode);
+    return r === null ? open.length > 0 : open.includes(r);
+  });
+  const students = fitting.filter(
     (s) => !q || s.fullName.toLowerCase().includes(q) || (s.trackName ?? "").toLowerCase().includes(q),
   );
 
   async function add(studentId: string) {
-    const role = roles[studentId] ?? open[0];
+    const student = data?.students.find((s) => s.id === studentId);
+    const role = roleForTrack(student?.trackCode ?? null) ?? roles[studentId] ?? open[0];
     if (!role) return;
     setBusy(studentId);
     setError(null);
@@ -125,7 +135,11 @@ export function AddSquadStudents({ squadId, onClose, onAdded }: { squadId: strin
 
           {students.length === 0 ? (
             <p className="py-[1em] text-center text-[0.85em] text-[#64748b]">
-              {data.students.length === 0 ? t("Every student is already in a squad.") : t("No students match.")}
+              {data.students.length === 0
+                ? t("Every student is already in a squad.")
+                : fitting.length === 0
+                  ? t("No student without a squad learns a track that has an open seat here.")
+                  : t("No students match.")}
             </p>
           ) : (
             <ul className="max-h-[22em] divide-y divide-[#eef2f6] overflow-y-auto">
@@ -139,19 +153,28 @@ export function AddSquadStudents({ squadId, onClose, onAdded }: { squadId: strin
                       {s.grade ? ` · ${t("Grade {grade}", { grade: s.grade })}` : ""}
                     </span>
                   </span>
-                  <select
-                    aria-label={t("Role")}
-                    value={roles[s.id] ?? open[0] ?? ""}
-                    onChange={(e) => setRoles((r) => ({ ...r, [s.id]: e.target.value as SquadSeatRole }))}
-                    disabled={full}
-                    className="rounded-[0.6em] border border-[#d6dde6] bg-white px-[0.6em] py-[0.35em] text-[0.9em]"
-                  >
-                    {open.map((r) => (
-                      <option key={r} value={r}>
-                        {t(r)}
-                      </option>
-                    ))}
-                  </select>
+{roleForTrack(s.trackCode) ? (
+                    <span
+                      title={t("The role follows the student's track.")}
+                      className="rounded-[0.6em] bg-[#eef2f6] px-[0.6em] py-[0.35em] text-[0.9em] font-semibold text-[#1b2d54]"
+                    >
+                      {t(roleForTrack(s.trackCode)!)}
+                    </span>
+                  ) : (
+                    <select
+                      aria-label={t("Role")}
+                      value={roles[s.id] ?? open[0] ?? ""}
+                      onChange={(e) => setRoles((r) => ({ ...r, [s.id]: e.target.value as SquadSeatRole }))}
+                      disabled={full}
+                      className="rounded-[0.6em] border border-[#d6dde6] bg-white px-[0.6em] py-[0.35em] text-[0.9em]"
+                    >
+                      {open.map((r) => (
+                        <option key={r} value={r}>
+                          {t(r)}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                   <PrimaryButton type="button" onClick={() => add(s.id)} disabled={full || busy !== null} className="!px-[0.9em] !py-[0.4em]">
                     {busy === s.id ? <LoaderCircle className="size-[1em] animate-spin" /> : <UserPlus className="size-[1em]" />} {t("Add")}
                   </PrimaryButton>
