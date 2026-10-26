@@ -115,4 +115,6 @@ export const learner: Record<string, string> = {
   "(you)": "(أنت)",
   "Invite": "دعوة",
   "Message {name}": "مراسلة {name}",
+  "Changing your track needs the admin's approval. You will get a notification when they answer.": "تغيير المسار يحتاج موافقة الأدمن، وسيصلك إشعار عند الرد.",
+  "Your level in {track} is {level}. Changing your track needs the admin's approval; you will get a notification when they answer.": "مستواك في {track} هو {level}. تغيير المسار يحتاج موافقة الأدمن، وسيصلك إشعار عند الرد.",
 };

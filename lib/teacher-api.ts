@@ -439,3 +439,9 @@ export const changeTeacherPassword = (currentPassword: string, newPassword: stri
 export const addClass = (grade: number, name: string, autoAccept: boolean) =>
   api.post<TeacherClassDetail>("/api/v1/teacher/classes", { grade, name, autoAccept });
 export const removeClass = (id: string) => api.delete<void>(`/api/v1/teacher/classes/${id}`);
+export const addClassStudent = (classId: string, email: string) =>
+  api.post<TeacherClassDetail>(`/api/v1/teacher/classes/${classId}/students`, { email });
+export const sendClassInvite = (classId: string, email: string) =>
+  api.post<{ link: string; email: string; hasAccount: boolean }>(`/api/v1/teacher/classes/${classId}/invite`, { email });
+/** The link a student opens to join the class (the site's /join/{code}). */
+export const classInviteLink = (code: string) => `${typeof window === "undefined" ? "" : window.location.origin}/join/${code}`;

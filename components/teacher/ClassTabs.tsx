@@ -8,6 +8,9 @@ import { ApiError } from "@/lib/api-client";
 import { errorMessage } from "@/lib/api-client";
 import { useT } from "@/lib/i18n/client";
 import {
+  addClassStudent,
+  classInviteLink,
+  sendClassInvite,
   addClass,
   getTeacherProfile,
   removeClass,
@@ -158,6 +161,106 @@ export function InviteTab({ d, onChange, notify }: Props) {
         </ul>
       </div>
       {error && <p role="alert" className="text-[11px] text-[#c81e1e] lg:col-span-2">{error}</p>}
+    </div>
+  );
+}
+
+/**
+ * Bringing students in: the invite link (copy it, or have it emailed), and adding a student account by its email at once.
+ */
+export function InviteStudents({ d, onChange, notify }: Props) {
+  const t = useT();
+  const link = classInviteLink(d.joinCode);
+  const [inviteTo, setInviteTo] = useState("");
+  const [addEmail, setAddEmail] = useState("");
+  const [busy, setBusy] = useState<"invite" | "add" | null>(null);
+  const [errors, setErrors] = useState<{ invite?: string; add?: string }>({});
+
+  async function invite(e: FormEvent) {
+    e.preventDefault();
+    setBusy("invite");
+    setErrors({});
+    try {
+      const sent = await sendClassInvite(d.id, inviteTo.trim());
+      notify(sent.hasAccount ? t("Invite sent to {email}. They also got a notification.", { email: sent.email }) : t("Invite sent to {email}.", { email: sent.email }));
+      setInviteTo("");
+    } catch (err) {
+      setErrors({ invite: errorMessage(err) });
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function add(e: FormEvent) {
+    e.preventDefault();
+    setBusy("add");
+    setErrors({});
+    try {
+      onChange(await addClassStudent(d.id, addEmail.trim()));
+      notify(t("The student was added to class {name}.", { name: d.name }));
+      setAddEmail("");
+    } catch (err) {
+      setErrors({ add: errorMessage(err) });
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  return (
+    <div className="grid gap-4 px-5 pb-5 lg:grid-cols-2">
+      <div className="rounded-xl border border-[#e3ece9] p-4">
+        <p className="text-[11px] font-semibold">{t("Invite link")}</p>
+        <p className="mt-1 text-[10px] text-[#1B2D54]/60">{t("Send this link to your students. They open it, sign in, and join the class.")}</p>
+        <div className="mt-3 flex items-center gap-2">
+          <span dir="ltr" className="min-w-0 flex-1 truncate rounded-lg bg-[#f6f9f8] px-3 py-2 font-mono text-[10px] text-start">
+            {link}
+          </span>
+          <button
+            type="button"
+            onClick={() => navigator.clipboard.writeText(link).then(() => notify(t("Link copied")), () => undefined)}
+            className="flex shrink-0 items-center gap-1 rounded-lg bg-[#14757d] px-3 py-2 text-[10px] font-semibold text-white"
+          >
+            <Copy className="size-3.5" /> {t("Copy link")}
+          </button>
+        </div>
+        <form onSubmit={invite} className="mt-3 flex gap-2">
+          <input
+            type="email"
+            dir="ltr"
+            required
+            value={inviteTo}
+            onChange={(e) => setInviteTo(e.target.value)}
+            placeholder={t("student@email.com")}
+            className={inputClass}
+          />
+          <button type="submit" disabled={busy === "invite"} className="flex shrink-0 items-center gap-1 rounded-lg bg-[#eef2f1] px-3 text-[10px] font-semibold disabled:opacity-60">
+            {busy === "invite" && <LoaderCircle className="size-3.5 animate-spin" />}
+            {t("Email the link")}
+          </button>
+        </form>
+        {errors.invite && <p role="alert" className="mt-1 text-[10px] text-[#c81e1e]">{errors.invite}</p>}
+      </div>
+
+      <div className="rounded-xl border border-[#e3ece9] p-4">
+        <p className="text-[11px] font-semibold">{t("Add a student")}</p>
+        <p className="mt-1 text-[10px] text-[#1B2D54]/60">{t("For a student who already has a Junior Hub account: they join the class at once and get a notification.")}</p>
+        <form onSubmit={add} className="mt-3 flex gap-2">
+          <input
+            type="email"
+            dir="ltr"
+            required
+            value={addEmail}
+            onChange={(e) => setAddEmail(e.target.value)}
+            placeholder={t("The student's account email")}
+            className={inputClass}
+          />
+          <button type="submit" disabled={busy === "add"} className="flex shrink-0 items-center gap-1 rounded-lg bg-[#14757d] px-3 text-[10px] font-semibold text-white disabled:opacity-60">
+            {busy === "add" ? <LoaderCircle className="size-3.5 animate-spin" /> : <Plus className="size-3.5" />}
+            {t("Add")}
+          </button>
+        </form>
+        {errors.add && <p role="alert" className="mt-1 text-[10px] text-[#c81e1e]">{errors.add}</p>}
+      </div>
     </div>
   );
 }

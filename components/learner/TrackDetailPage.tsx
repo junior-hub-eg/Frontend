@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { Route } from "next";
-import { ArrowRight, CheckCircle2, HelpCircle, LoaderCircle, Lock, PenTool, Plus, School, Sparkles } from "lucide-react";
+import { ArrowRight, CheckCircle2, HelpCircle, Hourglass, LoaderCircle, Lock, PenTool, Plus, School, Sparkles } from "lucide-react";
 import { errorMessage } from "@/lib/api-client";
 import {
   coursePath,
@@ -114,8 +114,10 @@ export default function TrackDetailPage({ slug }: { slug: string }) {
     setBusy(true);
     setActionError(null);
     try {
-      await selectTrack(track.code);
-      if (nextId) router.push(lessonPath(track.code, nextId) as Route);
+      const result = await selectTrack(track.code);
+      // A new track while learning another is a request the admin decides on: the page then says it is waiting.
+      if (result.requestedTrack) reload();
+      else if (nextId) router.push(lessonPath(track.code, nextId) as Route);
       else reload();
     } catch (e) {
       setActionError(errorMessage(e, "We couldn't choose this track. Please try again."));
@@ -168,6 +170,10 @@ export default function TrackDetailPage({ slug }: { slug: string }) {
               >
                 {t("Continue Learning")}
               </Link>
+            ) : track.changeRequested ? (
+              <span className="inline-flex items-center gap-[0.4em] rounded-[0.5em] bg-[#fff4d6] px-[1.2em] py-[0.7em] text-[0.8em] font-semibold text-[#8a5a00]">
+                <Hourglass className="h-[1.1em] w-[1.1em]" /> {t("Waiting for admin approval")}
+              </span>
             ) : (
               <button
                 type="button"
@@ -177,6 +183,12 @@ export default function TrackDetailPage({ slug }: { slug: string }) {
               >
                 {busy ? t("Saving...") : track.isLearning ? t("Your Track") : t("Choose This Track")}
               </button>
+            )}
+
+            {track.changeRequested && (
+              <p className="basis-full text-[0.75em] text-[#14365a]/75">
+                {t("Changing your track needs the admin's approval. You will get a notification when they answer.")}
+              </p>
             )}
 
             {previewId && (
