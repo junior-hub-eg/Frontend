@@ -23,7 +23,7 @@ export const reportKit: Record<string, string> = {
   "Generated {date}": "أُنشئ في {date}",
   // E-mail schedule
   "E-mail report schedule": "جدول إرسال التقرير بالبريد",
-  "Get this report as an Excel file in your inbox.": "استلم هذا التقرير كملف Excel في بريدك.",
+  "Get a summary of this report in your inbox.": "استلم ملخص هذا التقرير في بريدك.",
   "We could not load your report schedule.": "تعذّر تحميل جدول التقرير.",
   "On": "مفعّل",
   "Off": "متوقف",

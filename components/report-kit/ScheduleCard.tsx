@@ -99,7 +99,7 @@ export function ScheduleCard({ className }: { className?: string }) {
           {t("E-mail report schedule")}
         </span>
       }
-      hint={t("Get this report as an Excel file in your inbox.")}
+      hint={t("Get a summary of this report in your inbox.")}
       action={
         form && (
           <label className="flex cursor-pointer items-center gap-[0.5em] text-[0.82em] font-semibold text-[#1b2d54]">
