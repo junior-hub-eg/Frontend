@@ -1,14 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import type { Route } from "next";
 import { ClipboardCheck, MessageSquare } from "lucide-react";
 import { errorMessage } from "@/lib/api-client";
 import { useI18n } from "@/lib/i18n/client";
-import { addStudentNote, getMonitorMessages, getMyStudent, markMonitorMessagesRead, sendMonitorMessage } from "@/lib/monitor-api";
-import DirectChat from "@/components/shared/DirectChat";
+import { addStudentNote, getMyStudent } from "@/lib/monitor-api";
+import { openChat } from "@/lib/chat-api";
 import { cn } from "@/lib/utils";
 import {
   Card, Dialog, EmptyState, ErrorState, Field, LevelBadge, LinkButton, MentorAvatar, MentorPage, Pill, PrimaryButton, ProgressBar, RolePill,
@@ -25,7 +25,10 @@ export default function StudentPage({ id }: { id: string }) {
   const { t, intl } = useI18n();
   // The notification of a new message links here with ?chat=1.
   const params = useSearchParams();
-  const [chatting, setChatting] = useState(params.get("chat") === "1");
+  const chatLink = params.get("chat") === "1";
+  useEffect(() => {
+    if (chatLink) openChat({ userId: id });
+  }, [chatLink, id]);
   const rel = useRelative();
   const { data, error, loading, reload, setData } = useApi(() => getMyStudent(id), [id]);
   const [tab, setTab] = useState<Tab>("overview");
@@ -79,7 +82,7 @@ export default function StudentPage({ id }: { id: string }) {
           </div>
           <div className="flex gap-[0.6em]">
             <PrimaryButton onClick={() => setWriting(true)}><ClipboardCheck className="size-[1.1em]" /> {t("Write review")}</PrimaryButton>
-            <SecondaryButton onClick={() => setChatting(true)}><MessageSquare className="size-[1.1em]" /> {t("Message")}</SecondaryButton>
+            <SecondaryButton onClick={() => openChat({ userId: data.id })}><MessageSquare className="size-[1.1em]" /> {t("Message")}</SecondaryButton>
           </div>
         </div>
       </Card>
@@ -237,8 +240,6 @@ export default function StudentPage({ id }: { id: string }) {
         </div>
       )}
 
-      {chatting && <DirectChat key={data.id} me="mentor" partner={{ id: data.id, name: data.fullName, photoUrl: data.photoUrl, subtitle: sq?.squadName }}
-        load={getMonitorMessages} send={sendMonitorMessage} markRead={markMonitorMessagesRead} onClose={() => setChatting(false)} />}
       {writing && <NoteDialog name={data.fullName} onClose={() => setWriting(false)} onSave={(text, share) =>
         addStudentNote(id, text, share).then((n) => { setData({ ...data, notes: [n, ...data.notes] }); setWriting(false); setTab("notes"); })} />}
     </MentorPage>

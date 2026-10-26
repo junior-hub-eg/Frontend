@@ -21,6 +21,7 @@ import {
   UserRound,
   UserRoundCog,
   Users,
+  MessageCircle,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth/auth-context";
 import { useI18n } from "@/lib/i18n/client";
@@ -29,6 +30,7 @@ import { landingFont } from "@/components/Landing/font";
 import { getMonitorProfile, getMentorAreaBadges, searchMentorArea, type MentorAreaSearch } from "@/lib/monitor-api";
 import { getNotifications, getUnreadNotificationCount, markNotificationRead, notificationText, timeAgo, type AppNotification } from "@/lib/notifications-api";
 import { MentorAvatar } from "./mentor-area-ui";
+import { ChatButton } from "@/components/chat/ChatButton";
 
 const SKIP_AUTH = process.env.NEXT_PUBLIC_SKIP_AUTH === "true" && process.env.NODE_ENV !== "production";
 const noopSubscribe = () => () => {};
@@ -42,6 +44,7 @@ const NAV = [
   { href: "/mentor/squads", label: tk("My squads"), icon: Users },
   { href: "/mentor/reviews", label: tk("Reviews"), icon: ClipboardCheck, badge: "reviews" as const },
   { href: "/mentor/students", label: tk("My students"), icon: GraduationCap },
+  { href: "/mentor/messages", label: tk("Messages"), icon: MessageCircle },
   { href: "/mentor/calendar", label: tk("Calendar"), icon: CalendarDays },
   { href: "/mentor/announcements", label: tk("Announcements"), icon: Megaphone },
   { href: "/mentor/reports", label: tk("Reports"), icon: BarChart3 },
@@ -215,6 +218,7 @@ export function MentorShell({ children }: { children: ReactNode }) {
           </button>
 
           <div className="ms-auto flex items-center gap-[0.7em]">
+            <ChatButton className="pointer-events-auto size-[2.7em] border border-white/70 bg-white/55 text-[#14365a] shadow-[0_6px_18px_rgba(60,160,230,0.2)] backdrop-blur hover:bg-white/80" />
             <div className="pointer-events-auto relative">
               <button
                 type="button"

@@ -27,6 +27,7 @@ import { cn } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n/client";
 import { LanguageSwitcher } from "@/components/shared/LanguageSwitcher";
 import { NotificationBell } from "@/components/shared/NotificationBell";
+import { ChatButton } from "@/components/chat/ChatButton";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -218,6 +219,7 @@ export default function TeacherLayout({ children }: { children: ReactNode }) {
 
           {/* me-[1.6em] moves the bell and the teacher name a bit away from the screen edge (both languages) */}
           <div className="ms-auto flex items-center gap-[1.2em] me-[1.6em]">
+            <ChatButton />
             <NotificationBell home="/teacher" />
 
             <div className="relative">
