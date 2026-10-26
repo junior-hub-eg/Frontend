@@ -436,3 +436,6 @@ export async function downloadFromApi(path: string, filename: string) {
 }
 export const changeTeacherPassword = (currentPassword: string, newPassword: string, confirmPassword: string) =>
   api.put<void>("/api/v1/teacher/password", { currentPassword, newPassword, confirmPassword });
+export const addClass = (grade: number, name: string, autoAccept: boolean) =>
+  api.post<TeacherClassDetail>("/api/v1/teacher/classes", { grade, name, autoAccept });
+export const removeClass = (id: string) => api.delete<void>(`/api/v1/teacher/classes/${id}`);

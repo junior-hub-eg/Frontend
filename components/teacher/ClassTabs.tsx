@@ -1,12 +1,16 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import type { Route } from "next";
 import Link from "next/link";
 import { Check, Copy, LoaderCircle, Plus, RefreshCw, Trash2, X } from "lucide-react";
+import { ApiError } from "@/lib/api-client";
 import { errorMessage } from "@/lib/api-client";
 import { useT } from "@/lib/i18n/client";
 import {
+  addClass,
+  getTeacherProfile,
+  removeClass,
   addPlanItem,
   broadcast,
   decideJoinRequest,
@@ -319,5 +323,133 @@ export function AnnouncementDialog({ d, onClose, notify }: { d: TeacherClassDeta
         </div>
       </form>
     </TeacherDialog>
+  );
+}
+
+/**
+ * "Add class": a class in one of the teacher's grades. Students join it with its code (and school students whose record
+ * has this class name are in it from the start).
+ */
+export function AddClassDialog({ onClose, onAdded }: { onClose: () => void; onAdded: (d: TeacherClassDetail) => void }) {
+  const t = useT();
+  const [grades, setGrades] = useState<number[] | null>(null);
+  const [grade, setGrade] = useState<number | null>(null);
+  const [name, setName] = useState("");
+  const [autoAccept, setAutoAccept] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    let active = true;
+    getTeacherProfile().then(
+      (me) => {
+        if (!active) return;
+        setGrades(me.grades);
+        setGrade((g) => g ?? me.grades[0] ?? null);
+      },
+      (e) => active && setError(errorMessage(e)),
+    );
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  async function submit(e: FormEvent) {
+    e.preventDefault();
+    if (grade == null) return;
+    setBusy(true);
+    setError(null);
+    setFieldErrors({});
+    try {
+      onAdded(await addClass(grade, name.trim(), autoAccept));
+    } catch (err) {
+      if (err instanceof ApiError && Object.keys(err.fieldErrors).length > 0) setFieldErrors(err.fieldErrors);
+      else setError(errorMessage(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <TeacherDialog title={t("Add a class")} subtitle={t("Students join it with the class code you get after adding it.")} onClose={onClose}>
+      <form onSubmit={submit} className="grid gap-3">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <FieldLabel label={t("Grade")} error={fieldErrors.grade}>
+            <select className={inputClass} value={grade ?? ""} onChange={(e) => setGrade(Number(e.target.value))} disabled={!grades}>
+              {(grades ?? []).map((g) => (
+                <option key={g} value={g}>
+                  {t("Grade {grade}", { grade: g })}
+                </option>
+              ))}
+            </select>
+          </FieldLabel>
+          <FieldLabel label={t("Class name")} error={fieldErrors.name}>
+            <input
+              className={inputClass}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder={grade ? `${grade}E` : "9E"}
+              maxLength={10}
+              required
+              dir="auto"
+            />
+          </FieldLabel>
+        </div>
+        <label className="flex items-center gap-2 text-[11px]">
+          <input type="checkbox" checked={autoAccept} onChange={(e) => setAutoAccept(e.target.checked)} className="size-4 accent-[#14757d]" />
+          {t("Accept students who use the code automatically")}
+        </label>
+        {error && <p role="alert" className="text-[11px] text-[#c81e1e]">{error}</p>}
+        <div className="flex justify-end gap-2">
+          <button type="button" onClick={onClose} className="rounded-full bg-[#eef2f1] px-5 py-2 text-[11px] font-semibold">
+            {t("Cancel")}
+          </button>
+          <button
+            type="submit"
+            disabled={busy || grade == null || !name.trim()}
+            className="flex items-center gap-1.5 rounded-full bg-[#14757d] px-5 py-2 text-[11px] font-semibold text-white disabled:opacity-60"
+          >
+            {busy ? <LoaderCircle className="size-3.5 animate-spin" /> : <Plus className="size-3.5" />}
+            {t("Add class")}
+          </button>
+        </div>
+      </form>
+    </TeacherDialog>
+  );
+}
+
+/** "Remove class", for a class with no students, assignments or lessons (one added by mistake). */
+export function RemoveClassButton({ d, onRemoved, notify }: { d: TeacherClassDetail; onRemoved: () => void; notify: (text: string) => void }) {
+  const t = useT();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  if (d.students.length > 0 || d.assignments.length > 0 || d.plan.length > 0 || d.requests.length > 0) return null;
+  return (
+    <div className="mt-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-dashed border-[#f3c2c2] p-3">
+      <p className="text-[10px] text-[#1B2D54]/70">{t("This class is empty. You can remove it if you added it by mistake.")}</p>
+      <button
+        type="button"
+        disabled={busy}
+        onClick={async () => {
+          if (!window.confirm(t("Remove class {name}?", { name: d.name }))) return;
+          setBusy(true);
+          setError(null);
+          try {
+            await removeClass(d.id);
+            notify(t("Class {name} was removed.", { name: d.name }));
+            onRemoved();
+          } catch (e) {
+            setError(errorMessage(e));
+          } finally {
+            setBusy(false);
+          }
+        }}
+        className="flex items-center gap-1 rounded-full bg-[#fde8e8] px-3 py-1.5 text-[10px] font-semibold text-[#c81e1e]"
+      >
+        <Trash2 className="size-3.5" /> {t("Remove class")}
+      </button>
+      {error && <p role="alert" className="w-full text-[10px] text-[#c81e1e]">{error}</p>}
+    </div>
   );
 }
