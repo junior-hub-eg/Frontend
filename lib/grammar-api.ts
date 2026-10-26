@@ -17,8 +17,6 @@ export interface GrammarTopic {
   videoUrl: string | null;
   notes: string[];
   roles: string[];
-  /** A short vertical video of the topic (YouTube Short or TikTok). */
-  shortVideoUrl?: string | null;
 }
 
 export interface ParsedWord {

@@ -392,30 +392,6 @@ export const MATH_VIDEOS: Record<string, string> = {
   "class-variance": "SzZ6GpcfoQY",
 };
 
-/** A short vertical video of each problem's idea (a YouTube Short id), next to the explanation video. */
-export const MATH_SHORTS: Record<string, string> = {
-  "solve-linear-equation": "UK_mnPBDILk",
-  "line-through-two-points": "rnuW_2iiH_Y",
-  "predict-with-a-line": "bTpX3OsPujo",
-  "least-squares-line": "6L3OKY7WDEI",
-  "sigmoid-function": "HdiKxlBJLbE",
-  "logistic-decision-boundary": "Aqqx-w0L0Cw",
-  "majority-vote": "Y2hsdBnMU7M",
-  "distance-to-hyperplane": "jy8fNa8r39E",
-  "adaboost-weight": "d5wS-NUVTVU",
-  "gini-impurity": "n3OzRZOt5zs",
-  "euclidean-distance": "YdQsOPQ5lM4",
-  "angle-between-vectors": "q6_XmfP9Y8o",
-  "boosting-residuals": "zFZGoTRzlBA",
-  "neuron-output": "kQl45ophSVQ",
-  "gradient-descent-step": "H9mK0EmzfF8",
-  "bayes-rule": "JIyk172R7Sg",
-  "ordered-target-statistic": "3RLECmgrrKw",
-  "optimal-leaf-weight": "BBAgWnQNYTI",
-  "histogram-bins": "c_YPj9bjPYI",
-  "class-variance": "URcpEgxUfqU",
-};
-
 export const getMathProblem = (id: string) => MATH_PROBLEMS.find((p) => p.id === id);
 
 /** Up to 3 other problems: the same algorithm first, then the same topic. */

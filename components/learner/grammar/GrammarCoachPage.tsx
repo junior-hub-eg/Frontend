@@ -19,7 +19,6 @@ import PracticeCard from "./PracticeCard";
 import TopicList from "./TopicList";
 import { CARD, ErrorBox, Spinner } from "./shared";
 import { cn } from "@/lib/utils";
-import ShortEmbed from "@/components/shared/ShortEmbed";
 
 /** The parts of a lesson, one tab each, so each one has the whole width. */
 const TABS = [
@@ -222,9 +221,8 @@ export default function GrammarCoachPage() {
               </div>
 
               {tab === "video" && (
-                <section className={`${CARD} grid items-start gap-[1em] p-[1em] ${topic.shortVideoUrl ? "md:grid-cols-[minmax(0,1fr)_15em]" : ""}`}>
+                <section className={`${CARD} p-[1em]`}>
                   <TopicVideo key={topic.key} topic={topic} />
-                  {topic.shortVideoUrl && <ShortEmbed key={`short-${topic.key}`} url={topic.shortVideoUrl} title={topic.titleAr} />}
                 </section>
               )}
 
