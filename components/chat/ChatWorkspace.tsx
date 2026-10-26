@@ -332,9 +332,15 @@ export default function ChatWorkspace({ initialConversationId, compact, onClose,
     [me, reload],
   );
 
-  useLiveChannel({
+  const live = useLiveChannel({
     ConversationMessage: (e: ConversationMessageEvent) => bump(e.message, e.message.conversationId === openId),
   });
+  // Without the live channel, refresh the list every 20 seconds.
+  useEffect(() => {
+    if (live) return;
+    const timer = setInterval(() => void reload(), 20000);
+    return () => clearInterval(timer);
+  }, [live, reload]);
 
   const open = (id: string) => {
     setOpenId(id);

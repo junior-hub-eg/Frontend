@@ -27,11 +27,17 @@ export function ChatButton({ className }: { className?: string }) {
     void refresh();
   }, [refresh]);
 
-  useLiveChannel({
+  const live = useLiveChannel({
     ConversationMessage: (e: ConversationMessageEvent) => {
       if (e.message.sender.id !== me && !e.message.deleted && !open) setUnread((n) => n + 1);
     },
   });
+  // Without the live channel, look for new messages every 30 seconds.
+  useEffect(() => {
+    if (live) return;
+    const timer = setInterval(() => void refresh(), 30000);
+    return () => clearInterval(timer);
+  }, [live, refresh]);
 
   useEffect(
     () =>
