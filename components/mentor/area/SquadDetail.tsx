@@ -104,7 +104,7 @@ export default function SquadDetail({ id }: { id: string }) {
           tabs={TABS.map((v) => ({ value: v, label: t({ members: "Members", project: "Project", board: "Board", links: "Work links", reviews: "Reviews", chat: "Chat" }[v]) }))}
         />
         <div className="pt-[1.2em]">
-          {tab === "members" && <MembersTab detail={data} />}
+          {tab === "members" && <MembersTab detail={data} onChanged={reload} />}
           {tab === "project" && <ProjectTab detail={data} />}
           {tab === "board" && <BoardTab detail={data} />}
           {tab === "links" && <LinksTab detail={data} onLinks={(links) => setData({ ...data, links })} />}
