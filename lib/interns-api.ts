@@ -3,6 +3,7 @@
  * (backend InternsController, /api/v1/interns). Errors are thrown as ApiError with the backend's code,
  * for example NO_SQUAD, NOT_TASK_OWNER or INVALID_TRANSITION.
  */
+import type { CatalogLink } from "@/lib/projects-api";
 import { api } from "@/lib/api-client";
 
 export type SquadRole = "Frontend" | "Backend" | "UIUX" | "AI" | "Testing" | "Data" | "Mobile" | "Gaming";
@@ -49,6 +50,10 @@ export interface Squad {
   /** The seats the project needs by role; empty for squads formed before seats. */
   seats: SquadSeat[];
   seatsTotal: number;
+  /** The catalog project's logo, time and links; null or empty until revealed (27 Oct 2026). */
+  projectLogoUrl?: string | null;
+  projectDurationWeeks?: number | null;
+  projectLinks?: CatalogLink[];
 }
 
 /** The dashboard endpoints answer 409 with this code until the squad's project is revealed. */

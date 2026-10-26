@@ -10,6 +10,7 @@ import {
   BrainCircuit,
   CalendarDays,
   CircleCheck,
+  FileText,
   Clock,
   GitBranch,
   Link2,
@@ -39,6 +40,7 @@ import {
 } from "@/lib/projects-api";
 import { cn } from "@/lib/utils";
 import { useI18n, useT } from "@/lib/i18n/client";
+import { CatalogLinks, ProjectLogo } from "@/components/learner/ProjectCatalogParts";
 
 
 type TaskStatus = "Done" | "In Review" | "In Progress" | "To Do";
@@ -217,9 +219,13 @@ function ProjectDetailsView({ detail }: { detail: ProjectDetail }) {
         </div>
       </header>
       <Card className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-center">
-        <span className="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-[#c9efe9] text-[#14757d]">
-          <BrainCircuit aria-hidden className="size-8" strokeWidth={1.6} />
-        </span>
+        {p.logoUrl ? (
+          <ProjectLogo src={p.logoUrl} title={p.title} className="size-16" />
+        ) : (
+          <span className="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-[#c9efe9] text-[#14757d]">
+            <BrainCircuit aria-hidden className="size-8" strokeWidth={1.6} />
+          </span>
+        )}
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
@@ -234,9 +240,22 @@ function ProjectDetailsView({ detail }: { detail: ProjectDetail }) {
             <Chip icon={<Users aria-hidden className="size-3" />}>{t("Squad: {name}", { name: PROJECT.squad })}</Chip>
             <Chip icon={<User aria-hidden className="size-3" />}>{t("Your role: {role}", { role: PROJECT.role })}</Chip>
             <Chip icon={<CalendarDays aria-hidden className="size-3" />}>{PROJECT.startDate}</Chip>
+            <Chip icon={<Target aria-hidden className="size-3" />}>{t("{level} level", { level: t(p.level) })}</Chip>
+            {p.durationWeeks ? (
+              <Chip icon={<Clock aria-hidden className="size-3" />}>{t("{n} weeks", { n: p.durationWeeks })}</Chip>
+            ) : null}
           </div>
+          <CatalogLinks links={p.projectLinks} className="mt-2" />
         </div>
 
+        <div className="flex shrink-0 flex-col gap-2">
+        <Link
+          href={`/learner/projects/${encodeURIComponent(p.id)}/brief`}
+          className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg bg-white px-4 py-2 text-[11px] font-semibold text-[#14757d] ring-1 ring-[#14757d]/30 transition-colors hover:bg-[#e9f7f5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#12939b]/40"
+        >
+          <FileText aria-hidden className="size-3.5" />
+          {t("Project brief (PRD)")}
+        </Link>
         {p.isCurrent && (
         <Link
           href="/learner/interns/internship"
@@ -246,6 +265,7 @@ function ProjectDetailsView({ detail }: { detail: ProjectDetail }) {
           <ArrowRight aria-hidden className="size-3.5" />
         </Link>
         )}
+        </div>
       </Card>
 
       <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]">

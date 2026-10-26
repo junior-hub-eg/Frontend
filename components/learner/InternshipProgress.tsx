@@ -39,6 +39,7 @@ import { useT } from "@/lib/i18n/client";
 import { currentLocale, tk } from "@/lib/i18n/translate";
 import RedirectToSquad, { SQUAD_PAGE } from "./RedirectToSquad";
 import { TeamChatButton, TeamChatPanel, useTeamChat, type ChatKey } from "./TeamChat";
+import { CatalogLinks, ProjectLogo } from "@/components/learner/ProjectCatalogParts";
 
 const IMG = "/images/Intern";
 const BG = `${IMG}/bg-park.png`;
@@ -104,9 +105,13 @@ function TeamCard({
   return (
     <section className="flex min-w-0 flex-col gap-[0.8em]">
       <div className={`${glass} flex items-center gap-[1em] p-[1em]`}>
-        <span className="grid h-[4.6em] w-[4.6em] shrink-0 place-items-center rounded-[1em] bg-gradient-to-br from-[#d4f6f3] to-[#b4e8f2] text-[#12939b]">
-          <BrainCircuit className="h-[2.6em] w-[2.6em]" />
-        </span>
+        {squad?.projectLogoUrl ? (
+          <ProjectLogo src={squad.projectLogoUrl} title={squad.projectTitle ?? ""} className="h-[4.6em] w-[4.6em] rounded-[1em]" />
+        ) : (
+          <span className="grid h-[4.6em] w-[4.6em] shrink-0 place-items-center rounded-[1em] bg-gradient-to-br from-[#d4f6f3] to-[#b4e8f2] text-[#12939b]">
+            <BrainCircuit className="h-[2.6em] w-[2.6em]" />
+          </span>
+        )}
         <div className="min-w-0">
           <h1 className="flex flex-wrap items-center gap-[0.5em] text-[2.1em] font-extrabold leading-tight text-[#14365a]">
             {squad ? t("{name} Team", { name: squad.name }) : "\u00a0"}
@@ -118,6 +123,18 @@ function TeamCard({
           <p className="mt-[0.2em] text-[0.8em] text-[#14365a]/75">
             {squad?.projectDescription}
           </p>
+          {squad && (
+            <p className="mt-[0.4em] flex flex-wrap items-center gap-[0.4em] text-[0.72em] font-semibold text-[#14365a]/80">
+              <span className="rounded-full bg-[#e4f1fb] px-[0.7em] py-[0.15em]">{t("{level} level", { level: t(squad.level) })}</span>
+              {squad.projectDurationWeeks ? (
+                <span className="rounded-full bg-[#e4f1fb] px-[0.7em] py-[0.15em]">{t("{n} weeks", { n: squad.projectDurationWeeks })}</span>
+              ) : null}
+              <Link href={`/learner/projects/${encodeURIComponent(squad.id)}/brief`} className="rounded-full bg-[#14757d] px-[0.8em] py-[0.15em] text-white hover:opacity-90">
+                {t("Project brief (PRD)")}
+              </Link>
+            </p>
+          )}
+          <CatalogLinks links={squad?.projectLinks} className="mt-[0.5em]" />
         </div>
         {squad && (
           <div className="ms-auto shrink-0 self-start">
