@@ -4,12 +4,42 @@ import { useState } from "react";
 import { ArrowLeft, Dumbbell, GraduationCap, Lightbulb, PlayCircle, RotateCcw } from "lucide-react";
 import { WORD_COLOR, type GrammarLesson, type GrammarTopic, type ParsedSentence } from "@/lib/grammar-api";
 import { useT } from "@/lib/i18n/client";
+import { youTubeEmbed, youTubeId } from "@/lib/youtube";
 import { CARD, ErrorBox, ParsedLine, PRIMARY_BTN, SOFT_BTN, Spinner, StatusChip } from "./shared";
 
-/** The topic's video, when the admin added one. */
-function TopicVideo({ topic }: { topic: GrammarTopic }) {
+/** The topic's video: a YouTube lesson or an uploaded file; a placeholder while there is none. */
+export function TopicVideo({ topic }: { topic: GrammarTopic }) {
   const t = useT();
-  if (!topic.videoUrl) return null;
+  const [playing, setPlaying] = useState(false);
+  const yt = topic.videoUrl ? youTubeId(topic.videoUrl) : null;
+  if (yt) {
+    return (
+      <div>
+        <div className="relative aspect-video w-full overflow-hidden rounded-[1.1em] bg-black">
+          {playing ? (
+            <iframe
+              src={youTubeEmbed(yt).replace("loop=1", "loop=0")}
+              title={topic.titleAr}
+              allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+              className="absolute inset-0 h-full w-full"
+            />
+          ) : (
+            <button type="button" onClick={() => setPlaying(true)} aria-label={t("Play video")} className="group absolute inset-0">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={`https://i.ytimg.com/vi/${yt}/hqdefault.jpg`} alt="" className="h-full w-full object-cover opacity-85" />
+              <span className="absolute left-1/2 top-1/2 grid h-[4.4em] w-[4.4em] -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-[#1f9e95]/90 text-white ring-[0.35em] ring-white/40 transition group-hover:scale-105">
+                <PlayCircle className="h-[2em] w-[2em]" />
+              </span>
+            </button>
+          )}
+        </div>
+        {/* For when the player cannot load (a blocker, a school network) */}
+        <a href={`https://www.youtube.com/watch?v=${yt}`} target="_blank" rel="noreferrer" className="mt-[0.5em] inline-block text-[0.8em] font-semibold text-[#0f7a81] hover:underline">
+          {t("Watch on YouTube")}
+        </a>
+      </div>
+    );
+  }
   if (topic.videoUrl) {
     return (
       <video controls preload="metadata" src={topic.videoUrl} className="aspect-video w-full rounded-[1.1em] bg-black">
@@ -162,7 +192,6 @@ export default function LessonPanel({
         )}
       </header>
 
-      <TopicVideo topic={topic} />
 
       <div className="rounded-[1.1em] border border-[#e3eef5] p-[1em]">
         {loading ? (
