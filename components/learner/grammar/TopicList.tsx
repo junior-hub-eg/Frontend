@@ -50,10 +50,12 @@ export default function TopicList({
                 >
                   {i + 1}
                 </span>
-                <span dir="auto" className="min-w-0 flex-1 truncate text-[0.88em] font-bold text-[#14365a]">
-                  {locale === "ar" || !tp.titleEn ? tp.titleAr : tp.titleEn}
+                <span className="flex min-w-0 flex-1 flex-col items-start gap-[0.25em]">
+                  <span dir="auto" className="text-[0.88em] font-bold leading-snug text-[#14365a]">
+                    {locale === "ar" || !tp.titleEn ? tp.titleAr : tp.titleEn}
+                  </span>
+                  <StatusChip status={tp.status} />
                 </span>
-                <StatusChip status={tp.status} />
                 <ChevronLeft className="h-[1em] w-[1em] shrink-0 text-[#8a9bb0] ltr:rotate-180" />
               </button>
             </li>

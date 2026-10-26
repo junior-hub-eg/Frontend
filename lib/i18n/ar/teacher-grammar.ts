@@ -1,7 +1,6 @@
 /** Arabic for teacher-grammar (teacher design and grammar coach, 26 Oct 2026). */
 export const teacherGrammar: Record<string, string> = {
   "Under review": "قيد المراجعة",
-  "Title": "العنوان",
   "We couldn't load your passages. Please try again.": "تعذّر تحميل نصوصك. حاول مرة أخرى.",
   "The AI parsed the passage. Review it before publishing.": "أعرب الذكاء الاصطناعي النص. راجعه قبل نشره.",
   "Back to curriculum": "العودة إلى المنهج",

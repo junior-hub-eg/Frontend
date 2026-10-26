@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { BookOpen, CheckCircle2, ClipboardCheck, FileText, Target, XCircle } from "lucide-react";
+import { BookOpen, CheckCircle2, ClipboardCheck, FileText, Sparkles, XCircle } from "lucide-react";
 import {
   answerSentence,
   WORD_COLOR,
@@ -11,7 +11,7 @@ import {
 } from "@/lib/grammar-api";
 import { useT } from "@/lib/i18n/client";
 import QuickCheck from "./QuickCheck";
-import { CARD, ColorLegend, ErrorBox, PRIMARY_BTN, SOFT_BTN } from "./shared";
+import { ColorLegend, ErrorBox, PRIMARY_BTN, SOFT_BTN, Spinner } from "./shared";
 
 /** A word of the practice sentence: click it, then pick its role. */
 function PracticeWord({
@@ -126,12 +126,19 @@ function GuidingQuestions({ items }: { items: { question: string; answer: string
 export default function PracticeCard({
   topicKey,
   first,
+  loading,
+  error: lessonError,
+  onRetry,
   onStatus,
   onSentence,
   onOpenPassages,
 }: {
   topicKey: string;
   first: Practice | null;
+  /** The AI is writing the lesson's first sentence. */
+  loading: boolean;
+  error: unknown;
+  onRetry: () => void;
   onStatus: (status: GrammarStatus) => void;
   onSentence: (text: string) => void;
   onOpenPassages: () => void;
@@ -196,14 +203,20 @@ export default function PracticeCard({
   };
 
   return (
-    <section className={`${CARD} relative p-[1em]`}>
+    <section className="relative rounded-[1.4em] bg-gradient-to-br from-[#2bb8a6] via-[#3a8ee6] to-[#7b5cf0] p-[0.15em] shadow-[0_0.6em_2em_rgba(43,120,200,0.18)]">
+      <div className="relative rounded-[1.3em] bg-white p-[1.1em]">
       <header className="flex items-start gap-[0.7em]">
-        <span className="grid h-[2.6em] w-[2.6em] shrink-0 place-items-center rounded-[0.8em] bg-[#e4f7f4] text-[#1f9e95]">
-          <Target className="h-[1.5em] w-[1.5em]" />
+        <span className="grid h-[2.8em] w-[2.8em] shrink-0 place-items-center rounded-[0.9em] bg-gradient-to-br from-[#2bb8a6] to-[#3a8ee6] text-white shadow">
+          <Sparkles className="h-[1.5em] w-[1.5em]" />
         </span>
         <div className="min-w-0 flex-1">
-          <h2 className="text-[1.15em] font-extrabold text-[#14365a]">{t("Next step")}</h2>
-          <p className="text-[0.75em] text-[#5b7089]">{t("Apply what you learned through the exercises")}</p>
+          <h2 className="flex flex-wrap items-center gap-[0.4em] text-[1.25em] font-extrabold text-[#14365a]">
+            {t("Practise with the AI coach")}
+            <span className="rounded-full bg-gradient-to-r from-[#2bb8a6] to-[#7b5cf0] px-[0.6em] py-[0.1em] text-[0.6em] font-black tracking-wide text-white">AI</span>
+          </h2>
+          <p className="text-[0.78em] text-[#5b7089]">
+            {t("The AI writes a sentence at your level, checks every word, and explains your mistakes without giving the answer away.")}
+          </p>
         </div>
       </header>
 
@@ -235,12 +248,21 @@ export default function PracticeCard({
 
         {quiz ? (
           <QuickCheck topicKey={topicKey} onStatus={onStatus} onClose={() => setQuiz(false)} />
+        ) : !practice && loading ? (
+          <Spinner label={t("The AI is writing a sentence for you...")} />
+        ) : !practice && lessonError != null ? (
+          <div className="mt-[0.8em]">
+            <ErrorBox error={lessonError} onRetry={onRetry} />
+          </div>
         ) : !practice ? (
           <p className="mt-[0.8em] text-[0.85em] text-[#5b7089]">{t("Open a lesson to get your first sentence.")}</p>
         ) : (
           <>
-            <p className="mt-[0.4em] text-[0.75em] text-[#5b7089]">{t("Click each word, then choose its grammatical role.")}</p>
-            <div dir="rtl" className="mt-[0.8em] flex flex-wrap items-start gap-x-[0.4em] gap-y-[0.9em] rounded-[1em] bg-[#f3f9fd] p-[0.9em] text-[1.2em] leading-[1.9]">
+            <p className="mt-[0.4em] flex items-center gap-[0.35em] text-[0.75em] text-[#5b7089]">
+              <Sparkles className="h-[1.1em] w-[1.1em] text-[#3a8ee6]" />
+              {t("A new sentence written by the AI for you. Click each word, then choose its grammatical role.")}
+            </p>
+            <div dir="rtl" className="mt-[0.8em] flex min-h-[4.5em] flex-wrap items-center justify-center gap-x-[0.5em] gap-y-[0.9em] rounded-[1em] bg-gradient-to-br from-[#f1f8ff] to-[#f3fbf9] p-[1.1em] text-[1.6em] leading-[1.9] ring-1 ring-[#e3eef5]">
               {practice.words.map((w, i) => (
                 <PracticeWord
                   key={`${practice.exerciseId}-${w.index}`}
@@ -335,6 +357,7 @@ export default function PracticeCard({
             )}
           </>
         )}
+      </div>
       </div>
     </section>
   );
