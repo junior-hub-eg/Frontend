@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Bot, Send, UserRound } from "lucide-react";
+import { Bot, Send, Sparkles, UserRound } from "lucide-react";
+import { tk } from "@/lib/i18n/translate";
 import { askGrammarCoach } from "@/lib/grammar-api";
 import { useT } from "@/lib/i18n/client";
 import { CARD, isAiUnavailable } from "./shared";
@@ -15,16 +16,24 @@ function Mascot({ small }: { small?: boolean }) {
     <span
       aria-hidden
       className={`grid shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#5aa9f5] to-[#2f6fd6] text-white shadow ${
-        small ? "h-[2.2em] w-[2.2em] text-[1.1em]" : "h-[3.4em] w-[3.4em] text-[1.9em]"
+        small ? "h-[2.2em] w-[2.2em]" : "h-[3.2em] w-[3.2em]"
       }`}
     >
-      ⭐
+      <span className={small ? "text-[1.05em] leading-none" : "text-[1.6em] leading-none"}>⭐</span>
     </span>
   );
 }
 
+/** One-click questions, so the student sees what the coach can do. */
+const SUGGESTIONS = [
+  tk("Explain this rule to me simply"),
+  tk("Explain the إعراب of my sentence word by word"),
+  tk("Give me another example"),
+  tk("What mistake do students usually make here?"),
+];
+
 /** "اسأل المساعد الذكي": questions about the topic, with the current sentence as context. */
-export default function CoachChat({ topicKey, context }: { topicKey: string; context: string }) {
+export default function CoachChat({ topicKey, topicTitle, context }: { topicKey: string; topicTitle: string; context: string }) {
   const t = useT();
   const [messages, setMessages] = useState<Message[]>([]);
   const [draft, setDraft] = useState("");
@@ -42,8 +51,8 @@ export default function CoachChat({ topicKey, context }: { topicKey: string; con
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, sending]);
 
-  const send = async () => {
-    const question = draft.trim();
+  const send = async (asked?: string) => {
+    const question = (asked ?? draft).trim();
     if (!question || sending) return;
     const history = messages.filter((m) => !m.failed).map(({ role, text }) => ({ role, text }));
     setMessages((m) => [...m, { role: "student", text: question }]);
@@ -67,20 +76,46 @@ export default function CoachChat({ topicKey, context }: { topicKey: string; con
   };
 
   return (
-    <section className={`${CARD} flex flex-col p-[1em]`}>
-      <header className="flex items-center justify-between gap-[0.6em]">
-        <h2 className="flex items-center gap-[0.4em] text-[1.15em] font-extrabold text-[#14365a]">
-          <Bot className="h-[1.3em] w-[1.3em] text-[#2f6fd6]" />
-          {t("Ask the AI assistant")}
-        </h2>
+    <section className={`${CARD} flex flex-col overflow-hidden`}>
+      <header className="flex items-center gap-[0.8em] bg-gradient-to-r from-[#eaf3ff] to-[#eefaf7] p-[1em]">
         <Mascot />
+        <div className="min-w-0 flex-1">
+          <h2 className="flex items-center gap-[0.4em] text-[1.2em] font-extrabold text-[#14365a]">
+            <Bot className="h-[1.2em] w-[1.2em] text-[#2f6fd6]" />
+            {t("Ask the AI assistant")}
+          </h2>
+          <p dir="auto" className="text-[0.78em] text-[#5b7089]">
+            {t("Your coach knows {topic} and the sentence you are practising. Ask it anything.", { topic: topicTitle })}
+          </p>
+        </div>
       </header>
 
-      <div ref={listRef} className="mt-[0.7em] flex max-h-[22em] min-h-[6em] flex-col gap-[0.6em] overflow-y-auto">
+      <div className="flex flex-col p-[1em] pt-[0.6em]">
+      <div ref={listRef} className="flex max-h-[26em] min-h-[9em] flex-col gap-[0.6em] overflow-y-auto">
         {messages.length === 0 && (
-          <p className="rounded-[0.9em] bg-[#f3f9fd] p-[0.8em] text-[0.8em] text-[#5b7089]">
-            {t("Ask anything about this lesson or the sentence you are practising.")}
-          </p>
+          <div className="flex flex-col gap-[0.6em]">
+            <div className="flex items-start gap-[0.4em]">
+              <Mascot small />
+              <p className="rounded-[0.9em] bg-white px-[0.8em] py-[0.5em] text-[0.85em] text-[#14365a] ring-1 ring-[#e3eef5]">
+                {t("Hi! I'm your grammar coach. Pick a question below or write your own.")}
+              </p>
+            </div>
+            <ul className="flex flex-wrap gap-[0.45em] ps-[2.6em]">
+              {SUGGESTIONS.map((q) => (
+                <li key={q}>
+                  <button
+                    type="button"
+                    disabled={sending}
+                    onClick={() => void send(t(q))}
+                    className="inline-flex items-center gap-[0.35em] rounded-full border border-[#cfe3ec] bg-[#f6fbff] px-[0.9em] py-[0.35em] text-[0.78em] font-semibold text-[#1d5fb8] transition hover:bg-[#e6f2fd]"
+                  >
+                    <Sparkles className="h-[1em] w-[1em]" />
+                    {t(q)}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
         {messages.map((m, i) =>
           m.role === "student" ? (
@@ -137,6 +172,7 @@ export default function CoachChat({ topicKey, context }: { topicKey: string; con
           <Send className="h-[1.1em] w-[1.1em] rtl:-scale-x-100" />
         </button>
       </form>
+      </div>
     </section>
   );
 }

@@ -6,9 +6,10 @@ import { WORD_COLOR, type GrammarLesson, type GrammarTopic, type ParsedSentence 
 import { useT } from "@/lib/i18n/client";
 import { CARD, ErrorBox, ParsedLine, PRIMARY_BTN, SOFT_BTN, Spinner, StatusChip } from "./shared";
 
-/** The video, or a placeholder card with the topic title when the admin has not added one. */
+/** The topic's video, when the admin added one. */
 function TopicVideo({ topic }: { topic: GrammarTopic }) {
   const t = useT();
+  if (!topic.videoUrl) return null;
   if (topic.videoUrl) {
     return (
       <video controls preload="metadata" src={topic.videoUrl} className="aspect-video w-full rounded-[1.1em] bg-black">
@@ -147,10 +148,13 @@ export default function LessonPanel({
     <section className={`${CARD} flex min-w-0 flex-col gap-[1em] p-[1em]`}>
       <header>
         <div className="flex items-start justify-between gap-[0.6em]">
-          <h2 dir="rtl" className="flex items-center gap-[0.5em] text-[1.5em] font-extrabold text-[#14365a]">
-            <GraduationCap className="h-[1.2em] w-[1.2em] shrink-0" />
-            {topic.titleAr}
-          </h2>
+          <div className="min-w-0">
+            <p className="text-[0.75em] font-bold uppercase tracking-wide text-[#1f9e95] rtl:normal-case rtl:tracking-normal">{t("Lesson summary")}</p>
+            <h2 dir="rtl" className="flex items-center gap-[0.5em] text-[1.35em] font-extrabold text-[#14365a]">
+              <GraduationCap className="h-[1.2em] w-[1.2em] shrink-0" />
+              {topic.titleAr}
+            </h2>
+          </div>
           <StatusChip status={topic.status} />
         </div>
         {topic.descriptionAr && (
@@ -188,7 +192,7 @@ export default function LessonPanel({
 
       <button type="button" onClick={onStartPractice} disabled={!lesson} className={`${PRIMARY_BTN} self-center`}>
         <Dumbbell className="h-[1.2em] w-[1.2em]" />
-        {t("Start grammar practice")}
+        {t("Practise with the AI coach")}
       </button>
     </section>
   );

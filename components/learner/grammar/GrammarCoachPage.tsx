@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Bot, Check, ChevronRight, Dumbbell, PlayCircle } from "lucide-react";
+import { ChevronRight, MessageCircleQuestion, PenLine, ScanText, Sparkles } from "lucide-react";
 import {
   getGrammarTopics,
   startGrammarLesson,
@@ -19,12 +19,56 @@ import PracticeCard from "./PracticeCard";
 import TopicList from "./TopicList";
 import { CARD, ErrorBox, Spinner } from "./shared";
 
-const STEPS = [
-  { label: tk("Lessons"), icon: null },
-  { label: tk("Video and summary"), icon: PlayCircle },
-  { label: tk("Grammar practice"), icon: Dumbbell },
-  { label: tk("Ask the AI"), icon: Bot },
+/** What the AI coach does, shown in the banner (each one jumps to its place on the page). */
+const AI_SKILLS = [
+  { label: tk("Writes new sentences for you"), icon: PenLine, section: 1 },
+  { label: tk("Corrects you step by step"), icon: Sparkles, section: 1 },
+  { label: tk("Answers your questions"), icon: MessageCircleQuestion, section: 2 },
+  { label: tk("Reads a photo of your book"), icon: ScanText, section: -1 },
 ] as const;
+
+/** The banner at the top: the AI coach is the main feature of the page. */
+function AiHero({ topicTitle, ready, onSkill }: { topicTitle: string | null; ready: boolean; onSkill: (section: number) => void }) {
+  const t = useT();
+  return (
+    <section className="relative mt-[0.6em] overflow-hidden rounded-[1.6em] bg-gradient-to-br from-[#123a63] via-[#155e7a] to-[#1f9e95] p-[1.3em] text-white shadow-[0_0.8em_2.4em_rgba(20,54,90,0.25)]">
+      <span aria-hidden className="pointer-events-none absolute -end-[3em] -top-[4em] h-[12em] w-[12em] rounded-full bg-white/10" />
+      <span aria-hidden className="pointer-events-none absolute -bottom-[5em] start-[30%] h-[10em] w-[10em] rounded-full bg-[#5ee0d0]/20" />
+      <div className="relative flex flex-col gap-[1em] md:flex-row md:items-center">
+        <span aria-hidden className="relative grid h-[4.6em] w-[4.6em] shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#7cc4ff] to-[#2f6fd6] shadow-lg ring-4 ring-white/25">
+          <span className="text-[2.2em] leading-none">⭐</span>
+          <span className="absolute -end-[0.2em] -top-[0.2em] grid h-[1.9em] w-[1.9em] place-items-center rounded-full bg-[#ffd166] text-[0.75em] font-black text-[#123a63] shadow">AI</span>
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="flex items-center gap-[0.4em] text-[0.75em] font-bold uppercase tracking-wide text-[#bdf3ec] rtl:normal-case rtl:tracking-normal">
+            <span className={`h-[0.6em] w-[0.6em] rounded-full ${ready ? "bg-[#5ef0a0] shadow-[0_0_0.6em_#5ef0a0]" : "animate-pulse bg-[#ffd166]"}`} />
+            {ready ? t("Your AI grammar coach is ready") : t("Your AI grammar coach is preparing the lesson...")}
+          </p>
+          <h1 className="mt-[0.2em] text-[1.9em] font-extrabold leading-tight">{t("AI Grammar Coach")}</h1>
+          <p className="mt-[0.2em] max-w-[40em] text-[0.9em] text-white/85">
+            {topicTitle
+              ? t("Practise {topic} with an AI coach that writes sentences at your level and guides you to the right answer.", { topic: topicTitle })
+              : t("Practise Arabic grammar with an AI coach that writes sentences at your level and guides you to the right answer.")}
+          </p>
+          <ul className="mt-[0.8em] flex flex-wrap gap-[0.5em]">
+            {AI_SKILLS.map((s) => (
+              <li key={s.label}>
+                <button
+                  type="button"
+                  onClick={() => onSkill(s.section)}
+                  className="inline-flex items-center gap-[0.4em] rounded-full bg-white/15 px-[0.9em] py-[0.35em] text-[0.78em] font-semibold ring-1 ring-white/25 backdrop-blur transition hover:bg-white/25"
+                >
+                  <s.icon className="h-[1.1em] w-[1.1em]" />
+                  {t(s.label)}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </section>
+  );
+}
 
 /** The first topic the student is learning, else the first not started, else the first. */
 function firstTopic(topics: GrammarTopic[]): string | null {
@@ -46,7 +90,6 @@ export default function GrammarCoachPage() {
   const [lessonLoading, setLessonLoading] = useState(false);
   const [lessonError, setLessonError] = useState<unknown>(null);
   const [sentence, setSentence] = useState("");
-  const [step, setStep] = useState(0);
   const [passagesOpen, setPassagesOpen] = useState(false);
   const sections = useRef<(HTMLElement | null)[]>([]);
   const requested = useRef<string | null>(null);
@@ -88,8 +131,8 @@ export default function GrammarCoachPage() {
   }, [selected, lessons, loadLesson]);
 
   const goTo = (i: number) => {
-    setStep(i);
-    sections.current[i]?.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (i < 0) setPassagesOpen(true);
+    else sections.current[i]?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   const selectTopic = (key: string) => {
@@ -101,6 +144,7 @@ export default function GrammarCoachPage() {
     }
     goTo(1);
   };
+
 
   const setStatus = useCallback(
     (status: GrammarStatus) => {
@@ -125,38 +169,7 @@ export default function GrammarCoachPage() {
           <ChevronRight className="h-[1em] w-[1em] rtl:rotate-180" />
           <span>{t("Arabic Language")}</span>
         </nav>
-        <h1 className="sr-only">{t("Grammar coach")}</h1>
-
-        {/* Stepper */}
-        <div role="tablist" aria-label={t("Lesson steps")} className={`${CARD} mt-[0.6em] flex gap-[0.4em] overflow-x-auto p-[0.5em]`}>
-          {STEPS.map((s, i) => {
-            const active = i === step;
-            const done = i === 0 ? !!topic : i < step;
-            const Icon = s.icon;
-            return (
-              <button
-                key={s.label}
-                type="button"
-                role="tab"
-                aria-selected={active}
-                onClick={() => goTo(i)}
-                className={`flex min-w-max flex-1 items-center justify-center gap-[0.5em] rounded-full px-[1em] py-[0.5em] text-[0.88em] font-bold transition ${
-                  active ? "bg-[#1f9e95] text-white shadow" : "text-[#14365a] hover:bg-[#f1f8fb]"
-                }`}
-              >
-                <span
-                  className={`grid h-[1.8em] w-[1.8em] place-items-center rounded-full text-[0.85em] ${
-                    active ? "bg-white/25" : done ? "bg-[#1f9e95] text-white" : "bg-[#e6edf3]"
-                  }`}
-                >
-                  {done && !active ? <Check className="h-[1em] w-[1em]" /> : i + 1}
-                </span>
-                {Icon && <Icon className="h-[1.1em] w-[1.1em]" />}
-                {t(s.label)}
-              </button>
-            );
-          })}
-        </div>
+        <AiHero topicTitle={topic?.titleAr ?? null} ready={!!lesson} onSkill={goTo} />
 
         {topicsError != null ? (
           <div className="mt-[1em]">
@@ -169,12 +182,34 @@ export default function GrammarCoachPage() {
             {t("No grammar lessons are available yet.")}
           </p>
         ) : (
-          <div className="mt-[1em] grid items-start gap-[1em] lg:grid-cols-[minmax(15em,0.8fr)_minmax(0,1.35fr)_minmax(17em,1fr)]">
+          <div className="mt-[1em] grid items-start gap-[1em] lg:grid-cols-[minmax(13em,0.7fr)_minmax(0,1.55fr)] xl:grid-cols-[minmax(13em,0.7fr)_minmax(0,1.55fr)_minmax(16em,0.95fr)]">
             <div ref={(el) => { sections.current[0] = el; }} className="scroll-mt-[1em]">
               <TopicList topics={topics} selected={selected} onSelect={selectTopic} />
             </div>
 
-            <div ref={(el) => { sections.current[1] = el; }} className="min-w-0 scroll-mt-[1em]">
+            {/* The AI: practice written and checked by the coach, then the chat. */}
+            <div className="flex min-w-0 flex-col gap-[1em]">
+              <div ref={(el) => { sections.current[1] = el; }} className="scroll-mt-[1em]">
+                <PracticeCard
+                  topicKey={topic.key}
+                  first={lesson?.practice ?? null}
+                  loading={lessonLoading && !lesson}
+                  error={lesson ? null : lessonError}
+                  onRetry={() => {
+                    requested.current = null;
+                    void loadLesson(topic.key);
+                  }}
+                  onStatus={setStatus}
+                  onSentence={setSentence}
+                  onOpenPassages={() => setPassagesOpen(true)}
+                />
+              </div>
+              <div ref={(el) => { sections.current[2] = el; }} className="scroll-mt-[1em]">
+                <CoachChat topicKey={topic.key} topicTitle={topic.titleAr} context={sentence} />
+              </div>
+            </div>
+
+            <div ref={(el) => { sections.current[3] = el; }} className="min-w-0 scroll-mt-[1em] lg:col-span-2 xl:col-span-1">
               <LessonPanel
                 topic={topic}
                 lesson={lesson}
@@ -184,23 +219,8 @@ export default function GrammarCoachPage() {
                   requested.current = null;
                   void loadLesson(topic.key);
                 }}
-                onStartPractice={() => goTo(2)}
+                onStartPractice={() => goTo(1)}
               />
-            </div>
-
-            <div className="flex min-w-0 flex-col gap-[1em]">
-              <div ref={(el) => { sections.current[2] = el; }} className="scroll-mt-[1em]">
-                <PracticeCard
-                  topicKey={topic.key}
-                  first={lesson?.practice ?? null}
-                  onStatus={setStatus}
-                  onSentence={setSentence}
-                  onOpenPassages={() => setPassagesOpen(true)}
-                />
-              </div>
-              <div ref={(el) => { sections.current[3] = el; }} className="scroll-mt-[1em]">
-                <CoachChat topicKey={topic.key} context={sentence} />
-              </div>
             </div>
           </div>
         )}
