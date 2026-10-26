@@ -608,4 +608,18 @@ export const mentorArea: Record<string, string> = {
   "Passwords don't match.": "كلمتا المرور غير متطابقتين.",
   "Students see only your track. A new one needs the Admin's approval.": "الطلاب يرون مسارك فقط. المسار الجديد يحتاج موافقة الأدمن.",
   "Why you can teach it (optional)": "لماذا تقدر تدرّسه (اختياري)",
+  // Adding students to a squad (26 Oct 2026)
+  "We could not load the students.": "لم نتمكن من تحميل الطلاب.",
+  "We could not add the student.": "لم نتمكن من إضافة الطالب.",
+  "Add students to the squad": "إضافة طلاب للفريق",
+  "The squad is full.": "الفريق مكتمل.",
+  "{count} seats left": "متبقٍ {count} مقعد",
+  "Every student is already in a squad.": "كل الطلاب في فرق بالفعل.",
+  "No students match.": "لا يوجد طلاب مطابقون.",
+  "No track yet": "بدون مسار بعد",
+  "Add students": "إضافة طلاب",
+  "No members yet. Add students who are not in a squad.": "لا يوجد أعضاء بعد. أضف طلابًا ليسوا في فريق.",
+  "No members yet.": "لا يوجد أعضاء بعد.",
+  "This squad has no seat plan, so students can join in any role.": "هذا الفريق بلا خطة مقاعد، لذلك يمكن للطلاب الانضمام بأي دور.",
+  "{count} students added.": "تمت إضافة {count} طالب.",
 };

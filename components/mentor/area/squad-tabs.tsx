@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import type { Route } from "next";
-import { AlertTriangle, Check, ClipboardCheck, ExternalLink, Info, LoaderCircle, RefreshCw, UserRound } from "lucide-react";
+import { AlertTriangle, Check, ClipboardCheck, ExternalLink, Info, LoaderCircle, RefreshCw, UserPlus, UserRound } from "lucide-react";
 import { errorMessage } from "@/lib/api-client";
 import { useI18n } from "@/lib/i18n/client";
 import { useLiveChannel } from "@/lib/live-channel";
@@ -12,7 +12,8 @@ import {
   type BoardTask, type LinkRow, type SquadChatMessage, type SquadDetail,
 } from "@/lib/monitor-api";
 import { cn } from "@/lib/utils";
-import { Card, MentorAvatar, Pill, PrimaryButton, RolePill, SelectPill, useRelative, type Tone } from "../mentor-area-ui";
+import { Card, MentorAvatar, Pill, PrimaryButton, RolePill, SecondaryButton, SelectPill, useRelative, type Tone } from "../mentor-area-ui";
+import { AddSquadStudents } from "./AddSquadStudents";
 
 const day = (iso: string, intl: string) => new Date(iso).toLocaleDateString(intl, { month: "short", day: "numeric" });
 
@@ -69,10 +70,27 @@ export function SprintTimeline({ detail, vertical = false }: { detail: SquadDeta
 
 // ---------- Members ----------
 
-export function MembersTab({ detail }: { detail: SquadDetail }) {
+/** The members, and "Add students" for a squad that still takes members (students who are in no squad, by open seat). */
+export function MembersTab({ detail, onChanged }: { detail: SquadDetail; onChanged?: () => void }) {
   const { t, intl } = useI18n();
   const rel = useRelative();
+  const [adding, setAdding] = useState(false);
+  const canAdd = detail.squad.isCurrent && detail.squad.state !== "Completed";
   return (
+    <div>
+      {canAdd && (
+        <div className="mb-[1em] flex justify-end">
+          <SecondaryButton onClick={() => setAdding(true)}>
+            <UserPlus className="size-[1.1em]" /> {t("Add students")}
+          </SecondaryButton>
+        </div>
+      )}
+      {detail.members.length === 0 && (
+        <p className="mb-[1em] rounded-[0.8em] bg-[#f4f7fa] px-[1em] py-[0.8em] text-[0.85em] text-[#475467]">
+          {canAdd ? t("No members yet. Add students who are not in a squad.") : t("No members yet.")}
+        </p>
+      )}
+      {adding && <AddSquadStudents squadId={detail.squad.id} onClose={() => setAdding(false)} onAdded={() => onChanged?.()} />}
     <div className="overflow-x-auto">
       <table className="w-full min-w-[58em] text-[0.85em]">
         <thead>
@@ -118,6 +136,7 @@ export function MembersTab({ detail }: { detail: SquadDetail }) {
           })}
         </tbody>
       </table>
+    </div>
     </div>
   );
 }

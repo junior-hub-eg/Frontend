@@ -603,3 +603,28 @@ export const changeMentorPassword = (currentPassword: string, newPassword: strin
   api.put<void>("/api/v1/monitor/me/password", { currentPassword, newPassword, confirmPassword });
 export const getMyTrackRequests = () => api.get<{ id: string; trackCode: string; status: string }[]>("/api/v1/monitor/track-requests");
 export const sendTrackRequest = (trackCode: string, note: string) => api.post("/api/v1/monitor/track-requests", { trackCode, note });
+
+// ---------- Adding students to a squad (26 Oct 2026) ----------
+
+export type SquadSeatRole = "Frontend" | "Backend" | "UIUX" | "AI" | "Testing" | "Data" | "Mobile" | "Gaming";
+
+/** Open seats per role and the students of the squad's school who are in no squad now. */
+export interface SquadCandidates {
+  /** Empty when the squad has no seat plan (any role is accepted). */
+  seats: { role: SquadSeatRole; needed: number; filled: number }[];
+  students: {
+    id: string;
+    fullName: string;
+    email: string;
+    photoUrl: string | null;
+    grade: number | null;
+    totalXp: number;
+    trackCode: string | null;
+    trackName: string | null;
+  }[];
+}
+
+export const getSquadCandidates = (squadId: string) => api.get<SquadCandidates>(`/api/v1/monitor/squads/${squadId}/candidates`);
+/** Adds the student in the role; ROLE_SEATS_FULL / SQUAD_FULL when no seat is left. */
+export const addSquadStudent = (squadId: string, studentId: string, role: SquadSeatRole) =>
+  api.post<void>(`/api/v1/monitor/squads/${squadId}/students`, { studentId, role });
