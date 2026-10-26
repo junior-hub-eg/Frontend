@@ -622,4 +622,8 @@ export const mentorArea: Record<string, string> = {
   "No members yet.": "لا يوجد أعضاء بعد.",
   "This squad has no seat plan, so students can join in any role.": "هذا الفريق بلا خطة مقاعد، لذلك يمكن للطلاب الانضمام بأي دور.",
   "{count} students added.": "تمت إضافة {count} طالب.",
+  // Add students (26 Oct 2026): the role follows the student's track.
+  "The role follows the student's track.": "الدور يتحدد حسب مسار الطالب.",
+  "No student without a squad learns a track that has an open seat here.": "لا يوجد طالب بدون فريق في مسار له مقعد متاح هنا.",
+  "A student joins a squad in the role of their own track.": "ينضم الطالب للفريق بدور مساره فقط.",
 };
