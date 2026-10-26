@@ -55,20 +55,18 @@ function ProblemCard({ problem }: { problem: Problem }) {
 
       {/* Actions */}
       <div className="flex flex-wrap items-center gap-[0.8em]">
-        <Link href={detail} className={pill} style={{ backgroundColor: "#e6f0fd" }}>
+        <Link href={`${detail}?tab=video` as Route} className={pill} style={{ backgroundColor: "#e6f0fd" }}>
           <PlayCircle className="h-[1.3em] w-[1.3em]" style={{ color: "#1d6fe0" }} />
           {t("AI Video")}
         </Link>
-
-        {/* Simulation and Code pages are not built yet */}
-        <button type="button" title={t("Coming soon")} className={pill} style={{ backgroundColor: "#e3f6e8" }}>
+        <Link href={`${detail}?tab=simulation` as Route} className={pill} style={{ backgroundColor: "#e3f6e8" }}>
           <Box className="h-[1.3em] w-[1.3em]" style={{ color: "#1f9d55" }} />
           {t("Simulation")}
-        </button>
-        <button type="button" title={t("Coming soon")} className={pill} style={{ backgroundColor: "#e4dcf5" }}>
+        </Link>
+        <Link href={`${detail}?tab=code` as Route} className={pill} style={{ backgroundColor: "#e4dcf5" }}>
           <Code2 className="h-[1.3em] w-[1.3em]" style={{ color: "#14365a" }} />
           {t("Code")}
-        </button>
+        </Link>
 
         <Link
           href={detail}

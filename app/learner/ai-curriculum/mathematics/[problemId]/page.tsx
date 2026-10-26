@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import ProblemDetailPage from "@/components/learner/ProblemDetailPage";
 import { MATH_PROBLEMS, getMathProblem } from "@/lib/math-problems";
@@ -15,5 +16,10 @@ export default async function LearnerProblemPage({
   const problem = getMathProblem(problemId);
   // A problem that does not exist shows "page not found" instead of another problem's content.
   if (!problem) notFound();
-  return <ProblemDetailPage problem={problem} />;
+  // The page reads ?tab= (the Simulation and Code buttons), so it needs a Suspense boundary on a static route.
+  return (
+    <Suspense>
+      <ProblemDetailPage key={problem.id} problem={problem} />
+    </Suspense>
+  );
 }
