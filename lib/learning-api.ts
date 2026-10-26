@@ -26,6 +26,11 @@ export interface SelectTrackResult {
   level: TrackLevel;
   changed: boolean;
   learning: string[];
+  /**
+   * Set when the choice became a request to the admin (a new track for a student who learns one already): the track
+   * asked for. Nothing changed yet; the admin approves or rejects it.
+   */
+  requestedTrack?: string | null;
 }
 
 export const getTracks = () => api.get<TrackSummary[]>("/api/v1/tracks");
@@ -133,6 +138,8 @@ export interface TrackDetail {
   videos: TrackVideo[];
   /** Unlocked once a video of the track is completed. */
   quiz: { unlocked: boolean; passed: boolean; questions: QuizQuestion[] };
+  /** The student asked the admin to change to this track and waits for the answer. */
+  changeRequested?: boolean;
 }
 
 export type LessonStatus = "NotStarted" | "InProgress" | "Done";
