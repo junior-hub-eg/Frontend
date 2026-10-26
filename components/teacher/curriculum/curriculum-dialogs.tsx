@@ -208,6 +208,7 @@ export function LessonDialog({
     titleEn: lesson?.titleEn ?? "",
     summaryAr: lesson?.summaryAr ?? "",
     summaryEn: lesson?.summaryEn ?? "",
+    videoUrl: lesson?.videoUrl ?? "",
     status: (lesson?.status ?? "Published") as CurriculumStatus,
   });
 
@@ -220,6 +221,7 @@ export function LessonDialog({
       titleEn: form.titleEn.trim(),
       summaryAr: orNull(form.summaryAr),
       summaryEn: orNull(form.summaryEn),
+      videoUrl: form.videoUrl.trim(),
     };
     try {
       if (lesson) {
@@ -268,6 +270,17 @@ export function LessonDialog({
               <textarea className={cn(inputClass, "h-24 py-2")} dir="ltr" value={form.summaryEn} onChange={(e) => setForm({ ...form, summaryEn: e.target.value })} maxLength={4000} />
             </FieldLabel>
           </TwoCols>
+          <FieldLabel label={t("Lesson video link (YouTube or a video file)")} error={errors.fields.videoUrl}>
+            <input
+              className={inputClass}
+              dir="ltr"
+              type="url"
+              placeholder="https://www.youtube.com/watch?v=..."
+              value={form.videoUrl}
+              onChange={(e) => setForm({ ...form, videoUrl: e.target.value })}
+              maxLength={500}
+            />
+          </FieldLabel>
           {lesson && <StatusField value={form.status} onChange={(status) => setForm({ ...form, status })} error={errors.fields.status} />}
           <FormMessage text={errors.message} />
           <Actions busy={busy} onClose={onClose} label={lesson ? t("Save") : t("Create Lesson")} />

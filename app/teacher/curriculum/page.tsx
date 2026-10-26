@@ -44,6 +44,7 @@ import {
   STATUS_LABEL,
   UnitDialog,
 } from "@/components/teacher/curriculum/curriculum-dialogs";
+import VideoEmbed from "@/components/shared/VideoEmbed";
 
 function Ltr({ children, className }: { children: ReactNode; className?: string }) {
   return (
@@ -698,12 +699,16 @@ function LessonDetail({
           <Video aria-hidden className="size-4" />
           {t("Lesson Video")}
         </p>
-        <div className="relative mt-2 aspect-[11/5] max-h-60 w-full overflow-hidden rounded-xl bg-[#14243f]">
-          <Image src={VIDEO_POSTER} alt="" fill sizes="(min-width: 1280px) 40vw, 100vw" className="object-cover object-top opacity-70" />
-          <div className="absolute inset-0 grid place-items-center bg-black/30 p-4">
-            <span className="rounded-full bg-black/40 px-3 py-1 text-center text-[10px] font-medium text-white">{t("No video for this lesson yet")}</span>
+        {lesson.videoUrl ? (
+          <VideoEmbed key={lesson.id} url={lesson.videoUrl} title={titleOf(lesson)} className="mt-2" />
+        ) : (
+          <div className="relative mt-2 aspect-[11/5] max-h-60 w-full overflow-hidden rounded-xl bg-[#14243f]">
+            <Image src={VIDEO_POSTER} alt="" fill sizes="(min-width: 1280px) 40vw, 100vw" className="object-cover object-top opacity-70" />
+            <div className="absolute inset-0 grid place-items-center bg-black/30 p-4">
+              <span className="rounded-full bg-black/40 px-3 py-1 text-center text-[10px] font-medium text-white">{t("No video for this lesson yet")}</span>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       <div>
