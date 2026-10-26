@@ -16,6 +16,7 @@ import { PasswordField } from "./PasswordField";
 import { authStyles } from "./auth-styles";
 import { useAuth } from "@/lib/auth/auth-context";
 import { ROLE_HOME } from "@/lib/constants";
+import { takePendingJoin } from "@/lib/class-join";
 import { ApiError, errorMessage } from "@/lib/api-client";
 import { useT } from "@/lib/i18n/client";
 import { tk } from "@/lib/i18n/translate";
@@ -56,7 +57,8 @@ export function LoginForm() {
     try {
       setError(null);
       const user = await login(values.email, values.password, values.rememberMe);
-      router.push(ROLE_HOME[user.role] as Route);
+      const join = user.role === "learner" ? takePendingJoin() : null;
+      router.push((join ? `/join/${join}` : ROLE_HOME[user.role]) as Route);
     } catch (e) {
       if (e instanceof ApiError && e.code === "VALIDATION_FAILED") {
         Object.entries(e.fieldErrors).forEach(([field, message]) =>

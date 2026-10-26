@@ -29,7 +29,7 @@ import {
   type TeacherClassDetail,
 } from "@/lib/teacher-api";
 import { LoadBlock, StudentAvatar, SUBJECT_LABEL, useTeacherData } from "@/components/teacher/teacher-ui";
-import { AddClassDialog, AnnouncementDialog, AssignmentsTab, InviteTab, PlanTab, RemoveClassButton } from "@/components/teacher/ClassTabs";
+import { AddClassDialog, AnnouncementDialog, AssignmentsTab, InviteStudents, InviteTab, PlanTab, RemoveClassButton } from "@/components/teacher/ClassTabs";
 import { useToast } from "@/components/teacher/teacher-dialogs";
 import Link from "next/link";
 import type { Route } from "next";
@@ -490,6 +490,7 @@ function MyClasses() {
         ) : tab === "invite" ? (
           <>
             <InviteTab d={d} onChange={detail.setData} reload={() => { detail.reload(); classes.reload(); }} notify={toast.show} />
+            <InviteStudents d={d} onChange={(next) => { detail.setData(next); classes.reload(); }} reload={detail.reload} notify={toast.show} />
             <div className="px-5 pb-5">
               <RemoveClassButton d={d} notify={toast.show} onRemoved={() => { setChosen(null); classes.reload(); }} />
             </div>
