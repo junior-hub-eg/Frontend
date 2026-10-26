@@ -1,9 +1,11 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, UsersRound } from "lucide-react";
+import { getStudentAssignments, getStudentClasses } from "@/lib/student-classes-api";
 import { useT } from "@/lib/i18n/client";
 import { tk } from "@/lib/i18n/translate";
 
@@ -58,6 +60,50 @@ const SUBJECTS: {
 const ARROW_CLASS =
   "grid h-[4em] w-[4em] shrink-0 place-items-center rounded-full bg-[#14365a] text-white";
 
+/** The student's school classes (teachers' assignments, questions, channel), with how many assignments wait. */
+function MyClassesCard() {
+  const t = useT();
+  const [summary, setSummary] = useState<{ classes: number; toDo: number } | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    Promise.all([getStudentClasses(), getStudentAssignments()]).then(
+      ([classes, assignments]) =>
+        active &&
+        setSummary({
+          classes: classes.filter((c) => c.status === "Active").length,
+          toDo: assignments.filter((a) => a.status === "NotStarted" || a.status === "Missing").length,
+        }),
+      () => undefined, // the card still opens the page
+    );
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  return (
+    <Link
+      href={"/learner/ai-curriculum/classes" as Route}
+      className="mt-[1.8em] flex items-center gap-[1em] rounded-[1.8em] bg-gradient-to-br from-[#123a63] via-[#155e7a] to-[#1f9e95] p-[1.3em] text-white shadow-[0_0.8em_2.4em_rgba(20,54,90,0.2)] transition hover:brightness-110 lg:mx-[1.8em]"
+    >
+      <span className="grid h-[3.6em] w-[3.6em] shrink-0 place-items-center rounded-full bg-white/15">
+        <UsersRound className="h-[1.8em] w-[1.8em]" />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-[1.6em] font-extrabold leading-tight">{t("My classes")}</span>
+        <span className="block text-[0.9em] text-white/85">
+          {summary && summary.classes > 0
+            ? t("Classes: {classes} • Assignments to do: {count}", { classes: summary.classes, count: summary.toDo })
+            : t("Join your teacher's class and see its assignments, messages and schedule.")}
+        </span>
+      </span>
+      <span className="grid h-[3em] w-[3em] shrink-0 place-items-center rounded-full bg-white text-[#14365a]">
+        <ArrowRight className="h-[1.4em] w-[1.4em] rtl:rotate-180" />
+      </span>
+    </Link>
+  );
+}
+
 /** The Figma "AI Curriculum" page, inside the learner shell (it places itself next to the sidebar, like Courses). */
 export default function AiCurriculumPage() {
   const t = useT();
@@ -77,6 +123,8 @@ export default function AiCurriculumPage() {
             <Image src={`${IMG}/Group%20189.png`} alt="" fill priority sizes="(max-width: 1024px) 90vw, 50vw" className="object-cover object-right" />
           </div>
         </section>
+
+        <MyClassesCard />
 
         {/* Subjects */}
         <ul className="mt-[2.6em] grid gap-[1em] md:grid-cols-2 lg:px-[1.8em]">

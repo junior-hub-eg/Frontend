@@ -16,8 +16,11 @@ import { useT } from "@/lib/i18n/client";
 /** LOCAL ONLY: NEXT_PUBLIC_SKIP_AUTH=true in .env.local skips the login check and the "needs a track" lock. Off by default and ignored in production. */
 const SKIP_AUTH = process.env.NEXT_PUBLIC_SKIP_AUTH === "true" && process.env.NODE_ENV !== "production";
 
-/** The only pages a student without a track can open: Find your track, the placement test and the AI interview. */
-const ONBOARDING_PATHS = ["/learner/ai-interview", "/learner/courses", "/learner/courses/discovery"];
+/**
+ * The only pages a student without a track can open: Find your track, the placement test, the AI interview, and their
+ * school classes (a teacher's invite link lands there; the backend serves them without a track).
+ */
+const ONBOARDING_PATHS = ["/learner/ai-interview", "/learner/courses", "/learner/courses/discovery", "/learner/ai-curriculum/classes"];
 const isOnboarding = (path: string) => ONBOARDING_PATHS.includes(path) || path.startsWith("/learner/placement/");
 /** Where a student without a track lands: Find your track, with its two ways in. */
 const FIND_YOUR_TRACK = "/learner/courses";

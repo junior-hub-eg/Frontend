@@ -19,6 +19,7 @@ import { students } from "./ar/students";
 import { curriculum } from "./ar/curriculum";
 import { assignments } from "./ar/assignments";
 import { teacherWorkspace } from "./ar/teacher-workspace";
+import { myClasses } from "./ar/my-classes";
 import { teacherMessages } from "./ar/teacher-messages";
 import { teacherCalendar } from "./ar/teacher-calendar";
 import { teacherProgress } from "./ar/teacher-progress";
@@ -52,6 +53,7 @@ export const ar: Record<string, string> = {
   ...curriculum,
   ...assignments,
   ...teacherWorkspace,
+  ...myClasses,
   ...teacherMessages,
   ...teacherCalendar,
   ...teacherProgress,
