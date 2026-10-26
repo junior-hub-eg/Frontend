@@ -119,4 +119,7 @@ export const grammarCoach: Record<string, string> = {
   "Try it yourself: say each word's إعراب, then tap it to check.": "جرّب بنفسك: قول إعراب كل كلمة، وبعدين اضغط عليها عشان تتأكد.",
   "Parse it myself first": "أعرب بنفسي الأول",
   "Show the إعراب": "اعرض الإعراب",
+  "Delete this passage and its إعراب?": "تحذف القطعة دي وإعرابها؟",
+  "Deleting...": "جارٍ الحذف...",
+  "Delete": "حذف",
 };

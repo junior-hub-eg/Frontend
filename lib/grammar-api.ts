@@ -103,6 +103,7 @@ export const askGrammarCoach = (key: string, question: string, context: string, 
   api.post<{ answer: string }>(`/api/v1/student/grammar/topics/${key}/ask`, { question, context, history });
 export const getStudentPassages = () => api.get<GrammarPassage[]>("/api/v1/student/grammar/passages");
 export const addStudentPassage = (passage: NewPassage) => api.post<GrammarPassage>("/api/v1/student/grammar/passages", passage);
+export const deleteStudentPassage = (id: string) => api.delete<void>(`/api/v1/student/grammar/passages/${id}`);
 
 // Teacher
 export const getTeacherPassages = () => api.get<GrammarPassage[]>("/api/v1/teacher/grammar/passages");
