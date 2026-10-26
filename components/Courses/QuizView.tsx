@@ -128,10 +128,16 @@ async function placementQuiz(code: string): Promise<Quiz> {
         xpAwarded: 0,
         badge: null,
         level: tNow(r.level),
-        message: tNow("You start {track} at {level} level. You can take this test again to change it.", {
-          track: tNow(test.trackName),
-          level: tNow(r.level),
-        }),
+        // A student who learns another track asked the admin for this one: it starts once they approve.
+        message: r.track.requestedTrack
+          ? tNow("Your level in {track} is {level}. Changing your track needs the admin's approval; you will get a notification when they answer.", {
+              track: tNow(test.trackName),
+              level: tNow(r.level),
+            })
+          : tNow("You start {track} at {level} level. You can take this test again to change it.", {
+              track: tNow(test.trackName),
+              level: tNow(r.level),
+            }),
       };
     },
   };
