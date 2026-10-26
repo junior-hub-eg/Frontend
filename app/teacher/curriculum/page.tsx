@@ -45,7 +45,6 @@ import {
   UnitDialog,
 } from "@/components/teacher/curriculum/curriculum-dialogs";
 import VideoEmbed from "@/components/shared/VideoEmbed";
-import ShortEmbed from "@/components/shared/ShortEmbed";
 
 function Ltr({ children, className }: { children: ReactNode; className?: string }) {
   return (
@@ -701,12 +700,7 @@ function LessonDetail({
           {t("Lesson Video")}
         </p>
         {lesson.videoUrl ? (
-          <div className={cn("mt-2 grid items-start gap-3", lesson.shortVideoUrl && "sm:grid-cols-[minmax(0,1fr)_9.5rem]")}>
-            <VideoEmbed key={lesson.id} url={lesson.videoUrl} title={titleOf(lesson)} />
-            {lesson.shortVideoUrl && <ShortEmbed key={`short-${lesson.id}`} url={lesson.shortVideoUrl} title={titleOf(lesson)} className="text-[12px]" />}
-          </div>
-        ) : lesson.shortVideoUrl ? (
-          <ShortEmbed key={`short-${lesson.id}`} url={lesson.shortVideoUrl} title={titleOf(lesson)} className="mt-2 text-[12px]" />
+          <VideoEmbed key={lesson.id} url={lesson.videoUrl} title={titleOf(lesson)} className="mt-2" />
         ) : (
           <div className="relative mt-2 aspect-[11/5] max-h-60 w-full overflow-hidden rounded-xl bg-[#14243f]">
             <Image src={VIDEO_POSTER} alt="" fill sizes="(min-width: 1280px) 40vw, 100vw" className="object-cover object-top opacity-70" />

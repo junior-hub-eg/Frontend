@@ -27,7 +27,6 @@ export const lesson: Record<string, string> = {
   "The video of this lesson is coming soon.": "فيديو هذا الدرس قادم قريبًا.",
   "Key idea": "الفكرة الأساسية",
   "Short video + code practice": "فيديو قصير + تمرين كود",
-  "Watch on TikTok": "شاهد على تيك توك",
   "Short video": "فيديو قصير",
   "Watch on YouTube": "شاهد على يوتيوب",
   "Start practising": "ابدأ التمرين",
