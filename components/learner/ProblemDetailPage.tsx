@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import type { Route } from "next";
 import {
+  MATH_SHORTS,
   MATH_VIDEOS,
   relatedMathProblems,
   type MathProblem,
@@ -12,6 +13,7 @@ import {
 import { MATH_SIMS, type MathSim } from "@/lib/math-sims";
 import { youTubeEmbed } from "@/lib/youtube";
 import EquationSimulation from "./EquationSimulation";
+import ShortEmbed from "@/components/shared/ShortEmbed";
 import { useT } from "@/lib/i18n/client";
 import { tk } from "@/lib/i18n/translate";
 import {
@@ -301,10 +303,15 @@ export default function ProblemDetailPage({
         <div className="mt-[1em]">
           {tab === "AI Explanation" &&
             (MATH_VIDEOS[problem.id] ? (
-              <VideoPlayer
-                videoId={MATH_VIDEOS[problem.id]}
-                title={t(problem.title)}
-              />
+              <div className={`grid items-start gap-[1em] ${MATH_SHORTS[problem.id] ? "md:grid-cols-[minmax(0,1fr)_15em]" : ""}`}>
+                <VideoPlayer
+                  videoId={MATH_VIDEOS[problem.id]}
+                  title={t(problem.title)}
+                />
+                {MATH_SHORTS[problem.id] && (
+                  <ShortEmbed url={`https://www.youtube.com/shorts/${MATH_SHORTS[problem.id]}`} title={t(problem.title)} />
+                )}
+              </div>
             ) : (
               <p className="rounded-[1.2em] border border-dashed border-[#c9d3df] p-[2.5em] text-center text-[0.9em] text-[#5b7089]">
                 {t("Video coming soon")}

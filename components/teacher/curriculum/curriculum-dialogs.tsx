@@ -209,6 +209,7 @@ export function LessonDialog({
     summaryAr: lesson?.summaryAr ?? "",
     summaryEn: lesson?.summaryEn ?? "",
     videoUrl: lesson?.videoUrl ?? "",
+    shortVideoUrl: lesson?.shortVideoUrl ?? "",
     status: (lesson?.status ?? "Published") as CurriculumStatus,
   });
 
@@ -222,6 +223,7 @@ export function LessonDialog({
       summaryAr: orNull(form.summaryAr),
       summaryEn: orNull(form.summaryEn),
       videoUrl: form.videoUrl.trim(),
+      shortVideoUrl: form.shortVideoUrl.trim(),
     };
     try {
       if (lesson) {
@@ -278,6 +280,17 @@ export function LessonDialog({
               placeholder="https://www.youtube.com/watch?v=..."
               value={form.videoUrl}
               onChange={(e) => setForm({ ...form, videoUrl: e.target.value })}
+              maxLength={500}
+            />
+          </FieldLabel>
+          <FieldLabel label={t("Short video link (YouTube Short or TikTok)")} error={errors.fields.shortVideoUrl}>
+            <input
+              className={inputClass}
+              dir="ltr"
+              type="url"
+              placeholder="https://www.youtube.com/shorts/..."
+              value={form.shortVideoUrl}
+              onChange={(e) => setForm({ ...form, shortVideoUrl: e.target.value })}
               maxLength={500}
             />
           </FieldLabel>

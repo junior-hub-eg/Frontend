@@ -43,6 +43,8 @@ export interface CurriculumLesson {
   problems: CurriculumProblem[];
   /** The lesson's video: a YouTube link or a video file. */
   videoUrl: string | null;
+  /** A short vertical video of the lesson (YouTube Short or TikTok). */
+  shortVideoUrl?: string | null;
 }
 
 export interface CurriculumUnit {
@@ -85,6 +87,7 @@ export interface NewCurriculumLesson {
   summaryEn: string | null;
   orderIndex: number;
   videoUrl?: string | null;
+  shortVideoUrl?: string | null;
 }
 
 export interface UpdateCurriculumLesson {
@@ -96,6 +99,8 @@ export interface UpdateCurriculumLesson {
   status: CurriculumStatus;
   /** Null keeps the video; an empty text removes it. */
   videoUrl?: string | null;
+  /** The short video, kept or removed the same way. */
+  shortVideoUrl?: string | null;
 }
 
 export type SaveCurriculumProblem = Omit<CurriculumProblem, "id" | "lessonId">;
