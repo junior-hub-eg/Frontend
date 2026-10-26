@@ -76,6 +76,7 @@ export const curriculum: Record<string, string> = {
   "Other accepted answers (one per line)": "إجابات أخرى مقبولة (واحدة في كل سطر)",
   "Hints (one per line)": "التلميحات (واحد في كل سطر)",
   "Lesson video link (YouTube or a video file)": "رابط فيديو الدرس (يوتيوب أو ملف فيديو)",
+  "Short video link (YouTube Short or TikTok)": "رابط الفيديو القصير (يوتيوب Shorts أو تيك توك)",
 };
 
 export default curriculum;
