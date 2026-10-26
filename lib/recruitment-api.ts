@@ -86,6 +86,9 @@ export interface Certificate {
   issuedUtc: string;
   isSimulation: boolean;
   disclaimer: string;
+  /** Simulation, or one the admin signs: TrackCompletion, Capstone or CourseLevel (a finished course level). */
+  kind?: string;
+  signerName?: string | null;
 }
 
 export const getPracticeJobs = () => api.get<JobList>("/api/v1/recruitment/jobs");

@@ -8,8 +8,9 @@ import { errorMessage } from "@/lib/api-client";
 import { getAchievements, type Achievements } from "@/lib/learning-api";
 import { getMyCertificates, type Certificate } from "@/lib/recruitment-api";
 import { RecruitmentFrame, SimulationBadge } from "./recruitment-ui";
+import { certificateTitle } from "@/components/certificates/certificate-title";
 import { useT } from "@/lib/i18n/client";
-import { dateLocale } from "@/lib/i18n/translate";
+import { dateLocale, tk } from "@/lib/i18n/translate";
 
 const day = (iso: string) => new Date(iso).toLocaleDateString(dateLocale("en-GB"), { day: "numeric", month: "short", year: "numeric" });
 const checkPath = (code: string) => `/certificates/${code}`;
@@ -27,6 +28,13 @@ function Stat({ icon: Icon, value, label, color }: { icon: typeof Award; value: 
     </div>
   );
 }
+
+/** What an admin-signed certificate is for. */
+const KIND_LABEL: Record<string, string> = {
+  CourseLevel: tk("Course level"),
+  TrackCompletion: tk("Track completion"),
+  Capstone: tk("Capstone project"),
+};
 
 function CertificateCard({ certificate }: { certificate: Certificate }) {
   const t = useT();
@@ -48,7 +56,12 @@ function CertificateCard({ certificate }: { certificate: Certificate }) {
           <Award className="h-[1.5em] w-[1.5em]" />
         </span>
         <div className="min-w-0 flex-1">
-          <h3 className="text-[1.05em] font-bold leading-snug text-[#14365a]">{t(certificate.role)}</h3>
+          {!certificate.isSimulation && certificate.kind && KIND_LABEL[certificate.kind] && (
+            <span className="mb-[0.3em] inline-block rounded-full bg-[#e3f4f5] px-[0.7em] py-[0.15em] text-[0.7em] font-bold text-[#0f7a81]">
+              {t(KIND_LABEL[certificate.kind])}
+            </span>
+          )}
+          <h3 dir="auto" className="text-[1.05em] font-bold leading-snug text-[#14365a]">{certificateTitle(certificate, t)}</h3>
           <p className="text-[0.85em] text-[#14365a]/70">
             {certificate.companyName} · {t(certificate.trackName)}
           </p>
@@ -66,7 +79,9 @@ function CertificateCard({ certificate }: { certificate: Certificate }) {
           <dd className="inline font-mono font-bold tracking-wider">{certificate.code}</dd>
         </div>
       </dl>
-      <p className="text-[0.75em] font-semibold text-[#a86a00]">{t(certificate.disclaimer)}</p>
+      <p className={`text-[0.75em] font-semibold ${certificate.isSimulation ? "text-[#a86a00]" : "text-[#1f7a43]"}`}>
+        {certificate.isSimulation || !certificate.signerName ? t(certificate.disclaimer) : t("Signed by {name}", { name: certificate.signerName })}
+      </p>
 
       <div className="mt-auto flex flex-wrap gap-[0.6em]">
         <a
@@ -115,6 +130,9 @@ export default function CertificationPage() {
   }, []);
 
   const loading = !certificates && !error;
+  // The ones the admin signed (a finished course level, track or capstone) come first, apart from the practice ones.
+  const earned = certificates?.filter((c) => !c.isSimulation) ?? [];
+  const practice = certificates?.filter((c) => c.isSimulation) ?? [];
 
   return (
     <RecruitmentFrame>
@@ -141,11 +159,29 @@ export default function CertificationPage() {
           </div>
 
           <section className="mt-[2em]">
+            <h2 className="mb-[0.3em] text-[1.3em] font-extrabold text-[#14365a]">{t("Course certificates")}</h2>
+            <p className="mb-[0.8em] text-[0.85em] text-[#14365a]/70">
+              {t("Finish a level of a course (its lessons and its exam) and the admin signs your certificate.")}
+            </p>
+            {earned.length === 0 ? (
+              <p className="rounded-[1.4em] border border-dashed border-[#c9d3df] bg-white p-[1.5em] text-center text-[0.85em] text-[#14365a]/70">
+                {t("No course certificates yet.")}
+              </p>
+            ) : (
+              <div className="grid gap-[1em] md:grid-cols-2 xl:grid-cols-3">
+                {earned.map((c) => (
+                  <CertificateCard key={c.code} certificate={c} />
+                ))}
+              </div>
+            )}
+          </section>
+
+          <section className="mt-[2em]">
             <div className="mb-[0.8em] flex flex-wrap items-center gap-[0.6em]">
               <h2 className="text-[1.3em] font-extrabold text-[#14365a]">{t("Practice certificates")}</h2>
               <SimulationBadge />
             </div>
-            {certificates.length === 0 ? (
+            {practice.length === 0 ? (
               <div className="flex flex-col items-center gap-[0.6em] rounded-[1.4em] border border-dashed border-[#c9d3df] bg-white p-[2em] text-center">
                 <Award className="h-[2.4em] w-[2.4em] text-[#c9d3df]" aria-hidden />
                 <p className="text-[0.95em] font-bold text-[#14365a]">{t("No certificates yet")}</p>
@@ -161,7 +197,7 @@ export default function CertificationPage() {
               </div>
             ) : (
               <div className="grid gap-[1em] md:grid-cols-2 xl:grid-cols-3">
-                {certificates.map((c) => (
+                {practice.map((c) => (
                   <CertificateCard key={c.code} certificate={c} />
                 ))}
               </div>
