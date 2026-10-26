@@ -115,4 +115,8 @@ export const grammarCoach: Record<string, string> = {
   "A new sentence written by the AI for you. Click each word, then choose its grammatical role.": "جملة جديدة كتبها لك الـ AI. اضغط على كل كلمة واختار إعرابها.",
   "Lesson video": "فيديو الدرس",
   "Lesson parts": "أجزاء الدرس",
+  "Tap a word to see its full إعراب and why.": "اضغط على أي كلمة عشان تشوف إعرابها كامل والسبب.",
+  "Try it yourself: say each word's إعراب, then tap it to check.": "جرّب بنفسك: قول إعراب كل كلمة، وبعدين اضغط عليها عشان تتأكد.",
+  "Parse it myself first": "أعرب بنفسي الأول",
+  "Show the إعراب": "اعرض الإعراب",
 };

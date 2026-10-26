@@ -1,11 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { BadgeCheck, Camera, ImageUp, Sparkles, X } from "lucide-react";
-import { addStudentPassage, getStudentPassages, type GrammarPassage } from "@/lib/grammar-api";
+import { BadgeCheck, Camera, Eye, EyeOff, ImageUp, Sparkles, X } from "lucide-react";
+import { addStudentPassage, getStudentPassages, WORD_COLOR, type GrammarPassage, type ParsedWord } from "@/lib/grammar-api";
 import { useI18n } from "@/lib/i18n/client";
 import { dateLocale } from "@/lib/i18n/translate";
-import { ColorLegend, ErrorBox, ParsedLine, PRIMARY_BTN, SOFT_BTN, Spinner } from "./shared";
+import { ColorLegend, ErrorBox, PRIMARY_BTN, SOFT_BTN, Spinner } from "./shared";
 
 const MAX_BYTES = 5 * 1024 * 1024;
 const TYPES = ["image/png", "image/jpeg", "image/webp"];
@@ -19,8 +19,64 @@ function readBase64(file: File): Promise<string> {
   });
 }
 
-function PassageView({ passage }: { passage: GrammarPassage }) {
+/**
+ * One parsed sentence (US-12): each word with its إعراب under it, in the case color. With the إعراب hidden, the student
+ * tries first and taps a word to check it. Tapping a word shows its full إعراب and the reason.
+ */
+function ParsedSentenceView({ words, showRoles }: { words: ParsedWord[]; showRoles: boolean }) {
   const { t } = useI18n();
+  const [open, setOpen] = useState<number | null>(null);
+  const [revealed, setRevealed] = useState<Set<number>>(new Set());
+  const w = open == null ? null : words[open];
+  return (
+    <div>
+      <div dir="rtl" className="flex flex-wrap gap-[0.45em]">
+        {words.map((word, i) => {
+          const visible = showRoles || revealed.has(i);
+          return (
+            <button
+              key={i}
+              type="button"
+              onClick={() => {
+                setOpen(open === i ? null : i);
+                setRevealed((r) => new Set(r).add(i));
+              }}
+              aria-expanded={open === i}
+              className={`flex min-w-[4.2em] flex-col items-center rounded-[0.7em] px-[0.6em] py-[0.35em] ring-1 transition ${
+                WORD_COLOR[word.color] ?? WORD_COLOR.gray
+              } ${open === i ? "ring-2 ring-[#14365a]" : ""}`}
+            >
+              <span className="text-[1.15em] font-bold leading-snug">{word.word}</span>
+              <span className={`mt-[0.15em] max-w-[11em] text-center text-[0.68em] font-semibold leading-tight ${visible ? "" : "opacity-0"}`}>
+                {visible ? word.role : "؟"}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      {w && (
+        <div dir="rtl" className="mt-[0.5em] rounded-[0.9em] bg-white p-[0.8em] text-[0.85em] text-[#14365a] ring-1 ring-[#e3eef5]">
+          <p className="font-extrabold">
+            {w.word}: <span className="font-semibold">{w.role}</span>
+          </p>
+          {(w.case || w.sign) && (
+            <p className="mt-[0.2em] text-[#5b7089]">
+              {[w.case, w.sign].filter(Boolean).join(" - ")}
+            </p>
+          )}
+          {w.explanation && <p className="mt-[0.3em] leading-relaxed">{w.explanation}</p>}
+          <button type="button" onClick={() => setOpen(null)} className="mt-[0.4em] text-[0.8em] font-semibold text-[#1f9e95] hover:underline">
+            {t("Close")}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PassageView({ passage, startShown = true }: { passage: GrammarPassage; startShown?: boolean }) {
+  const { t } = useI18n();
+  const [showRoles, setShowRoles] = useState(startShown);
   return (
     <article className="rounded-[1em] border border-[#e3eef5] bg-white p-[0.9em]">
       <header className="flex flex-wrap items-center justify-between gap-[0.5em]">
@@ -40,9 +96,18 @@ function PassageView({ passage }: { passage: GrammarPassage }) {
       <p className="mt-[0.2em] text-[0.7em] text-[#8a9bb0]">
         {new Date(passage.publishedUtc ?? passage.createdUtc).toLocaleDateString(dateLocale("en-GB"), { day: "numeric", month: "short", year: "numeric" })}
       </p>
-      <div className="mt-[0.6em] space-y-[0.4em]">
+      <div className="mt-[0.6em] flex flex-wrap items-center justify-between gap-[0.5em]">
+        <p className="text-[0.75em] text-[#5b7089]">
+          {showRoles ? t("Tap a word to see its full إعراب and why.") : t("Try it yourself: say each word's إعراب, then tap it to check.")}
+        </p>
+        <button type="button" className={SOFT_BTN} onClick={() => setShowRoles((v) => !v)}>
+          {showRoles ? <EyeOff className="h-[1.1em] w-[1.1em]" /> : <Eye className="h-[1.1em] w-[1.1em]" />}
+          {showRoles ? t("Parse it myself first") : t("Show the إعراب")}
+        </button>
+      </div>
+      <div className="mt-[0.6em] space-y-[0.8em]">
         {passage.sentences.map((s, i) => (
-          <ParsedLine key={i} words={s.words} />
+          <ParsedSentenceView key={i} words={s.words} showRoles={showRoles} />
         ))}
       </div>
     </article>
