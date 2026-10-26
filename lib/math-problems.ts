@@ -368,6 +368,30 @@ export const MATH_PROBLEMS: MathProblem[] = [
   },
 ];
 
+/** The explanation video of each problem (a YouTube id): StatQuest, 3Blue1Brown and Khan Academy lessons on the idea. */
+export const MATH_VIDEOS: Record<string, string> = {
+  "solve-linear-equation": "bAerID24QJ0",
+  "line-through-two-points": "R948Tsyq4vA",
+  "predict-with-a-line": "nk2CQITm_eo",
+  "least-squares-line": "PaFPbb66DxQ",
+  "sigmoid-function": "yIYKR4sgzI8",
+  "logistic-decision-boundary": "_1dZbuMPZyo",
+  "majority-vote": "J4Wdy0Wc_xQ",
+  "distance-to-hyperplane": "efR1C6CvhmE",
+  "adaboost-weight": "LsK-xG1cLYA",
+  "gini-impurity": "u4IxOk2ijSs",
+  "euclidean-distance": "nyZuite17Pc",
+  "angle-between-vectors": "LyGKycYT2v0",
+  "boosting-residuals": "3CC4N4z3GJc",
+  "neuron-output": "aircAruvnKk",
+  "gradient-descent-step": "sDv4f4s2SB8",
+  "bayes-rule": "HZGCoVF3YvM",
+  "ordered-target-statistic": "KXOTSkPL2X4",
+  "optimal-leaf-weight": "ZVFeW798-2I",
+  "histogram-bins": "qBigTkBLU6g",
+  "class-variance": "SzZ6GpcfoQY",
+};
+
 export const getMathProblem = (id: string) => MATH_PROBLEMS.find((p) => p.id === id);
 
 /** Up to 3 other problems: the same algorithm first, then the same topic. */
