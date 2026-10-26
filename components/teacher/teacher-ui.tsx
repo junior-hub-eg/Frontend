@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import Image from "next/image";
 import { LoaderCircle, RotateCcw } from "lucide-react";
-import { errorMessage } from "@/lib/api-client";
+import { ApiError, errorMessage } from "@/lib/api-client";
 import { avatarOrDefault } from "@/lib/avatars";
 import { useT } from "@/lib/i18n/client";
 import { dateLocale, tk } from "@/lib/i18n/translate";
@@ -14,6 +14,20 @@ export function Card({ className, children }: { className?: string; children: Re
   return <section className={cn("rounded-2xl border border-[#e3ece9] bg-white p-4 shadow-sm", className)}>{children}</section>;
 }
 
+/**
+ * A server error or no connection is tried once more after a short wait: the live server can fail the first request
+ * while it wakes up. Errors the server means (not found, not allowed, invalid) are not retried.
+ */
+async function loadWithRetry<T>(load: () => Promise<T>): Promise<T> {
+  try {
+    return await load();
+  } catch (e) {
+    if (!(e instanceof ApiError) || (e.status !== 0 && e.status < 500)) throw e;
+    await new Promise((r) => setTimeout(r, 1500));
+    return load();
+  }
+}
+
 /** Loads one API call on mount; `reload` fetches again and `setData` takes what a save returned. */
 export function useTeacherData<T>(load: () => Promise<T>, failMessage: string) {
   const [data, setData] = useState<T | null>(null);
@@ -22,7 +36,7 @@ export function useTeacherData<T>(load: () => Promise<T>, failMessage: string) {
   const reload = useCallback(async () => {
     setError(null);
     try {
-      setData(await load());
+      setData(await loadWithRetry(load));
     } catch (e) {
       setError(errorMessage(e, failMessage));
     }
@@ -30,7 +44,7 @@ export function useTeacherData<T>(load: () => Promise<T>, failMessage: string) {
 
   useEffect(() => {
     let active = true;
-    load().then(
+    loadWithRetry(load).then(
       (value) => active && setData(value),
       (e) => active && setError(errorMessage(e, failMessage)),
     );
