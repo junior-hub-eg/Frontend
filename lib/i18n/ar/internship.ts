@@ -210,4 +210,12 @@ export const internship: Record<string, string> = {
   "Join now": "انضم الآن",
   "Internships and career simulation": "التدريب ومحاكاة سوق العمل",
   "Practice for your first job": "تدرّب على أول وظيفة لك",
+  "Squad details": "تفاصيل الفريق",
+  "Rank #{n}": "المركز {n}",
+  "Team": "الفريق",
+  "Sprint tasks": "مهام السبرنت",
+  "Unassigned": "بدون مسؤول",
+  "{n} tasks done · {points} points": "{n} مهام منجزة · {points} نقطة",
+  "{done}/{total} tasks · {days} days left": "{done}/{total} مهام · متبقي {days} يوم",
+  "Open {name}'s details": "افتح تفاصيل {name}",
 };

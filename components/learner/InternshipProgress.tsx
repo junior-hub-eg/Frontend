@@ -39,6 +39,7 @@ import { useT } from "@/lib/i18n/client";
 import { currentLocale, tk } from "@/lib/i18n/translate";
 import RedirectToSquad, { SQUAD_PAGE } from "./RedirectToSquad";
 import { TeamChatButton } from "./TeamChat";
+import { SquadCompetitorDialog } from "./SquadCompetitorDialog";
 import { getConversations, openChat } from "@/lib/chat-api";
 import { CatalogLinks, ProjectLogo } from "@/components/learner/ProjectCatalogParts";
 
@@ -508,6 +509,7 @@ function TaskBoard({
 
 function Leaderboard({ data }: { data: LeaderboardData | null }) {
   const t = useT();
+  const [openSquad, setOpenSquad] = useState<string | null>(null);
   const rows = data ? [...data.top, ...(data.mine ? [data.mine] : [])] : [];
   return (
     <section className={`${solid} min-w-0 p-[1.1em]`}>
@@ -524,10 +526,15 @@ function Leaderboard({ data }: { data: LeaderboardData | null }) {
 
       <ol className="mt-[1em] grid gap-[0.9em]">
         {rows.map((s, i) => (
-          <li
-            key={s.squadId}
-            className={`flex items-center gap-[0.7em] ${s.isMine ? "-mx-[0.4em] rounded-[0.8em] bg-[#eaf4fe] px-[0.4em] py-[0.2em]" : ""}`}
-          >
+          <li key={s.squadId}>
+            <button
+              type="button"
+              onClick={() => setOpenSquad(s.squadId)}
+              aria-label={t("Open {name}'s details", { name: s.name })}
+              className={`-mx-[0.4em] flex w-[calc(100%+0.8em)] items-center gap-[0.7em] rounded-[0.8em] px-[0.4em] py-[0.2em] text-start transition-colors ${
+                s.isMine ? "bg-[#eaf4fe] hover:bg-[#dcecfb]" : "hover:bg-[#f2f6fa]"
+              }`}
+            >
             <span
               className={`grid h-[2.2em] w-[2.2em] shrink-0 place-items-center rounded-full text-[0.85em] font-bold text-[#14365a] ${
                 s.rank === 1
@@ -553,9 +560,11 @@ function Leaderboard({ data }: { data: LeaderboardData | null }) {
               </div>
             </div>
             <span className="text-[0.85em] font-bold text-[#14365a]">{t("{n} XP", { n: s.xp })}</span>
+            </button>
           </li>
         ))}
       </ol>
+      {openSquad && <SquadCompetitorDialog squadId={openSquad} onClose={() => setOpenSquad(null)} />}
     </section>
   );
 }
