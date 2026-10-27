@@ -102,6 +102,29 @@ export interface Leaderboard {
   mine: LeaderboardEntry | null;
 }
 
+/** One member of a squad on the leaderboard, with the work they finished in the active sprint. */
+export interface CompetitorMember {
+  studentId: string;
+  firstName: string;
+  photoUrl: string | null;
+  role: SquadRole;
+  tasksDone: number;
+  storyPointsDone: number;
+  isMe: boolean;
+}
+
+/** A squad of the school's leaderboard in detail: rank, project, members, sprint and tasks. */
+export interface Competitor {
+  entry: LeaderboardEntry;
+  level: Squad["level"];
+  projectTitle: string;
+  projectDescription: string;
+  monitor: SquadMonitor | null;
+  members: CompetitorMember[];
+  sprint: Sprint;
+  columns: TaskBoard["columns"];
+}
+
 export interface MoveTaskResult {
   taskId: string;
   status: TaskStatus;
@@ -113,6 +136,8 @@ export const getSquad = () => api.get<Squad>("/api/v1/interns/squad");
 export const getSprint = () => api.get<Sprint>("/api/v1/interns/sprint");
 export const getTasks = () => api.get<TaskBoard>("/api/v1/interns/tasks");
 export const getLeaderboard = () => api.get<Leaderboard>("/api/v1/interns/leaderboard");
+/** 404 SQUAD_NOT_ON_BOARD for a squad that is not on the student's school board. */
+export const getCompetitor = (squadId: string) => api.get<Competitor>(`/api/v1/interns/leaderboard/${squadId}`);
 
 /** Moves an own task one step forward or back. */
 export const moveTask = (taskId: string, status: TaskStatus) =>
