@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import { LoaderCircle, Trophy, X } from "lucide-react";
 import { errorMessage } from "@/lib/api-client";
 import { getCompetitor, type Competitor, type TaskStatus } from "@/lib/interns-api";
 import { mentorAvatar } from "@/lib/avatars";
-import { useT } from "@/lib/i18n/client";
+import { useI18n } from "@/lib/i18n/client";
 import { tk } from "@/lib/i18n/translate";
 import { avatarFor, ROLE_TITLE } from "./interns-data";
 
@@ -22,7 +23,7 @@ const COLUMN: Record<TaskStatus, { title: string; bg: string; dot: string }> = {
  * finished, sprint progress and tasks (read only). Opened from a leaderboard row.
  */
 export function SquadCompetitorDialog({ squadId, onClose }: { squadId: string; onClose: () => void }) {
-  const t = useT();
+  const { t, dir } = useI18n();
   const [data, setData] = useState<Competitor | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -43,9 +44,11 @@ export function SquadCompetitorDialog({ squadId, onClose }: { squadId: string; o
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  return (
+  // On document.body: the internship page is its own fixed layer, which would keep the dialog under the side menu.
+  return createPortal(
     <div
       role="dialog"
+      dir={dir}
       aria-modal="true"
       aria-label={data ? data.entry.name : t("Squad details")}
       className="fixed inset-0 z-[70] grid place-items-center bg-[#14365a]/40 p-4"
@@ -170,6 +173,7 @@ export function SquadCompetitorDialog({ squadId, onClose }: { squadId: string; o
           </>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
