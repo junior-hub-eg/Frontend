@@ -1,5 +1,6 @@
 import type { Route } from "next";
 import {
+  Bot,
   Brain,
   FileBadge,
   FileText,
@@ -28,6 +29,8 @@ export const LEARNER_NAV_MAIN: LearnerNavItem[] = [
     matches: ["/learner/interns"],
   },
   { label: tk("AI Curriculum"), href: "/learner/ai-curriculum" as Route, icon: Brain },
+  // The track-discovery interview with Alice, any time (27 Oct 2026); before, only Settings linked to it.
+  { label: tk("AI Interview"), href: "/learner/ai-interview" as Route, icon: Bot, matches: ["/learner/courses/discovery"] },
   { label: tk("Recruitment Practice"), href: "/learner/recruitment-practice" as Route, icon: FileText },
   { label: tk("Messages"), href: "/learner/messages" as Route, icon: MessageCircle },
 ];
