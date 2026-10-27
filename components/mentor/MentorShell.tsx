@@ -23,6 +23,7 @@ import {
   Users,
   MessageCircle,
 } from "lucide-react";
+import { PageGate, useClosedPages } from "@/lib/permissions";
 import { useAuth } from "@/lib/auth/auth-context";
 import { useI18n } from "@/lib/i18n/client";
 import { tk } from "@/lib/i18n/translate";
@@ -40,16 +41,19 @@ const CAP_IMG = "/images/admin/reicon_grad-cap-filled.png";
 
 /** The mentor area (design "Junior Hub · Mentor", M1–M9, 26 Oct 2026). */
 const NAV = [
-  { href: "/mentor/dashboard", label: tk("Overview"), icon: House },
-  { href: "/mentor/squads", label: tk("My squads"), icon: Users },
-  { href: "/mentor/reviews", label: tk("Reviews"), icon: ClipboardCheck, badge: "reviews" as const },
-  { href: "/mentor/students", label: tk("My students"), icon: GraduationCap },
-  { href: "/mentor/messages", label: tk("Messages"), icon: MessageCircle },
-  { href: "/mentor/calendar", label: tk("Calendar"), icon: CalendarDays },
-  { href: "/mentor/announcements", label: tk("Announcements"), icon: Megaphone },
-  { href: "/mentor/reports", label: tk("Reports"), icon: BarChart3 },
+  { href: "/mentor/dashboard", label: tk("Overview"), icon: House, area: "Overview" },
+  { href: "/mentor/squads", label: tk("My squads"), icon: Users, area: "My Squads" },
+  { href: "/mentor/reviews", label: tk("Reviews"), icon: ClipboardCheck, area: "Reviews", badge: "reviews" as const },
+  { href: "/mentor/students", label: tk("My students"), icon: GraduationCap, area: "My Students" },
+  { href: "/mentor/messages", label: tk("Messages"), icon: MessageCircle, area: "Messages" },
+  { href: "/mentor/calendar", label: tk("Calendar"), icon: CalendarDays, area: "Calendar" },
+  { href: "/mentor/announcements", label: tk("Announcements"), icon: Megaphone, area: "Announcements" },
+  { href: "/mentor/reports", label: tk("Reports"), icon: BarChart3, area: "Reports" },
   { href: "/mentor/profile", label: tk("Profile & settings"), icon: UserRound },
 ];
+
+/** The mentor pages and their module of the Roles & Permissions matrix (Profile & settings is always open). */
+const PAGES = NAV.filter((n): n is (typeof NAV)[number] & { area: string } => "area" in n && !!n.area);
 
 const vars = { "--u": "clamp(10px, 0.9vw, 16px)" } as CSSProperties;
 const baseFont = { fontSize: "clamp(11px, calc(var(--u) * 1.05), 17px)" } as CSSProperties;
@@ -58,6 +62,7 @@ export function MentorShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuth();
+  const closed = useClosedPages();
   const { t, locale, setLocale } = useI18n();
   const hydrated = useSyncExternalStore(noopSubscribe, () => true, () => false);
   const allowed = SKIP_AUTH || (!!user && user.role === "mentor");
@@ -162,7 +167,7 @@ export function MentorShell({ children }: { children: ReactNode }) {
 
         <nav aria-label={t("Mentor")} className="relative z-10 flex-1 overflow-y-auto px-3 pt-8 [scrollbar-width:none]">
           <ul className="space-y-3">
-            {NAV.map((item) => {
+            {NAV.filter((n) => !("area" in n && n.area && closed.has(n.area))).map((item) => {
               const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
               const labels = expanded || mobileOpen;
               return (
@@ -218,7 +223,7 @@ export function MentorShell({ children }: { children: ReactNode }) {
           </button>
 
           <div className="ms-auto flex items-center gap-[0.7em]">
-            <ChatButton className="pointer-events-auto size-[2.7em] border border-white/70 bg-white/55 text-[#14365a] shadow-[0_6px_18px_rgba(60,160,230,0.2)] backdrop-blur hover:bg-white/80" />
+            {!closed.has("Messages") && <ChatButton className="pointer-events-auto size-[2.7em] border border-white/70 bg-white/55 text-[#14365a] shadow-[0_6px_18px_rgba(60,160,230,0.2)] backdrop-blur hover:bg-white/80" />}
             <div className="pointer-events-auto relative">
               <button
                 type="button"
@@ -304,7 +309,9 @@ export function MentorShell({ children }: { children: ReactNode }) {
         </header>
 
         <div className="relative flex min-h-full flex-col" style={baseFont}>
-          {children}
+          <PageGate pages={PAGES} closed={closed}>
+            {children}
+          </PageGate>
         </div>
       </main>
     </div>
