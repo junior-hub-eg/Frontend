@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { GraduationCap, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n/client";
+import { useClosedPages } from "@/lib/permissions";
 import { LEARNER_NAV_MAIN, LEARNER_NAV_SECONDARY, type LearnerNavItem } from "./learner-nav";
 
 interface LearnerSidebarProps {
@@ -84,6 +85,7 @@ function NavLink({
 
 /** The parent (LearnerShell frame) must be `relative` and define `--sb` and `--u`. */
 export function LearnerSidebar({ activeHref, collapsed = false, mobileOpen = false, onNavigate, locked = false }: LearnerSidebarProps) {
+  const closed = useClosedPages();
   const t = useT();
   const pathname = usePathname();
   const current = activeHref ?? pathname;
@@ -143,7 +145,7 @@ export function LearnerSidebar({ activeHref, collapsed = false, mobileOpen = fal
       </Link>
 
       <nav className="flex flex-col gap-[0.8em]">
-        {LEARNER_NAV_MAIN.map((item) => (
+        {LEARNER_NAV_MAIN.filter((item) => !item.area || !closed.has(item.area)).map((item) => (
           <NavLink
             key={item.label}
             item={item}
@@ -159,7 +161,7 @@ export function LearnerSidebar({ activeHref, collapsed = false, mobileOpen = fal
       <div className="my-[1.6em] border-t border-[#14365a]/10" />
 
       <nav className="flex flex-col gap-[0.8em]">
-        {LEARNER_NAV_SECONDARY.map((item) => (
+        {LEARNER_NAV_SECONDARY.filter((item) => !item.area || !closed.has(item.area)).map((item) => (
           <NavLink
             key={item.label}
             item={item}

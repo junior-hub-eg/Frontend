@@ -28,6 +28,7 @@ import { useI18n } from "@/lib/i18n/client";
 import { LanguageSwitcher } from "@/components/shared/LanguageSwitcher";
 import { NotificationBell } from "@/components/shared/NotificationBell";
 import { ChatButton } from "@/components/chat/ChatButton";
+import { PageGate, useClosedPages } from "@/lib/permissions";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -35,22 +36,26 @@ const poppins = Poppins({
 });
 
 const NAV = [
-  { label: "Dashboard", href: "/teacher/dashboard", icon: LayoutDashboard },
-  { label: "My Classes", href: "/teacher/classes", icon: Users },
-  { label: "Students", href: "/teacher/students", icon: UserRound },
-  { label: "Curriculum", href: "/teacher/curriculum", icon: BookOpen },
-  { label: "Assignments", href: "/teacher/assignments", icon: ClipboardList },
-  { label: "Progress", href: "/teacher/progress", icon: TrendingUp },
-  { label: "Messages", href: "/teacher/messages", icon: MessageSquare },
-  { label: "Calendar", href: "/teacher/calendar", icon: CalendarDays },
+  { label: "Dashboard", href: "/teacher/dashboard", icon: LayoutDashboard, area: "Dashboard" },
+  { label: "My Classes", href: "/teacher/classes", icon: Users, area: "My Classes" },
+  { label: "Students", href: "/teacher/students", icon: UserRound, area: "Students" },
+  { label: "Curriculum", href: "/teacher/curriculum", icon: BookOpen, area: "Curriculum" },
+  { label: "Assignments", href: "/teacher/assignments", icon: ClipboardList, area: "Assignments" },
+  { label: "Progress", href: "/teacher/progress", icon: TrendingUp, area: "Progress" },
+  { label: "Messages", href: "/teacher/messages", icon: MessageSquare, area: "Messages" },
+  { label: "Calendar", href: "/teacher/calendar", icon: CalendarDays, area: "Calendar" },
   { label: "Settings", href: "/teacher/settings", icon: Settings },
 ];
+
+/** The teacher pages and their module of the Roles & Permissions matrix (Settings is always open). */
+const PAGES = NAV.filter((n): n is (typeof NAV)[number] & { area: string } => "area" in n && !!n.area);
 
 export default function TeacherLayout({ children }: { children: ReactNode }) {
   const { t, dir } = useI18n();
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuth();
+  const closed = useClosedPages();
 
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -141,7 +146,7 @@ export default function TeacherLayout({ children }: { children: ReactNode }) {
           </Link>
 
           <nav aria-label={t("Teacher navigation")} className="flex flex-1 flex-col gap-1 py-2">
-            {NAV.map(({ label, href, icon: Icon }) => {
+            {NAV.filter((n) => !("area" in n && n.area && closed.has(n.area))).map(({ label, href, icon: Icon }) => {
               const active = pathname === href || pathname.startsWith(`${href}/`);
 
               return (
@@ -219,7 +224,7 @@ export default function TeacherLayout({ children }: { children: ReactNode }) {
 
           {/* me-[1.6em] moves the bell and the teacher name a bit away from the screen edge (both languages) */}
           <div className="ms-auto flex items-center gap-[1.2em] me-[1.6em]">
-            <ChatButton />
+            {!closed.has("Messages") && <ChatButton />}
             <NotificationBell home="/teacher" />
 
             <div className="relative">
@@ -266,7 +271,9 @@ export default function TeacherLayout({ children }: { children: ReactNode }) {
             "lg:ps-[calc(var(--sb)+var(--u)*2)]"
           )}
         >
-          {children}
+          <PageGate pages={PAGES} closed={closed}>
+            {children}
+          </PageGate>
         </main>
       </div>
     </div>

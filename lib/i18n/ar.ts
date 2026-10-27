@@ -29,6 +29,7 @@ import { mentorArea } from "./ar/mentor-area";
 import { reportKit } from "./ar/report-kit";
 import { projectBrief } from "./ar/project-brief";
 import { chat } from "./ar/chat";
+import { permissions } from "./ar/permissions";
 
 /** Arabic translations, keyed by the English text. `node scripts/i18n-check.mjs` lists missing ones. */
 export const ar: Record<string, string> = {
@@ -64,4 +65,5 @@ export const ar: Record<string, string> = {
   ...teacherGrammar,
   ...reportKit,
   ...projectBrief,
+  ...permissions,
 };

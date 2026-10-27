@@ -12,6 +12,8 @@ import { useI18n, useT } from "@/lib/i18n/client";
 import { tk } from "@/lib/i18n/translate";
 import { LanguageSwitcher } from "@/components/shared/LanguageSwitcher";
 import { NotificationBell } from "@/components/shared/NotificationBell";
+import { PageGate, useClosedPages } from "@/lib/permissions";
+import { LEARNER_PAGES } from "./learner-nav";
 import { ChatButton } from "@/components/chat/ChatButton";
 import { AssistantButton } from "./AssistantChat";
 import { LearnerSidebar } from "./learner-sidebar";
@@ -54,6 +56,7 @@ export function LearnerShell({
 }: LearnerShellProps) {
   const { t, dir } = useI18n();
   const pathname = usePathname();
+  const closed = useClosedPages();
   const current = activeHref ?? pathname;
   const [collapsed, setCollapsed] = useState(false); // desktop: icons only
   const [mobileOpen, setMobileOpen] = useState(false); // mobile/tablet: expanded drawer
@@ -129,8 +132,8 @@ export function LearnerShell({
           <LanguageSwitcher className="h-[2.8em] gap-[0.5em] rounded-full border border-white/70 bg-white/55 px-[1em] text-[0.95em] font-medium text-[#14365a] backdrop-blur" />
 
           <div className="ms-auto flex items-center gap-[1.2em]">
-            <AssistantButton />
-            <ChatButton />
+            {!closed.has("AI Assistant") && <AssistantButton />}
+            {!closed.has("Messages") && <ChatButton />}
             <NotificationBell home="/learner" />
 
             {/* The track in focus and the student's level in it; hidden until the student has a track */}
@@ -200,7 +203,7 @@ export function LearnerShell({
         )}
 
         {/* ---------- Content: fills the whole frame on desktop ---------- */}
-        <main className="relative flex flex-col ps-[4rem] lg:absolute lg:inset-0 lg:z-0 lg:ps-0">{children}</main>
+        <main className="relative flex flex-col ps-[4rem] lg:absolute lg:inset-0 lg:z-0 lg:ps-0"><PageGate pages={LEARNER_PAGES} closed={closed}>{children}</PageGate></main>
       </div>
     </div>
   );
