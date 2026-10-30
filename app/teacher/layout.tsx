@@ -17,6 +17,7 @@ import {
   MessageSquare,
   Search,
   Settings,
+  Sparkles,
   TrendingUp,
   UserRound,
   Users,
@@ -37,6 +38,7 @@ const poppins = Poppins({
 
 const NAV = [
   { label: "Dashboard", href: "/teacher/dashboard", icon: LayoutDashboard, area: "Dashboard" },
+  { label: "AI Integration", href: "/teacher/ai-integration", icon: Sparkles, area: "AI Integration" },
   { label: "My Classes", href: "/teacher/classes", icon: Users, area: "My Classes" },
   { label: "Students", href: "/teacher/students", icon: UserRound, area: "Students" },
   { label: "Curriculum", href: "/teacher/curriculum", icon: BookOpen, area: "Curriculum" },
@@ -114,12 +116,12 @@ export default function TeacherLayout({ children }: { children: ReactNode }) {
         <aside
           className={cn(
             "absolute inset-y-0 start-0 z-30 flex flex-col overflow-hidden border-e border-white/70 bg-[linear-gradient(180deg,rgba(198,236,255,0.78)_0%,rgba(217,243,255,0.45)_55%,rgba(203,233,252,0.6)_100%)] pb-5 shadow-[0_8px_40px_rgba(20,54,90,0.10)] backdrop-blur-xl transition-[width,transform] duration-300",
-            mobileOpen ? "w-64 rounded-e-[2rem] px-4 pt-5" : "w-14 rounded-e-[2rem] px-2 pt-5",
+            mobileOpen ? "w-64 rounded-e-[2rem] px-4 pt-4" : "w-14 rounded-e-[2rem] px-2 pt-4",
             "lg:w-[var(--sb)]",
             collapsed ? "lg:px-[0.6em]" : "lg:px-[1.2em]",
             mobileOpen ? "translate-x-0" : "-translate-x-[120%] rtl:translate-x-[120%]",
-            // lg:rtl:translate-x-0 is needed so the Arabic sidebar is not pushed off the screen on desktop
-            "lg:translate-x-0 lg:rtl:translate-x-0 lg:rounded-ee-[4.7em] lg:rounded-se-[6.5em] lg:pt-[2.8em] lg:[font-size:clamp(9px,var(--u),16px)]"
+            // تقليل المسافة العلوية (pt) هنا قليلاً لرفع الشعار للأعلى
+            "lg:translate-x-0 lg:rtl:translate-x-0 lg:rounded-ee-[4.7em] lg:rounded-se-[6.5em] lg:pt-[1.8em] lg:[font-size:clamp(9px,var(--u),16px)]"
           )}
         >
           <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-[40%]">
@@ -131,21 +133,21 @@ export default function TeacherLayout({ children }: { children: ReactNode }) {
             href="/"
             onClick={closeMobile}
             aria-label={t("Junior Hub home")}
-            className={cn("mb-6 flex h-16 shrink-0 items-center gap-2 rounded-xl px-1", collapsed && "lg:justify-center lg:px-0")}
+            className={cn("mb-4 flex h-16 shrink-0 items-center gap-2 rounded-xl px-1", collapsed && "lg:justify-center lg:px-0")}
           >
             <Image
               src="/images/Auth/logo.png"
               alt={t("Junior Hub")}
-              width={160}
-              height={32}
+              width={180}
+              height={40}
               priority
-              style={{ height: "2em", width: "auto" }}
-              className={cn("max-w-full object-contain", collapsed && "lg:hidden")}
+              style={{ height: "2.4em", width: "auto" }}
+              className={cn("max-w-full object-contain scale-105 transform origin-start", collapsed && "lg:hidden")}
             />
-            <GraduationCap className={cn("hidden size-6 shrink-0 text-[#14365a]", collapsed && "lg:block")} />
+            <GraduationCap className={cn("hidden size-7 shrink-0 text-[#14365a]", collapsed && "lg:block")} />
           </Link>
 
-          <nav aria-label={t("Teacher navigation")} className="flex flex-1 flex-col gap-1 py-2">
+          <nav aria-label={t("Teacher navigation")} className="flex flex-1 flex-col gap-1 py-1">
             {NAV.filter((n) => !("area" in n && n.area && closed.has(n.area))).map(({ label, href, icon: Icon }) => {
               const active = pathname === href || pathname.startsWith(`${href}/`);
 
@@ -170,7 +172,7 @@ export default function TeacherLayout({ children }: { children: ReactNode }) {
             })}
           </nav>
 
-          <div className={cn("mt-auto shrink-0 px-1 pb-2 pt-5", collapsed && "lg:hidden")}>
+          <div className={cn("mt-auto shrink-0 px-1 pb-2 pt-3", collapsed && "lg:hidden")}>
             <div className="flex items-center gap-2 text-[#1B2D54]">
               <GraduationCap className="size-5 shrink-0" />
               <div className="leading-tight">

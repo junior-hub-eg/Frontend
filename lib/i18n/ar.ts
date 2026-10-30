@@ -30,12 +30,14 @@ import { reportKit } from "./ar/report-kit";
 import { projectBrief } from "./ar/project-brief";
 import { chat } from "./ar/chat";
 import { permissions } from "./ar/permissions";
+import { aiIntegration } from "./ar/ai-integration";
 
 /** Arabic translations, keyed by the English text. `node scripts/i18n-check.mjs` lists missing ones. */
 export const ar: Record<string, string> = {
   // First, so the older dictionaries keep their own wording for the texts they share.
   ...chat,
   ...mentorArea,
+  ...aiIntegration,
   ...common,
   ...landing,
   ...auth,
