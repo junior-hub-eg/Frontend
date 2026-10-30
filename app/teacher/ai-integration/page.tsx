@@ -54,7 +54,8 @@ const INTRO: Record<string, string> = {
   chatbots: "Short video explaining Chatbots and Language Models.",
 };
 
-function VideoBox({ title, videoUrl, disabled }: { title: string; videoUrl?: string; disabled?: boolean }) {
+/** `disabled`: the lock and `lockedText` ("Coming soon" by default) instead of the player. */
+function VideoBox({ title, videoUrl, disabled, lockedText = "Coming soon" }: { title: string; videoUrl?: string; disabled?: boolean; lockedText?: string }) {
   const { t } = useI18n();
 
   if (videoUrl && !disabled) {
@@ -93,7 +94,7 @@ function VideoBox({ title, videoUrl, disabled }: { title: string; videoUrl?: str
           <div className="grid size-9 place-items-center rounded-full bg-black/40">
             <Lock aria-hidden className="size-4 text-white" />
           </div>
-          <span className="text-[10px] font-semibold tracking-wide rtl:tracking-normal">{t("Coming soon")}</span>
+          <span className="text-[10px] font-semibold tracking-wide rtl:tracking-normal">{t(lockedText)}</span>
         </div>
       ) : (
         <button
@@ -547,16 +548,26 @@ function ConceptWizard({
   );
 }
 
+/** What a closed video says: it has no transcript yet, or it waits for the teacher to publish the video before it. */
+const LOCKED_TEXT: Record<ConceptVideo["status"], string> = {
+  Open: "",
+  Locked: "Finish the previous video first",
+  ComingSoon: "Coming soon",
+};
+
 function ConceptVideosCard({
   page,
+  onPublished,
   onNotice,
 }: {
   page: ConceptVideosPage;
+  /** Loads the page again: publishing a video opens the next one. */
+  onPublished: () => void;
   onNotice: (text: string) => void;
 }) {
   const { t } = useI18n();
   const [active, setActive] = useState<ConceptVideo | null>(null);
-  const [published, setPublished] = useState<TeacherConceptLesson[]>(page.lessons);
+  const published = page.lessons;
 
   return (
     <Card className="p-5">
@@ -579,7 +590,7 @@ function ConceptVideosCard({
           return (
             <li key={c.id} className={cn("flex flex-col gap-3 rounded-xl border border-[#e3ece9] bg-white p-3", !isAvailable && "opacity-90")}>
               <div className="relative overflow-hidden rounded-lg">
-                <VideoBox title={t(c.title)} videoUrl={c.videoUrl} disabled={!isAvailable} />
+                <VideoBox title={t(c.title)} videoUrl={c.videoUrl} disabled={!isAvailable} lockedText={LOCKED_TEXT[c.status]} />
               </div>
 
               <p className="text-xs font-semibold leading-snug">{t(c.title)}</p>
@@ -596,7 +607,7 @@ function ConceptVideosCard({
               ) : (
                 <span className="mt-auto flex items-center justify-center gap-1.5 rounded-lg bg-[#eef2f1] px-3 py-2 text-center text-[11px] font-semibold text-[#1B2D54]/60">
                   <Lock aria-hidden className="size-3.5" />
-                  {t("Coming soon")}
+                  {t(LOCKED_TEXT[c.status])}
                 </span>
               )}
             </li>
@@ -633,8 +644,8 @@ function ConceptVideosCard({
           classes={page.classes}
           onClose={() => setActive(null)}
           onPublished={(lesson) => {
-            setPublished((list) => [lesson, ...list.filter((l) => l.id !== lesson.id)]);
             setActive(null);
+            onPublished();
             onNotice(
               t("{concept} was linked to {subject} and published to {classes}.", {
                 concept: t(lesson.video.title),
@@ -668,7 +679,7 @@ export default function AIIntegrationPage() {
       </div>
 
       {page.data ? (
-        <ConceptVideosCard page={page.data} onNotice={(text) => alert(text)} />
+        <ConceptVideosCard page={page.data} onPublished={() => void page.reload()} onNotice={(text) => alert(text)} />
       ) : (
         <LoadBlock error={page.error} onRetry={page.reload} />
       )}
