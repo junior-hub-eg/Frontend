@@ -2,6 +2,7 @@
 
 import { useCallback, useRef, useState, type ReactNode, type PointerEvent as ReactPointerEvent } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import type { Route } from "next";
 import {
   Activity,
@@ -68,6 +69,29 @@ const KIND_TONE: Record<TeacherAlert["kind"], { text: string; dot: string }> = {
   Inactive: { text: "text-[#1B2D54]/70", dot: "bg-[#8a94a6]" },
   JoinRequest: { text: "text-[#14757d]", dot: "bg-[#14757d]" },
 };
+
+/**
+ * Sky picture: only the top part of the page, fading into white.
+ * It is positioned against <main> in the layout (so the page root must NOT be "relative"):
+ * it spans the full width, scrolls away with the page and sits behind the cards.
+ */
+function SkyBackground() {
+  return (
+    <div
+      aria-hidden
+      className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[453px] [mask-image:linear-gradient(to_bottom,black_60%,transparent)]"
+    >
+      <Image
+        src="/images/learner/projects/background.png"
+        alt=""
+        fill
+        priority
+        sizes="100vw"
+        className="object-cover object-top"
+      />
+    </div>
+  );
+}
 
 function ActionButton({
   label,
@@ -451,6 +475,7 @@ export default function TeacherDashboardPage() {
   if (!d) {
     return (
       <div className="flex min-w-0 flex-1 flex-col gap-4 pb-6 pt-4 font-[family-name:var(--font-poppins)] text-[#1B2D54]">
+        <SkyBackground />
         <LoadBlock error={dashboard.error} onRetry={dashboard.reload} />
       </div>
     );
@@ -531,6 +556,9 @@ export default function TeacherDashboardPage() {
 
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-4 pb-6 pt-4 font-[family-name:var(--font-poppins)] text-[#1B2D54]">
+      {/* Sky background: only the top part, fading into white */}
+      <SkyBackground />
+
       <header className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <p className="flex items-center gap-2 text-[9px] font-semibold uppercase tracking-wide">
