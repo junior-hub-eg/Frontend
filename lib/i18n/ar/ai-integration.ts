@@ -3,6 +3,7 @@
 // {concept}, {subject}, {classes}, {name}, {n}, {xp} are filled in by the page.
 export const aiIntegration: Record<string, string> = {
   // Page
+  "AI Integration": "الذكاء الاصطناعي",
   "AI Integration & Curriculum": "الذكاء الاصطناعي والمنهج",
   "Turn short AI concept videos into interactive lessons linked directly to your school curriculum.":
     "حوّل فيديوهات مفاهيم الذكاء الاصطناعي القصيرة إلى دروس تفاعلية مرتبطة مباشرة بمنهج مدرستك.",
@@ -107,6 +108,7 @@ export const aiIntegration: Record<string, string> = {
   "No classes yet. Ask the school admin to link your classes.": "لا توجد فصول بعد. اطلب من إدارة المدرسة ربط فصولك.",
   "Choose at least one class.": "اختر فصلًا واحدًا على الأقل.",
   "We couldn't publish. Please try again.": "تعذّر النشر. حاول مرة أخرى.",
+  "We couldn't load the concept videos.": "تعذّر تحميل فيديوهات المفاهيم.",
   "Cancel": "إلغاء",
   "Back": "رجوع",
   "Next": "التالي",

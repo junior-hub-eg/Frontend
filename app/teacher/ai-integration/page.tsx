@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useCallback, useState, type ReactNode } from "react";
 import Image from "next/image";
 import {
   ChevronLeft,
@@ -18,137 +18,41 @@ import {
 import { errorMessage } from "@/lib/api-client";
 import { useI18n } from "@/lib/i18n/client";
 import { cn } from "@/lib/utils";
-import { Card } from "@/components/teacher/teacher-ui";
+import {
+  approveConceptLink,
+  getConceptSummary,
+  getConceptVideos,
+  publishConceptLesson,
+  suggestConceptIdeas,
+  type ConceptClass,
+  type ConceptVideo,
+  type ConceptVideosPage,
+  type SummaryPoint,
+  type TeacherConceptLesson,
+} from "@/lib/concept-videos-api";
+import type { SchoolSubject } from "@/lib/teacher-api";
+import { Card, LoadBlock, useTeacherData } from "@/components/teacher/teacher-ui";
 import { TeacherDialog } from "@/components/teacher/teacher-dialogs";
 
-/* ------------------------------------------------------------------ */
-/* Mock data. TODO: replace with the real data from the API.          */
-/* Everything is plain English: the Arabic lives in lib/i18n/ar/ai-integration.ts */
-/* ------------------------------------------------------------------ */
+/* Videos, summaries, link ideas and Quick Checks come from lib/concept-videos-api.ts (the AI writes them). */
+/* The fixed texts are plain English: the Arabic lives in lib/i18n/ar/ai-integration.ts */
 
-type SubjectId = "physics" | "math" | "biology" | "chemistry";
-
-const SUBJECTS: { id: SubjectId; label: string }[] = [
-  { id: "physics", label: "Physics" },
-  { id: "math", label: "Math" },
-  { id: "biology", label: "Biology" },
-  { id: "chemistry", label: "Chemistry" },
-];
-
-type Detail = {
-  intro: string;
-  summary: { title: string; text: string }[];
-  links: Record<SubjectId, string[]>;
-  quick: { question: string; options: string[]; answer: number }[];
-  xp: number;
-  videoUrl?: string;
+/** The page's short names for the subjects (the design says "Math"). */
+const SUBJECT_NAME: Record<SchoolSubject, string> = {
+  Physics: "Physics",
+  Math: "Math",
+  Biology: "Biology",
+  Chemistry: "Chemistry",
+  Science: "Science",
+  Language: "Language",
 };
 
-type Concept = { id: string; title: string; minutes: number; detail?: Detail };
-
-const CONCEPTS: Concept[] = [
-  {
-    id: "computer-vision",
-    title: "Computer Vision",
-    minutes: 3,
-    detail: {
-      intro: "Short video explaining Computer Vision with simple drawings.",
-      videoUrl: "https://www.youtube.com/watch?v=-4E2-0sxVUM",
-      summary: [
-        { title: "What it is", text: "Computer Vision lets computers understand images and video the way people do." },
-        {
-          title: "How it works",
-          text: "A camera turns the picture into numbers, and a trained model finds patterns such as edges, shapes and objects.",
-        },
-        {
-          title: "Where it's used",
-          text: "Face unlock, self-driving cars, medical scans and spotting plant diseases from a photo.",
-        },
-      ],
-      links: {
-        physics: [
-          "The camera captures light through lenses and reflection, the same thing you study in optics.",
-          "Compare how a camera lens focuses light with how the lens of the eye does.",
-          "Build a simple pinhole camera to see how light forms an image.",
-        ],
-        math: [
-          "An image is a matrix of numbers (pixels), and AI does its calculations on it.",
-          "Count how many numbers it takes to describe a small 10×10 image.",
-          "Use coordinates to describe where an object sits inside a picture.",
-        ],
-        biology: [
-          "The eye and the brain recognize shapes, and AI imitates that.",
-          "Compare the cells of the retina with the pixels of a camera sensor.",
-          "Discuss how the brain recognizes a face even in poor light.",
-        ],
-        chemistry: [
-          "The camera reads the color of a reaction or solution and estimates the concentration.",
-          "Compare the color of solutions at different concentrations using a phone camera.",
-          "Explain how a color change shows that a reaction has finished.",
-        ],
-      },
-      quick: [
-        {
-          question: "What does a computer see when it looks at a picture?",
-          options: ["A grid of numbers (pixels)", "A tiny human eye", "Only the colors red and blue"],
-          answer: 0,
-        },
-        {
-          question: "Which one is an example of Computer Vision?",
-          options: ["Unlocking a phone with your face", "Playing a song from a playlist", "Sending a text message"],
-          answer: 0,
-        },
-      ],
-      xp: 20,
-    },
-  },
-  {
-    id: "machine-learning",
-    title: "Machine Learning Basics",
-    minutes: 4,
-    detail: {
-      intro: "Short video explaining Machine Learning basics.",
-      videoUrl: "https://www.youtube.com/watch?v=jVwvnWRYcdk",
-      summary: [
-        { title: "Overview", text: "Introduction to machine learning models." },
-        { title: "Key concepts", text: "Understanding data science fundamentals." },
-      ],
-      links: { physics: [], math: [], biology: [], chemistry: [] },
-      quick: [],
-      xp: 20,
-    },
-  },
-  {
-    id: "chatbots",
-    title: "Chatbots & Language Models",
-    minutes: 4,
-    detail: {
-      intro: "Short video explaining Chatbots and Language Models.",
-      videoUrl: "https://www.youtube.com/watch?v=puB-4LuRNys&t=80s",
-      summary: [
-        { title: "Overview", text: "Introduction to language models." },
-        { title: "Key concepts", text: "Understanding chatbots." },
-      ],
-      links: { physics: [], math: [], biology: [], chemistry: [] },
-      quick: [],
-      xp: 20,
-    },
-  },
-];
-
-async function suggestLinkIdeas(detail: Detail, subject: SubjectId, round: number): Promise<string[]> {
-  await new Promise((r) => setTimeout(r, 700));
-  const ideas = detail.links[subject];
-  const shift = round % ideas.length;
-  return [...ideas.slice(shift), ...ideas.slice(0, shift)];
-}
-
-type PublishPayload = { conceptId: string; subject: SubjectId; link: string; classIds: string[] };
-
-async function publishConceptLink(payload: PublishPayload): Promise<void> {
-  void payload;
-  await new Promise((r) => setTimeout(r, 600));
-}
+/** The line under each video, by its key. */
+const INTRO: Record<string, string> = {
+  "computer-vision": "Short video explaining Computer Vision with simple drawings.",
+  "machine-learning": "Short video explaining Machine Learning basics.",
+  chatbots: "Short video explaining Chatbots and Language Models.",
+};
 
 function VideoBox({ title, videoUrl, disabled }: { title: string; videoUrl?: string; disabled?: boolean }) {
   const { t } = useI18n();
@@ -233,43 +137,53 @@ function Stepper({ steps, current }: { steps: string[]; current: number }) {
   );
 }
 
-type PublishedItem = { id: string; concept: string; subject: string; link: string; classNames: string[] };
-
 function ConceptWizard({
   concept,
-  detail,
+  subjects,
   classes,
   onClose,
   onPublished,
 }: {
-  concept: Concept;
-  detail: Detail;
-  classes: { id: string; name: string }[];
+  concept: ConceptVideo;
+  subjects: SchoolSubject[];
+  classes: ConceptClass[];
   onClose: () => void;
-  onPublished: (item: PublishedItem) => void;
+  onPublished: (lesson: TeacherConceptLesson) => void;
 }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const language = locale === "en" ? "en" : "ar";
   const [step, setStep] = useState(0);
-  const [subject, setSubject] = useState<SubjectId | null>(null);
+  const [subject, setSubject] = useState<SchoolSubject | null>(subjects.length === 1 ? subjects[0] : null);
   const [ideas, setIdeas] = useState<string[] | null>(null);
-  const [round, setRound] = useState(0);
+  // Every idea shown for this subject, so "Suggest new ideas" asks the AI for different ones.
+  const [shown, setShown] = useState<string[]>([]);
   const [loadingIdeas, setLoadingIdeas] = useState(false);
   const [choice, setChoice] = useState<number | "custom" | null>(null);
   const [custom, setCustom] = useState("");
+  const [draft, setDraft] = useState<TeacherConceptLesson | null>(null);
   const [classIds, setClassIds] = useState<string[]>(classes.length === 1 ? [classes[0].id] : []);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const steps = [t("Watch & summary"), t("Subject"), t("Link idea"), t("Preview & publish")];
-  const subjectLabel = SUBJECTS.find((s) => s.id === subject)?.label ?? "";
+  const subjectLabel = subject ? SUBJECT_NAME[subject] : "";
   const link = choice === "custom" ? custom.trim() : choice !== null && ideas ? ideas[choice] : "";
 
-  async function loadIdeas(nextRound: number) {
+  // The AI writes the summary the first time anyone opens the video; after that it is kept.
+  const loadSummary = useCallback(async (): Promise<SummaryPoint[]> => (await getConceptSummary(concept.id, language)).points, [concept.id, language]);
+  const { data: summary, error: summaryError, reload: reloadSummary } = useTeacherData(loadSummary, t("Something went wrong. Please try again."));
+
+  async function loadIdeas(avoid: string[]) {
     if (!subject) return;
     setLoadingIdeas(true);
     setChoice(null);
+    setError(null);
     try {
-      setIdeas(await suggestLinkIdeas(detail, subject, nextRound));
+      const next = (await suggestConceptIdeas(concept.id, subject, language, avoid)).ideas;
+      setIdeas(next);
+      setShown([...avoid, ...next]);
+    } catch (e) {
+      setError(errorMessage(e));
     } finally {
       setLoadingIdeas(false);
     }
@@ -278,67 +192,80 @@ function ConceptWizard({
   async function next() {
     if (step === 1) {
       setStep(2);
-      if (!ideas) await loadIdeas(round);
+      if (!ideas) await loadIdeas([]);
+      return;
+    }
+    if (step === 2) {
+      // The approved link: the AI writes the Quick Check for the preview.
+      if (!subject) return;
+      setBusy(true);
+      setError(null);
+      try {
+        setDraft(await approveConceptLink(concept.id, subject, link, choice !== "custom", language));
+        setStep(3);
+      } catch (e) {
+        setError(errorMessage(e));
+      } finally {
+        setBusy(false);
+      }
       return;
     }
     setStep((s) => s + 1);
   }
 
-  function pickSubject(id: SubjectId) {
+  function pickSubject(id: SchoolSubject) {
     if (id !== subject) {
       setSubject(id);
       setIdeas(null);
+      setShown([]);
       setChoice(null);
     }
   }
 
   async function publish() {
-    if (!subject) return;
+    if (!draft) return;
     setBusy(true);
     setError(null);
     try {
-      await publishConceptLink({ conceptId: concept.id, subject, link, classIds });
-      onPublished({
-        id: `${concept.id}-${Date.now()}`,
-        concept: concept.title,
-        subject: subjectLabel,
-        link,
-        classNames: classes.filter((c) => classIds.includes(c.id)).map((c) => c.name),
-      });
+      onPublished(await publishConceptLesson(draft.id, classIds));
     } catch (e) {
-      setError(errorMessage(e) || t("We couldn't publish. Please try again."));
+      setError(errorMessage(e, t("We couldn't publish. Please try again.")));
     } finally {
       setBusy(false);
     }
   }
 
-  const canNext = step === 0 || (step === 1 && subject !== null);
-  const canPublish = link.length >= 10 && classIds.length > 0 && !busy;
+  const canNext = (step === 0 && summary !== null) || (step === 1 && subject !== null);
+  const canPublish = draft !== null && classIds.length > 0 && !busy;
 
   let body: ReactNode;
 
   if (step === 0) {
     body = (
       <div className="grid gap-4">
-        <VideoBox title={t(concept.title)} videoUrl={detail.videoUrl} />
-        <p className="text-[11px] text-[#1B2D54]/70">{t(detail.intro)}</p>
+        <VideoBox title={t(concept.title)} videoUrl={concept.videoUrl} />
+        {INTRO[concept.key] && <p className="text-[11px] text-[#1B2D54]/70">{t(INTRO[concept.key])}</p>}
 
         <div>
           <h3 className="flex items-center gap-1.5 text-xs font-semibold">
             <Lightbulb aria-hidden className="size-4 text-[#14757d]" />
             {t("Quick summary")}
           </h3>
-          <ol className="mt-2 grid gap-2 sm:grid-cols-3">
-            {detail.summary.map((s, i) => (
-              <li key={s.title} className="rounded-xl bg-[#f1f4f4] p-3">
-                <p className="flex items-center gap-1.5 text-[10px] font-bold text-[#14757d]">
-                  <span className="grid size-4 place-items-center rounded-full bg-[#14757d] text-[9px] text-white">{i + 1}</span>
-                  {t(s.title)}
-                </p>
-                <p className="mt-1.5 text-[11px] leading-snug text-[#1B2D54]/80">{t(s.text)}</p>
-              </li>
-            ))}
-          </ol>
+          {summary ? (
+            <ol className="mt-2 grid gap-2 sm:grid-cols-3">
+              {summary.map((s, i) => (
+                <li key={s.title} className="rounded-xl bg-[#f1f4f4] p-3">
+                  <p className="flex items-center gap-1.5 text-[10px] font-bold text-[#14757d]">
+                    <span className="grid size-4 place-items-center rounded-full bg-[#14757d] text-[9px] text-white">{i + 1}</span>
+                    {t(s.title)}
+                  </p>
+                  <p dir="auto" className="mt-1.5 text-[11px] leading-snug text-[#1B2D54]/80">{s.text}</p>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <LoadBlock error={summaryError} onRetry={() => void reloadSummary()} className="mt-2" />
+          )}
         </div>
       </div>
     );
@@ -350,21 +277,21 @@ function ConceptWizard({
           <p className="mt-1 text-[11px] text-[#1B2D54]/60">{t("The AI will suggest ways to connect {concept} to it.", { concept: t(concept.title) })}</p>
         </div>
         <div role="radiogroup" aria-label={t("Subject")} className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {SUBJECTS.map((s) => {
-            const selected = subject === s.id;
+          {subjects.map((s) => {
+            const selected = subject === s;
             return (
               <button
-                key={s.id}
+                key={s}
                 type="button"
                 role="radio"
                 aria-checked={selected}
-                onClick={() => pickSubject(s.id)}
+                onClick={() => pickSubject(s)}
                 className={cn(
                   "rounded-xl border px-3 py-4 text-center text-xs font-semibold transition-colors",
                   selected ? "border-[#14757d] bg-[#e9f7f5] text-[#14757d]" : "border-[#e3ece9] bg-white hover:bg-[#f6f9f8]",
                 )}
               >
-                {t(s.label)}
+                {t(SUBJECT_NAME[s])}
               </button>
             );
           })}
@@ -385,12 +312,8 @@ function ConceptWizard({
           </div>
           <button
             type="button"
-            disabled={loadingIdeas}
-            onClick={() => {
-              const nextRound = round + 1;
-              setRound(nextRound);
-              void loadIdeas(nextRound);
-            }}
+            disabled={loadingIdeas || busy}
+            onClick={() => void loadIdeas(shown)}
             className="flex items-center gap-1.5 rounded-lg bg-[#eef2f1] px-3 py-1.5 text-[10px] font-semibold disabled:opacity-50"
           >
             <RefreshCw aria-hidden className={cn("size-3.5", loadingIdeas && "animate-spin")} />
@@ -400,8 +323,8 @@ function ConceptWizard({
 
         {loadingIdeas || !ideas ? (
           <p className="flex items-center justify-center gap-2 rounded-xl bg-[#f1f4f4] p-8 text-[11px] text-[#1B2D54]/60">
-            <LoaderCircle aria-hidden className="size-4 animate-spin" />
-            {t("The AI is thinking…")}
+            {loadingIdeas && <LoaderCircle aria-hidden className="size-4 animate-spin" />}
+            {loadingIdeas ? t("The AI is thinking…") : error}
           </p>
         ) : (
           <div role="radiogroup" aria-label={t("AI link ideas")} className="grid gap-2">
@@ -425,7 +348,7 @@ function ConceptWizard({
                   >
                     {selected && <span className="size-1.5 rounded-full bg-[#14757d]" />}
                   </span>
-                  <span className="text-[11px] leading-snug">{t(idea)}</span>
+                  <span dir="auto" className="text-[11px] leading-snug">{idea}</span>
                 </button>
               );
             })}
@@ -450,16 +373,29 @@ function ConceptWizard({
                 value={custom}
                 onChange={(e) => setCustom(e.target.value)}
                 rows={3}
-                maxLength={400}
+                maxLength={1000}
                 placeholder={t("Write how {concept} connects to your subject…", { concept: t(concept.title) })}
                 className="w-full resize-none rounded-xl border border-[#e3ece9] bg-[#f6f9f8] p-3 text-[11px] outline-none focus:ring-2 focus:ring-[#12939b]/40"
               />
             )}
           </div>
         )}
+
+        {busy && (
+          <p className="flex items-center gap-2 text-[11px] text-[#1B2D54]/60">
+            <LoaderCircle aria-hidden className="size-4 animate-spin" />
+            {t("The AI is thinking…")}
+          </p>
+        )}
+        {error && ideas && (
+          <p role="alert" className="text-[11px] text-[#c81e1e]">
+            {error}
+          </p>
+        )}
       </div>
     );
   } else {
+    const questions = draft?.questions ?? [];
     body = (
       <div className="grid gap-4">
         <div>
@@ -468,7 +404,7 @@ function ConceptWizard({
         </div>
 
         <div className="grid gap-3 rounded-2xl bg-[#f1f4f4] p-3">
-          <VideoBox title={t(concept.title)} videoUrl={detail.videoUrl} />
+          <VideoBox title={t(concept.title)} videoUrl={concept.videoUrl} />
 
           <div className="rounded-xl bg-white p-3">
             <p className="flex items-center gap-1.5 text-[10px] font-bold text-[#14757d]">
@@ -477,26 +413,26 @@ function ConceptWizard({
               <span className="rounded-full bg-[#c9efe9] px-2 py-0.5 text-[9px]">{t(subjectLabel)}</span>
             </p>
             <p dir="auto" className="mt-1.5 text-[11px] leading-snug">
-              {link || t("Pick or write a link in the previous step.")}
+              {draft?.linkText || t("Pick or write a link in the previous step.")}
             </p>
           </div>
 
           <div className="rounded-xl bg-white p-3">
             <div className="flex items-center justify-between gap-2">
               <p className="text-[10px] font-bold text-[#1B2D54]">
-                {t("Quick Check")} • {t("{n} questions", { n: detail.quick.length })}
+                {t("Quick Check")} • {t("{n} questions", { n: questions.length })}
               </p>
               <span className="flex items-center gap-1 rounded-full bg-[#fdeedb] px-2 py-0.5 text-[9px] font-semibold text-[#c76a0a]">
                 <Zap aria-hidden className="size-3" />
-                <bdi dir="ltr">{t("+{xp} XP", { xp: detail.xp })}</bdi>
+                <bdi dir="ltr">{t("+{xp} XP", { xp: draft?.xp ?? 0 })}</bdi>
               </span>
             </div>
 
             <ol className="mt-2 grid gap-3">
-              {detail.quick.map((q, qi) => (
-                <li key={q.question}>
+              {questions.map((q, qi) => (
+                <li key={q.question} dir="auto">
                   <p className="text-[11px] font-semibold">
-                    {qi + 1}. {t(q.question)}
+                    {qi + 1}. {q.question}
                   </p>
                   <ul className="mt-1.5 grid gap-1">
                     {q.options.map((o, oi) => (
@@ -504,12 +440,12 @@ function ConceptWizard({
                         key={o}
                         className={cn(
                           "flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-[10px]",
-                          oi === q.answer ? "border-[#14757d]/40 bg-[#e9f7f5]" : "border-[#e3ece9]",
+                          oi === q.answerIndex ? "border-[#14757d]/40 bg-[#e9f7f5]" : "border-[#e3ece9]",
                         )}
                       >
                         <span aria-hidden className="size-3 shrink-0 rounded-full border border-[#1B2D54]/30" />
-                        {t(o)}
-                        {oi === q.answer && <CircleCheck aria-hidden className="ms-auto size-3.5 text-[#14757d]" />}
+                        {o}
+                        {oi === q.answerIndex && <CircleCheck aria-hidden className="ms-auto size-3.5 text-[#14757d]" />}
                       </li>
                     ))}
                   </ul>
@@ -572,8 +508,12 @@ function ConceptWizard({
         ) : (
           <button
             type="button"
-            onClick={() => setStep((s) => s - 1)}
-            className="flex items-center gap-1 rounded-full bg-[#eef2f1] px-4 py-2 text-[11px] font-semibold"
+            disabled={busy}
+            onClick={() => {
+              setError(null);
+              setStep((s) => s - 1);
+            }}
+            className="flex items-center gap-1 rounded-full bg-[#eef2f1] px-4 py-2 text-[11px] font-semibold disabled:opacity-50"
           >
             <ChevronLeft aria-hidden className="size-3.5 rtl:rotate-180" />
             {t("Back")}
@@ -583,10 +523,11 @@ function ConceptWizard({
         {step < 3 ? (
           <button
             type="button"
-            onClick={() => (step === 2 ? setStep(3) : void next())}
-            disabled={step === 2 ? link.length < 10 || loadingIdeas : !canNext}
+            onClick={() => void next()}
+            disabled={step === 2 ? link.length < 10 || loadingIdeas || busy : !canNext}
             className="flex items-center gap-1 rounded-full bg-[#14757d] px-5 py-2 text-[11px] font-semibold text-white disabled:opacity-50"
           >
+            {busy && <LoaderCircle aria-hidden className="size-3.5 animate-spin" />}
             {t("Next")}
             <ChevronRight aria-hidden className="size-3.5 rtl:rotate-180" />
           </button>
@@ -607,15 +548,15 @@ function ConceptWizard({
 }
 
 function ConceptVideosCard({
-  classes,
+  page,
   onNotice,
 }: {
-  classes: { id: string; name: string }[];
+  page: ConceptVideosPage;
   onNotice: (text: string) => void;
 }) {
   const { t } = useI18n();
-  const [active, setActive] = useState<Concept | null>(null);
-  const [published, setPublished] = useState<PublishedItem[]>([]);
+  const [active, setActive] = useState<ConceptVideo | null>(null);
+  const [published, setPublished] = useState<TeacherConceptLesson[]>(page.lessons);
 
   return (
     <Card className="p-5">
@@ -632,13 +573,13 @@ function ConceptVideosCard({
       </div>
 
       <ul className="mt-4 grid gap-3 md:grid-cols-3">
-        {CONCEPTS.map((c, index) => {
-          const isAvailable = index === 0;
+        {page.videos.map((c) => {
+          const isAvailable = c.available;
 
           return (
             <li key={c.id} className={cn("flex flex-col gap-3 rounded-xl border border-[#e3ece9] bg-white p-3", !isAvailable && "opacity-90")}>
               <div className="relative overflow-hidden rounded-lg">
-                <VideoBox title={t(c.title)} videoUrl={c.detail?.videoUrl} disabled={!isAvailable} />
+                <VideoBox title={t(c.title)} videoUrl={c.videoUrl} disabled={!isAvailable} />
               </div>
 
               <p className="text-xs font-semibold leading-snug">{t(c.title)}</p>
@@ -670,14 +611,14 @@ function ConceptVideosCard({
             {published.map((p) => (
               <li key={p.id} className="rounded-xl bg-[#f1f4f4] p-3">
                 <p className="flex flex-wrap items-center gap-2 text-[11px] font-semibold">
-                  {t(p.concept)}
-                  <span className="rounded-full bg-[#c9efe9] px-2 py-0.5 text-[9px] text-[#14757d]">{t(p.subject)}</span>
+                  {t(p.video.title)}
+                  <span className="rounded-full bg-[#c9efe9] px-2 py-0.5 text-[9px] text-[#14757d]">{t(SUBJECT_NAME[p.subject])}</span>
                   <span className="text-[10px] font-normal text-[#1B2D54]/60">
-                    {p.classNames.map((n) => t("Class {name}", { name: n })).join(" • ")}
+                    {p.classes.map((c) => t("Class {name}", { name: c.name })).join(" • ")}
                   </span>
                 </p>
                 <p dir="auto" className="mt-1 text-[11px] leading-snug text-[#1B2D54]/75">
-                  {p.link}
+                  {p.linkText}
                 </p>
               </li>
             ))}
@@ -685,20 +626,20 @@ function ConceptVideosCard({
         </div>
       )}
 
-      {active?.detail && (
+      {active && (
         <ConceptWizard
           concept={active}
-          detail={active.detail}
-          classes={classes}
+          subjects={page.subjects}
+          classes={page.classes}
           onClose={() => setActive(null)}
-          onPublished={(item) => {
-            setPublished((list) => [item, ...list]);
+          onPublished={(lesson) => {
+            setPublished((list) => [lesson, ...list.filter((l) => l.id !== lesson.id)]);
             setActive(null);
             onNotice(
               t("{concept} was linked to {subject} and published to {classes}.", {
-                concept: t(item.concept),
-                subject: t(item.subject),
-                classes: item.classNames.map((n) => t("Class {name}", { name: n })).join(", "),
+                concept: t(lesson.video.title),
+                subject: t(SUBJECT_NAME[lesson.subject]),
+                classes: lesson.classes.map((c) => t("Class {name}", { name: c.name })).join(", "),
               }),
             );
           }}
@@ -710,12 +651,7 @@ function ConceptVideosCard({
 
 export default function AIIntegrationPage() {
   const { t } = useI18n();
-
-  // TODO: replace with the teacher's real classes from the API (names look like "4A", "5A")
-  const mockClasses = [
-    { id: "1", name: "4A" },
-    { id: "2", name: "5A" },
-  ];
+  const page = useTeacherData(getConceptVideos, t("We couldn't load the concept videos."));
 
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-4 pb-6 pt-4 font-[family-name:var(--font-poppins)] text-[#1B2D54]">
@@ -731,10 +667,11 @@ export default function AIIntegrationPage() {
         </p>
       </div>
 
-      <ConceptVideosCard
-        classes={mockClasses}
-        onNotice={(text) => alert(text)}
-      />
+      {page.data ? (
+        <ConceptVideosCard page={page.data} onNotice={(text) => alert(text)} />
+      ) : (
+        <LoadBlock error={page.error} onRetry={page.reload} />
+      )}
     </div>
   );
 }

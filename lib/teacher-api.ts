@@ -2,7 +2,7 @@
 import { api, API_BASE_URL, ApiError } from "@/lib/api-client";
 import { getToken } from "@/lib/auth/token";
 
-export type SchoolSubject = "Math" | "Science" | "Physics" | "Language";
+export type SchoolSubject = "Math" | "Science" | "Physics" | "Language" | "Biology" | "Chemistry";
 export type Gender = "Male" | "Female";
 
 export interface TeacherClass {
