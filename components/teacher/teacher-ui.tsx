@@ -100,6 +100,8 @@ export const SUBJECT_LABEL: Record<SchoolSubject, string> = {
   Science: tk("Science"),
   Physics: tk("Physics"),
   Language: tk("Language"),
+  Biology: tk("Biology"),
+  Chemistry: tk("Chemistry"),
 };
 
 export const formatDate = (iso: string, withTime = false) =>
