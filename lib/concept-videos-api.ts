@@ -15,8 +15,10 @@ export interface ConceptVideo {
   title: string;
   videoUrl: string;
   minutes: number;
-  /** False: "coming soon". */
+  /** The teacher can use it now (status "Open"). */
   available: boolean;
+  /** "Locked" until the teacher publishes the video before it; "ComingSoon" while it has no transcript. */
+  status: "Open" | "Locked" | "ComingSoon";
 }
 
 export interface ConceptClass {

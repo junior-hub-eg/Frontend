@@ -13,6 +13,7 @@ export const aiIntegration: Record<string, string> = {
   "Turn a short AI concept video into a lesson linked to your subject.": "حوّل فيديو قصير عن مفهوم في الذكاء الاصطناعي إلى درس مرتبط بمادتك.",
   "Use in class": "استخدمه في الفصل",
   "Coming soon": "قريبًا",
+  "Finish the previous video first": "أكمل الفيديو السابق أولًا",
   "Play video": "تشغيل الفيديو",
   "Recently linked": "تم ربطها مؤخرًا",
   "Class {name}": "الفصل {name}",
